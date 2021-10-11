@@ -26,6 +26,10 @@ def run_deterministic():
                         #type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
                         help="start and end dates for the scenario")
 
+    parser.add_argument('--threads', '-t', type=int, default=1,
+                        help="How many compute cores to use for parallelizing "
+                             "solver operations.")
+
     parser.add_argument(
         '--sced_horizon', help="Specifies the number of time periods "
                                "in the look-ahead horizon for each SCED. "
@@ -77,5 +81,7 @@ def run_deterministic():
          '--output-ruc-solutions', '--output-solver-logs',
          '--ruc-mipgap', str(args.ruc_mipgap), '--symbolic-solver-labels',
          '--reserve-factor', '0.0', '--deterministic-ruc-solver', args.solver,
-         '--sced-solver', args.solver]
+         '--sced-solver', args.solver,
+         '--deterministic-ruc-solver-options=Threads={}'.format(args.threads),
+         '--sced-solver-options=Threads={}'.format(args.threads), ]
         )).simulate()
