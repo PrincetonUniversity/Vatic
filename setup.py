@@ -1,4 +1,6 @@
+
 import setuptools
+
 
 setuptools.setup(
     name='Vatic',
@@ -15,9 +17,9 @@ setuptools.setup(
             'vatic-det=vatic.command_line:run_deterministic',
             ],
         },
-
+ 
     install_requires = [
-        'numpy<1.21',
+        'numpy<1.21', 'gurobipy',
         'gridx-prescient @ git+https://github.com/shrivats-pu/Prescient.git@vatic'
         ],
     )
