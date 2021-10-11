@@ -6,7 +6,7 @@ setuptools.setup(
     description='Pyomo + Egret',
     author='Michal Radoslaw Grzadkowski',
     author_email='mg2332@princeton.edu',
-    python_requires='>=3.8, <4',
+    python_requires='==3.8.*',
 
     packages=setuptools.find_packages(exclude=["vatic.tests"]),
 
@@ -15,4 +15,9 @@ setuptools.setup(
             'vatic-det=vatic.command_line:run_deterministic',
             ],
         },
+
+    install_requires = [
+        'numpy<1.21',
+        'gridx-prescient @ git+https://github.com/shrivats-pu/Prescient.git@vatic'
+        ],
     )
