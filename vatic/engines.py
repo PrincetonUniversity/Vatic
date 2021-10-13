@@ -7,11 +7,13 @@ from egret.models.unit_commitment import (
     create_tight_unit_commitment_model, _get_uc_model)
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from egret.common.log import logger as egret_logger
+from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 
 from prescient.simulator.time_manager import PrescientTime
 from prescient.data.providers.dat_data_provider import DatDataProvider
 from prescient.data.simulation_state.state_with_offset import StateWithOffset
-from prescient.simulator import TimeManager, DataManager, StatsManager
+from prescient.simulator import (TimeManager, DataManager,
+                                 StatsManager, ReportingManager)
 from prescient.engine.egret.data_extractors import ScedDataExtractor
 from prescient.engine.modeling_engine import ForecastErrorMethod
 from prescient.engine.egret.egret_plugin import (
@@ -38,6 +40,7 @@ from typing import Union
 import logging
 import time
 from ast import literal_eval
+import math
 
 
 class Simulator(EgretEngine):
@@ -69,6 +72,8 @@ class Simulator(EgretEngine):
 
         self._stats_manager = StatsManager()
         self._stats_manager.initialize(options)
+        self._reporting_manager = ReportingManager()
+        self._reporting_manager.initialize(options, self._stats_manager)
 
         self._actuals_step_frequency = 60
         if options.simulate_out_of_sample:
@@ -127,12 +132,13 @@ class Simulator(EgretEngine):
         else:
             ruc_market = None
 
-        # the RUC instance to simulate only exists to store the actual demand and renewables outputs
-        # to be realized during the course of a day. it also serves to provide a concrete instance,
-        # from which static data and topological features of the system can be extracted.
-        # IMPORTANT: This instance should *not* be passed to any method involved in the creation of
-        #            economic dispatch instances, as that would enable those instances to be
-        #            prescient.
+        # the RUC instance to simulate only exists to store the actual demand
+        # and renewables outputs to be realized during the course of a day. it
+        # also serves to provide a concrete instance, from which static data
+        # and topological features of the system can be extracted.
+        # IMPORTANT: This instance should *not* be passed to any method
+        #            involved in the creation of economic dispatch instances,
+        #            as that would enable those instances to be prescient.
         print("")
         print("Extracting scenario to simulate")
 
@@ -177,7 +183,10 @@ class Simulator(EgretEngine):
 
     def _get_projected_state(self,
                              time_step: PrescientTime) -> SimulationState:
-        ''' Get the simulation state as we project it will appear after the RUC delay '''
+        """
+        Get the simulation state as we project it will appear
+        after the RUC delay.
+        """
 
         ruc_delay = self._get_ruc_delay()
 
@@ -191,33 +200,39 @@ class Simulator(EgretEngine):
         uc_hour, uc_date = self._get_uc_activation_time(time_step)
 
         print("")
-        print(
-            "Creating and solving SCED to determine UC initial conditions for date:",
-            str(uc_date), "hour:", uc_hour)
+        print("Creating and solving SCED to determine UC initial conditions "
+              "for date:", str(uc_date), "hour:", uc_hour)
 
-        # determine the SCED execution mode, in terms of how discrepancies between forecast and actuals are handled.
-        # prescient processing is identical in the case of deterministic and stochastic RUC.
-        # persistent processing differs, as there is no point forecast for stochastic RUC.
-        sced_forecast_error_method = ForecastErrorMethod.PRESCIENT  # always the default
+        # determine the SCED execution mode, in terms of how discrepancies
+        # between forecast and actuals are handled. prescient processing is
+        # identical in the case of deterministic and stochastic RUC.
+        # persistent processing differs, as there is no point forecast
+        # for stochastic RUC.
+
+        # always the default
+        sced_forecast_error_method = ForecastErrorMethod.PRESCIENT
+
         if self.options.run_sced_with_persistent_forecast_errors:
-            print(
-                "Using persistent forecast error model when projecting demand and renewables in SCED")
+            print("Using persistent forecast error model when projecting "
+                  "demand and renewables in SCED")
             sced_forecast_error_method = ForecastErrorMethod.PERSISTENT
-        else:
-            print(
-                "Using prescient forecast error model when projecting demand and renewables in SCED")
-        print("")
 
-        # NOTE: the projected sced probably doesn't have to be run for a full 24 hours - just enough
-        #       to get you to midnight and a few hours beyond (to avoid end-of-horizon effects).
+        else:
+            print("Using prescient forecast error model when projecting "
+                  "demand and renewables in SCED")
+
+        print("")
+        # NOTE: the projected sced probably doesn't have to be run for a full
+        #       24 hours - just enough to get you to midnight and a few hours
+        #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
-        current_state = self._data_manager.current_state.get_state_with_step_length(
-            60)
+        current_state = self._data_manager.current_state\
+            .get_state_with_step_length(60)
+
         projected_sced_instance = create_sced_instance(
-            self._data_provider,
-            current_state,
-            self.options,
-            sced_horizon=min(24, self._data_manager.current_state.timestep_count),
+            self._data_provider, current_state, self.options,
+            sced_horizon=min(24,
+                             self._data_manager.current_state.timestep_count),
             forecast_error_method=sced_forecast_error_method,
             )
 
@@ -237,7 +252,10 @@ class Simulator(EgretEngine):
                  % (-self.options.ruc_every_hours))
 
     def _get_uc_activation_time(self, time_step):
-        ''' Get the hour and date that a RUC generated at the given time will be activated '''
+        """
+        Get the hour and date that a RUC generated at the given
+        time will be activated.
+        """
         ruc_delay = self._get_ruc_delay()
         activation_time = time_step.datetime + timedelta(hours=ruc_delay)
 
@@ -246,9 +264,12 @@ class Simulator(EgretEngine):
     def call_oracle(self, time_step):
         """port of OracleManager.call_operation_oracle"""
 
-        # determine the SCED execution mode, in terms of how discrepancies between forecast and actuals are handled.
-        # prescient processing is identical in the case of deterministic and stochastic RUC.
-        # persistent processing differs, as there is no point forecast for stochastic RUC.
+        # determine the SCED execution mode, in terms of how discrepancies
+        # between forecast and actuals are handled.
+        # prescient processing is identical in the case of deterministic and
+        # stochastic RUC. persistent processing differs, as there is no point
+        # forecast for stochastic RUC.
+
         if self.options.run_sced_with_persistent_forecast_errors:
             forecast_error_method = ForecastErrorMethod.PERSISTENT
         else:
@@ -279,26 +300,31 @@ class Simulator(EgretEngine):
             current_sced_instance)
 
         pre_quickstart_cache = None
-
         if self.options.enable_quick_start_generator_commitment:
             # Determine whether we are going to run a quickstart optimization
+
             # TODO: Why the "if True" here?
             if True or engine.operations_data_extractor.has_load_shedding(
                     current_sced_instance):
-                # Yep, we're doing it.  Cache data we can use to compare results with and without quickstart
-                pre_quickstart_cache = engine.operations_data_extractor.get_pre_quickstart_data(
-                    current_sced_instance)
+                # Yep, we're doing it.  Cache data we can use to compare
+                # results with and without quickstart
+                pre_quickstart_cache = engine.operations_data_extractor\
+                    .get_pre_quickstart_data(current_sced_instance)
 
-                # TODO: report solution/load shedding before unfixing Quick Start Generators
+                # TODO: report solution/load shedding before unfixing
+                #  Quick Start Generators
                 # print("")
                 # print("SCED Solution before unfixing Quick Start Generators")
                 # print("")
                 # self.report_sced_stats()
 
-                # Set up the quickstart run, allowing quickstart generators to turn on
+                # Set up the quickstart run, allowing quickstart
+                # generators to turn on
                 print("Re-solving SCED after unfixing Quick Start Generators")
-                current_sced_instance = self.engine.enable_quickstart_and_solve(
-                    options, current_sced_instance)
+
+                current_sced_instance = self.engine\
+                    .enable_quickstart_and_solve(options,
+                                                 current_sced_instance)
 
         print("Solving for LMPs")
         lmp_sced = self.create_and_solve_lmp(current_sced_instance)
@@ -411,6 +437,7 @@ class Simulator(EgretEngine):
             )
 
         # update in case lines were taken out
+        # TODO: lol what
         self._ptdf_manager.PTDF_matrix_dict = pyo_model._PTDFs
 
         # TODO: better error handling
@@ -454,9 +481,11 @@ class Simulator(EgretEngine):
             get_data_func = self._data_provider.populate_with_actuals
         else:
             print("")
-            print(
-                "***WARNING: Simulating the forecast scenario when running deterministic RUC - "
-                "time consistency across midnight boundaries is not guaranteed, and may lead to threshold events.")
+            print("***WARNING: Simulating the forecast scenario when running "
+                  "deterministic RUC - time consistency across midnight "
+                  "boundaries is not guaranteed, and may lead to "
+                  "threshold events.")
+
             get_data_func = self._data_provider.populate_with_forecast_data
 
         # Get a new model
@@ -521,6 +550,7 @@ class Simulator(EgretEngine):
         except:
             print("Some isssue with SCED, writing instance")
             print("Problematic SCED from to file")
+
             # for diagnostic purposes, save the failed SCED instance.
             if lp_filename is not None:
                 if lp_filename.endswith(".json"):
@@ -528,11 +558,15 @@ class Simulator(EgretEngine):
                                                :-5] + ".FAILED.json"
                 else:
                     infeasible_sced_filename = lp_filename + ".FAILED.json"
+
             else:
-                infeasible_sced_filename = options.output_directory + os.sep + "FAILED_SCED.json"
+                infeasible_sced_filename = (options.output_directory
+                                            + os.sep + "FAILED_SCED.json")
+
             sced_instance.write(infeasible_sced_filename)
-            print(
-                "Problematic SCED instance written to file=" + infeasible_sced_filename)
+            print("Problematic SCED instance written to file="
+                  + infeasible_sced_filename)
+
             raise
 
         self._ptdf_manager.update_active(sced_results)
@@ -544,16 +578,19 @@ class Simulator(EgretEngine):
     def create_and_solve_lmp(self, sced_instance):
         lmp_sced_instance = sced_instance.clone()
 
-        # In case of demand shortfall, the price skyrockets, so we threshold the value.
-        if 'load_mismatch_cost' not in lmp_sced_instance.data['system'] or \
-                lmp_sced_instance.data['system']['load_mismatch_cost'] > \
-                    self.options.price_threshold:
-            lmp_sced_instance.data['system']['load_mismatch_cost'] = self.options.price_threshold
+        # In case of demand shortfall, the price skyrockets, so we
+        # threshold the value.
+        if ('load_mismatch_cost' not in lmp_sced_instance.data['system']
+                or (lmp_sced_instance.data['system']['load_mismatch_cost']
+                    > self.options.price_threshold)):
+            lmp_sced_instance.data[
+                'system']['load_mismatch_cost'] = self.options.price_threshold
 
-        # In case of reserve shortfall, the price skyrockets, so we threshold the value.
-        if 'reserve_shortfall_cost' not in lmp_sced_instance.data['system'] or \
-                lmp_sced_instance.data['system']['reserve_shortfall_cost'] > \
-                    self.options.reserve_price_threshold:
+        # In case of reserve shortfall, the price skyrockets, so we
+        # threshold the value.
+        if ('reserve_shortfall_cost' not in lmp_sced_instance.data['system']
+                or (lmp_sced_instance.data['system']['reserve_shortfall_cost']
+                    > self.options.reserve_price_threshold)):
             lmp_sced_instance.data['system']['reserve_shortfall_cost'] = \
                     self.options.reserve_price_threshold
 
@@ -584,7 +621,9 @@ class Simulator(EgretEngine):
 
         except:
             print("Some issue with LMP SCED, writing instance")
-            quickstart_uc_filename = self.options.output_directory+os.sep+"FAILED_LMP_SCED.json"
+            quickstart_uc_filename = (self.options.output_directory
+                                      + os.sep + "FAILED_LMP_SCED.json")
+
             lmp_sced_instance.write(quickstart_uc_filename)
             print(f"Problematic LMP SCED written to {quickstart_uc_filename}")
             raise
@@ -593,23 +632,23 @@ class Simulator(EgretEngine):
 
 
     def _transform_for_lmp(self, pyo_model, pyo_solver, lmp_sced_instance):
-        from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
-        import math
-
         uc_instance_binary_relaxer(pyo_model, pyo_solver)
 
         ## reset the penalites
         system = lmp_sced_instance.data['system']
-
         update_obj = False
 
         new_load_penalty = system['baseMVA'] * system['load_mismatch_cost']
-        if not math.isclose(new_load_penalty, pyo_model.LoadMismatchPenalty.value):
+        if not math.isclose(new_load_penalty,
+                            pyo_model.LoadMismatchPenalty.value):
             pyo_model.LoadMismatchPenalty.value = new_load_penalty
             update_obj = True
 
-        new_reserve_penalty =  system['baseMVA'] * system['reserve_shortfall_cost']
-        if not math.isclose(new_reserve_penalty, pyo_model.ReserveShortfallPenalty.value):
+        new_reserve_penalty = (system['baseMVA']
+                               * system['reserve_shortfall_cost'])
+
+        if not math.isclose(new_reserve_penalty,
+                            pyo_model.ReserveShortfallPenalty.value):
             pyo_model.ReserveShortfallPenalty.value = new_reserve_penalty
             update_obj = True
 
@@ -623,7 +662,8 @@ class Simulator(EgretEngine):
         if not self.options.output_solver_logs:
             egret_logger.setLevel(logging.WARNING)
 
-        solver_options_list = [opt.split('=') for opt in solver_options]
+        solver_options_list = [opt.split('=')
+                               for opt in solver_options[0].split(' ')]
         solver_options_dict = {option: literal_eval(val)
                                for option, val in solver_options_list}
 
@@ -651,17 +691,22 @@ class Simulator(EgretEngine):
         print("")
 
         if ops_stats.load_shedding != 0.0:
-            print("Load shedding reported at t=%d -     total=%12.2f" % (1, ops_stats.load_shedding))
+            print("Load shedding reported at t=%d -     total=%12.2f"
+                  % (1, ops_stats.load_shedding))
         if ops_stats.over_generation!= 0.0:
-            print("Over-generation reported at t=%d -   total=%12.2f" % (1, ops_stats.over_generation))
+            print("Over-generation reported at t=%d -   total=%12.2f"
+                  % (1, ops_stats.over_generation))
 
         if ops_stats.reserve_shortfall != 0.0:
-            print("Reserve shortfall reported at t=%2d: %12.2f" % (1, ops_stats.reserve_shortfall))
-            print("Quick start generation capacity available at t=%2d: %12.2f" % (1, ops_stats.available_quickstart))
+            print("Reserve shortfall reported at t=%2d: %12.2f"
+                  % (1, ops_stats.reserve_shortfall))
+            print("Quick start generation capacity available at t=%2d: %12.2f"
+                  % (1, ops_stats.available_quickstart))
             print("")
 
         if ops_stats.renewables_curtailment > 0:
-            print("Renewables curtailment reported at t=%d - total=%12.2f" % (1, ops_stats.renewables_curtailment))
+            print("Renewables curtailment reported at t=%d - total=%12.2f"
+                  % (1, ops_stats.renewables_curtailment))
             print("")
 
         print("Number on/offs:       %12d" % ops_stats.on_offs)
