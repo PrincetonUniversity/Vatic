@@ -1,11 +1,7 @@
 
 import argparse
-import os
 from datetime import datetime
 from pathlib import Path
-import shutil
-
-from prescient.scripts import populator
 from prescient.simulator import master_options
 from .engines import Simulator
 
@@ -27,11 +23,6 @@ def run_deterministic():
 
     parser.add_argument('--solver', type=str, default='cbc',
                         help="How to solve RUCs and SCEDs.")
-
-    parser.add_argument('--scen-dir', type=str, dest='scen_dir',
-                        help="Directory storing generated scenarios, setting "
-                             "this will skip scenario generation.")
-
     parser.add_argument('--threads', '-t', type=int, default=1,
                         help="How many compute cores to use for parallelizing "
                              "solver operations.")
@@ -47,6 +38,11 @@ def run_deterministic():
         help="Specifies the mipgap for all deterministic RUC solves."
         )
 
+    parser.add_argument(
+        '--create-plots', '-p', action='store_true', dest='create_plots',
+        help="Create daily stackgraphs?"
+        )
+
     parser.add_argument('--solver-args', nargs='*', dest='solver_args',
                         help="A list of arguments to pass to the solver for "
                              "both RUCs and SCEDs.")
@@ -58,26 +54,8 @@ def run_deterministic():
         raise ValueError(
             "Input directory {} does not exist!".format(args.in_dir))
 
-    if args.out_dir.exists():
-        shutil.rmtree(args.out_dir)
-
     if args.solver_args is None:
         args.solver_args = list()
-
-    shutil.copytree(args.in_dir, args.out_dir)
-    os.chdir(args.out_dir)
-
-    if not args.scen_dir:
-        args.scen_dir = 'scenarios'
-
-        populator.main(populator_args=[
-            '--start-date', start_date, '--end-date', end_date,
-            '--sources-file', 'sources_with_network.txt',
-            '--output-directory', args.scen_dir,
-            '--scenario-creator-options-file',
-            'deterministic_scenario_creator_with_network.txt',
-            '--traceback'
-            ])
 
     ndays = (datetime.strptime(end_date, "%Y-%m-%d")
              - datetime.strptime(start_date, "%Y-%m-%d")).days
@@ -85,17 +63,23 @@ def run_deterministic():
     solver_args = ' '.join(["Threads={}".format(args.threads)]
                            + args.solver_args)
 
+    simulator_args =  [
+        '--data-directory', str(args.in_dir), '--simulate-out-of-sample',
+        '--run-sced-with-persistent-forecast-errors',
+        '--output-directory', str(args.out_dir), '--start-date', start_date,
+        '--num-days', str(ndays), '--sced-horizon', str(args.sced_horizon),
+        '--traceback', '--output-sced-initial-conditions',
+        '--output-sced-demands', '--output-ruc-initial-conditions',
+        '--output-ruc-solutions', '--output-solver-logs',
+        '--ruc-mipgap', str(args.ruc_mipgap), '--symbolic-solver-labels',
+        '--reserve-factor', '0.0', '--deterministic-ruc-solver', args.solver,
+        '--sced-solver', args.solver,
+        '--deterministic-ruc-solver-options={}'.format(solver_args),
+        '--sced-solver-options={}'.format(solver_args),
+        ]
+
+    if not args.create_plots:
+        simulator_args += ['--disable-stackgraphs']
+
     Simulator(master_options.construct_options_parser().parse_args(
-        ['--data-directory', args.scen_dir, '--simulate-out-of-sample',
-         '--run-sced-with-persistent-forecast-errors',
-         '--output-directory', 'output', '--start-date', start_date,
-         '--num-days', str(ndays), '--sced-horizon', str(args.sced_horizon),
-         '--traceback', '--output-sced-initial-conditions',
-         '--output-sced-demands', '--output-ruc-initial-conditions',
-         '--output-ruc-solutions', '--output-solver-logs',
-         '--ruc-mipgap', str(args.ruc_mipgap), '--symbolic-solver-labels',
-         '--reserve-factor', '0.0', '--deterministic-ruc-solver', args.solver,
-         '--sced-solver', args.solver,
-         '--deterministic-ruc-solver-options={}'.format(solver_args),
-         '--sced-solver-options={}'.format(solver_args), ]
-        )).simulate()
+        simulator_args)).simulate()

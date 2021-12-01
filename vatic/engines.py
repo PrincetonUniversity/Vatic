@@ -1,4 +1,17 @@
 
+import os
+import datetime
+from datetime import timedelta
+import dateutil
+from typing import Union
+import logging
+import time
+from ast import literal_eval
+import math
+
+from .data_providers import PickleProvider
+from .managers.reporting_manager import ReportingManager
+
 from prescient.engine.egret.engine import EgretEngine
 from egret.models.unit_commitment import (
     _solve_unit_commitment, _save_uc_results)
@@ -10,10 +23,8 @@ from egret.common.log import logger as egret_logger
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 
 from prescient.simulator.time_manager import PrescientTime
-from prescient.data.providers.dat_data_provider import DatDataProvider
 from prescient.data.simulation_state.state_with_offset import StateWithOffset
-from prescient.simulator import (TimeManager, DataManager,
-                                 StatsManager, ReportingManager)
+from prescient.simulator import TimeManager, DataManager, StatsManager
 from prescient.engine.egret.data_extractors import ScedDataExtractor
 from prescient.engine.modeling_engine import ForecastErrorMethod
 from prescient.engine.egret.egret_plugin import (
@@ -32,16 +43,6 @@ from prescient.data.simulation_state import SimulationState
 from prescient.simulator.data_manager import RucPlan
 import pyomo.environ as pe
 
-import os
-import datetime
-from datetime import timedelta
-import dateutil
-from typing import Union
-import logging
-import time
-from ast import literal_eval
-import math
-
 
 class Simulator(EgretEngine):
 
@@ -57,9 +58,8 @@ class Simulator(EgretEngine):
         self.model = None # Pyomo.ConcreteModel
         self._setup_solvers(options)
 
-        self._data_provider = DatDataProvider()
-        self._data_provider.initialize(options)
-
+        self._data_provider = PickleProvider(
+            options.data_directory, options.start_date, options.num_days)
         self._data_manager = DataManager()
         self._data_manager.initialize(self, options)
 
@@ -72,8 +72,8 @@ class Simulator(EgretEngine):
 
         self._stats_manager = StatsManager()
         self._stats_manager.initialize(options)
-        self._reporting_manager = ReportingManager()
-        self._reporting_manager.initialize(options, self._stats_manager)
+        self._reporting_manager = ReportingManager(options,
+                                                   self._stats_manager)
 
         self._actuals_step_frequency = 60
         if options.simulate_out_of_sample:
@@ -119,6 +119,8 @@ class Simulator(EgretEngine):
         self.simulation_end_time = time.time()
         print("Total simulation time: {:.2f} seconds".format(
             self.simulation_end_time - self.simulation_start_time))
+
+        self._reporting_manager.save_output(self.options.output_directory)
 
     def generate_ruc(self, time_step, sim_state_for_ruc=None):
         ruc_plan = self.solve_deterministic_ruc(self.create_deterministic_ruc(
@@ -228,16 +230,13 @@ class Simulator(EgretEngine):
         #       But for now we run for 24 hours.
         current_state = self._data_manager.current_state\
             .get_state_with_step_length(60)
+        proj_hours = min(24, current_state.timestep_count)
 
-        projected_sced_instance = create_sced_instance(
-            self._data_provider, current_state, self.options,
-            sced_horizon=min(24,
-                             self._data_manager.current_state.timestep_count),
+        projected_sced_instance = self.create_sced_instance(
+            current_state,
+            hours_in_objective=proj_hours, sced_horizon=proj_hours,
             forecast_error_method=sced_forecast_error_method,
             )
-
-        self._hours_in_objective = min(
-            24, self._data_manager.current_state.timestep_count)
 
         projected_sced_instance, solve_time = self.solve_sced_instance(
             projected_sced_instance)
@@ -284,17 +283,12 @@ class Simulator(EgretEngine):
         print("")
         print("Solving SCED instance")
 
-        sced_horizon_timesteps = self.options.sced_horizon
-        current_sced_instance = create_sced_instance(
-            self._data_provider,
+        current_sced_instance = self.create_sced_instance(
             self._data_manager.current_state.get_state_with_step_length(
                 self.options.sced_frequency_minutes),
-            self.options,
-            sced_horizon=sced_horizon_timesteps,
+            hours_in_objective=1, sced_horizon=self.options.sced_horizon,
             forecast_error_method=forecast_error_method,
             )
-
-        self._hours_in_objective = 1
 
         current_sced_instance, solve_time = self.solve_sced_instance(
             current_sced_instance)
@@ -517,8 +511,19 @@ class Simulator(EgretEngine):
 
         return model
 
-    def create_sced_instance(self, ):
-        pass
+    def create_sced_instance(self,
+                             current_state, hours_in_objective,
+                             sced_horizon, forecast_error_method):
+
+        sced_instance = create_sced_instance(
+            self._data_provider, current_state, self.options,
+            sced_horizon=sced_horizon,
+            forecast_error_method=forecast_error_method,
+            )
+
+        self._hours_in_objective = hours_in_objective
+
+        return sced_instance
 
     def solve_sced_instance(self, sced_instance):
         """
