@@ -214,7 +214,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
         }
 
     if reserve_factor is not None:
-        template['ReserveFactor'] = reserve_factor
+        template['ReserveFactor'] = round(reserve_factor, 8)
 
     if not copper_sheet:
         template['Buses'] = list(bus_dict.keys())
@@ -231,12 +231,12 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
             }
 
         template['ThermalLimit'] = {
-            branch_id: branch_spec.ContRating
+            branch_id: round(branch_spec.ContRating, 8)
             for branch_id, branch_spec in branch_dict.items()
             }
 
         template['Impedence'] = {
-            branch_id: branch_spec.X
+            branch_id: round(branch_spec.X, 8)
             for branch_id, branch_spec in branch_dict.items()
             }
 
@@ -297,46 +297,46 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
         if gen_id in template['NondispatchableGenerators']
         }
 
-    template['MinimumPowerOutput'] = {gen_id: gen_spec.MinPower
+    template['MinimumPowerOutput'] = {gen_id: round(gen_spec.MinPower, 2)
                                       for gen_id, gen_spec in gen_dict.items()
                                       if gen_spec.Fuel in {'Oil', 'Coal',
                                                            'NG', 'Nuclear'}}
 
-    template['MaximumPowerOutput'] = {gen_id: gen_spec.MaxPower
+    template['MaximumPowerOutput'] = {gen_id: round(gen_spec.MaxPower, 2)
                                       for gen_id, gen_spec in gen_dict.items()
                                       if gen_spec.Fuel in {'Oil', 'Coal',
                                                            'NG', 'Nuclear'}}
 
-    template['MinimumUpTime'] = {gen_id: gen_spec.MinUpTime
+    template['MinimumUpTime'] = {gen_id: round(gen_spec.MinUpTime, 2)
                                  for gen_id, gen_spec in gen_dict.items()
                                  if gen_spec.Fuel in {'Oil', 'Coal',
                                                       'NG', 'Nuclear'}}
 
-    template['MinimumDownTime'] = {gen_id: gen_spec.MinDownTime
+    template['MinimumDownTime'] = {gen_id: round(gen_spec.MinDownTime, 2)
                                    for gen_id, gen_spec in gen_dict.items()
                                    if gen_spec.Fuel in {'Oil', 'Coal',
                                                         'NG', 'Nuclear'}}
 
     template['NominalRampUpLimit'] = {
-        gen_id: (gen_spec.RampRate
-                 * float(mins_per_time_period) / ramp_scaling_factor)
+        gen_id: round((gen_spec.RampRate
+                       * float(mins_per_time_period) / ramp_scaling_factor), 2)
         for gen_id, gen_spec in gen_dict.items()
         if gen_spec.Fuel in {'Oil', 'Coal', 'NG', 'Nuclear'}
         }
 
     template['NominalRampDownLimit'] = {
-        gen_id: (gen_spec.RampRate
-                 * float(mins_per_time_period) / ramp_scaling_factor)
+        gen_id: round((gen_spec.RampRate
+                       * float(mins_per_time_period) / ramp_scaling_factor), 2)
         for gen_id, gen_spec in gen_dict.items()
         if gen_spec.Fuel in {'Oil', 'Coal', 'NG', 'Nuclear'}
         }
 
-    template['StartupRampLimit'] = {gen_id: gen_spec.MinPower
+    template['StartupRampLimit'] = {gen_id: round(gen_spec.MinPower, 2)
                                     for gen_id, gen_spec in gen_dict.items()
                                     if gen_spec.Fuel in {'Oil', 'Coal',
                                                          'NG', 'Nuclear'}}
 
-    template['ShutdownRampLimit'] = {gen_id: gen_spec.MinPower
+    template['ShutdownRampLimit'] = {gen_id: round(gen_spec.MinPower, 2)
                                      for gen_id, gen_spec in gen_dict.items()
                                      if gen_spec.Fuel in {'Oil', 'Coal',
                                                           'NG', 'Nuclear'}}
@@ -401,27 +401,25 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
             # 1) Fuel price is in $/MMBTU
             # 2) Heat Rate quantities are in BTU/KWH 
             # 3) 1+2 => need to convert both from BTU->MMBTU and from KWH->MWH
-            y0 = round((gen_spec.FuelPrice
-                        * ((gen_spec.HeatRateAvg0 * 1000.0 / 1000000.0) * x0)),
-                       2)
+            y0 = (gen_spec.FuelPrice
+                  * ((gen_spec.HeatRateAvg0 * 1000.0 / 1000000.0) * x0))
 
-            y1 = round((gen_spec.FuelPrice
-                        * (((x1 - x0)
-                            * (gen_spec.HeatRateIncr1 * 1000.0 / 1000000.0)))
-                        + y0),
-                       2)
+            y1 = (gen_spec.FuelPrice
+                  * (((x1 - x0)
+                      * (gen_spec.HeatRateIncr1 * 1000.0 / 1000000.0))) + y0)
 
-            y2 = round((gen_spec.FuelPrice
-                        * (((x2 - x1)
-                            * (gen_spec.HeatRateIncr2 * 1000.0 / 1000000.0)))
-                        + y1),
-                       2)
+            y2 = (gen_spec.FuelPrice
+                  * (((x2 - x1)
+                      * (gen_spec.HeatRateIncr2 * 1000.0 / 1000000.0))) + y1)
 
-            y3 = round((gen_spec.FuelPrice
-                        * (((x3 - x2)
-                            * (gen_spec.HeatRateIncr3 * 1000.0 / 1000000.0)))
-                        + y2),
-                       2)
+            y3 = (gen_spec.FuelPrice
+                  * (((x3 - x2)
+                      * (gen_spec.HeatRateIncr3 * 1000.0 / 1000000.0))) + y2)
+
+            y0 = round(y0, 2)
+            y1 = round(y1, 2)
+            y2 = round(y2, 2)
+            y3 = round(y3, 2)
 
             ## for the nuclear unit
             if y0 == y3:

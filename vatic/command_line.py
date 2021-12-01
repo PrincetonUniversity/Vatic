@@ -34,6 +34,12 @@ def run_deterministic():
         )
 
     parser.add_argument(
+        '--reserve-factor', '-r',
+        type=float, default=0.05, dest='reserve_factor',
+        help="Spinning reserve factor as a constant fraction of demand."
+        )
+
+    parser.add_argument(
         '--ruc-mipgap', type=float, default=0.01, dest='ruc_mipgap',
         help="Specifies the mipgap for all deterministic RUC solves."
         )
@@ -72,7 +78,8 @@ def run_deterministic():
         '--output-sced-demands', '--output-ruc-initial-conditions',
         '--output-ruc-solutions', '--output-solver-logs',
         '--ruc-mipgap', str(args.ruc_mipgap), '--symbolic-solver-labels',
-        '--reserve-factor', '0.0', '--deterministic-ruc-solver', args.solver,
+        '--reserve-factor', str(args.reserve_factor),
+        '--deterministic-ruc-solver', args.solver,
         '--sced-solver', args.solver,
         '--deterministic-ruc-solver-options={}'.format(solver_args),
         '--sced-solver-options={}'.format(solver_args),
