@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.1.0-a6',
+    version='0.1.0-a7',
     description='Pyomo + Egret',
     author='Michal Radoslaw Grzadkowski',
     author_email='mg2332@princeton.edu',

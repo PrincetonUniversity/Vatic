@@ -14,12 +14,15 @@ def run_deterministic():
 
     parser.add_argument('in_dir', type=Path,
                         help="directory containing input datasets")
-    parser.add_argument('out_dir', type=Path,
-                        help="directory where output will be stored")
-
     parser.add_argument('run_dates', nargs=2, type=str,
                         #type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
                         help="start and end dates for the scenario")
+
+    parser.add_argument('--out_dir', '-o', type=Path,
+                        help="directory where output will be stored")
+    parser.add_argument('--light-output', '-l',
+                        action='store_true', dest='light_output',
+                        help="don't create hourly asset digests")
 
     parser.add_argument('--solver', type=str, default='cbc',
                         help="How to solve RUCs and SCEDs.")
@@ -60,6 +63,11 @@ def run_deterministic():
         raise ValueError(
             "Input directory {} does not exist!".format(args.in_dir))
 
+    if args.out_dir:
+        out_dir = args.out_dir
+    else:
+        out_dir = args.in_dir
+
     if args.solver_args is None:
         args.solver_args = list()
 
@@ -72,7 +80,7 @@ def run_deterministic():
     simulator_args =  [
         '--data-directory', str(args.in_dir), '--simulate-out-of-sample',
         '--run-sced-with-persistent-forecast-errors',
-        '--output-directory', str(args.out_dir), '--start-date', start_date,
+        '--output-directory', str(out_dir), '--start-date', start_date,
         '--num-days', str(ndays), '--sced-horizon', str(args.sced_horizon),
         '--traceback', '--output-sced-initial-conditions',
         '--output-sced-demands', '--output-ruc-initial-conditions',
@@ -88,5 +96,7 @@ def run_deterministic():
     if not args.create_plots:
         simulator_args += ['--disable-stackgraphs']
 
-    Simulator(master_options.construct_options_parser().parse_args(
-        simulator_args)).simulate()
+    parsed_args = master_options.construct_options_parser().parse_args(
+        simulator_args)
+
+    Simulator(parsed_args, light_output=args.light_output).simulate()

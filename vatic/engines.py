@@ -49,7 +49,7 @@ class Simulator(EgretEngine):
     _ptdf_manager: PTDFManager
     _current_state: Union[None, SimulationState]
 
-    def __init__(self, options=None):
+    def __init__(self, options=None, light_output=False):
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
 
@@ -72,7 +72,7 @@ class Simulator(EgretEngine):
 
         self._stats_manager = StatsManager()
         self._stats_manager.initialize(options)
-        self._reporting_manager = ReportingManager(options,
+        self._reporting_manager = ReportingManager(options, light_output,
                                                    self._stats_manager)
 
         self._actuals_step_frequency = 60

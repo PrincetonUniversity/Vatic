@@ -152,7 +152,7 @@ class ListMultiRowReporter:
 
 class ReportingManager(_Manager):
 
-    def __init__(self, options, stats_manager: StatsManager):
+    def __init__(self, options, light_output, stats_manager: StatsManager):
         self.write_dir = options.output_directory
 
         if not options.disable_stackgraphs:
@@ -189,108 +189,112 @@ class ReportingManager(_Manager):
                 self.reports['hr_runtimes'].write_record)
 
         # set up thermal detail
-        self.reports['thermal_detail'] = ListMultiRowReporter(
-            lambda stats: stats.observed_thermal_dispatch_levels.keys(), {
-                'Date':       lambda ops, g: str(ops.timestamp.date()),
-                'Hour':       lambda ops, g: ops.timestamp.hour,
-                'Minute':     lambda ops, g: ops.timestamp.minute,
-                'Generator':  lambda ops, g: g,
-                'Dispatch':   lambda ops, g: self._round(
-                    ops.observed_thermal_dispatch_levels[g]),
-                'Dispatch DA':lambda ops, g: (
-                    self._round(ops.thermal_gen_cleared_DA[g])
-                    if options.compute_market_settlements else None
+        if not light_output:
+            self.reports['thermal_detail'] = ListMultiRowReporter(
+                lambda stats: stats.observed_thermal_dispatch_levels.keys(), {
+                    'Date': lambda ops, g: str(ops.timestamp.date()),
+                    'Hour': lambda ops, g: ops.timestamp.hour,
+                    'Minute': lambda ops, g: ops.timestamp.minute,
+                    'Generator': lambda ops, g: g,
+                    'Dispatch': lambda ops, g: self._round(
+                        ops.observed_thermal_dispatch_levels[g]),
+                    'Dispatch DA': lambda ops, g: (
+                        self._round(ops.thermal_gen_cleared_DA[g])
+                        if options.compute_market_settlements else None
                     ),
-                'Headroom':   lambda ops, g: self._round(
-                    ops.observed_thermal_headroom_levels[g]),
-                'Unit State': lambda ops, g: ops.observed_thermal_states[g],
-                'Unit Cost':  lambda ops, g: self._round(
-                    ops.observed_costs[g]),
-                'Unit Market Revenue': lambda ops, g: (
-                    self._round(ops.thermal_gen_revenue[g]
-                                + ops.thermal_reserve_revenue[g])
-                    if options.compute_market_settlements else None
+                    'Headroom': lambda ops, g: self._round(
+                        ops.observed_thermal_headroom_levels[g]),
+                    'Unit State': lambda ops, g: ops.observed_thermal_states[
+                        g],
+                    'Unit Cost': lambda ops, g: self._round(
+                        ops.observed_costs[g]),
+                    'Unit Market Revenue': lambda ops, g: (
+                        self._round(ops.thermal_gen_revenue[g]
+                                    + ops.thermal_reserve_revenue[g])
+                        if options.compute_market_settlements else None
                     ),
-                'Unit Uplift Payment': lambda hourly, g: (
-                    self._round(hourly.thermal_uplift[g])
-                    if options.compute_market_settlements else None
+                    'Unit Uplift Payment': lambda hourly, g: (
+                        self._round(hourly.thermal_uplift[g])
+                        if options.compute_market_settlements else None
                     )
-                }
-            )
+                    }
+                )
 
-        stats_manager.register_for_sced_stats(
-            self.reports['thermal_detail'].write_record)
-        #stats_manager.register_for_overall_stats(lambda overall: thermal_details_file.close())
+            stats_manager.register_for_sced_stats(
+                self.reports['thermal_detail'].write_record)
 
-        # set up renewables detail
-        self.reports['renewables_detail'] = ListMultiRowReporter(
-            lambda ops: ops.observed_renewables_levels.keys(), {
-                'Date': lambda ops, g: str(ops.timestamp.date()),
-                'Hour': lambda ops, g: ops.timestamp.hour,
-                'Minute': lambda ops, g: ops.timestamp.minute,
-                'Generator': lambda ops, g: g,
-                'Output': lambda ops, g: self._round(
-                    ops.observed_renewables_levels[g]),
-                'Output DA': lambda ops, g: (
-                    self._round(ops.renewable_gen_cleared_DA[g])
-                    if options.compute_market_settlements else None
+            # set up renewables detail
+            self.reports['renewables_detail'] = ListMultiRowReporter(
+                lambda ops: ops.observed_renewables_levels.keys(), {
+                    'Date': lambda ops, g: str(ops.timestamp.date()),
+                    'Hour': lambda ops, g: ops.timestamp.hour,
+                    'Minute': lambda ops, g: ops.timestamp.minute,
+                    'Generator': lambda ops, g: g,
+                    'Output': lambda ops, g: self._round(
+                        ops.observed_renewables_levels[g]),
+                    'Output DA': lambda ops, g: (
+                        self._round(ops.renewable_gen_cleared_DA[g])
+                        if options.compute_market_settlements else None
                     ),
-                'Curtailment': lambda ops, g: self._round(
-                    ops.observed_renewables_curtailment[g]),
-                'Unit Market Revenue': lambda ops, g: (
-                    self._round(ops.renewable_gen_revenue[g])
-                    if options.compute_market_settlements else None
+                    'Curtailment': lambda ops, g: self._round(
+                        ops.observed_renewables_curtailment[g]),
+                    'Unit Market Revenue': lambda ops, g: (
+                        self._round(ops.renewable_gen_revenue[g])
+                        if options.compute_market_settlements else None
                     ),
-                'Unit Uplift Payment': lambda ops, g: (
-                    self._round(ops.renewable_uplift[g])
-                    if options.compute_market_settlements else None
+                    'Unit Uplift Payment': lambda ops, g: (
+                        self._round(ops.renewable_uplift[g])
+                        if options.compute_market_settlements else None
                     )
-                }
-            )
+                    }
+                )
 
-        stats_manager.register_for_sced_stats(
-            self.reports['renewables_detail'].write_record)
 
-        # set up bus detail
-        self.reports['bus'] = ListMultiRowReporter(
-            lambda ops: ops.observed_bus_mismatches.keys(), {
-                'Date': lambda ops, b: str(ops.timestamp.date()),
-                'Hour': lambda ops, b: ops.timestamp.hour,
-                'Minute': lambda ops, b: ops.timestamp.minute,
-                'Bus': lambda ops, b: b,
-                'Demand': lambda ops, b: self._round(ops.bus_demands[b]),
-                'Shortfall': lambda ops, b: (
-                    self._round(ops.observed_bus_mismatches[b])
-                    if ops.observed_bus_mismatches[b] > 0.0 else 0.0
-                    ),
-                'Overgeneration': lambda ops, b: (
-                    self._round(-ops.observed_bus_mismatches[b])
-                    if ops.observed_bus_mismatches[b] < 0.0 else 0.0
-                    ),
-                'LMP': lambda ops, b: self._round(ops.observed_bus_LMPs[b]),
-                'LMP DA': lambda ops, b: (
-                    self._round(ops.planning_energy_prices[b])
-                    if options.compute_market_settlements else None
-                    )
-                }
-            )
+            stats_manager.register_for_sced_stats(
+                self.reports['renewables_detail'].write_record)
 
-        stats_manager.register_for_sced_stats(self.reports['bus'].write_record)
+            # set up bus detail
+            self.reports['bus_detail'] = ListMultiRowReporter(
+                lambda ops: ops.observed_bus_mismatches.keys(), {
+                    'Date': lambda ops, b: str(ops.timestamp.date()),
+                    'Hour': lambda ops, b: ops.timestamp.hour,
+                    'Minute': lambda ops, b: ops.timestamp.minute,
+                    'Bus': lambda ops, b: b,
+                    'Demand': lambda ops, b: self._round(ops.bus_demands[b]),
+                    'Shortfall': lambda ops, b: (
+                        self._round(ops.observed_bus_mismatches[b])
+                        if ops.observed_bus_mismatches[b] > 0.0 else 0.0
+                        ),
+                    'Overgeneration': lambda ops, b: (
+                        self._round(-ops.observed_bus_mismatches[b])
+                        if ops.observed_bus_mismatches[b] < 0.0 else 0.0
+                        ),
+                    'LMP': lambda ops, b: self._round(
+                        ops.observed_bus_LMPs[b]),
+                    'LMP DA': lambda ops, b: (
+                        self._round(ops.planning_energy_prices[b])
+                        if options.compute_market_settlements else None
+                        )
+                    }
+                )
 
-        # set up line detail
+            stats_manager.register_for_sced_stats(
+                self.reports['bus_detail'].write_record)
 
-        self.reports['line_detail'] = ListMultiRowReporter(
-            lambda ops: ops.observed_flow_levels.keys(), {
-                'Date': lambda ops, l: str(ops.timestamp.date()),
-                'Hour': lambda ops, l: ops.timestamp.hour,
-                'Minute': lambda ops, l: ops.timestamp.minute,
-                'Line': lambda ops, l: l,
-                'Flow': lambda ops, l: self._round(ops.observed_flow_levels[l])
-                }
-            )
+            # set up line detail
+            self.reports['line_detail'] = ListMultiRowReporter(
+                lambda ops: ops.observed_flow_levels.keys(), {
+                    'Date': lambda ops, l: str(ops.timestamp.date()),
+                    'Hour': lambda ops, l: ops.timestamp.hour,
+                    'Minute': lambda ops, l: ops.timestamp.minute,
+                    'Line': lambda ops, l: l,
+                    'Flow': lambda ops, l: self._round(
+                        ops.observed_flow_levels[l])
+                    }
+                )
 
-        stats_manager.register_for_sced_stats(
-            self.reports['line_detail'].write_record)
+            stats_manager.register_for_sced_stats(
+                self.reports['line_detail'].write_record)
 
         # set up hourly generator summary
         self.reports['hourly_gen_summary'] = ListReporter({
