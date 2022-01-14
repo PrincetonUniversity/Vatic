@@ -42,7 +42,7 @@ def process_actual_df(rts_file: Path,
 
     # TODO: are we making an off-by-one-hour error here?
     rts_df = pd.read_csv(rts_file)
-    rts_df['Hour'] = (rts_df.Period - 1) // 12 + 1
+    rts_df['Hour'] = (rts_df.Period - 1) // 12
     rts_df['Min'] = (rts_df.Period - 1) % 12 * 5
 
     df_times = pd.to_datetime({'year': rts_df.Year, 'month': rts_df.Month,
@@ -62,7 +62,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
     data_dir = Path(rts_gmlc_dir, 'RTS_Data', 'SourceData')
 
     Generator = namedtuple('Generator',
-                           ['ID', # integer 
+                           ['ID', # integer
                             'Bus',
                             'UnitGroup',
                             'UnitType',
@@ -75,12 +75,12 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                             'StartTimeCold',    # units are hours
                             'StartTimeWarm',    # units are hours
                             'StartTimeHot',     # units are hours
-                            'StartCostCold',    # units are MBTU 
+                            'StartCostCold',    # units are MBTU
                             'StartCostWarm',    # units are MBTU
                             'StartCostHot',     # units are MBTU
                             'NonFuelStartCost', # units are $
                             'FuelPrice',        # units are $ / MMBTU
-                            'OutputPct0',  
+                            'OutputPct0',
                             'OutputPct1',
                             'OutputPct2',
                             'OutputPct3',
@@ -89,7 +89,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                             'HeatRateIncr2',
                             'HeatRateIncr3'],
                            )
-    
+
     Bus = namedtuple('Bus',
                      ['ID', # integer
                       'Name',
@@ -102,23 +102,23 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                       'Lat',
                       'Long'],
                      )
-    
+
     Branch = namedtuple('Branch',
                         ['ID',
                          'FromBus',
                          'ToBus',
                          'R',
                          'X', # csv file is in PU, multiple by 100 to make consistent with MW
-                         'B', 
+                         'B',
                          'ContRating'],
                        )
-    
-    
+
+
     gen_dict = {} # keys are ID
     bus_dict = {} # keys are ID
     branch_dict = {} # keys are ID
     timeseries_pointer_dict = {} # keys are (ID, simulation-type) pairs
-    
+
     generator_df = pd.read_csv(Path(data_dir, "gen.csv"))
     bus_df = pd.read_csv(Path(data_dir, "bus.csv"))
     branch_df = pd.read_csv(Path(data_dir, "branch.csv"))
@@ -152,11 +152,11 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                                   float(this_generator_dict["HR_incr_1"]),
                                   float(this_generator_dict["HR_incr_2"]),
                                   float(this_generator_dict["HR_incr_3"]))
-        
+
         gen_dict[new_generator.ID] = new_generator
-    
+
     bus_id_to_name_dict = {}
-    
+
     for bus_index in bus_df.index.tolist():
         this_bus_dict = bus_df.loc[bus_index].to_dict()
         new_bus = Bus(int(this_bus_dict["Bus ID"]),
@@ -171,7 +171,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                       this_bus_dict["lng"])
         bus_dict[new_bus.Name] = new_bus
         bus_id_to_name_dict[new_bus.ID] = new_bus.Name
-    
+
     for branch_index in branch_df.index.tolist():
         this_branch_dict = branch_df.loc[branch_index].to_dict()
         new_branch = Branch(this_branch_dict["UID"],
@@ -182,8 +182,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
                             float(this_branch_dict["B"]),
                             float(this_branch_dict["Cont Rating"]))
         branch_dict[new_branch.ID] = new_branch
-    
-    
+
     unit_on_time_df = pd.read_csv(Path(
         data_dir, '..', 'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
         'DAY_AHEAD Solution Files', 'noTX', 'on_time_7.12.csv'
@@ -196,9 +195,9 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
         gen_id = unit_on_time_df_as_dict["columns"][i]
         unit_on_t0_state_dict[gen_id] = int(
             unit_on_time_df_as_dict["data"][0][i])
-    
+
     #print("Writing Prescient template file")
-    
+
     mins_per_time_period = 60
     ## we'll bring the ramping down by this factor
     ramp_scaling_factor = 1.
@@ -399,7 +398,7 @@ def create_template(rts_gmlc_dir, copper_sheet=False, reserve_factor=None):
 
             # NOTES:
             # 1) Fuel price is in $/MMBTU
-            # 2) Heat Rate quantities are in BTU/KWH 
+            # 2) Heat Rate quantities are in BTU/KWH
             # 3) 1+2 => need to convert both from BTU->MMBTU and from KWH->MWH
             y0 = (gen_spec.FuelPrice
                   * ((gen_spec.HeatRateAvg0 * 1000.0 / 1000000.0) * x0))

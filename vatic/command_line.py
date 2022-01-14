@@ -56,6 +56,12 @@ def run_deterministic():
                         help="A list of arguments to pass to the solver for "
                              "both RUCs and SCEDs.")
 
+    parser.add_argument('--init-ruc-file', dest='init_ruc_file',
+                        help='where to save/load the initial RUC from')
+    parser.add_argument('--save-init-ruc', dest='save_init_ruc',
+                        nargs='?', const=True,
+                        help="whether to save the initial solved RUC to file")
+
     args = parser.parse_args()
     start_date, end_date = args.run_dates
 
@@ -99,4 +105,6 @@ def run_deterministic():
     parsed_args = master_options.construct_options_parser().parse_args(
         simulator_args)
 
-    Simulator(parsed_args, light_output=args.light_output).simulate()
+    Simulator(parsed_args, light_output=args.light_output,
+              init_ruc_file=args.init_ruc_file,
+              save_init_ruc=args.save_init_ruc).simulate()

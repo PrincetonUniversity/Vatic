@@ -29,7 +29,9 @@ class ProviderError(Exception):
 
 class PickleProvider:
 
-    def __init__(self, data_dir: str, start_date: str, num_days: int) -> None:
+    def __init__(self,
+                 data_dir: str, start_date: str, num_days: int,
+                 init_ruc_file=None) -> None:
         self._uc_model_template = get_uc_model()
 
         with open(Path(data_dir, "grid-template.p"), 'rb') as f:
@@ -39,6 +41,7 @@ class PickleProvider:
         with open(Path(data_dir, "load-data.p"), 'rb') as f:
             self.load_data = pickle.load(f)
 
+        self.init_ruc_file = init_ruc_file
         self._first_day = pd.Timestamp(start_date).date()
         self._final_day = self._first_day + pd.Timedelta(days=num_days)
 
@@ -125,6 +128,10 @@ class PickleProvider:
             'time_period_length_minutes'] = minutes_per_timestep
 
         return new_model
+
+    def load_initial_model(self):
+        with open(self.init_ruc_file, 'rb') as f:
+            return pickle.load(f)
 
     def populate_initial_state_data(self, options: Options,
                                     day: date,

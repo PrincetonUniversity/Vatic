@@ -8,6 +8,8 @@ import logging
 import time
 from ast import literal_eval
 import math
+from pathlib import Path
+import dill as pickle
 
 from .data_providers import PickleProvider
 from .managers.reporting_manager import ReportingManager
@@ -49,7 +51,9 @@ class Simulator(EgretEngine):
     _ptdf_manager: PTDFManager
     _current_state: Union[None, SimulationState]
 
-    def __init__(self, options=None, light_output=False):
+    def __init__(self,
+                 options=None, light_output=False,
+                 init_ruc_file=None, save_init_ruc=False):
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
 
@@ -59,7 +63,11 @@ class Simulator(EgretEngine):
         self._setup_solvers(options)
 
         self._data_provider = PickleProvider(
-            options.data_directory, options.start_date, options.num_days)
+            options.data_directory, options.start_date, options.num_days,
+            init_ruc_file
+            )
+        self.save_init_ruc = save_init_ruc
+
         self._data_manager = DataManager()
         self._data_manager.initialize(self, options)
 
@@ -164,7 +172,25 @@ class Simulator(EgretEngine):
              and OracleManager._generate_ruc
         """
 
-        ruc = self.generate_ruc(self._time_manager.get_first_time_step())
+        if self._data_provider.init_ruc_file:
+            ruc_plan = self._data_provider.load_initial_model()
+
+            simulation_actuals = self.create_simulation_actuals(
+                self._time_manager.get_first_time_step())
+            ruc = RucPlan(simulation_actuals, ruc_plan, None)
+
+        else:
+            ruc = self.generate_ruc(self._time_manager.get_first_time_step())
+
+        if self.save_init_ruc:
+            if not isinstance(self.save_init_ruc, (str, Path)):
+                ruc_file = "init_ruc.p"
+            else:
+                ruc_file = Path(self.save_init_ruc)
+
+            with open(ruc_file, 'wb') as f:
+                pickle.dump(ruc.deterministic_ruc_instance, f, protocol=-1)
+
         self._data_manager.set_pending_ruc_plan(self.options, ruc)
         self._data_manager.activate_pending_ruc(self.options)
 
