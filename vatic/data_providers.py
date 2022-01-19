@@ -1,26 +1,26 @@
-#  ___________________________________________________________________________
-#
-#  Prescient
-#  Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
-#  (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
-#  Government retains certain rights in this software.
-#  This software is distributed under the Revised BSD License.
-#  ___________________________________________________________________________
 
-import os.path
-from datetime import datetime, date, timedelta
-import copy
+from datetime import datetime, date, timedelta, time
+from copy import deepcopy
 from pathlib import Path
 import dill as pickle
 import pandas as pd
+import math
 
-from prescient.engine import forecast_helper
 from egret.parsers.prescient_dat_parser import get_uc_model, \
     create_model_data_dict_params
 from egret.data.model_data import ModelData as EgretModel
+from prescient.engine.modeling_engine import ForecastErrorMethod
+from prescient.simulator.time_manager import PrescientTime
 
 from prescient.simulator.options import Options
-from typing import Dict, Any, Callable
+from typing import Union
+from prescient.data.simulation_state import MutableSimulationState
+from prescient.engine.egret.reporting import (
+    report_initial_conditions_for_deterministic_ruc,
+    report_demand_for_deterministic_ruc
+    )
+
+from .model_data import VaticModelData
 
 
 class ProviderError(Exception):
@@ -63,8 +63,8 @@ class PickleProvider:
         if len(data_freq) != 1:
             raise ProviderError("Inconsistent dataset time frequencies!")
 
-        self._data_freq = tuple(data_freq)[0].astype(
-            'timedelta64[m]').astype('int')
+        self.data_freq = int(
+            tuple(data_freq)[0].astype('timedelta64[m]').astype('int'))
         self.date_cache = {'actual': dict(), 'fcst': dict()}
 
         # TODO: better generalize this across different power grids
@@ -79,31 +79,18 @@ class PickleProvider:
         self.nondisp_renewables = [gen for gen, gen_info in rnwbl_info.items()
                                    if gen_info[1] in {'HYDRO', 'RTPV'}]
 
-    def negotiate_data_frequency(self, desired_frequency_minutes: int):
-        ''' Get the number of minutes between each timestep of actuals data this provider will supply,
-            given the requested frequency.
+        self.init_model = self._get_model_for_date(self._first_day,
+                                                   use_actuals=False)
+        self.init_model.reset_timeseries()
+        self.shutdown_curves = dict()
 
-            Arguments
-            ---------
-            desired_frequency_minutes:int
-                The number of minutes between actual values that the application would like to get
-                from the data provider.
+    def load_initial_model(self):
+        with open(self.init_ruc_file, 'rb') as f:
+            return pickle.load(f)
 
-            Returns
-            -------
-            Returns the number of minutes between each timestep of data.
-
-            The data provider may be able to provide data at different frequencies.  This method allows the
-            data provider to select an appropriate frequency of data samples, given a requested data frequency.
-
-            Note that the frequency indicated by this method only applies to actuals data; estimates are always
-            hourly.
-        '''
-        # This provider can only return one value every 60 minutes.
-        return int(self._data_freq)
-
-    def get_initial_model(self, options: Options, num_time_steps: int,
-                          minutes_per_timestep: int) -> EgretModel:
+    def _get_initial_model(self,
+                           num_time_steps: int,
+                           minutes_per_timestep: int) -> VaticModelData:
         ''' Get a model ready to be populated with data
 
         Returns
@@ -114,28 +101,16 @@ class PickleProvider:
 
         Initial values in time time series do not have meaning.
         '''
-        # Get data for the first simulation day
-        first_day_model = self._get_egret_model_for_date(self._first_day,
-                                                         use_actuals=False)
 
-        # Copy it, making sure we've got the right number of time periods
-        data = _recurse_copy_with_time_series_length(first_day_model.data,
-                                                     num_time_steps)
-        new_model = EgretModel(data)
-        new_model.data['system']['time_keys'] = list(
-            str(i) for i in range(1, num_time_steps + 1))
-        new_model.data['system'][
-            'time_period_length_minutes'] = minutes_per_timestep
+        new_model = deepcopy(self.init_model)
+        new_model.set_time_steps(num_time_steps, minutes_per_timestep)
 
         return new_model
 
-    def load_initial_model(self):
-        with open(self.init_ruc_file, 'rb') as f:
-            return pickle.load(f)
-
-    def populate_initial_state_data(self, options: Options,
-                                    day: date,
-                                    model: EgretModel) -> None:
+    def _get_initial_state_model(self,
+                                 num_time_steps: int,
+                                 minutes_per_timestep: int,
+                                 day: date) -> VaticModelData:
         ''' Populate an existing model with initial state data for the requested day
 
         Sets T0 information from actuals:
@@ -145,8 +120,6 @@ class PickleProvider:
 
         Arguments
         ---------
-        options:
-            Option values
         day:date
             The day whose initial state will be saved in the model
         model: EgretModel
@@ -157,150 +130,74 @@ class PickleProvider:
         elif day > self._final_day:
             day = self._final_day
 
-        actuals = self._get_egret_model_for_date(day, use_actuals=True)
+        new_model = self._get_initial_model(num_time_steps,
+                                            minutes_per_timestep)
+        actuals_model = self._get_model_for_date(day, use_actuals=True)
 
-        for s, sdict in model.elements('storage'):
-            soc = actuals.data['elements']['storage'][s][
-                'initial_state_of_charge']
-            sdict['initial_state_of_charge'] = soc
+        new_model.copy_elements(actuals_model, 'storage',
+                                ['initial_state_of_charge'], strict_mode=True)
+        new_model.copy_elements(actuals_model, 'generator',
+                                ['initial_status', 'initial_p_output'],
+                                strict_mode=True, generator_type='thermal')
 
-        for g, gdict in model.elements('generator', generator_type='thermal'):
-            source = actuals.data['elements']['generator'][g]
-            gdict['initial_status'] = source['initial_status']
-            gdict['initial_p_output'] = source['initial_p_output']
+        return new_model
 
-    def populate_with_forecast_data(self, options: Options,
-                                    start_time: datetime,
-                                    num_time_periods: int,
-                                    time_period_length_minutes: int,
-                                    model: EgretModel
-                                    ) -> None:
-        ''' Populate an existing model with forecast data.
+    def _copy_initial_state_into_model(
+            self,
+            use_state: MutableSimulationState, num_time_steps: int,
+            minutes_per_timestep: int) -> VaticModelData:
 
-        Populates the following values for each requested time period:
-            * demand for each bus
-            * min and max non-dispatchable power for each non-dispatchable generator
-            * reserve requirement
+        new_model = self._get_initial_model(num_time_steps,
+                                            minutes_per_timestep)
 
-        Arguments
-        ---------
-        options:
-            Option values
-        start_time: datetime
-            The time (day, hour, and minute) of the first time step for
-            which forecast data will be provided
-        num_time_periods: int
-            The number of time steps for which forecast data will be provided.
-        time_period_length_minutes: int
-            The duration of each time step
-        model: EgretModel
-            The model where forecast data will be stored
+        for gen, g_data in new_model.elements('generator',
+                                              generator_type='thermal'):
+            g_data['initial_status'] = use_state.get_initial_generator_state(
+                gen)
+            g_data['initial_p_output'] = use_state.get_initial_power_generated(
+                gen)
 
-        Notes
-        -----
-        This will store forecast data in the model's existing data arrays, starting
-        at index 0.  If the model's arrays are not big enough to hold all the
-        requested time steps, only those steps for which there is sufficient storage
-        will be saved.  If arrays are larger than the number of requested time
-        steps, the remaining array elements will be left unchanged.
+        for store, store_data in new_model.elements('storage'):
+            store_data['initial_state_of_charge'] \
+                = use_state.get_initial_state_of_charge(store)
 
-        If start_time is midnight of any day, all data comes from the DAT file for
-        the starting day.  Otherwise, forecast data is taken from the file matching
-        the date of the time step.  In other words, if requesting data starting at
-        midnight, all data in the first day's DAT file will be available, but otherwise
-        only the first 24 hours of each DAT file will be used.
+        return new_model
 
-        Note that this method has the same signature as populate_with_actuals.
-        '''
-        self._populate_with_forecastable_data(
-            options, start_time, num_time_periods, time_period_length_minutes,
-            model, lambda day: self._get_egret_model_for_date(
-                day, use_actuals=False)
-            )
-
-    def populate_with_actuals(self, options: Options,
-                              start_time: datetime,
-                              num_time_periods: int,
-                              time_period_length_minutes: int,
-                              model: EgretModel
-                              ) -> None:
-        ''' Populate an existing model with actuals data.
-
-        Populates the following values for each requested time period:
-            * demand for each bus
-            * min and max non-dispatchable power for each non-dispatchable generator
-            * reserve requirement
-
-        Arguments
-        ---------
-        options:
-            Option values
-        start_time: datetime
-            The time (day, hour, and minute) of the first time step for
-            which data will be provided
-        num_time_periods: int
-            The number of time steps for which actuals data will be provided.
-        time_period_length_minutes: int
-            The duration of each time step
-        model: EgretModel
-            The model where actuals data will be stored
-
-        Notes
-        -----
-        This will store actuals data in the model's existing data arrays, starting
-        at index 0.  If the model's arrays are not big enough to hold all the
-        requested time steps, only those steps for which there is sufficient storage
-        will be saved.  If arrays are larger than the number of requested time
-        steps, the remaining array elements will be left unchanged.
-
-        If start_time is midnight of any day, all data comes from the DAT file for
-        the starting day.  Otherwise, data is taken from the file matching
-        the date of the time step.  In other words, if requesting data starting at
-        midnight, all data in the first day's DAT file will be available, but otherwise
-        only the first 24 hours of each DAT file will be used.
-
-        Note that this method has the same signature as populate_with_forecast_data.
-        '''
-        self._populate_with_forecastable_data(
-            options, start_time, num_time_periods, time_period_length_minutes,
-            model, lambda day: self._get_egret_model_for_date(
-                day, use_actuals=True)
-            )
-
-    def _populate_with_forecastable_data(self, options: Options,
-                                         start_time: datetime,
-                                         num_time_periods: int,
-                                         time_period_length_minutes: int,
-                                         model: EgretModel,
-                                         identify_dat: Callable[
-                                             [date], EgretModel]
-                                         ) -> None:
-        # For now, require the time period to always be 60 minutes
-        assert (time_period_length_minutes == 60.0)
-        step_delta = timedelta(minutes=time_period_length_minutes)
-
-        # See if we have space to store all the requested data.
-        # If not, only supply what we have space for
-        if len(model.data['system']['time_keys']) < num_time_periods:
-            num_time_periods = len(model.data['system']['time_keys'])
+    def get_populated_model(
+            self,
+            use_actuals: bool, start_time: datetime, num_time_periods: int,
+            use_state: Union[None, MutableSimulationState] = None,
+            reserve_factor: float = 0.
+            ) -> VaticModelData:
 
         start_hour = start_time.hour
         start_day = start_time.date()
         assert (start_time.minute == 0)
         assert (start_time.second == 0)
+        step_delta = timedelta(minutes=self.data_freq)
 
-        # Find the ratio of native step length to requested step length
-        src_step_length_minutes = identify_dat(start_day).data['system'][
-            'time_period_length_minutes']
-        step_ratio = int(time_period_length_minutes) // src_step_length_minutes
+        # Populate the T0 data
+        if use_state is None or use_state.timestep_count == 0:
+            new_model = self._get_initial_state_model(
+                num_time_steps=num_time_periods,
+                minutes_per_timestep=self.data_freq, day=start_time.date()
+                )
 
-        # Loop through each time step
+        else:
+            new_model = self._copy_initial_state_into_model(
+                use_state, num_time_periods, self.data_freq)
+
+        day_model = self._get_model_for_date(start_day, use_actuals)
+
         for step_index in range(0, num_time_periods):
             step_time = start_time + step_delta * step_index
             day = step_time.date()
+            src_step_index = step_index
 
-            # 0-based hour, useable as index into forecast arrays
-            src_step_index = step_index * step_ratio
+            # If request is beyond the last day, just repeat the
+            # final day's values
+            if day > self._final_day:
+                day = self._final_day
 
             # How we handle crossing midnight depends on whether we
             # started at time 0
@@ -311,24 +208,232 @@ class PickleProvider:
                     day = start_day
                 else:
                     # Otherwise we need to subtract off one day's worth of samples
-                    src_step_index -= 24 * 60 / src_step_length_minutes
+                    src_step_index = step_index - 24
+                    day_model = self._get_model_for_date(day, use_actuals)
+
             ### Note that we will never be asked to cross midnight more than once.
             ### That's because any data request that starts mid-day will only request
             ### 24 hours of data and then copy it as needed to fill out the horizon.
             ### If that ever changes, the code above will need to change.
 
-            # If request is beyond the last day, just repeat the final day's values
-            if day > self._final_day:
-                day = self._final_day
+            new_model.copy_forecastables(day_model, step_index, src_step_index)
+            new_model.honor_reserve_factor(reserve_factor, step_index)
 
-            dat = identify_dat(day)
+        return new_model
 
-            for src, target in forecast_helper.get_forecastables(dat, model):
-                target[step_index] = src[src_step_index]
+    def create_deterministic_ruc(self,
+                                 time_step: PrescientTime, options: Options,
+                                 current_state=None,
+                                 output_init_conditions=False) -> EgretModel:
+        """
+        merge of EgretEngine.create_deterministic_ruc
+             and egret_plugin.create_deterministic_ruc
+        """
 
-    def _get_egret_model_for_date(self,
-                                  requested_date: date,
-                                  use_actuals) -> EgretModel:
+        start_time = datetime.combine(time_step.date, time(time_step.hour))
+        copy_first_day = not options.run_ruc_with_next_day_data
+        copy_first_day &= time_step.hour != 0
+
+        forecast_request_count = 24
+        if not copy_first_day:
+            forecast_request_count = options.ruc_horizon
+
+        # Populate forecasts
+        ruc_model = self.get_populated_model(
+            use_actuals=False, start_time=start_time,
+            num_time_periods=forecast_request_count, use_state=current_state,
+            reserve_factor=options.reserve_factor
+            )
+
+        # Make some near-term forecasts more accurate
+        ruc_delay = -(options.ruc_execution_hour % -options.ruc_every_hours)
+        if options.ruc_prescience_hour > ruc_delay + 1:
+            improved_hour_count = options.ruc_prescience_hour - ruc_delay
+            improved_hour_count -= 1
+            future_actuals = current_state.get_future_actuals()
+
+            for forecast, actuals in zip(ruc_model.get_forecastables(),
+                                         future_actuals):
+                for t in range(improved_hour_count):
+                    forecast_portion = (ruc_delay + t)
+                    forecast_portion /= options.ruc_prescience_hour
+                    actuals_portion = 1 - forecast_portion
+
+                    forecast[t] = forecast_portion * forecast[t]
+                    forecast[t] += actuals_portion * actuals[t]
+
+        # Copy from first 24 to second 24, if necessary
+        if copy_first_day:
+            for vals, in ruc_model.get_forecastables():
+                for t in range(24, options.ruc_horizon):
+                    vals[t] = vals[t - 24]
+
+        if output_init_conditions:
+            report_initial_conditions_for_deterministic_ruc(ruc_model)
+            report_demand_for_deterministic_ruc(ruc_model,
+                                                options.ruc_every_hours)
+
+        return ruc_model.to_egret()
+
+    def create_sced_instance(
+            self,
+            current_state: MutableSimulationState, options: Options,
+            sced_horizon: int,
+            forecast_error_method=ForecastErrorMethod.PRESCIENT
+            ) -> EgretModel:
+        assert current_state is not None
+
+        sced_model = self._copy_initial_state_into_model(
+            current_state, sced_horizon, self.data_freq)
+
+        # initialize the demand and renewables data, based
+        # on the forecast error model
+        if forecast_error_method is ForecastErrorMethod.PRESCIENT:
+            # Warning: This method can see into the future!
+            future_actuals = current_state.get_future_actuals()
+            sced_forecastables = sced_model.get_forecastables()
+
+            for future, sced_data in zip(future_actuals, sced_forecastables):
+                for t in range(sced_horizon):
+                    sced_data[t] = future[t]
+
+        else:  # persistent forecast error:
+            current_actuals = current_state.get_current_actuals()
+            forecasts = current_state.get_forecasts()
+            sced_forecastables = sced_model.get_forecastables()
+
+            # Go through each time series that can be forecasted
+            for current_actual, forecast, sced_data in zip(current_actuals,
+                                                           forecasts,
+                                                           sced_forecastables):
+                # the first value is, by definition, the actual.
+                sced_data[0] = current_actual
+
+                # Find how much the first forecast was off from the actual, as
+                # a fraction of the forecast. For all subsequent times, adjust
+                # the forecast by the same fraction.
+                current_forecast = forecast[0]
+                if current_forecast == 0.0:
+                    forecast_error_ratio = 0.0
+                else:
+                    forecast_error_ratio = current_actual / forecast[0]
+
+                for t in range(1, sced_horizon):
+                    sced_data[t] = forecast[t] * forecast_error_ratio
+
+        for t in range(sced_horizon):
+            sced_model.honor_reserve_factor(options.reserve_factor, t)
+
+        # Set generator commitments & future state, start by preparing an empty
+        # array of the correct size for each generator
+        for gen, gen_data in sced_model.elements(element_type='generator',
+                                                 generator_type='thermal'):
+            fixed_commitment = [current_state.get_generator_commitment(gen, t)
+                                for t in range(sced_horizon)]
+            gen_data['fixed_commitment'] = {'data_type': 'time_series',
+                                            'values': fixed_commitment}
+
+            # Look as far into the future as we can for future
+            # startups / shutdowns
+            last_commitment = fixed_commitment[-1]
+            for t in range(sced_horizon, current_state.timestep_count):
+                this_commitment = current_state.get_generator_commitment(
+                    gen, t)
+
+                # future startup
+                if (this_commitment - last_commitment) > 0.5:
+                    future_status_time_steps = (t - sced_horizon + 1)
+                    break
+
+                # future shutdown
+                elif (last_commitment - this_commitment) > 0.5:
+                    future_status_time_steps = -(t - sced_horizon + 1)
+                    break
+
+            # no break
+            else:
+                future_status_time_steps = 0
+
+            gen_data['future_status'] = current_state.minutes_per_step / 60.
+            gen_data['future_status'] *= future_status_time_steps
+
+        if not options.no_startup_shutdown_curves:
+            mins_per_step = current_state.minutes_per_step
+
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                if 'startup_curve' in gen_data:
+                    continue
+
+                ramp_up_rate_sced = gen_data['ramp_up_60min'] * mins_per_step
+                ramp_up_rate_sced /= 60.
+
+                sced_startup_capacity = _calculate_sced_ramp_capacity(
+                    gen_data, ramp_up_rate_sced,
+                    mins_per_step, 'startup_capacity'
+                    )
+
+                gen_data['startup_curve'] = [
+                    sced_startup_capacity - i * ramp_up_rate_sced
+                    for i in range(1, int(math.ceil(sced_startup_capacity
+                                                    / ramp_up_rate_sced)))
+                    ]
+
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                if 'shutdown_curve' in gen_data:
+                    continue
+
+                ramp_down_rate_sced = (
+                        gen_data['ramp_down_60min'] * mins_per_step / 60.)
+
+                # compute a new shutdown curve if we go from "on" to "off"
+                if (gen_data['initial_status'] > 0
+                        and gen_data['fixed_commitment']['values'][0] == 0):
+                    power_t0 = gen_data['initial_p_output']
+                    # if we end up using a historical curve, it's important
+                    # for the time-horizons to match, particularly since this
+                    # function is also used to create long-horizon look-ahead
+                    # SCEDs for the unit commitment process
+                    self.shutdown_curves[gen, mins_per_step] = [
+                        power_t0 - i * ramp_down_rate_sced
+                        for i in range(
+                            1, int(math.ceil(power_t0 / ramp_down_rate_sced)))
+                        ]
+
+                if (gen, mins_per_step) in self.shutdown_curves:
+                    gen_data['shutdown_curve'] = self.shutdown_curves[
+                        gen, mins_per_step]
+
+                else:
+                    sced_shutdown_capacity = _calculate_sced_ramp_capacity(
+                        gen_data, ramp_down_rate_sced,
+                        mins_per_step, 'shutdown_capacity'
+                        )
+
+                    gen_data['shutdown_curve'] = [
+                        sced_shutdown_capacity - i * ramp_down_rate_sced
+                        for i in range(
+                            1, int(math.ceil(sced_shutdown_capacity
+                                             / ramp_down_rate_sced))
+                            )
+                        ]
+
+        if not options.enforce_sced_shutdown_ramprate:
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                # make sure the generator can immediately turn off
+                gen_data['shutdown_capacity'] = max(
+                    gen_data['shutdown_capacity'],
+                    (60. / current_state.minutes_per_step)
+                    * gen_data['initial_p_output'] + 1.
+                    )
+
+        return sced_model.to_egret()
+
+    def _get_model_for_date(self,
+                            requested_date: date,
+                            use_actuals) -> VaticModelData:
         if use_actuals:
             use_lbl = 'actual'
         else:
@@ -338,7 +443,7 @@ class PickleProvider:
         if requested_date in self.date_cache[use_lbl]:
             return self.date_cache[use_lbl][requested_date]
 
-        model_dict = copy.deepcopy(self.template)
+        model_dict = deepcopy(self.template)
         del model_dict['CopperSheet']
 
         gen_data = self.gen_data.loc[
@@ -387,27 +492,54 @@ class PickleProvider:
                     for k, v in model_dict.items()}
         use_dict['MustRun'] = {k: 1 for k in use_dict['MustRun']}
 
-        day_pyomo = self._uc_model_template.create_instance(
-            data={None: use_dict})
-        day_dict = create_model_data_dict_params(day_pyomo, True)
-
-        day_model = EgretModel(day_dict)
-        self.date_cache[use_lbl][requested_date] = day_model
+        day_model = VaticModelData(create_model_data_dict_params(
+            self._uc_model_template.create_instance(data={None: use_dict}),
+            keep_names=True
+            ))
+        self.date_cache[use_lbl][requested_date] = deepcopy(day_model)
 
         return day_model
 
-def _recurse_copy_with_time_series_length(root: Dict[str, Any],
-                                          time_count: int) -> Dict[str, Any]:
-    new_node = {}
-    for key, att in root.items():
-        if isinstance(att, dict):
-            if 'data_type' in att and att['data_type'] == 'time_series':
-                val = att['values'][0]
-                new_node[key] = {'data_type': 'time_series',
-                                 'values': [val] * time_count}
-            else:
-                new_node[key] = _recurse_copy_with_time_series_length(att,
-                                                                      time_count)
+
+# adapted from prescient.engine.egret.egret_plugin
+def _calculate_sced_ramp_capacity(gen_data, ramp_rate_sced,
+                                  minutes_per_step, capacity_key):
+    if capacity_key in gen_data:
+        susd_capacity_time_varying = isinstance(gen_data[capacity_key], dict)
+        p_min_time_varying = isinstance(gen_data['p_min'], dict)
+
+        if p_min_time_varying and susd_capacity_time_varying:
+            capacity = sum(
+                (susd - pm) * (minutes_per_step / 60.) + pm
+                for pm, susd in zip(gen_data['p_min']['values'],
+                                    gen_data[capacity_key]['values'])
+                ) / len(gen_data['p_min']['values'])
+
+        elif p_min_time_varying:
+            capacity = sum(
+                (gen_data[capacity_key] - pm)
+                * (minutes_per_step / 60.) + pm
+                for pm in gen_data['p_min']['values']
+                ) / len(gen_data['p_min']['values'])
+
+        elif susd_capacity_time_varying:
+            capacity = sum(
+                (susd - gen_data['p_min']) * (minutes_per_step / 60.)
+                + gen_data['p_min']
+                for susd in gen_data[capacity_key]['values']
+                ) / len(gen_data[capacity_key]['values'])
+
         else:
-            new_node[key] = copy.deepcopy(att)
-    return new_node
+            capacity = ((gen_data[capacity_key] - gen_data['p_min'])
+                        * (minutes_per_step / 60.) + gen_data['p_min'])
+
+    else:
+        if isinstance(gen_data['p_min'], dict):
+            capacity = sum(
+                pm + ramp_rate_sced / 2. for pm in gen_data['p_min']['values']
+                ) / len(gen_data['p_min']['values'])
+
+        else:
+            capacity = gen_data['p_min'] + ramp_rate_sced / 2.
+
+    return capacity
