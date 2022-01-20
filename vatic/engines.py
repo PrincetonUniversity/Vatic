@@ -1,8 +1,6 @@
 
 import os
 import datetime
-from datetime import timedelta
-import dateutil
 from typing import Union
 import logging
 import time
@@ -10,16 +8,16 @@ from ast import literal_eval
 import math
 from pathlib import Path
 import dill as pickle
+from typing import Tuple, Dict, Any, Callable
 
-from .data_providers import PickleProvider
+from .data_providers import PickleProvider, AllocationPickleProvider
 from .managers.reporting_manager import ReportingManager
+from .model_formulations import generate_uc_model
 
 from prescient.engine.egret.engine import EgretEngine
+from egret.data.model_data import ModelData as EgretModel
 from egret.models.unit_commitment import (
     _solve_unit_commitment, _save_uc_results)
-from egret.data.model_data import ModelData
-from egret.models.unit_commitment import (
-    create_tight_unit_commitment_model, _get_uc_model)
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from egret.common.log import logger as egret_logger
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
@@ -29,16 +27,7 @@ from prescient.data.simulation_state.state_with_offset import StateWithOffset
 from prescient.simulator import TimeManager, DataManager, StatsManager
 from prescient.engine.egret.data_extractors import ScedDataExtractor
 from prescient.engine.modeling_engine import ForecastErrorMethod
-from prescient.engine.egret.egret_plugin import (
-    _copy_initial_state_into_model, _ensure_reserve_factor_honored,
-    create_sced_instance, _zero_out_costs,
-    )
-
-from prescient.engine.forecast_helper import get_forecastables
-from prescient.engine.egret.reporting import (
-    report_initial_conditions_for_deterministic_ruc,
-    report_demand_for_deterministic_ruc
-    )
+from prescient.engine.egret.egret_plugin import _zero_out_costs
 
 from prescient.engine.egret.ptdf_manager import PTDFManager
 from prescient.data.simulation_state import SimulationState
@@ -62,7 +51,7 @@ class Simulator(EgretEngine):
         self.model = None # Pyomo.ConcreteModel
         self._setup_solvers(options)
 
-        self._data_provider = PickleProvider(
+        self._data_provider = AllocationPickleProvider(
             options.data_directory, options.start_date, options.num_days,
             init_ruc_file
             )
@@ -85,11 +74,30 @@ class Simulator(EgretEngine):
 
         self._actuals_step_frequency = 60
         if options.simulate_out_of_sample:
-            self._actuals_step_frequency = self._data_provider\
-                .negotiate_data_frequency(options.sced_frequency_minutes)
+            if self._data_provider.data_freq != options.sced_frequency_minutes:
+                raise ValueError(
+                    "Given SCED frequency of `{}` minutes doesn't match what "
+                    "is available in the data!".format(
+                        options.sced_frequency_minutes)
+                    )
+
+            self._actuals_step_frequency = options.sced_frequency_minutes
 
         self.network_constraints = 'ptdf_power_flow'
-        self.formulation_list = [
+
+        self.ruc_formulations = [
+            'garver_3bin_vars',
+            'garver_power_vars',
+            'garver_power_avail_vars',
+            'pan_guan_gentile_KOW_generation_limits',
+            'damcikurt_ramping',
+            'KOW_production_costs_tightened',
+            'rajan_takriti_UT_DT',
+            'KOW_startup_costs',
+            self.network_constraints
+            ]
+
+        self.sced_formulations = [
             'garver_3bin_vars',
             'garver_power_vars',
             'MLR_reserve_vars',
@@ -101,6 +109,7 @@ class Simulator(EgretEngine):
             self.network_constraints,
             ]
 
+        self._hours_in_objective = None
         self._last_sced_pyo_model = None
         self._last_sced_pyo_solver = None
 
@@ -131,8 +140,14 @@ class Simulator(EgretEngine):
         self._reporting_manager.save_output(self.options.output_directory)
 
     def generate_ruc(self, time_step, sim_state_for_ruc=None):
-        ruc_plan = self.solve_deterministic_ruc(self.create_deterministic_ruc(
-            time_step, current_state=sim_state_for_ruc), time_step)
+
+        ruc_plan = self.solve_deterministic_ruc(
+            self._data_provider.create_deterministic_ruc(
+                time_step, self.options,
+                sim_state_for_ruc
+                ),
+            time_step
+            )
 
         if self.options.compute_market_settlements:
             print("Solving day-ahead market")
@@ -156,15 +171,6 @@ class Simulator(EgretEngine):
         result = RucPlan(simulation_actuals, ruc_plan, ruc_market)
 
         return result
-
-    def get_first_time_step(self) -> PrescientTime:
-        """port of TimeManager.get_first_time_step"""
-        t0 = datetime.datetime.combine(
-            dateutil.parser.parse(self.options.start_date).date(),
-            datetime.time(0)
-            )
-
-        return PrescientTime(t0, False, False)
 
     def initialize_oracle(self):
         """
@@ -201,8 +207,11 @@ class Simulator(EgretEngine):
         uc_hour, uc_date = self._get_uc_activation_time(time_step)
 
         ruc = self.generate_ruc(
-            PrescientTime(datetime.datetime.combine(
-                uc_date, datetime.time(hour=uc_hour)), False, False),
+            PrescientTime(
+                datetime.datetime.combine(uc_date,
+                                          datetime.time(hour=uc_hour)),
+                False, False
+                ),
             projected_state
             )
         self._data_manager.set_pending_ruc_plan(self.options, ruc)
@@ -282,7 +291,7 @@ class Simulator(EgretEngine):
         time will be activated.
         """
         ruc_delay = self._get_ruc_delay()
-        activation_time = time_step.datetime + timedelta(hours=ruc_delay)
+        activation_time = time_step.datetime + datetime.timedelta(hours=ruc_delay)
 
         return activation_time.hour, activation_time.date()
 
@@ -367,82 +376,6 @@ class Simulator(EgretEngine):
 
         return current_sced_instance
 
-
-    def create_deterministic_ruc(self, time_step: PrescientTime,
-                                 output_init_conditions=False,
-                                 current_state=None) -> ModelData:
-        """
-        merge of EgretEngine.create_deterministic_ruc
-             and egret_plugin.create_deterministic_ruc
-        """
-
-        start_time = datetime.datetime.combine(
-            time_step.date, datetime.time(hour=time_step.hour))
-
-        # Create a new model
-        ruc_model = self._data_provider.get_initial_model(
-            self.options, self.options.ruc_horizon, minutes_per_timestep=60)
-
-        # Populate the T0 data
-        if current_state is None or current_state.timestep_count == 0:
-            self._data_provider.populate_initial_state_data(self.options,
-                                                            start_time.date(),
-                                                            ruc_model)
-
-        else:
-            _copy_initial_state_into_model(self.options,
-                                           current_state, ruc_model)
-
-        # Populate forecasts
-        copy_first_day = not self.options.run_ruc_with_next_day_data
-        copy_first_day &= time_step.hour != 0
-
-        forecast_request_count = 24
-        if not copy_first_day:
-            forecast_request_count = self.options.ruc_horizon
-
-        self._data_provider.populate_with_forecast_data(
-            self.options, start_time, forecast_request_count,
-            time_period_length_minutes=60, model=ruc_model
-            )
-
-        # Make some near-term forecasts more accurate
-        ruc_delay = -(self.options.ruc_execution_hour
-                      % -self.options.ruc_every_hours)
-
-        # TODO: when does this apply?
-        if self.options.ruc_prescience_hour > ruc_delay + 1:
-            improved_hour_count = self.options.ruc_prescience_hour - ruc_delay
-            improved_hour_count -= 1
-            future_actuals = current_state.get_future_actuals()
-
-            for forecast, actuals in zip(get_forecastables(ruc_model),
-                                         future_actuals):
-                for t in range(improved_hour_count):
-                    forecast_portion = (ruc_delay + t)
-                    forecast_portion /= self.options.ruc_prescience_hour
-
-                    actuals_portion = 1 - forecast_portion
-                    forecast[t] = forecast_portion * forecast[t]
-                    forecast[t] += actuals_portion * actuals[t]
-
-        # Ensure the reserve requirement is satisfied
-        _ensure_reserve_factor_honored(self.options, ruc_model,
-                                       range(forecast_request_count))
-
-        # Copy from first 24 to second 24, if necessary
-        if copy_first_day:
-            for vals, in get_forecastables(ruc_model):
-                for t in range(24, self.options.ruc_horizon):
-                    vals[t] = vals[t - 24]
-
-        if output_init_conditions:
-            report_initial_conditions_for_deterministic_ruc(ruc_model)
-            report_demand_for_deterministic_ruc(ruc_model,
-                                                self.options.ruc_every_hours)
-
-        return ruc_model
-
     def solve_deterministic_ruc(self, ruc_model, time_step):
         """
         merge of EgretEngine.solve_deterministic_ruc
@@ -451,9 +384,10 @@ class Simulator(EgretEngine):
 
         self._ptdf_manager.mark_active(ruc_model)
 
-        pyo_model = create_tight_unit_commitment_model(
-            ruc_model, ptdf_options=self._ptdf_manager.ruc_ptdf_options,
-            PTDF_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+        pyo_model = generate_uc_model(
+            ruc_model, self.ruc_formulations, relax_binaries=False,
+            ptdf_options=self._ptdf_manager.ruc_ptdf_options,
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
             )
 
         # update in case lines were taken out
@@ -494,11 +428,11 @@ class Simulator(EgretEngine):
 
         # Convert time string to time
         start_time = datetime.datetime.combine(
-            time_step.date, datetime.time(hour=time_step.hour))
+            time_step.date, datetime.time(time_step.hour))
 
         # Pick whether we're getting actuals or forecasts
         if self.options.simulate_out_of_sample:
-            get_data_func = self._data_provider.populate_with_actuals
+            use_actuals = True
         else:
             print("")
             print("***WARNING: Simulating the forecast scenario when running "
@@ -506,44 +440,36 @@ class Simulator(EgretEngine):
                   "boundaries is not guaranteed, and may lead to "
                   "threshold events.")
 
-            get_data_func = self._data_provider.populate_with_forecast_data
+            use_actuals = False
 
         # Get a new model
         total_step_count = self.options.ruc_horizon * 60
         total_step_count //= self._actuals_step_frequency
 
-        model = self._data_provider.get_initial_model(
-            self.options, total_step_count, self._actuals_step_frequency)
-
-        # Fill it in with data
-        self._data_provider.populate_initial_state_data(
-            self.options, start_time.date(), model)
-
         if time_step.hour == 0:
-            get_data_func(self.options, start_time, total_step_count,
-                          self._actuals_step_frequency, model)
+            sim_model = self._data_provider.get_populated_model(
+                use_actuals, start_time, total_step_count)
 
         else:
             # only get up to 24 hours of data, then copy it
             timesteps_per_day = 24 * 60 / self._actuals_step_frequency
             steps_to_request = min(timesteps_per_day, total_step_count)
 
-            get_data_func(self.options, start_time, steps_to_request,
-                          self._actuals_step_frequency, model)
+            sim_model = self._data_provider.get_populated_model(
+                use_actuals, start_time, steps_to_request)
 
-            for vals, in get_forecastables(model):
+            for vals, in sim_model.get_forecastables():
                 for t in range(timesteps_per_day, total_step_count):
                     vals[t] = vals[t - timesteps_per_day]
 
-        return model
+        return sim_model.to_egret()
 
     def create_sced_instance(self,
                              current_state, hours_in_objective,
                              sced_horizon, forecast_error_method):
 
-        sced_instance = create_sced_instance(
-            self._data_provider, current_state, self.options,
-            sced_horizon=sced_horizon,
+        sced_instance = self._data_provider.create_sced_instance(
+            current_state, self.options, sced_horizon=sced_horizon,
             forecast_error_method=forecast_error_method,
             )
 
@@ -564,10 +490,10 @@ class Simulator(EgretEngine):
 
         self._ptdf_manager.mark_active(sced_instance)
 
-        pyo_model = _get_uc_model(
-            sced_instance, self.formulation_list, relax_binaries=False,
+        pyo_model = generate_uc_model(
+            sced_instance, self.sced_formulations, relax_binaries=False,
             ptdf_options=ptdf_options,
-            PTDF_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
             )
 
         # update in case lines were taken out
@@ -628,10 +554,10 @@ class Simulator(EgretEngine):
         if self._last_sced_pyo_model is None:
             self._ptdf_manager.mark_active(lmp_sced_instance)
 
-            pyo_model = _get_uc_model(
-                lmp_sced_instance, self.formulation_list, relax_binaries=True,
+            pyo_model = generate_uc_model(
+                lmp_sced_instance, self.sced_formulations, relax_binaries=True,
                 ptdf_options=self._ptdf_manager.lmpsced_ptdf_options,
-                PTDF_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+                ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
                 )
 
             pyo_solver = self._sced_solver
