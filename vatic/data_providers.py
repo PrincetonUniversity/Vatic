@@ -6,8 +6,6 @@ import dill as pickle
 import pandas as pd
 import math
 
-from egret.parsers.prescient_dat_parser import get_uc_model, \
-    create_model_data_dict_params
 from egret.data.model_data import ModelData as EgretModel
 from prescient.engine.modeling_engine import ForecastErrorMethod
 from prescient.simulator.time_manager import PrescientTime
@@ -32,7 +30,9 @@ class PickleProvider:
     def __init__(self,
                  data_dir: str, start_date: str, num_days: int,
                  init_ruc_file=None) -> None:
-        self._uc_model_template = get_uc_model()
+        self._time_period_mins = 60
+        self._load_mismatch_cost = 1e4
+        self._reserve_mismatch_cost = 1e3
 
         with open(Path(data_dir, "grid-template.p"), 'rb') as f:
             self.template = pickle.load(f)
@@ -70,6 +70,7 @@ class PickleProvider:
         # TODO: better generalize this across different power grids
         self.renewables = self.gen_data.columns.get_level_values(
             level=1).unique().tolist()
+
         rnwbl_info = {gen: gen.split('_')
                       for gen in self.template['NondispatchableGenerators']
                       if gen in self.renewables}
@@ -78,6 +79,8 @@ class PickleProvider:
                                     if gen_info[1] not in {'HYDRO', 'RTPV'}]
         self.nondisp_renewables = [gen for gen, gen_info in rnwbl_info.items()
                                    if gen_info[1] in {'HYDRO', 'RTPV'}]
+        self.forecast_renewables = [gen for gen, gen_info in rnwbl_info.items()
+                                    if gen_info[1] != 'HYDRO']
 
         self.init_model = self._get_model_for_date(self._first_day,
                                                    use_actuals=False)
@@ -368,14 +371,14 @@ class PickleProvider:
                 ramp_up_rate_sced = gen_data['ramp_up_60min'] * mins_per_step
                 ramp_up_rate_sced /= 60.
 
-                sced_startup_capacity = _calculate_sced_ramp_capacity(
+                sced_startup_capc = self._calculate_sced_ramp_capacity(
                     gen_data, ramp_up_rate_sced,
                     mins_per_step, 'startup_capacity'
                     )
 
                 gen_data['startup_curve'] = [
-                    sced_startup_capacity - i * ramp_up_rate_sced
-                    for i in range(1, int(math.ceil(sced_startup_capacity
+                    sced_startup_capc - i * ramp_up_rate_sced
+                    for i in range(1, int(math.ceil(sced_startup_capc
                                                     / ramp_up_rate_sced)))
                     ]
 
@@ -406,15 +409,15 @@ class PickleProvider:
                         gen, mins_per_step]
 
                 else:
-                    sced_shutdown_capacity = _calculate_sced_ramp_capacity(
+                    sced_shutdown_capc = self._calculate_sced_ramp_capacity(
                         gen_data, ramp_down_rate_sced,
                         mins_per_step, 'shutdown_capacity'
                         )
 
                     gen_data['shutdown_curve'] = [
-                        sced_shutdown_capacity - i * ramp_down_rate_sced
+                        sced_shutdown_capc - i * ramp_down_rate_sced
                         for i in range(
-                            1, int(math.ceil(sced_shutdown_capacity
+                            1, int(math.ceil(sced_shutdown_capc
                                              / ramp_down_rate_sced))
                             )
                         ]
@@ -431,6 +434,52 @@ class PickleProvider:
 
         return sced_model.to_egret()
 
+    # adapted from prescient.engine.egret.egret_plugin
+    @staticmethod
+    def _calculate_sced_ramp_capacity(gen_data, ramp_rate_sced,
+                                      minutes_per_step, capacity_key):
+        if capacity_key in gen_data:
+            susd_capacity_time_varying = isinstance(gen_data[capacity_key],
+                                                    dict)
+            p_min_time_varying = isinstance(gen_data['p_min'], dict)
+
+            if p_min_time_varying and susd_capacity_time_varying:
+                capacity = sum(
+                    (susd - pm) * (minutes_per_step / 60.) + pm
+                    for pm, susd in zip(gen_data['p_min']['values'],
+                                        gen_data[capacity_key]['values'])
+                    ) / len(gen_data['p_min']['values'])
+
+            elif p_min_time_varying:
+                capacity = sum(
+                    (gen_data[capacity_key] - pm)
+                    * (minutes_per_step / 60.) + pm
+                    for pm in gen_data['p_min']['values']
+                    ) / len(gen_data['p_min']['values'])
+
+            elif susd_capacity_time_varying:
+                capacity = sum(
+                    (susd - gen_data['p_min']) * (minutes_per_step / 60.)
+                    + gen_data['p_min']
+                    for susd in gen_data[capacity_key]['values']
+                    ) / len(gen_data[capacity_key]['values'])
+
+            else:
+                capacity = ((gen_data[capacity_key] - gen_data['p_min'])
+                            * (minutes_per_step / 60.) + gen_data['p_min'])
+
+        else:
+            if isinstance(gen_data['p_min'], dict):
+                capacity = sum(
+                    pm + ramp_rate_sced / 2. for pm in
+                    gen_data['p_min']['values']
+                    ) / len(gen_data['p_min']['values'])
+
+            else:
+                capacity = gen_data['p_min'] + ramp_rate_sced / 2.
+
+        return capacity
+
     def _get_model_for_date(self,
                             requested_date: date,
                             use_actuals) -> VaticModelData:
@@ -441,105 +490,184 @@ class PickleProvider:
 
         # Return cached model, if we have it
         if requested_date in self.date_cache[use_lbl]:
-            return self.date_cache[use_lbl][requested_date]
+            return VaticModelData(self.date_cache[use_lbl][requested_date])
 
-        model_dict = deepcopy(self.template)
-        del model_dict['CopperSheet']
+        day_data = deepcopy(self.template)
+        del day_data['CopperSheet']
 
         gen_data = self.gen_data.loc[
             self.gen_data.index.date == requested_date, use_lbl]
-        model_dict['MaxNondispatchablePower'] = dict()
-        model_dict['MinNondispatchablePower'] = dict()
+        day_data['MaxNondispatchablePower'] = dict()
+        day_data['MinNondispatchablePower'] = dict()
 
         for gen in self.renewables:
-            model_dict['MaxNondispatchablePower'].update({
+            day_data['MaxNondispatchablePower'].update({
                 (gen, i + 1): val for i, val in enumerate(gen_data[gen])})
 
         for gen in self.dispatch_renewables:
             if 'WIND' in gen:
-                model_dict['MaxNondispatchablePower'].update({
+                day_data['MaxNondispatchablePower'].update({
                     (gen, i): gen_data[gen][-1] for i in range(25, 49)})
             else:
-                model_dict['MaxNondispatchablePower'].update({
+                day_data['MaxNondispatchablePower'].update({
                     (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
 
-            model_dict['MinNondispatchablePower'].update({
+            day_data['MinNondispatchablePower'].update({
                 (gen, i + 1): 0 for i in range(48)})
 
         for gen in self.nondisp_renewables:
-            model_dict['MaxNondispatchablePower'].update({
+            day_data['MaxNondispatchablePower'].update({
                 (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
-            model_dict['MinNondispatchablePower'].update({
-                (gen, i + 1): model_dict['MaxNondispatchablePower'][gen, i + 1]
+            day_data['MinNondispatchablePower'].update({
+                (gen, i + 1): day_data['MaxNondispatchablePower'][gen, i + 1]
                 for i in range(48)
                 })
 
         load_data = self.load_data.loc[
             self.load_data.index.date == requested_date, use_lbl]
-        model_dict['Demand'] = dict()
+        day_data['Demand'] = dict()
 
         for bus in self.template['Buses']:
-            model_dict['Demand'].update({
+            day_data['Demand'].update({
                 (bus, i + 1): val for i, val in enumerate(load_data[bus])})
-            model_dict['Demand'].update({
+            day_data['Demand'].update({
                 (bus, i + 25): val for i, val in enumerate(load_data[bus])})
 
-        namespace_ks = {'NumTimePeriods', 'TransmissionLines', 'StageSet',
-                        'NondispatchableGenerators', 'ThermalGenerators',
-                        'TimePeriodLength', 'Buses'}
+        model_dict = self.create_vatic_model_dict(day_data)
+        self.date_cache[use_lbl][requested_date] = deepcopy(model_dict)
 
-        use_dict = {k: ({None: v} if k in namespace_ks else v)
-                    for k, v in model_dict.items()}
-        use_dict['MustRun'] = {k: 1 for k in use_dict['MustRun']}
+        return VaticModelData(model_dict)
 
-        day_model = VaticModelData(create_model_data_dict_params(
-            self._uc_model_template.create_instance(data={None: use_dict}),
-            keep_names=True
-            ))
-        self.date_cache[use_lbl][requested_date] = deepcopy(day_model)
+    def create_vatic_model_dict(self, data: dict) -> dict:
+        time_periods = range(1, data['NumTimePeriods'] + 1)
 
-        return day_model
+        loads = {
+            bus: {'bus': bus, 'in_service': True,
 
+                  'p_load': {
+                      'data_type': 'time_series',
+                      'values': [data['Demand'][bus, t] for t in time_periods]
+                      }}
 
-# adapted from prescient.engine.egret.egret_plugin
-def _calculate_sced_ramp_capacity(gen_data, ramp_rate_sced,
-                                  minutes_per_step, capacity_key):
-    if capacity_key in gen_data:
-        susd_capacity_time_varying = isinstance(gen_data[capacity_key], dict)
-        p_min_time_varying = isinstance(gen_data['p_min'], dict)
+            for bus in data['Buses']
+            }
 
-        if p_min_time_varying and susd_capacity_time_varying:
-            capacity = sum(
-                (susd - pm) * (minutes_per_step / 60.) + pm
-                for pm, susd in zip(gen_data['p_min']['values'],
-                                    gen_data[capacity_key]['values'])
-                ) / len(gen_data['p_min']['values'])
+        branches = {
+            line: {'from_bus': data['BusFrom'][line],
+                   'to_bus': data['BusTo'][line],
 
-        elif p_min_time_varying:
-            capacity = sum(
-                (gen_data[capacity_key] - pm)
-                * (minutes_per_step / 60.) + pm
-                for pm in gen_data['p_min']['values']
-                ) / len(gen_data['p_min']['values'])
+                   'reactance': data['Impedence'][line],
+                   'rating_long_term': data['ThermalLimit'][line],
+                   'rating_short_term': data['ThermalLimit'][line],
+                   'rating_emergency': data['ThermalLimit'][line],
 
-        elif susd_capacity_time_varying:
-            capacity = sum(
-                (susd - gen_data['p_min']) * (minutes_per_step / 60.)
-                + gen_data['p_min']
-                for susd in gen_data[capacity_key]['values']
-                ) / len(gen_data[capacity_key]['values'])
+                   'in_service': True, 'branch_type': 'line',
+                   'angle_diff_min': -90, 'angle_diff_max': 90,
+                   }
 
-        else:
-            capacity = ((gen_data[capacity_key] - gen_data['p_min'])
-                        * (minutes_per_step / 60.) + gen_data['p_min'])
+            for line in data['TransmissionLines']
+            }
 
-    else:
-        if isinstance(gen_data['p_min'], dict):
-            capacity = sum(
-                pm + ramp_rate_sced / 2. for pm in gen_data['p_min']['values']
-                ) / len(gen_data['p_min']['values'])
+        gen_buses = dict()
+        for bus in data['Buses']:
+            for gen in data['ThermalGeneratorsAtBus'][bus]:
+                gen_buses[gen] = bus
+            for gen in data['NondispatchableGeneratorsAtBus'][bus]:
+                gen_buses[gen] = bus
 
-        else:
-            capacity = gen_data['p_min'] + ramp_rate_sced / 2.
+        generators = {**self._create_thermals_model_dict(data, gen_buses),
+                      **self._create_renewables_model_dict(data, gen_buses)}
 
-    return capacity
+        return {
+            'system': {'time_keys': [str(t) for t in time_periods],
+                       'time_period_length_minutes': self._time_period_mins,
+                       'load_mismatch_cost': self._load_mismatch_cost,
+                       'reserve_shortfall_cost': self._reserve_mismatch_cost,
+
+                       'baseMVA': 1., 'reference_bus': data['Buses'][0],
+                       'reference_bus_angle': 0.,
+
+                       'reserve_requirement': {
+                           'data_type': 'time_series',
+                           'values': [0. for _ in time_periods]
+                           }},
+
+            'elements': {'bus': {bus: {'base_kv': 1e3}
+                                 for bus in data['Buses']},
+
+                         'load': loads, 'branch': branches,
+                         'generator': generators,
+
+                         'interface': dict(), 'zone': dict(), 'storage': dict()
+                         }
+            }
+
+    def _create_thermals_model_dict(self, data: dict, gen_buses: dict) -> dict:
+        return {
+            gen: {'generator_type': 'thermal', 'bus': gen_buses[gen],
+                  'fuel': data['ThermalGeneratorType'][gen],
+                  'fast_start': False,
+
+                  'fixed_commitment': (1 if gen in data['MustRun'] else None),
+                  'in_service': True, 'zone': 'None', 'failure_rate': 0.,
+
+                  'p_min': data['MinimumPowerOutput'][gen],
+                  'p_max': data['MaximumPowerOutput'][gen],
+
+                  'ramp_up_60min': data['NominalRampUpLimit'][gen],
+                  'ramp_down_60min': data['NominalRampDownLimit'][gen],
+                  'startup_capacity': data['StartupRampLimit'][gen],
+                  'shutdown_capacity': data['ShutdownRampLimit'][gen],
+                  'min_up_time': data['MinimumUpTime'][gen],
+                  'min_down_time': data['MinimumDownTime'][gen],
+                  'initial_status': data['UnitOnT0State'][gen],
+                  'initial_p_output': data['PowerGeneratedT0'][gen],
+                  'startup_cost': list(zip(data['StartupLags'][gen],
+                                           data['StartupCosts'][gen])),
+                  'shutdown_cost': 0.,
+
+                  'p_cost': {
+                      'data_type': 'cost_curve',
+                      'cost_curve_type': 'piecewise',
+                      'values': list(zip(data['CostPiecewisePoints'][gen],
+                                         data['CostPiecewiseValues'][gen]))
+                      }}
+
+            for gen in self.template['ThermalGenerators']
+            }
+
+    def _create_renewables_model_dict(self,
+                                      data: dict, gen_buses: dict) -> dict:
+        gen_dict = {
+            gen: {'generator_type': 'renewable', 'bus': gen_buses[gen],
+                  'fuel': data['NondispatchableGeneratorType'][gen],
+                  'in_service': True}
+            for gen in self.template['NondispatchableGenerators']
+            }
+
+        for gen in self.template['NondispatchableGenerators']:
+            if gen in self.renewables:
+                gen_dict[gen]['p_min'] = {
+                    'data_type': 'time_series',
+                    'values': [data['MinNondispatchablePower'][gen, t + 1]
+                               for t in range(data['NumTimePeriods'])]
+                    }
+
+                gen_dict[gen]['p_max'] = {
+                    'data_type': 'time_series',
+                    'values': [data['MaxNondispatchablePower'][gen, t + 1]
+                               for t in range(data['NumTimePeriods'])]
+                    }
+
+            else:
+                gen_dict[gen]['p_min'] = {
+                    'data_type': 'time_series',
+                    'values': [0. for _ in range(data['NumTimePeriods'])]
+                    }
+
+                gen_dict[gen]['p_max'] = {
+                    'data_type': 'time_series',
+                    'values': [0. for _ in range(data['NumTimePeriods'])]
+                    }
+
+        return gen_dict
