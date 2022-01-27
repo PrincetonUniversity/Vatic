@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.1',
+    version='0.2.0-a0',
     description='Pyomo + Egret',
     author='Michal Radoslaw Grzadkowski',
     author_email='mg2332@princeton.edu',
@@ -19,7 +19,7 @@ setuptools.setup(
         },
 
     install_requires = [
-        'numpy>1.21', 'dill', 'gurobipy',
+        'numpy>1.21', 'dill', 'gurobipy==9.1.2',
         'gridx-prescient @ git+https://github.com/shrivats-pu/Prescient.git@vatic'
         ],
     )

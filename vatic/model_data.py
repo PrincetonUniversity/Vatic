@@ -17,10 +17,6 @@ class ModelError(Exception):
 class VaticModelData(object):
     """Simplified version of egret.data.model_data.ModelData"""
 
-    @staticmethod
-    def empty_model_data_dict():
-        return {"elements": dict(), "system": dict()}
-
     def __init__(self,
                  source: Union[dict, VModelData, str, Path,
                                None] = None) -> None:
@@ -39,7 +35,7 @@ class VaticModelData(object):
                 self._data = pickle.load(f)
 
         elif source is None:
-            self._data = VaticModelData.empty_model_data_dict()
+            self._data = {'system': dict(), 'elements': dict()}
 
         else:
             raise ValueError("Unrecognized source for ModelData")
