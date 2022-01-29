@@ -18,28 +18,26 @@ from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 
 from prescient.simulator.time_manager import PrescientTime
+from prescient.data.simulation_state import MutableSimulationState
 from prescient.data.simulation_state.state_with_offset import StateWithOffset
-from prescient.simulator import TimeManager, DataManager, StatsManager
+from prescient.simulator import TimeManager, StatsManager
 from prescient.engine.egret.data_extractors import ScedDataExtractor
 from prescient.engine.modeling_engine import ForecastErrorMethod
 from prescient.engine.egret.egret_plugin import _zero_out_costs
 
 from prescient.engine.egret.ptdf_manager import PTDFManager
 from prescient.data.simulation_state import SimulationState
-from prescient.simulator.data_manager import RucPlan
 import pyomo.environ as pe
 
 
 class Simulator(EgretEngine):
-
-    _ptdf_manager: PTDFManager
-    _current_state: Union[None, SimulationState]
 
     def __init__(self,
                  options=None, light_output=False,
                  init_ruc_file=None, save_init_ruc=False):
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
+        self._current_time = None
 
         self.options = options
         self._setup_solvers(options)
@@ -51,13 +49,14 @@ class Simulator(EgretEngine):
             )
         self.save_init_ruc = save_init_ruc
 
-        self._data_manager = DataManager()
-        self._data_manager.initialize(self, options)
+        self._ruc_market_active = None
+        self._ruc_market_pending = None
+        self._simulation_state = MutableSimulationState()
+        self._prior_sced_instance = None
 
         self._time_manager = TimeManager()
         self._time_manager.initialize(options)
 
-        self._current_state = None
         self._sced_extractor = ScedDataExtractor()
         self._ptdf_manager = PTDFManager()
 
@@ -81,12 +80,14 @@ class Simulator(EgretEngine):
 
         self.ruc_model = UCModel(
             params_forml='default_params',
+            #params_forml='renewable_cost_params',
             status_forml='garver_3bin_vars',
             power_forml='garver_power_vars',
             reserve_forml='garver_power_avail_vars',
             generation_forml='pan_guan_gentile_KOW_generation_limits',
             ramping_forml='damcikurt_ramping',
             production_forml='KOW_production_costs_tightened',
+            #production_forml='KOW_Vatic_production_costs_tightened',
             updown_forml='rajan_takriti_UT_DT',
             startup_forml='KOW_startup_costs',
             network_forml=self.network_constraints
@@ -110,13 +111,14 @@ class Simulator(EgretEngine):
 
         for time_step in self._time_manager.time_steps():
             self._stats_manager.begin_timestep(time_step)
-            self._data_manager.update_time(time_step)
+            self._current_time = time_step
 
             if time_step.is_planning_time:
                 self.call_planning_oracle(time_step)
 
             if time_step.is_ruc_activation_time:
-                self._data_manager.activate_pending_ruc(self.options)
+                self._ruc_market_active = self._ruc_market_pending
+                self._ruc_market_pending = None
 
             self.call_oracle(time_step)
 
@@ -138,14 +140,15 @@ class Simulator(EgretEngine):
         """
 
         if self._data_provider.init_ruc_file:
-            ruc_plan = self._data_provider.load_initial_model()
-
-            simulation_actuals = self.create_simulation_actuals(
+            sim_actuals = self.create_simulation_actuals(
                 self._time_manager.get_first_time_step())
-            ruc = RucPlan(simulation_actuals, ruc_plan, None)
+
+            ruc = self._data_provider.load_initial_model()
+            ruc_market = None
 
         else:
-            ruc = self.solve_ruc(self._time_manager.get_first_time_step())
+            sim_actuals, ruc, ruc_market = self.solve_ruc(
+                self._time_manager.get_first_time_step())
 
         if self.save_init_ruc:
             if not isinstance(self.save_init_ruc, (str, Path)):
@@ -154,18 +157,17 @@ class Simulator(EgretEngine):
                 ruc_file = Path(self.save_init_ruc)
 
             with open(ruc_file, 'wb') as f:
-                pickle.dump(ruc.deterministic_ruc_instance, f, protocol=-1)
+                pickle.dump(ruc, f, protocol=-1)
 
-        self._data_manager.set_pending_ruc_plan(self.options, ruc)
-        self._data_manager.activate_pending_ruc(self.options)
-
-        return ruc
+        self._simulation_state.apply_ruc(self.options, ruc)
+        self._simulation_state.apply_actuals(self.options, sim_actuals)
+        self._ruc_market_active = ruc_market
 
     def call_planning_oracle(self, time_step):
         projected_state = self._get_projected_state(time_step)
         uc_hour, uc_date = self._get_uc_activation_time(time_step)
 
-        ruc = self.solve_ruc(
+        sim_actuals, ruc, ruc_market = self.solve_ruc(
             PrescientTime(
                 datetime.datetime.combine(uc_date,
                                           datetime.time(hour=uc_hour)),
@@ -173,9 +175,10 @@ class Simulator(EgretEngine):
                 ),
             projected_state
             )
-        self._data_manager.set_pending_ruc_plan(self.options, ruc)
 
-        return ruc
+        self._simulation_state.apply_ruc(self.options, ruc)
+        self._simulation_state.apply_actuals(self.options, sim_actuals)
+        self._ruc_market_pending = ruc_market
 
     def call_oracle(self, time_step):
         """port of OracleManager.call_operation_oracle"""
@@ -201,7 +204,7 @@ class Simulator(EgretEngine):
         print("Solving SCED instance")
 
         current_sced_instance, solve_time = self.solve_sced(
-            self._data_manager.current_state.get_state_with_step_length(
+            self._simulation_state.get_state_with_step_length(
                 self.options.sced_frequency_minutes),
             hours_in_objective=1, sced_horizon=self.options.sced_horizon,
             forecast_error_method=forecast_error_method,
@@ -237,7 +240,8 @@ class Simulator(EgretEngine):
         print("Solving for LMPs")
         lmp_sced = self.solve_lmp(current_sced_instance)
 
-        self._data_manager.apply_sced(self.options, current_sced_instance)
+        self._simulation_state.apply_sced(self.options, current_sced_instance)
+        self._prior_sced_instance = current_sced_instance
 
         ops_stats = self._stats_manager.collect_operations(
             current_sced_instance, solve_time, lmp_sced, pre_quickstart_cache,
@@ -251,8 +255,6 @@ class Simulator(EgretEngine):
                 self.engine.operations_data_extractor,
                 self.simulator.data_manager.ruc_market_active,
                 time_step.hour % options.ruc_every_hours)
-
-        return current_sced_instance
 
     def solve_ruc(self, time_step, sim_state_for_ruc=None):
 
@@ -309,10 +311,7 @@ class Simulator(EgretEngine):
         print("")
         print("Extracting scenario to simulate")
 
-        simulation_actuals = self.create_simulation_actuals(time_step)
-        result = RucPlan(simulation_actuals, ruc_plan, ruc_market)
-
-        return result
+        return self.create_simulation_actuals(time_step), ruc_plan, ruc_market
 
     def solve_sced(self,
                    current_state, hours_in_objective,
@@ -474,7 +473,7 @@ class Simulator(EgretEngine):
             print("")
             print("Drawing UC initial conditions for date:", time_step.date,
                   "hour:", time_step.hour, "from prior SCED instance.")
-            return self._data_manager.current_state
+            return self._simulation_state
 
         uc_hour, uc_date = self._get_uc_activation_time(time_step)
 
@@ -505,8 +504,7 @@ class Simulator(EgretEngine):
         #       24 hours - just enough to get you to midnight and a few hours
         #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
-        current_state = self._data_manager.current_state\
-            .get_state_with_step_length(60)
+        current_state = self._simulation_state.get_state_with_step_length(60)
         proj_hours = min(24, current_state.timestep_count)
 
         proj_sced_instance, solve_time = self.solve_sced(
