@@ -27,21 +27,24 @@ class ProviderError(Exception):
 
 class PickleProvider:
 
-    def __init__(self,
-                 data_dir: str, start_date: str, num_days: int,
-                 init_ruc_file=None) -> None:
+    def __init__(self, data_dir: str, start_date: str, num_days: int) -> None:
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
 
+        # load input datasets, starting with static grid data (e.g. network
+        # topology, thermal generator outputs)
         with open(Path(data_dir, "grid-template.p"), 'rb') as f:
-            self.template = pickle.load(f)
-        with open(Path(data_dir, "gen-data.p"), 'rb') as f:
-            self.gen_data = pickle.load(f).round(8)
-        with open(Path(data_dir, "load-data.p"), 'rb') as f:
-            self.load_data = pickle.load(f)
+            self.template: dict = pickle.load(f)
 
-        self.init_ruc_file = init_ruc_file
+        # load renewable generator forecasted and actual outputs
+        with open(Path(data_dir, "gen-data.p"), 'rb') as f:
+            self.gen_data: pd.DataFrame = pickle.load(f).round(8)
+
+        # load bus forecasted and actual outputs
+        with open(Path(data_dir, "load-data.p"), 'rb') as f:
+            self.load_data: pd.DataFrame = pickle.load(f)
+
         self._first_day = pd.Timestamp(start_date).date()
         self._final_day = self._first_day + pd.Timedelta(days=num_days)
 
@@ -82,61 +85,64 @@ class PickleProvider:
         self.forecast_renewables = [gen for gen, gen_info in rnwbl_info.items()
                                     if gen_info[1] != 'HYDRO']
 
+        # create an empty template model
         self.init_model = self._get_model_for_date(self._first_day,
                                                    use_actuals=False)
         self.init_model.reset_timeseries()
         self.shutdown_curves = dict()
 
-    def load_initial_model(self):
-        with open(self.init_ruc_file, 'rb') as f:
-            return pickle.load(f)
-
     def _get_initial_model(self,
                            num_time_steps: int,
                            minutes_per_timestep: int) -> VaticModelData:
-        ''' Get a model ready to be populated with data
+        """Creates an empty model ready to be populated with timeseries data.
 
-        Returns
-        -------
-        A model object populated with static system information, such as
-        buses and generators, and with time series arrays that are large
-        enough to hold num_time_steps entries.
+        This function creates a copy of the empty template model, which only
+        contains static grid info (e.g. generator names and other metadata),
+        and adds to it empty timeseries lists that will be filled with
+        forecasted and actual data.
 
-        Initial values in time time series do not have meaning.
-        '''
+        Args
+        ----
+            num_time_steps  The length of the timeseries list for each asset.
+            minutes_per_timestep    Metadata on the time between observing
+                                    values in each timeseries.
 
+        """
         new_model = deepcopy(self.init_model)
         new_model.set_time_steps(num_time_steps, minutes_per_timestep)
 
         return new_model
 
     def _get_initial_state_model(self,
-                                 num_time_steps: int,
-                                 minutes_per_timestep: int,
-                                 day: date) -> VaticModelData:
-        ''' Populate an existing model with initial state data for the requested day
+                                 day: date, num_time_steps: int,
+                                 minutes_per_timestep: int) -> VaticModelData:
+        """Creates a model with initial generator states from input datasets.
 
-        Sets T0 information from actuals:
-          * initial_state_of_charge for each storage element
-          * initial_status for each generator
-          * initial_p_output for each generator
+        This function makes a copy of the empty template model, and adds to it
+        empty timeseries of the requested lengths as well as generators' time
+        since on/off (`initial_status`) and their initial power output
+        (`initial_p_output`).
 
-        Arguments
-        ---------
-        day:date
-            The day whose initial state will be saved in the model
-        model: EgretModel
-            The model whose values will be modifed
-        '''
+        Args
+        ----
+            day     Which day's initial generator states to use.
+
+            num_time_steps  The length of the timeseries list for each asset.
+            minutes_per_timestep    Metadata on the time between observing
+                                    values in each timeseries.
+
+        """
         if day < self._first_day:
             day = self._first_day
         elif day > self._final_day:
             day = self._final_day
 
+        # get a model with empty timeseries and the model with initial states
         new_model = self._get_initial_model(num_time_steps,
                                             minutes_per_timestep)
         actuals_model = self._get_model_for_date(day, use_actuals=True)
 
+        # copy initial states into the empty model
         new_model.copy_elements(actuals_model, 'storage',
                                 ['initial_state_of_charge'], strict_mode=True)
         new_model.copy_elements(actuals_model, 'generator',
@@ -149,10 +155,26 @@ class PickleProvider:
             self,
             use_state: MutableSimulationState, num_time_steps: int,
             minutes_per_timestep: int) -> VaticModelData:
+        """Creates a model with initial generator states from a simulation.
 
+        This function makes a copy of the empty template model and copies over
+        the generator states from the current status of a simulation of a
+        power grid's operation.
+
+        Args
+        ----
+            use_state   The state of a running simulation created by an engine
+                        such as :class:`vatic.engines.Simulator`.
+
+            num_time_steps  The length of the timeseries list for each asset.
+            minutes_per_timestep    Metadata on the time between observing
+                                    values in each timeseries.
+
+        """
         new_model = self._get_initial_model(num_time_steps,
                                             minutes_per_timestep)
 
+        # copy over generator initial states
         for gen, g_data in new_model.elements('generator',
                                               generator_type='thermal'):
             g_data['initial_status'] = use_state.get_initial_generator_state(
@@ -160,6 +182,7 @@ class PickleProvider:
             g_data['initial_p_output'] = use_state.get_initial_power_generated(
                 gen)
 
+        # copy over energy storage initial states
         for store, store_data in new_model.elements('storage'):
             store_data['initial_state_of_charge'] \
                 = use_state.get_initial_state_of_charge(store)
@@ -172,53 +195,69 @@ class PickleProvider:
             use_state: Union[None, MutableSimulationState] = None,
             reserve_factor: float = 0.
             ) -> VaticModelData:
+        """Creates a model with all grid asset data for a given time period.
 
+        Args
+        ----
+            use_actuals     Whether to use actual output/demand values to
+                            populate timeseries or their forecasts.
+
+            start_time          Which time point to pull model data from.
+            num_time_periods    How many time steps' data to pull, including
+                                the starting time step.
+
+            use_state   The state of a running simulation created by an engine
+                        such as :class:`vatic.engines.Simulator`. If given,
+                        this will be used to populate initial generator states
+                        instead of the initial states in the input datasets.
+
+            reserve_factor  What proportion of the total demand to set aside as
+                            the model's reserve requirement at each time point.
+
+        """
         start_hour = start_time.hour
         start_day = start_time.date()
         assert (start_time.minute == 0)
         assert (start_time.second == 0)
         step_delta = timedelta(minutes=self.data_freq)
 
-        # Populate the T0 data
+        # populate the initial generator outputs and times since on/off, using
+        # the given simulation state or the input datasets as requested
         if use_state is None or use_state.timestep_count == 0:
             new_model = self._get_initial_state_model(
-                num_time_steps=num_time_periods,
-                minutes_per_timestep=self.data_freq, day=start_time.date()
+                day=start_time.date(), num_time_steps=num_time_periods,
+                minutes_per_timestep=self.data_freq,
                 )
 
         else:
             new_model = self._copy_initial_state_into_model(
                 use_state, num_time_periods, self.data_freq)
 
+        # get the data for this date from the input datasets
         day_model = self._get_model_for_date(start_day, use_actuals)
 
-        for step_index in range(0, num_time_periods):
+        # advance through the given number of time steps
+        for step_index in range(num_time_periods):
             step_time = start_time + step_delta * step_index
             day = step_time.date()
-            src_step_index = step_index
 
-            # If request is beyond the last day, just repeat the
+            # if we have advanced beyond the last day, just repeat the
             # final day's values
             if day > self._final_day:
                 day = self._final_day
 
-            # How we handle crossing midnight depends on whether we
-            # started at time 0
-            if day != start_day:
-                if start_hour == 0:
-                    # For data starting at time 0, we collect tomorrow's
-                    # data from today's dat file
-                    day = start_day
-                else:
-                    # Otherwise we need to subtract off one day's worth of samples
-                    src_step_index = step_index - 24
-                    day_model = self._get_model_for_date(day, use_actuals)
+            # if we cross midnight and we didn't start at midnight, we start
+            # pulling data from the next day
+            if day != start_day and start_hour != 0:
+                day_model = self._get_model_for_date(day, use_actuals)
+                src_step_index = step_index - 24
 
-            ### Note that we will never be asked to cross midnight more than once.
-            ### That's because any data request that starts mid-day will only request
-            ### 24 hours of data and then copy it as needed to fill out the horizon.
-            ### If that ever changes, the code above will need to change.
+            # if we did start at midnight, pull tomorrow's data from today's
+            # input datasets
+            else:
+                src_step_index = step_index
 
+            # copy over timeseries data for the current timestep
             new_model.copy_forecastables(day_model, step_index, src_step_index)
             new_model.honor_reserve_factor(reserve_factor, step_index)
 
@@ -226,13 +265,22 @@ class PickleProvider:
 
     def create_deterministic_ruc(self,
                                  time_step: PrescientTime, options: Options,
-                                 current_state=None,
-                                 output_init_conditions=False) -> EgretModel:
-        """
-        merge of EgretEngine.create_deterministic_ruc
-             and egret_plugin.create_deterministic_ruc
-        """
+                                 current_state=None) -> EgretModel:
+        """Generates a Reliability Unit Commitment model.
 
+        This a merge of Prescient's EgretEngine.create_deterministic_ruc and
+        egret_plugin.create_deterministic_ruc.
+
+        Args
+        ----
+            time_step   Which time point to pull data from.
+            options     Miscelleanous properties of the simulation engine in
+                        which this RUC will be used.
+            current_state   If given, a simulation state used to get initial
+                            states for the generators, which will otherwise be
+                            pulled from the input datasets.
+
+        """
         start_time = datetime.combine(time_step.date, time(time_step.hour))
         copy_first_day = not options.run_ruc_with_next_day_data
         copy_first_day &= time_step.hour != 0
@@ -241,14 +289,14 @@ class PickleProvider:
         if not copy_first_day:
             forecast_request_count = options.ruc_horizon
 
-        # Populate forecasts
+        # create a new model using the forecasts for the given time steps
         ruc_model = self.get_populated_model(
             use_actuals=False, start_time=start_time,
             num_time_periods=forecast_request_count, use_state=current_state,
             reserve_factor=options.reserve_factor
             )
 
-        # Make some near-term forecasts more accurate
+        # make some near-term forecasts more accurate if necessary
         ruc_delay = -(options.ruc_execution_hour % -options.ruc_every_hours)
         if options.ruc_prescience_hour > ruc_delay + 1:
             improved_hour_count = options.ruc_prescience_hour - ruc_delay
@@ -265,13 +313,13 @@ class PickleProvider:
                     forecast[t] = forecast_portion * forecast[t]
                     forecast[t] += actuals_portion * actuals[t]
 
-        # Copy from first 24 to second 24, if necessary
+        # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
             for vals, in ruc_model.get_forecastables():
                 for t in range(24, options.ruc_horizon):
                     vals[t] = vals[t - 24]
 
-        if output_init_conditions:
+        if options.output_ruc_initial_conditions:
             report_initial_conditions_for_deterministic_ruc(ruc_model)
             report_demand_for_deterministic_ruc(ruc_model,
                                                 options.ruc_every_hours)
@@ -284,6 +332,24 @@ class PickleProvider:
             sced_horizon: int,
             forecast_error_method=ForecastErrorMethod.PRESCIENT
             ) -> EgretModel:
+        """Generates a Security Constrained Economic Dispatch model.
+
+        This a merge of Prescient's EgretEngine.create_sced_instance and
+        egret_plugin.create_sced_instance.
+
+        Args
+        ----
+            current_state   The simulation state of a power grid which will
+                            be used as the basis for the data included in this
+                            model.
+
+            options     Miscelleanous properties of the simulation engine in
+                        which this SCED will be used.
+            sced_horizon    How many time steps this SCED will simulate over.
+            forecast_error_method   How the forecasts used in this model will
+                                    be adjusted to be closer to the actuals.
+
+        """
         assert current_state is not None
 
         sced_model = self._copy_initial_state_into_model(
