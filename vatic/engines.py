@@ -1,14 +1,14 @@
 
 import os
 import datetime
-from typing import Union
 import time
 import math
 from pathlib import Path
 import dill as pickle
-from typing import Tuple, Dict, Any, Callable
+from typing import Union, Tuple, Dict, Any, Callable
 
 from .data_providers import PickleProvider, AllocationPickleProvider
+from .simulation_state import VaticSimulationState
 from .managers.reporting_manager import ReportingManager
 from .models import UCModel
 
@@ -16,18 +16,14 @@ from prescient.engine.egret.engine import EgretEngine
 from egret.data.model_data import ModelData as EgretModel
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
+from pyomo.environ import Suffix as PyomoSuffix
 
 from prescient.simulator.time_manager import PrescientTime
-from prescient.data.simulation_state import MutableSimulationState
 from prescient.data.simulation_state.state_with_offset import StateWithOffset
 from prescient.simulator import TimeManager, StatsManager
+from prescient.engine.egret.ptdf_manager import PTDFManager
 from prescient.engine.egret.data_extractors import ScedDataExtractor
 from prescient.engine.modeling_engine import ForecastErrorMethod
-from prescient.engine.egret.egret_plugin import _zero_out_costs
-
-from prescient.engine.egret.ptdf_manager import PTDFManager
-from prescient.data.simulation_state import SimulationState
-import pyomo.environ as pe
 
 
 class Simulator(EgretEngine):
@@ -51,7 +47,7 @@ class Simulator(EgretEngine):
 
         self._ruc_market_active = None
         self._ruc_market_pending = None
-        self._simulation_state = MutableSimulationState()
+        self._simulation_state = VaticSimulationState(options)
         self._prior_sced_instance = None
 
         self._time_manager = TimeManager()
@@ -103,7 +99,7 @@ class Simulator(EgretEngine):
             production_forml='CA_production_costs',
             updown_forml='rajan_takriti_UT_DT',
             startup_forml='MLR_startup_costs',
-            network_forml=self.network_constraints,
+            network_forml=self.network_constraints
             )
 
     def simulate(self):
@@ -159,8 +155,7 @@ class Simulator(EgretEngine):
             with open(ruc_file, 'wb') as f:
                 pickle.dump(ruc, f, protocol=-1)
 
-        self._simulation_state.apply_ruc(self.options, ruc)
-        self._simulation_state.apply_actuals(self.options, sim_actuals)
+        self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
         self._ruc_market_active = ruc_market
 
     def call_planning_oracle(self, time_step):
@@ -176,8 +171,7 @@ class Simulator(EgretEngine):
             projected_state
             )
 
-        self._simulation_state.apply_ruc(self.options, ruc)
-        self._simulation_state.apply_actuals(self.options, sim_actuals)
+        self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._ruc_market_pending = ruc_market
 
     def call_oracle(self, time_step):
@@ -203,9 +197,11 @@ class Simulator(EgretEngine):
         print("")
         print("Solving SCED instance")
 
+        cur_state = self._simulation_state.get_state_with_step_length(
+            self.options.sced_frequency_minutes)
+
         current_sced_instance, solve_time = self.solve_sced(
-            self._simulation_state.get_state_with_step_length(
-                self.options.sced_frequency_minutes),
+            cur_state,
             hours_in_objective=1, sced_horizon=self.options.sced_horizon,
             forecast_error_method=forecast_error_method,
             )
@@ -240,7 +236,7 @@ class Simulator(EgretEngine):
         print("Solving for LMPs")
         lmp_sced = self.solve_lmp(current_sced_instance)
 
-        self._simulation_state.apply_sced(self.options, current_sced_instance)
+        self._simulation_state.apply_sced(current_sced_instance)
         self._prior_sced_instance = current_sced_instance
 
         ops_stats = self._stats_manager.collect_operations(
@@ -333,12 +329,12 @@ class Simulator(EgretEngine):
 
         self.sced_model.generate_model(
             sced_model_data, relax_binaries=False, ptdf_options=ptdf_options,
-            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+            objective_hours=hours_in_objective
             )
 
         # update in case lines were taken out
         self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
-        _zero_out_costs(self.sced_model.pyo_instance, self._hours_in_objective)
 
         try:
             sced_results, solve_time = self.sced_model.solve_model(
@@ -397,12 +393,9 @@ class Simulator(EgretEngine):
             self.sced_model.generate_model(
                 lmp_sced_instance, relax_binaries=True,
                 ptdf_options=self._ptdf_manager.lmpsced_ptdf_options,
-                ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+                ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+                objective_hours=self._hours_in_objective
                 )
-
-            pyo_solver = self._sced_solver
-            _zero_out_costs(self.sced_model.pyo_instance,
-                            self._hours_in_objective)
 
         else:
             uc_instance_binary_relaxer(self.sced_model.pyo_instance,
@@ -437,8 +430,8 @@ class Simulator(EgretEngine):
                 self.sced_model.solver.set_objective(
                     self.sced_model.pyo_instance.TotalCostObjective)
 
-        self.sced_model.pyo_instance.dual = pe.Suffix(
-            direction=pe.Suffix.IMPORT)
+        self.sced_model.pyo_instance.dual = PyomoSuffix(
+            direction=PyomoSuffix.IMPORT)
 
         try:
             lmp_sced_results, _ = self.sced_model.solve_model(
@@ -460,16 +453,14 @@ class Simulator(EgretEngine):
         return lmp_sced_results
 
     def _get_projected_state(self,
-                             time_step: PrescientTime) -> SimulationState:
+                             time_step: PrescientTime) -> VaticSimulationState:
         """
         Get the simulation state as we project it will appear
         after the RUC delay.
         """
 
-        ruc_delay = self._get_ruc_delay()
-
         # If there is no RUC delay, use the current state as is
-        if ruc_delay == 0:
+        if self._simulation_state.ruc_delay == 0:
             print("")
             print("Drawing UC initial conditions for date:", time_step.date,
                   "hour:", time_step.hour, "from prior SCED instance.")
@@ -513,19 +504,18 @@ class Simulator(EgretEngine):
             forecast_error_method=sced_forecast_error_method,
             )
 
-        return StateWithOffset(current_state, proj_sced_instance, ruc_delay)
-
-    def _get_ruc_delay(self):
-        return -(self.options.ruc_execution_hour
-                 % (-self.options.ruc_every_hours))
+        return StateWithOffset(current_state, proj_sced_instance,
+                               self._simulation_state.ruc_delay)
 
     def _get_uc_activation_time(self, time_step):
         """
         Get the hour and date that a RUC generated at the given
         time will be activated.
         """
-        ruc_delay = self._get_ruc_delay()
-        activation_time = time_step.datetime + datetime.timedelta(hours=ruc_delay)
+        activation_time = (
+                time_step.datetime
+                + datetime.timedelta(hours=self._simulation_state.ruc_delay)
+                )
 
         return activation_time.hour, activation_time.date()
 

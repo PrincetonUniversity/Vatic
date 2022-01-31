@@ -1,6 +1,7 @@
 
 import pyomo.environ as pe
 
+#TODO: make this and _load_params below more elegant or merge with formulations
 from egret.model_library.unit_commitment.params import load_params \
     as default_params
 from .params import load_params as renewable_cost_params
@@ -92,7 +93,7 @@ class UCModel(object):
     def generate_model(self,
                        model_data: EgretModel,
                        relax_binaries: bool,
-                       ptdf_options, ptdf_matrix_dict):
+                       ptdf_options, ptdf_matrix_dict, objective_hours=None):
 
         use_model = scale_ModelData_to_pu(model_data.clone_in_service(),
                                           inplace=False)
@@ -150,6 +151,41 @@ class UCModel(object):
             model.security_constraints = None
 
         self._load_formulation('objective')(model)
+
+        if objective_hours:
+            zero_cost_hours = set(model.TimePeriods)
+
+            for i, t in enumerate(model.TimePeriods):
+                if i < objective_hours:
+                    zero_cost_hours.remove(t)
+                else:
+                    break
+
+            cost_gens = {g for g, _ in model.ProductionCost}
+            for t in zero_cost_hours:
+                for g in cost_gens:
+                    model.ProductionCostConstr[g, t].deactivate()
+                    model.ProductionCost[g, t].value = 0.
+                    model.ProductionCost[g, t].fix()
+
+                for g in model.DualFuelGenerators:
+                    model.DualFuelProductionCost[g, t].expr = 0.
+
+                if model.regulation_service:
+                    for g in model.AGC_Generators:
+                        model.RegulationCostGeneration[g, t].expr = 0.
+
+                if model.spinning_reserve:
+                    for g in model.ThermalGenerators:
+                        model.SpinningReserveCostGeneration[g, t].expr = 0.
+
+                if model.non_spinning_reserve:
+                    for g in model.ThermalGenerators:
+                        model.NonSpinningReserveCostGeneration[g, t].expr = 0.
+
+                if model.supplemental_reserve:
+                    for g in model.ThermalGenerators:
+                        model.SupplementalReserveCostGeneration[g, t].expr = 0.
 
         self.pyo_instance = model
 
