@@ -29,48 +29,49 @@ from prescient.engine.modeling_engine import ForecastErrorMethod
 class Simulator(EgretEngine):
 
     def __init__(self,
-                 options=None, light_output=False,
-                 init_ruc_file=None, save_init_ruc=False):
+                 in_dir, out_dir, light_output,
+                 init_ruc_file, save_init_ruc, verbosity, prescient_options):
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
         self._current_time = None
 
-        self.options = options
-        self._setup_solvers(options)
+        self.options = prescient_options
+        self.verbosity = verbosity
+        self._setup_solvers(prescient_options)
         self._hours_in_objective = None
 
-        self._data_provider = PickleProvider(
-            options.data_directory, options.start_date, options.num_days,
-            init_ruc_file
-            )
+        self._data_provider = PickleProvider(in_dir,
+                                             prescient_options.start_date,
+                                             prescient_options.num_days,
+                                             init_ruc_file)
         self.save_init_ruc = save_init_ruc
 
         self._ruc_market_active = None
         self._ruc_market_pending = None
-        self._simulation_state = VaticSimulationState(options)
+        self._simulation_state = VaticSimulationState(prescient_options)
         self._prior_sced_instance = None
 
         self._time_manager = TimeManager()
-        self._time_manager.initialize(options)
+        self._time_manager.initialize(prescient_options)
 
         self._sced_extractor = ScedDataExtractor()
         self._ptdf_manager = PTDFManager()
 
         self._stats_manager = StatsManager()
-        self._stats_manager.initialize(options)
-        self._reporting_manager = ReportingManager(options, light_output,
-                                                   self._stats_manager)
+        self._stats_manager.initialize(prescient_options)
+        self._reporting_manager = ReportingManager(
+            out_dir, light_output, self._stats_manager, prescient_options)
 
         self._actuals_step_frequency = 60
-        if options.simulate_out_of_sample:
-            if self._data_provider.data_freq != options.sced_frequency_minutes:
+        if prescient_options.simulate_out_of_sample:
+            if self._data_provider.data_freq != prescient_options.sced_frequency_minutes:
                 raise ValueError(
                     "Given SCED frequency of `{}` minutes doesn't match what "
                     "is available in the data!".format(
-                        options.sced_frequency_minutes)
+                        prescient_options.sced_frequency_minutes)
                     )
 
-            self._actuals_step_frequency = options.sced_frequency_minutes
+            self._actuals_step_frequency = prescient_options.sced_frequency_minutes
 
         self.network_constraints = 'ptdf_power_flow'
 
@@ -122,12 +123,14 @@ class Simulator(EgretEngine):
 
         self._stats_manager.end_simulation()
 
-        print("Simulation Complete")
-        self.simulation_end_time = time.time()
-        print("Total simulation time: {:.2f} seconds".format(
-            self.simulation_end_time - self.simulation_start_time))
+        if self.verbosity > 0:
+            self.simulation_end_time = time.time()
 
-        self._reporting_manager.save_output(self.options.output_directory)
+            print("Simulation Complete")
+            print("Total simulation time: {:.2f} seconds".format(
+                self.simulation_end_time - self.simulation_start_time))
+
+        self._reporting_manager.save_output()
 
     def initialize_oracle(self):
         """
@@ -194,8 +197,8 @@ class Simulator(EgretEngine):
                 time_step.date) + \
                           os.sep + "sced_hour_" + str(time_step.hour) + ".lp"
 
-        print("")
-        print("Solving SCED instance")
+        if self.verbosity > 0:
+            print("\nSolving SCED instance")
 
         cur_state = self._simulation_state.get_state_with_step_length(
             self.options.sced_frequency_minutes)
@@ -233,9 +236,10 @@ class Simulator(EgretEngine):
                     .enable_quickstart_and_solve(options,
                                                  current_sced_instance)
 
-        print("Solving for LMPs")
-        lmp_sced = self.solve_lmp(current_sced_instance)
+        if self.verbosity > 0:
+            print("Solving for LMPs")
 
+        lmp_sced = self.solve_lmp(current_sced_instance)
         self._simulation_state.apply_sced(current_sced_instance)
         self._prior_sced_instance = current_sced_instance
 
@@ -243,7 +247,9 @@ class Simulator(EgretEngine):
             current_sced_instance, solve_time, lmp_sced, pre_quickstart_cache,
             self._sced_extractor
             )
-        self._report_sced_stats(ops_stats)
+
+        if self.verbosity > 0:
+            self._report_sced_stats(ops_stats)
 
         if self.options.compute_market_settlements:
             self.simulator.stats_manager.collect_market_settlement(
@@ -304,8 +310,9 @@ class Simulator(EgretEngine):
         # IMPORTANT: This instance should *not* be passed to any method
         #            involved in the creation of economic dispatch instances,
         #            as that would enable those instances to be prescient.
-        print("")
-        print("Extracting scenario to simulate")
+
+        if self.verbosity > 0:
+            print("\nExtracting scenario to simulate")
 
         return self.create_simulation_actuals(time_step), ruc_plan, ruc_market
 
@@ -468,9 +475,9 @@ class Simulator(EgretEngine):
 
         uc_hour, uc_date = self._get_uc_activation_time(time_step)
 
-        print("")
-        print("Creating and solving SCED to determine UC initial conditions "
-              "for date:", str(uc_date), "hour:", uc_hour)
+        if self.verbosity > 0:
+            print("Creating and solving SCED to determine UC initial "
+                  "conditions for date:", str(uc_date), "hour:", uc_hour)
 
         # determine the SCED execution mode, in terms of how discrepancies
         # between forecast and actuals are handled. prescient processing is
@@ -482,15 +489,17 @@ class Simulator(EgretEngine):
         sced_forecast_error_method = ForecastErrorMethod.PRESCIENT
 
         if self.options.run_sced_with_persistent_forecast_errors:
-            print("Using persistent forecast error model when projecting "
-                  "demand and renewables in SCED")
             sced_forecast_error_method = ForecastErrorMethod.PERSISTENT
 
-        else:
-            print("Using prescient forecast error model when projecting "
-                  "demand and renewables in SCED")
+            if self.verbosity > 0:
+                print("Using persistent forecast error model when projecting "
+                      "demand and renewables in SCED\n")
 
-        print("")
+        else:
+            if self.verbosity > 0:
+                print("Using prescient forecast error model when projecting "
+                      "demand and renewables in SCED\n")
+
         # NOTE: the projected sced probably doesn't have to be run for a full
         #       24 hours - just enough to get you to midnight and a few hours
         #       beyond (to avoid end-of-horizon effects).

@@ -62,6 +62,10 @@ def run_deterministic():
                         nargs='?', const=True,
                         help="whether to save the initial solved RUC to file")
 
+    parser.add_argument('--verbose', '-v', action='count', default=0,
+                        help="how much info to print about the ongoing state "
+                             "of the simulator and its solvers")
+
     args = parser.parse_args()
     start_date, end_date = args.run_dates
 
@@ -83,15 +87,21 @@ def run_deterministic():
     solver_args = ' '.join(["Threads={}".format(args.threads)]
                            + args.solver_args)
 
-    simulator_args =  [
-        '--data-directory', str(args.in_dir), '--simulate-out-of-sample',
+    # Prescient options we want to have no matter what
+    simulator_args = [
+        '--simulate-out-of-sample',
         '--run-sced-with-persistent-forecast-errors',
-        '--output-directory', str(out_dir), '--start-date', start_date,
-        '--num-days', str(ndays), '--sced-horizon', str(args.sced_horizon),
-        '--traceback', '--output-sced-initial-conditions',
-        '--output-sced-demands', '--output-ruc-initial-conditions',
-        '--output-ruc-solutions', '--output-solver-logs',
-        '--ruc-mipgap', str(args.ruc_mipgap), '--symbolic-solver-labels',
+        '--symbolic-solver-labels',
+        '--traceback',
+        ]
+
+    if args.verbose > 1:
+        simulator_args += ['--output-solver-logs']
+
+    simulator_args += [
+        '--start-date', start_date, '--num-days', str(ndays),
+        '--sced-horizon', str(args.sced_horizon),
+        '--ruc-mipgap', str(args.ruc_mipgap),
         '--reserve-factor', str(args.reserve_factor),
         '--deterministic-ruc-solver', args.solver,
         '--sced-solver', args.solver,
@@ -105,6 +115,7 @@ def run_deterministic():
     parsed_args = master_options.construct_options_parser().parse_args(
         simulator_args)
 
-    Simulator(parsed_args, light_output=args.light_output,
-              init_ruc_file=args.init_ruc_file,
-              save_init_ruc=args.save_init_ruc).simulate()
+    Simulator(in_dir=args.in_dir, out_dir=out_dir,
+              light_output=args.light_output, init_ruc_file=args.init_ruc_file,
+              save_init_ruc=args.save_init_ruc, verbosity=args.verbose,
+              prescient_options=parsed_args).simulate()

@@ -152,8 +152,10 @@ class ListMultiRowReporter:
 
 class ReportingManager(_Manager):
 
-    def __init__(self, options, light_output, stats_manager: StatsManager):
-        self.write_dir = options.output_directory
+    def __init__(self,
+                 write_dir, light_output,
+                 stats_manager: StatsManager, options):
+        self.write_dir = write_dir
 
         if not options.disable_stackgraphs:
             os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
@@ -461,12 +463,12 @@ class ReportingManager(_Manager):
 
         super().__init__()
 
-    def save_output(self, out_dir):
+    def save_output(self):
         report_dfs = {output_type: pd.DataFrame(reporter.data,
                                                 columns=reporter.headers)
                       for output_type, reporter in self.reports.items()}
 
-        with bz2.BZ2File(Path(out_dir, "output.p.gz"), 'w') as f:
+        with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
             pickle.dump(report_dfs, f, protocol=-1)
 
     @staticmethod
