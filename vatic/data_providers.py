@@ -26,11 +26,35 @@ class ProviderError(Exception):
 
 
 class PickleProvider:
+    """Loading data from input datasets and generating UC and ED models.
 
-    def __init__(self, data_dir: str, start_date: str, num_days: int) -> None:
+    Args
+    ----
+        options     Miscelleanous properties of the simulation engine which
+                    also apply to data provision.
+
+    """
+
+    def __init__(self, data_dir: str, options: Options) -> None:
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
+        self._reserve_factor = options.reserve_factor
+
+        self._ruc_execution_hour = options.ruc_execution_hour
+        self._ruc_every_hours = options.ruc_every_hours
+        self._ruc_delay = -(self._ruc_execution_hour
+                            % -options.ruc_every_hours)
+
+        self._run_ruc_with_next_day_data = options.run_ruc_with_next_day_data
+        self._ruc_horizon = options.ruc_horizon
+        self._ruc_prescience_hour = options.ruc_prescience_hour
+        self._output_ruc_initial_conditions \
+            = options.output_ruc_initial_conditions
+
+        self._no_startup_shutdown_curves = options.no_startup_shutdown_curves
+        self._enforce_sced_shutdown_ramprate \
+            = options.enforce_sced_shutdown_ramprate
 
         # load input datasets, starting with static grid data (e.g. network
         # topology, thermal generator outputs)
@@ -45,8 +69,8 @@ class PickleProvider:
         with open(Path(data_dir, "load-data.p"), 'rb') as f:
             self.load_data: pd.DataFrame = pickle.load(f)
 
-        self._first_day = pd.Timestamp(start_date).date()
-        self._final_day = self._first_day + pd.Timedelta(days=num_days)
+        self._first_day = pd.Timestamp(options.start_date).date()
+        self._final_day = self._first_day + pd.Timedelta(days=options.num_days)
 
         if not ((self.gen_data.index.date >= self._first_day)
                 & (self.gen_data.index.date <= self._final_day)).all():
@@ -193,7 +217,6 @@ class PickleProvider:
             self,
             use_actuals: bool, start_time: datetime, num_time_periods: int,
             use_state: Union[None, MutableSimulationState] = None,
-            reserve_factor: float = 0.
             ) -> VaticModelData:
         """Creates a model with all grid asset data for a given time period.
 
@@ -210,9 +233,6 @@ class PickleProvider:
                         such as :class:`vatic.engines.Simulator`. If given,
                         this will be used to populate initial generator states
                         instead of the initial states in the input datasets.
-
-            reserve_factor  What proportion of the total demand to set aside as
-                            the model's reserve requirement at each time point.
 
         """
         start_hour = start_time.hour
@@ -259,13 +279,15 @@ class PickleProvider:
 
             # copy over timeseries data for the current timestep
             new_model.copy_forecastables(day_model, step_index, src_step_index)
-            new_model.honor_reserve_factor(reserve_factor, step_index)
+
+            # set aside a proportion of the total demand as the model's reserve
+            # requirement (if any) at each time point
+            new_model.honor_reserve_factor(self._reserve_factor, step_index)
 
         return new_model
 
-    def create_deterministic_ruc(self,
-                                 time_step: PrescientTime, options: Options,
-                                 current_state=None) -> EgretModel:
+    def create_deterministic_ruc(
+            self, time_step: PrescientTime, current_state=None) -> EgretModel:
         """Generates a Reliability Unit Commitment model.
 
         This a merge of Prescient's EgretEngine.create_deterministic_ruc and
@@ -274,40 +296,36 @@ class PickleProvider:
         Args
         ----
             time_step   Which time point to pull data from.
-            options     Miscelleanous properties of the simulation engine in
-                        which this RUC will be used.
             current_state   If given, a simulation state used to get initial
                             states for the generators, which will otherwise be
                             pulled from the input datasets.
 
         """
         start_time = datetime.combine(time_step.date, time(time_step.hour))
-        copy_first_day = not options.run_ruc_with_next_day_data
+        copy_first_day = not self._run_ruc_with_next_day_data
         copy_first_day &= time_step.hour != 0
 
         forecast_request_count = 24
         if not copy_first_day:
-            forecast_request_count = options.ruc_horizon
+            forecast_request_count = self._ruc_horizon
 
         # create a new model using the forecasts for the given time steps
         ruc_model = self.get_populated_model(
             use_actuals=False, start_time=start_time,
             num_time_periods=forecast_request_count, use_state=current_state,
-            reserve_factor=options.reserve_factor
             )
 
         # make some near-term forecasts more accurate if necessary
-        ruc_delay = -(options.ruc_execution_hour % -options.ruc_every_hours)
-        if options.ruc_prescience_hour > ruc_delay + 1:
-            improved_hour_count = options.ruc_prescience_hour - ruc_delay
+        if self._ruc_prescience_hour > self._ruc_delay + 1:
+            improved_hour_count = self._ruc_prescience_hour - self._ruc_delay
             improved_hour_count -= 1
             future_actuals = current_state.get_future_actuals()
 
             for forecast, actuals in zip(ruc_model.get_forecastables(),
                                          future_actuals):
                 for t in range(improved_hour_count):
-                    forecast_portion = (ruc_delay + t)
-                    forecast_portion /= options.ruc_prescience_hour
+                    forecast_portion = (self._ruc_delay + t)
+                    forecast_portion /= self._ruc_prescience_hour
                     actuals_portion = 1 - forecast_portion
 
                     forecast[t] = forecast_portion * forecast[t]
@@ -316,20 +334,19 @@ class PickleProvider:
         # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
             for vals, in ruc_model.get_forecastables():
-                for t in range(24, options.ruc_horizon):
+                for t in range(24, self._ruc_horizon):
                     vals[t] = vals[t - 24]
 
-        if options.output_ruc_initial_conditions:
+        if self._output_ruc_initial_conditions:
             report_initial_conditions_for_deterministic_ruc(ruc_model)
             report_demand_for_deterministic_ruc(ruc_model,
-                                                options.ruc_every_hours)
+                                                self._ruc_every_hours)
 
         return ruc_model.to_egret()
 
     def create_sced_instance(
             self,
-            current_state: MutableSimulationState, options: Options,
-            sced_horizon: int,
+            current_state: MutableSimulationState, sced_horizon: int,
             forecast_error_method=ForecastErrorMethod.PRESCIENT
             ) -> EgretModel:
         """Generates a Security Constrained Economic Dispatch model.
@@ -343,8 +360,6 @@ class PickleProvider:
                             be used as the basis for the data included in this
                             model.
 
-            options     Miscelleanous properties of the simulation engine in
-                        which this SCED will be used.
             sced_horizon    How many time steps this SCED will simulate over.
             forecast_error_method   How the forecasts used in this model will
                                     be adjusted to be closer to the actuals.
@@ -391,7 +406,7 @@ class PickleProvider:
                     sced_data[t] = forecast[t] * forecast_error_ratio
 
         for t in range(sced_horizon):
-            sced_model.honor_reserve_factor(options.reserve_factor, t)
+            sced_model.honor_reserve_factor(self._reserve_factor, t)
 
         # Set generator commitments & future state, start by preparing an empty
         # array of the correct size for each generator
@@ -426,7 +441,7 @@ class PickleProvider:
             gen_data['future_status'] = current_state.minutes_per_step / 60.
             gen_data['future_status'] *= future_status_time_steps
 
-        if not options.no_startup_shutdown_curves:
+        if not self._no_startup_shutdown_curves:
             mins_per_step = current_state.minutes_per_step
 
             for gen, gen_data in sced_model.elements(element_type='generator',
@@ -488,7 +503,7 @@ class PickleProvider:
                             )
                         ]
 
-        if not options.enforce_sced_shutdown_ramprate:
+        if not self._enforce_sced_shutdown_ramprate:
             for gen, gen_data in sced_model.elements(element_type='generator',
                                                      generator_type='thermal'):
                 # make sure the generator can immediately turn off

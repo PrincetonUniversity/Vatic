@@ -7,7 +7,7 @@ from pathlib import Path
 import dill as pickle
 from typing import Union, Tuple, Dict, Any, Callable
 
-from .data_providers import PickleProvider, AllocationPickleProvider
+from .data_providers import PickleProvider
 from .simulation_state import VaticSimulationState
 from .managers.reporting_manager import ReportingManager
 from .models import UCModel
@@ -40,10 +40,8 @@ class Simulator(EgretEngine):
         self._setup_solvers(prescient_options)
         self._hours_in_objective = None
 
-        self._data_provider = PickleProvider(in_dir,
-                                             prescient_options.start_date,
-                                             prescient_options.num_days,
-                                             init_ruc_file)
+        self._data_provider = PickleProvider(in_dir, prescient_options)
+        self.init_ruc_file = init_ruc_file
         self.save_init_ruc = save_init_ruc
 
         self._ruc_market_active = None
@@ -138,11 +136,13 @@ class Simulator(EgretEngine):
              and OracleManager._generate_ruc
         """
 
-        if self._data_provider.init_ruc_file:
+        if self.init_ruc_file:
             sim_actuals = self.create_simulation_actuals(
                 self._time_manager.get_first_time_step())
 
-            ruc = self._data_provider.load_initial_model()
+            with open(self.init_ruc_file, 'rb') as f:
+                ruc = pickle.load(f)
+
             ruc_market = None
 
         else:
@@ -261,7 +261,7 @@ class Simulator(EgretEngine):
     def solve_ruc(self, time_step, sim_state_for_ruc=None):
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(
-            time_step, self.options, sim_state_for_ruc)
+            time_step, sim_state_for_ruc)
         self._ptdf_manager.mark_active(ruc_model_data)
 
         self.ruc_model.generate_model(
@@ -321,7 +321,7 @@ class Simulator(EgretEngine):
                    sced_horizon, forecast_error_method):
 
         sced_model_data = self._data_provider.create_sced_instance(
-            current_state, self.options, sced_horizon=sced_horizon,
+            current_state, sced_horizon=sced_horizon,
             forecast_error_method=forecast_error_method,
             )
 
