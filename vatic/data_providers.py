@@ -30,8 +30,9 @@ class PickleProvider:
 
     Args
     ----
-        options     Miscelleanous properties of the simulation engine which
-                    also apply to data provision.
+        data_dir    The path to where the input datasets are stored.
+        options     Miscelleanous properties of the simulation engine, some of
+                    which also apply to data provision.
 
     """
 
@@ -366,81 +367,83 @@ class PickleProvider:
 
         """
         assert current_state is not None
+        assert current_state.timestep_count >= sced_horizon
 
+        # make a new model, starting with the simulation's initial asset states
         sced_model = self._copy_initial_state_into_model(
             current_state, sced_horizon, self.data_freq)
 
-        # initialize the demand and renewables data, based
-        # on the forecast error model
+        # add the forecasted load demands and renewable generator outputs, and
+        # adjust them to be closer to the corresponding actual values
+        sced_forecastables = sced_model.get_forecastables()
         if forecast_error_method is ForecastErrorMethod.PRESCIENT:
-            # Warning: This method can see into the future!
             future_actuals = current_state.get_future_actuals()
-            sced_forecastables = sced_model.get_forecastables()
 
+            # this error method makes the forecasts equal to the actuals!
             for future, sced_data in zip(future_actuals, sced_forecastables):
                 for t in range(sced_horizon):
                     sced_data[t] = future[t]
 
-        else:  # persistent forecast error:
+        else:
             current_actuals = current_state.get_current_actuals()
             forecasts = current_state.get_forecasts()
-            sced_forecastables = sced_model.get_forecastables()
 
-            # Go through each time series that can be forecasted
+            # this error method adjusts future forecasts based on how much the
+            # current forecast over/underestimated the current actual value
             for current_actual, forecast, sced_data in zip(current_actuals,
                                                            forecasts,
                                                            sced_forecastables):
-                # the first value is, by definition, the actual.
                 sced_data[0] = current_actual
 
-                # Find how much the first forecast was off from the actual, as
-                # a fraction of the forecast. For all subsequent times, adjust
-                # the forecast by the same fraction.
+                # find how much the first forecast was off from the actual as
+                # a fraction of the forecast
                 current_forecast = forecast[0]
                 if current_forecast == 0.0:
                     forecast_error_ratio = 0.0
                 else:
                     forecast_error_ratio = current_actual / forecast[0]
 
+                # adjust the remaining forecasts based on the initial error
                 for t in range(1, sced_horizon):
                     sced_data[t] = forecast[t] * forecast_error_ratio
 
+        # set aside a proportion of the total demand as the model's reserve
+        # requirement (if any) at each time point
         for t in range(sced_horizon):
             sced_model.honor_reserve_factor(self._reserve_factor, t)
 
-        # Set generator commitments & future state, start by preparing an empty
-        # array of the correct size for each generator
+        # pull generator commitments from the state of the simulation
         for gen, gen_data in sced_model.elements(element_type='generator',
                                                  generator_type='thermal'):
-            fixed_commitment = [current_state.get_generator_commitment(gen, t)
-                                for t in range(sced_horizon)]
-            gen_data['fixed_commitment'] = {'data_type': 'time_series',
-                                            'values': fixed_commitment}
+            gen_commits = [current_state.get_generator_commitment(gen, t)
+                           for t in range(current_state.timestep_count)]
 
-            # Look as far into the future as we can for future
-            # startups / shutdowns
-            last_commitment = fixed_commitment[-1]
-            for t in range(sced_horizon, current_state.timestep_count):
-                this_commitment = current_state.get_generator_commitment(
-                    gen, t)
+            gen_data['fixed_commitment'] = {
+                'data_type': 'time_series',
+                'values': gen_commits[:sced_horizon]
+                }
 
-                # future startup
-                if (this_commitment - last_commitment) > 0.5:
-                    future_status_time_steps = (t - sced_horizon + 1)
-                    break
+            # look as far into the future as we can for startups if the
+            # generator is committed to be off at the end of the model window
+            future_status_time_steps = 0
+            if gen_commits[sced_horizon - 1] == 0:
+                for t in range(sced_horizon, current_state.timestep_count):
+                    if gen_commits[t] == 1:
+                        future_status_time_steps = (t - sced_horizon + 1)
+                        break
 
-                # future shutdown
-                elif (last_commitment - this_commitment) > 0.5:
-                    future_status_time_steps = -(t - sced_horizon + 1)
-                    break
-
-            # no break
-            else:
-                future_status_time_steps = 0
+            # same but for future shutdowns if the generator is committed to be
+            # on at the end of the model's time steps
+            elif gen_commits[sced_horizon - 1] == 1:
+                for t in range(sced_horizon, current_state.timestep_count):
+                    if gen_commits[t] == 0:
+                        future_status_time_steps = -(t - sced_horizon + 1)
+                        break
 
             gen_data['future_status'] = current_state.minutes_per_step / 60.
             gen_data['future_status'] *= future_status_time_steps
 
+        # infer generator startup and shutdown curves
         if not self._no_startup_shutdown_curves:
             mins_per_step = current_state.minutes_per_step
 
@@ -517,8 +520,9 @@ class PickleProvider:
 
     # adapted from prescient.engine.egret.egret_plugin
     @staticmethod
-    def _calculate_sced_ramp_capacity(gen_data, ramp_rate_sced,
-                                      minutes_per_step, capacity_key):
+    def _calculate_sced_ramp_capacity(gen_data: dict, ramp_rate_sced: float,
+                                      minutes_per_step: int,
+                                      capacity_key: str) -> float:
         if capacity_key in gen_data:
             susd_capacity_time_varying = isinstance(gen_data[capacity_key],
                                                     dict)
@@ -564,27 +568,41 @@ class PickleProvider:
     def _get_model_for_date(self,
                             requested_date: date,
                             use_actuals) -> VaticModelData:
+        """Retrieves the data for a given day and creates a model template.
+
+        Args
+        ----
+            requested_date  Which day's timeseries values to load.
+            use_actuals     Whether to use the actual values for load demand
+                            and renewable outputs or forecasted values.
+
+        """
         if use_actuals:
             use_lbl = 'actual'
         else:
             use_lbl = 'fcst'
 
-        # Return cached model, if we have it
+        # return cached model if we have already loaded it
         if requested_date in self.date_cache[use_lbl]:
             return VaticModelData(self.date_cache[use_lbl][requested_date])
 
+        # get the static power grid characteristics such as thermal generator
+        # properties and network topology
         day_data = deepcopy(self.template)
         del day_data['CopperSheet']
 
+        # get the renewable generators' output values for this day
         gen_data = self.gen_data.loc[
             self.gen_data.index.date == requested_date, use_lbl]
         day_data['MaxNondispatchablePower'] = dict()
         day_data['MinNondispatchablePower'] = dict()
 
+        # maximum renewable output is just the actual/forecasted output
         for gen in self.renewables:
             day_data['MaxNondispatchablePower'].update({
                 (gen, i + 1): val for i, val in enumerate(gen_data[gen])})
 
+        # we need a second day's worth of values for e.g. extended RUC horizons
         for gen in self.dispatch_renewables:
             if 'WIND' in gen:
                 day_data['MaxNondispatchablePower'].update({
@@ -593,9 +611,12 @@ class PickleProvider:
                 day_data['MaxNondispatchablePower'].update({
                     (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
 
+            # for dispatchable renewables, minimum output is always zero
             day_data['MinNondispatchablePower'].update({
                 (gen, i + 1): 0 for i in range(48)})
 
+        # for non-dispatchable renewables (RTPV), min output is equal to max
+        # output, and we create a second day of values like we do for PV
         for gen in self.nondisp_renewables:
             day_data['MaxNondispatchablePower'].update({
                 (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
@@ -604,6 +625,7 @@ class PickleProvider:
                 for i in range(48)
                 })
 
+        # get the load demand values for this day
         load_data = self.load_data.loc[
             self.load_data.index.date == requested_date, use_lbl]
         day_data['Demand'] = dict()
@@ -614,12 +636,20 @@ class PickleProvider:
             day_data['Demand'].update({
                 (bus, i + 25): val for i, val in enumerate(load_data[bus])})
 
+        # use the loaded data to create a model dictionary that is
+        # interpretable by an Egret model formulation, save it to our cache
         model_dict = self.create_vatic_model_dict(day_data)
         self.date_cache[use_lbl][requested_date] = deepcopy(model_dict)
 
         return VaticModelData(model_dict)
 
     def create_vatic_model_dict(self, data: dict) -> dict:
+        """Convert power grid data into an Egret model dictionary.
+
+        Adapted from
+        egret.parsers.prescient_dat_parser.create_model_data_dict_params
+
+        """
         time_periods = range(1, data['NumTimePeriods'] + 1)
 
         loads = {
@@ -649,6 +679,11 @@ class PickleProvider:
             for line in data['TransmissionLines']
             }
 
+        # how we create the model entries for generators depends on which model
+        # formulation we will use and can thus be changed by children providers
+        generators = {**self._create_thermals_model_dict(data),
+                      **self._create_renewables_model_dict(data)}
+
         gen_buses = dict()
         for bus in data['Buses']:
             for gen in data['ThermalGeneratorsAtBus'][bus]:
@@ -656,8 +691,8 @@ class PickleProvider:
             for gen in data['NondispatchableGeneratorsAtBus'][bus]:
                 gen_buses[gen] = bus
 
-        generators = {**self._create_thermals_model_dict(data, gen_buses),
-                      **self._create_renewables_model_dict(data, gen_buses)}
+        for gen in generators:
+            generators[gen]['bus'] = gen_buses[gen]
 
         return {
             'system': {'time_keys': [str(t) for t in time_periods],
@@ -683,9 +718,9 @@ class PickleProvider:
                          }
             }
 
-    def _create_thermals_model_dict(self, data: dict, gen_buses: dict) -> dict:
+    def _create_thermals_model_dict(self, data: dict) -> dict:
         return {
-            gen: {'generator_type': 'thermal', 'bus': gen_buses[gen],
+            gen: {'generator_type': 'thermal',
                   'fuel': data['ThermalGeneratorType'][gen],
                   'fast_start': False,
 
@@ -717,10 +752,9 @@ class PickleProvider:
             for gen in self.template['ThermalGenerators']
             }
 
-    def _create_renewables_model_dict(self,
-                                      data: dict, gen_buses: dict) -> dict:
+    def _create_renewables_model_dict(self, data: dict) -> dict:
         gen_dict = {
-            gen: {'generator_type': 'renewable', 'bus': gen_buses[gen],
+            gen: {'generator_type': 'renewable',
                   'fuel': data['NondispatchableGeneratorType'][gen],
                   'in_service': True}
             for gen in self.template['NondispatchableGenerators']
@@ -740,6 +774,8 @@ class PickleProvider:
                                for t in range(data['NumTimePeriods'])]
                     }
 
+            # deal with cases like CSPs which show up in the model template but
+            # for which there is no data
             else:
                 gen_dict[gen]['p_min'] = {
                     'data_type': 'time_series',
