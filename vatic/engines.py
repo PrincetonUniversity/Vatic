@@ -7,7 +7,7 @@ from pathlib import Path
 import dill as pickle
 from typing import Union, Tuple, Dict, Any, Callable
 
-from .data_providers import PickleProvider
+from .data_providers import PickleProvider, AllocationPickleProvider
 from .simulation_state import VaticSimulationState
 from .managers.reporting_manager import ReportingManager
 from .models import UCModel
@@ -28,6 +28,34 @@ from prescient.engine.modeling_engine import ForecastErrorMethod
 
 class Simulator(EgretEngine):
 
+    ruc_formulations = dict(
+        params_forml='default_params',
+        status_forml='garver_3bin_vars',
+        power_forml='garver_power_vars',
+        reserve_forml='garver_power_avail_vars',
+        generation_forml='pan_guan_gentile_KOW_generation_limits',
+        ramping_forml='damcikurt_ramping',
+        production_forml='KOW_production_costs_tightened',
+        updown_forml='rajan_takriti_UT_DT',
+        startup_forml='KOW_startup_costs',
+        network_forml='ptdf_power_flow'
+        )
+
+    sced_formulations = dict(
+        params_forml='default_params',
+        status_forml='garver_3bin_vars',
+        power_forml='garver_power_vars',
+        reserve_forml='MLR_reserve_vars',
+        generation_forml='MLR_generation_limits',
+        ramping_forml='damcikurt_ramping',
+        production_forml='CA_production_costs',
+        updown_forml='rajan_takriti_UT_DT',
+        startup_forml='MLR_startup_costs',
+        network_forml='ptdf_power_flow'
+        )
+
+    data_provider_class = PickleProvider
+
     def __init__(self,
                  in_dir, out_dir, light_output,
                  init_ruc_file, save_init_ruc, verbosity, prescient_options):
@@ -40,7 +68,8 @@ class Simulator(EgretEngine):
         self._setup_solvers(prescient_options)
         self._hours_in_objective = None
 
-        self._data_provider = PickleProvider(in_dir, prescient_options)
+        self._data_provider = self.__class__.data_provider_class(
+            in_dir, prescient_options)
         self.init_ruc_file = init_ruc_file
         self.save_init_ruc = save_init_ruc
 
@@ -71,35 +100,8 @@ class Simulator(EgretEngine):
 
             self._actuals_step_frequency = prescient_options.sced_frequency_minutes
 
-        self.network_constraints = 'ptdf_power_flow'
-
-        self.ruc_model = UCModel(
-            params_forml='default_params',
-            #params_forml='renewable_cost_params',
-            status_forml='garver_3bin_vars',
-            power_forml='garver_power_vars',
-            reserve_forml='garver_power_avail_vars',
-            generation_forml='pan_guan_gentile_KOW_generation_limits',
-            ramping_forml='damcikurt_ramping',
-            production_forml='KOW_production_costs_tightened',
-            #production_forml='KOW_Vatic_production_costs_tightened',
-            updown_forml='rajan_takriti_UT_DT',
-            startup_forml='KOW_startup_costs',
-            network_forml=self.network_constraints
-            )
-
-        self.sced_model = UCModel(
-            params_forml='default_params',
-            status_forml='garver_3bin_vars',
-            power_forml='garver_power_vars',
-            reserve_forml='MLR_reserve_vars',
-            generation_forml='MLR_generation_limits',
-            ramping_forml='damcikurt_ramping',
-            production_forml='CA_production_costs',
-            updown_forml='rajan_takriti_UT_DT',
-            startup_forml='MLR_startup_costs',
-            network_forml=self.network_constraints
-            )
+        self.ruc_model = UCModel(**self.__class__.ruc_formulations)
+        self.sced_model = UCModel(**self.__class__.sced_formulations)
 
     def simulate(self):
         self.initialize_oracle()
@@ -460,7 +462,7 @@ class Simulator(EgretEngine):
         return lmp_sced_results
 
     def _get_projected_state(self,
-                             time_step: PrescientTime) -> VaticSimulationState:
+                             time_step: PrescientTime) -> StateWithOffset:
         """
         Get the simulation state as we project it will appear
         after the RUC delay.
@@ -604,3 +606,21 @@ class Simulator(EgretEngine):
         print("Sum on/off ramps:     %12.2f" % ops_stats.sum_on_off_ramps)
         print("Sum nominal ramps:    %12.2f" % ops_stats.sum_nominal_ramps)
         print("")
+
+
+class AllocationSimulator(Simulator):
+
+    ruc_formulations = dict(
+        params_forml='renewable_cost_params',
+        status_forml='garver_3bin_vars',
+        power_forml='garver_power_vars',
+        reserve_forml='garver_power_avail_vars',
+        generation_forml='pan_guan_gentile_KOW_generation_limits',
+        ramping_forml='damcikurt_ramping',
+        production_forml='KOW_Vatic_production_costs_tightened',
+        updown_forml='rajan_takriti_UT_DT',
+        startup_forml='KOW_startup_costs',
+        network_forml='ptdf_power_flow'
+        )
+
+    data_provider_class = AllocationPickleProvider

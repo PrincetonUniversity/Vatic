@@ -3,7 +3,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 from prescient.simulator import master_options
-from .engines import Simulator
+from .engines import Simulator, AllocationSimulator
 
 
 def run_deterministic():
@@ -23,6 +23,9 @@ def run_deterministic():
     parser.add_argument('--light-output', '-l',
                         action='store_true', dest='light_output',
                         help="don't create hourly asset digests")
+    parser.add_argument('--renew-costs', '-c',
+                        action='store_true', dest='renew_costs',
+                        help="use costs for renewables from input directory")
 
     parser.add_argument('--solver', type=str, default='cbc',
                         help="How to solve RUCs and SCEDs.")
@@ -115,7 +118,11 @@ def run_deterministic():
     parsed_args = master_options.construct_options_parser().parse_args(
         simulator_args)
 
-    Simulator(in_dir=args.in_dir, out_dir=out_dir,
-              light_output=args.light_output, init_ruc_file=args.init_ruc_file,
-              save_init_ruc=args.save_init_ruc, verbosity=args.verbose,
-              prescient_options=parsed_args).simulate()
+    if args.renew_costs:
+        SimCls = AllocationSimulator
+    else:
+        SimCls = Simulator
+
+    SimCls(in_dir=args.in_dir, out_dir=out_dir, light_output=args.light_output,
+           init_ruc_file=args.init_ruc_file, save_init_ruc=args.save_init_ruc,
+           verbosity=args.verbose, prescient_options=parsed_args).simulate()
