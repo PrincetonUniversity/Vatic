@@ -8,8 +8,7 @@ from .params import load_params as renewable_cost_params
 
 from egret.model_library.unit_commitment import (
     services, fuel_supply, fuel_consumption, security_constraints)
-from egret.models.unit_commitment import (
-    _solve_unit_commitment, _save_uc_results)
+from egret.models.unit_commitment import _solve_unit_commitment
 from egret.common.log import logger as egret_logger
 
 from egret.model_library.transmission.tx_utils import scale_ModelData_to_pu
@@ -19,7 +18,7 @@ import egret.common.lazy_ptdf_utils as lpu
 import importlib
 import logging
 from ast import literal_eval
-from ._utils import ModelError
+from ._utils import ModelError, _save_uc_results
 
 
 class UCModel(object):
@@ -95,9 +94,8 @@ class UCModel(object):
                        relax_binaries: bool,
                        ptdf_options, ptdf_matrix_dict, objective_hours=None):
 
-        use_model = scale_ModelData_to_pu(model_data.clone_in_service(),
-                                          inplace=False)
-
+        #TODO: do we need to add scaling back in if baseMVA is always 1?
+        use_model = model_data.clone_in_service()
         model = pe.ConcreteModel()
         model.model_data = use_model
         model.name = "UnitCommitment"
