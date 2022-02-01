@@ -103,12 +103,12 @@ class PickleProvider:
                       for gen in self.template['NondispatchableGenerators']
                       if gen in self.renewables}
 
-        self.dispatch_renewables = [gen for gen, gen_info in rnwbl_info.items()
-                                    if gen_info[1] not in {'HYDRO', 'RTPV'}]
-        self.nondisp_renewables = [gen for gen, gen_info in rnwbl_info.items()
-                                   if gen_info[1] in {'HYDRO', 'RTPV'}]
-        self.forecast_renewables = [gen for gen, gen_info in rnwbl_info.items()
-                                    if gen_info[1] != 'HYDRO']
+        self.dispatch_renewables = {gen for gen, gen_info in rnwbl_info.items()
+                                    if gen_info[1] not in {'HYDRO', 'RTPV'}}
+        self.nondisp_renewables = {gen for gen, gen_info in rnwbl_info.items()
+                                   if gen_info[1] in {'HYDRO', 'RTPV'}}
+        self.forecast_renewables = {gen for gen, gen_info in rnwbl_info.items()
+                                    if gen_info[1] != 'HYDRO'}
 
         # create an empty template model
         self.init_model = self._get_model_for_date(self._first_day,
@@ -753,38 +753,75 @@ class PickleProvider:
             }
 
     def _create_renewables_model_dict(self, data: dict) -> dict:
-        gen_dict = {
-            gen: {'generator_type': 'renewable',
-                  'fuel': data['NondispatchableGeneratorType'][gen],
-                  'in_service': True}
-            for gen in self.template['NondispatchableGenerators']
-            }
+        gen_dict = {gen: {'generator_type': 'renewable',
+                          'fuel': data['NondispatchableGeneratorType'][gen],
+                          'in_service': True}
+                    for gen in self.template['NondispatchableGenerators']}
 
         for gen in self.template['NondispatchableGenerators']:
             if gen in self.renewables:
-                gen_dict[gen]['p_min'] = {
-                    'data_type': 'time_series',
-                    'values': [data['MinNondispatchablePower'][gen, t + 1]
-                               for t in range(data['NumTimePeriods'])]
-                    }
-
-                gen_dict[gen]['p_max'] = {
-                    'data_type': 'time_series',
-                    'values': [data['MaxNondispatchablePower'][gen, t + 1]
-                               for t in range(data['NumTimePeriods'])]
-                    }
+                pmin_vals = [data['MinNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+                pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
 
             # deal with cases like CSPs which show up in the model template but
             # for which there is no data
             else:
-                gen_dict[gen]['p_min'] = {
-                    'data_type': 'time_series',
-                    'values': [0. for _ in range(data['NumTimePeriods'])]
-                    }
+                pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
+                pmax_vals = [0. for _ in range(data['NumTimePeriods'])]
 
-                gen_dict[gen]['p_max'] = {
-                    'data_type': 'time_series',
-                    'values': [0. for _ in range(data['NumTimePeriods'])]
-                    }
+            gen_dict[gen]['p_min'] = {'data_type': 'time_series',
+                                      'values': pmin_vals}
+            gen_dict[gen]['p_max'] = {'data_type': 'time_series',
+                                      'values': pmax_vals}
+
+        return gen_dict
+
+
+class AllocationPickleProvider(PickleProvider):
+
+    def __init__(self, data_dir: str, options: Options) -> None:
+        with open(Path(data_dir, "renew-costs.p"), 'rb') as f:
+            self.renew_costs: dict = pickle.load(f)
+
+        super().__init__(data_dir, options)
+
+    def _create_renewables_model_dict(self, data: dict) -> dict:
+        gen_dict = {gen: {'generator_type': 'renewable',
+                          'fuel': data['NondispatchableGeneratorType'][gen],
+                          'in_service': True}
+                    for gen in self.template['NondispatchableGenerators']}
+
+        for gen in self.template['NondispatchableGenerators']:
+            if gen in self.forecast_renewables:
+                pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
+                pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+
+            # renewables such as hydro which we don't allocate costs to
+            elif gen in self.renewables:
+                pmin_vals = [data['MinNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+                pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+
+            # renewables such as CSP for which there is no data
+            else:
+                pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
+                pmax_vals = [0. for _ in range(data['NumTimePeriods'])]
+
+            gen_dict[gen]['p_min'] = {'data_type': 'time_series',
+                                      'values': pmin_vals}
+            gen_dict[gen]['p_max'] = {'data_type': 'time_series',
+                                      'values': pmax_vals}
+
+        for gen, cost_vals in self.renew_costs.items():
+            if gen not in self.forecast_renewables:
+                raise ProviderError("Costs have been provided for generator "
+                                    "`{}` which is not a forecastable (WIND, "
+                                    "PV, RTPV) renewable!".format(gen))
+
+            gen_dict[gen]['p_cost'] = deepcopy(cost_vals)
 
         return gen_dict
