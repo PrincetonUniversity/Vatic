@@ -3,7 +3,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 from prescient.simulator import master_options
-from .engines import Simulator, AllocationSimulator
+from .engines import Simulator, AllocationSimulator, AutoAllocationSimulator
 
 
 def run_deterministic():
@@ -23,8 +23,8 @@ def run_deterministic():
     parser.add_argument('--light-output', '-l',
                         action='store_true', dest='light_output',
                         help="don't create hourly asset digests")
-    parser.add_argument('--renew-costs', '-c',
-                        action='store_true', dest='renew_costs',
+    parser.add_argument('--renew-costs', '-c', nargs='*',
+                        default=False, dest='renew_costs',
                         help="use costs for renewables from input directory")
 
     parser.add_argument('--solver', type=str, default='cbc',
@@ -118,11 +118,26 @@ def run_deterministic():
     parsed_args = master_options.construct_options_parser().parse_args(
         simulator_args)
 
-    if args.renew_costs:
-        SimCls = AllocationSimulator
-    else:
-        SimCls = Simulator
+    if args.renew_costs is False:
+        Simulator(in_dir=args.in_dir, out_dir=out_dir,
+                  light_output=args.light_output,
+                  init_ruc_file=args.init_ruc_file,
+                  save_init_ruc=args.save_init_ruc, verbosity=args.verbose,
+                  prescient_options=parsed_args).simulate()
 
-    SimCls(in_dir=args.in_dir, out_dir=out_dir, light_output=args.light_output,
-           init_ruc_file=args.init_ruc_file, save_init_ruc=args.save_init_ruc,
-           verbosity=args.verbose, prescient_options=parsed_args).simulate()
+    elif not args.renew_costs:
+        AllocationSimulator(in_dir=args.in_dir, out_dir=out_dir,
+                            light_output=args.light_output,
+                            init_ruc_file=args.init_ruc_file,
+                            save_init_ruc=args.save_init_ruc,
+                            verbosity=args.verbose,
+                            prescient_options=parsed_args).simulate()
+
+    else:
+        AutoAllocationSimulator(cost_vals=args.renew_costs, in_dir=args.in_dir,
+                                out_dir=out_dir,
+                                light_output=args.light_output,
+                                init_ruc_file=args.init_ruc_file,
+                                save_init_ruc=args.save_init_ruc,
+                                verbosity=args.verbose,
+                                prescient_options=parsed_args).simulate()

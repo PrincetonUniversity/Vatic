@@ -11,12 +11,7 @@ def _get_piecewise_production_generators(model):
 
     # more than two points -> not linear
     def piecewise_generators_time_set(m):
-        for g in m.ThermalGenerators:
-            for t in m.TimePeriods:
-                if len(m.PowerGenerationPiecewisePoints[g, t]) > 2:
-                    yield g, t
-
-        for g in m.AllNondispatchableGenerators:
+        for g in m.ThermalGenerators | m.AllNondispatchableGenerators:
             for t in m.TimePeriods:
                 if len(m.PowerGenerationPiecewisePoints[g, t]) > 2:
                     yield g, t
@@ -26,7 +21,7 @@ def _get_piecewise_production_generators(model):
 
     # two points -> linear
     def linear_generators_time_set(m):
-        for g in m.ThermalGenerators:
+        for g in m.ThermalGenerators | m.AllNondispatchableGenerators:
             for t in m.TimePeriods:
                 if len(m.PowerGenerationPiecewisePoints[g, t]) == 2:
                     yield g, t
@@ -120,8 +115,13 @@ def _basic_production_costs_constr(model):
             slope = time_scale * costs[i + 1] - time_scale * costs[i]
             slope /= points[i + 1] - points[i]
 
-            linear_vars, linear_coefs = \
-                m._get_power_generated_above_minimum_lists(m, g, t)
+            if g in m.ThermalGenerators:
+                linear_vars, linear_coefs = \
+                    m._get_power_generated_above_minimum_lists(m, g, t)
+            else:
+                linear_vars = [m.NondispatchablePowerUsed[g, t]]
+                linear_coefs = [1.]
+
             linear_coefs = [slope * coef for coef in linear_coefs]
             linear_vars.append(m.ProductionCost[g, t])
             linear_coefs.append(-1.)

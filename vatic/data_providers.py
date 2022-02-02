@@ -825,3 +825,50 @@ class AllocationPickleProvider(PickleProvider):
             gen_dict[gen]['p_cost'] = deepcopy(cost_vals)
 
         return gen_dict
+
+
+class AutoAllocationPickleProvider(PickleProvider):
+
+    cost_vals = [(1., 0.)]
+
+    def _create_renewables_model_dict(self, data: dict) -> dict:
+        gen_dict = {gen: {'generator_type': 'renewable',
+                          'fuel': data['NondispatchableGeneratorType'][gen],
+                          'in_service': True}
+                    for gen in self.template['NondispatchableGenerators']}
+
+        for gen in self.template['NondispatchableGenerators']:
+            if gen in self.forecast_renewables:
+                pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
+                pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+
+            # renewables such as hydro which we don't allocate costs to
+            elif gen in self.renewables:
+                pmin_vals = [data['MinNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+                pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
+                             for t in range(data['NumTimePeriods'])]
+
+            # renewables such as CSP for which there is no data
+            else:
+                pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
+                pmax_vals = [0. for _ in range(data['NumTimePeriods'])]
+
+            gen_dict[gen]['p_min'] = {'data_type': 'time_series',
+                                      'values': pmin_vals}
+            gen_dict[gen]['p_max'] = {'data_type': 'time_series',
+                                      'values': pmax_vals}
+
+        for gen in self.forecast_renewables:
+            gen_dict[gen]['p_cost'] = {
+                'data_type': 'time_series',
+
+                'values': [{'data_type': 'cost_curve',
+                            'cost_curve_type': 'piecewise',
+                            'values': [(ratio * pmax, cost * ratio * pmax)
+                                       for ratio, cost in self.cost_vals]}
+                           for pmax in gen_dict[gen]['p_max']['values']]
+                }
+
+        return gen_dict

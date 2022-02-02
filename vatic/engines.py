@@ -7,7 +7,8 @@ from pathlib import Path
 import dill as pickle
 from typing import Union, Tuple, Dict, Any, Callable
 
-from .data_providers import PickleProvider, AllocationPickleProvider
+from .data_providers import (
+    PickleProvider, AllocationPickleProvider, AutoAllocationPickleProvider)
 from .simulation_state import VaticSimulationState
 from .managers.reporting_manager import ReportingManager
 from .models import UCModel
@@ -68,8 +69,8 @@ class Simulator(EgretEngine):
         self._setup_solvers(prescient_options)
         self._hours_in_objective = None
 
-        self._data_provider = self.__class__.data_provider_class(
-            in_dir, prescient_options)
+        self._data_provider = self.data_provider_class(in_dir,
+                                                       prescient_options)
         self.init_ruc_file = init_ruc_file
         self.save_init_ruc = save_init_ruc
 
@@ -624,3 +625,34 @@ class AllocationSimulator(Simulator):
         )
 
     data_provider_class = AllocationPickleProvider
+
+
+class AutoAllocationSimulator(AllocationSimulator):
+
+    def __new__(cls,
+                cost_vals, in_dir, out_dir, light_output, init_ruc_file,
+                save_init_ruc, verbosity, prescient_options):
+
+        cls.data_provider_class = cls.auto_provider_factory(cost_vals)
+
+        return super().__new__(cls)
+
+    def __init__(self,
+                 cost_vals, in_dir, out_dir, light_output, init_ruc_file,
+                 save_init_ruc, verbosity, prescient_options):
+        super().__init__(in_dir, out_dir, light_output, init_ruc_file,
+                         save_init_ruc, verbosity, prescient_options)
+
+    @staticmethod
+    def auto_provider_factory(cost_vals):
+        NewCls = AutoAllocationPickleProvider
+
+        ncosts = len(cost_vals) - 1
+        if ncosts == 0:
+            NewCls.cost_vals = [(1., float(cost_vals[0]))]
+
+        else:
+            NewCls.cost_vals = [(i / ncosts, float(c))
+                                for i, c in enumerate(cost_vals)]
+
+        return NewCls
