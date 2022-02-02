@@ -52,7 +52,20 @@ class VaticModelData(object):
 
     def elements(self,
                  element_type: str,
-                 **element_args) -> Iterator[Tuple[str, Dict]]:
+                 **element_args: str) -> Iterator[Tuple[str, Dict]]:
+        """Retrieves grid elements that match a set of criteria.
+
+        Args
+        ----
+            element_type    Which type of element to search within, e.g. 'bus',
+                            'generator', 'load', 'branch', etc.
+            element_args    A set of element property values, all of which must
+                            be present in an element's data entry and equal to
+                            the given value for the element's entry to be
+                            returned. e.g. generator_type='renewable'
+                                           bus='Chifa'
+
+        """
         if element_type not in self._data['elements']:
             raise ModelError("This model does not include the element "
                              "type `{}`!".format(element_type))
@@ -63,6 +76,8 @@ class VaticModelData(object):
                 yield name, elem
 
     def get_forecastables(self) -> Iterator[List[float]]:
+        """Retrieves grid elements' timeseries that can be forecast."""
+
         for gen, gen_data in self.elements('generator',
                                            generator_type='renewable'):
             yield gen_data['p_min']['values']
@@ -75,8 +90,23 @@ class VaticModelData(object):
 
     def time_series(self,
                     element_types: Optional[Iterable[str]] = None,
-                    include_reserves=True, **element_args) -> Iterator[Tuple]:
+                    include_reserves=True,
+                    **element_args: str) -> Iterator[Tuple]:
+        """Retrieves timeseries for grid elements that match a set of criteria.
 
+        Args
+        ----
+            element_types   Which types of element to search within,
+                            e.g. 'storage', 'load', generator', 'bus', etc.
+            include_reserves    Whether to return reserve requirements, which
+                                will never be returned otherwise.
+            element_args    A set of element property values, all of which must
+                            be present in an element's data entry and equal to
+                            the given value for the element's entry to be
+                            returned. e.g. generator_type='thermal'
+                                           in_service=True
+
+        """
         if element_types is None:
             element_types = list(self._data['elements'])
 
@@ -98,15 +128,36 @@ class VaticModelData(object):
                    self._data['system']['reserve_requirement'])
 
     def copy_elements(self,
-                      other: VModelData, element_type, attrs=None,
-                      strict_mode=False, **element_args) -> None:
+                      other: VModelData, element_type: str,
+                      attrs: Optional[Iterable[str]] = None,
+                      strict_mode=False, **element_args: str) -> None:
+        """Replaces grid elements with those in another model data object.
 
+        Args
+        ----
+            other   The model data object we will be copying from.
+            element_type    Which type of element to copy from, e.g. 'bus',
+                            'generator', 'load', 'branch', etc.
+            attrs       If given, only copy data from within these element
+                        entry fields, e.g. 'p_min', 'generator_type', etc.
+            strict_mode     Raise an error if an element meeting the criteria
+                            for copying in the other model data object is
+                            not present in this model data object.
+
+            element_args    A set of element property values, all of which must
+                            be present in an element's data entry and equal to
+                            the given value for the element's entry to be
+                            copied. e.g. generator_type='thermal'
+                                         in_service=False
+
+        """
         for name, elem in other.elements(element_type, **element_args):
             if name in self._data['elements'][element_type]:
                 if attrs:
                     for attr in attrs:
                         self._data['elements'][element_type][name][attr] \
                             = deepcopy(elem[attr])
+
                 else:
                     self._data['elements'][element_type][name] = deepcopy(elem)
 
@@ -115,15 +166,24 @@ class VaticModelData(object):
                                  "object which contains the missing "
                                  "element `{}`!".format(name))
 
-    def copy_forecastables(self, other: VModelData,
-                           time_index, other_time_index) -> None:
+    def copy_forecastables(self,
+                           other: VModelData,
+                           time_index: int, other_time_index: int) -> None:
+        """Replaces forecastable values with those from another model data.
 
+        Args
+        ----
+            other   The model data object we will be copying from.
+            time_index      Which time step to replace in this model data.
+            other_time_index    Which time step to copy from in the other data.
+
+        """
         for gen, gen_data in other.elements('generator',
                                             generator_type='renewable'):
-            for k in ['p_min', 'p_max']:
-                self._data[
-                    'elements']['generator'][gen][k]['values'][time_index] \
-                        = gen_data[k]['values'][other_time_index]
+            for k in ['p_min', 'p_max', 'p_cost']:
+                if k in gen_data:
+                    self._data['elements']['generator'][gen][k]['values'][
+                        time_index] = gen_data[k]['values'][other_time_index]
 
         for bus, bus_data in other.elements('load'):
             self._data[
@@ -134,6 +194,8 @@ class VaticModelData(object):
             = other.get_reserve_requirement(other_time_index)
 
     def reset_timeseries(self) -> None:
+        """Replaces all timeseries entries with empty lists."""
+
         self._data['system']['time_keys'] = list()
         self._data['system']['time_period_length_minutes'] = None
 
