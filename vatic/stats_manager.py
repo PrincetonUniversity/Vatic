@@ -15,13 +15,14 @@ import dill as pickle
 from typing import TypeVar, Callable, Iterable, Any, Union, Dict
 import pandas as pd
 
-from prescient.simulator.manager import _Manager
+from .model_data import VaticModelData
+from .time_manager import VaticTime
+
 from prescient.simulator.reporting_manager import (
     _collect_time, _collect_time_assert_equal,
     _add_timeseries_attribute_to_egret_dict
     )
 
-from prescient.simulator.stats_manager import StatsManager
 from prescient.stats.overall_stats import OverallStats
 from prescient.stats.daily_stats import DailyStats
 from egret.data.model_data import ModelData
@@ -150,323 +151,184 @@ class ListMultiRowReporter:
         self.data += [self.map(record, k) for k in self._key_provider(record)]
 
 
-class ReportingManager(_Manager):
+class StatsManager:
 
     def __init__(self,
-                 write_dir, light_output,
-                 stats_manager: StatsManager, options):
+                 write_dir, light_output, verbosity, options):
+        self._sced_stats = dict()
+        self._ruc_stats = dict()
+
+        self.light_output = light_output
+        self.verbosity = verbosity
         self.write_dir = write_dir
 
+        self._round = lambda val: round(val, options.output_max_decimal_places)
         if not options.disable_stackgraphs:
             os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
 
-        self._round = lambda val : round(val,
-                                         options.output_max_decimal_places)
-
-        self.reports = dict()
-
-        # set up runtimes
-        self.reports['runtimes'] = ListReporter({
-            'Date':       lambda ops: str(ops.timestamp.date()),
-            'Hour':       lambda ops: ops.timestamp.hour,
-            'Minute':     lambda ops: ops.timestamp.minute,
-            'Type':       lambda ops: "SCED",
-            'Solve Time': lambda ops: self._round(ops.sced_runtime)
-            })
-
-        stats_manager.register_for_sced_stats(
-            self.reports['runtimes'].write_record)
-
-        if options.sced_frequency_minutes != 60:
-            self.reports['hr_runtime'] = ListReporter({
-                'Date':       lambda hourly: str(hourly.date),
-                'Hour':       lambda hourly: hourly.hour,
-                'Minute':     lambda hourly: 0,
-                'Type':       lambda hourly: "Hourly Average",
-                'Solve Time': lambda hourly: self._round(
-                    hourly.average_sced_runtime)
-                })
-
-            stats_manager.register_for_hourly_stats(
-                self.reports['hr_runtimes'].write_record)
-
-        # set up thermal detail
-        if not light_output:
-            self.reports['thermal_detail'] = ListMultiRowReporter(
-                lambda stats: stats.observed_thermal_dispatch_levels.keys(), {
-                    'Date': lambda ops, g: str(ops.timestamp.date()),
-                    'Hour': lambda ops, g: ops.timestamp.hour,
-                    'Minute': lambda ops, g: ops.timestamp.minute,
-                    'Generator': lambda ops, g: g,
-                    'Dispatch': lambda ops, g: self._round(
-                        ops.observed_thermal_dispatch_levels[g]),
-                    'Dispatch DA': lambda ops, g: (
-                        self._round(ops.thermal_gen_cleared_DA[g])
-                        if options.compute_market_settlements else None
-                    ),
-                    'Headroom': lambda ops, g: self._round(
-                        ops.observed_thermal_headroom_levels[g]),
-                    'Unit State': lambda ops, g: ops.observed_thermal_states[
-                        g],
-                    'Unit Cost': lambda ops, g: self._round(
-                        ops.observed_costs[g]),
-                    'Unit Market Revenue': lambda ops, g: (
-                        self._round(ops.thermal_gen_revenue[g]
-                                    + ops.thermal_reserve_revenue[g])
-                        if options.compute_market_settlements else None
-                    ),
-                    'Unit Uplift Payment': lambda hourly, g: (
-                        self._round(hourly.thermal_uplift[g])
-                        if options.compute_market_settlements else None
-                    )
-                    }
-                )
-
-            stats_manager.register_for_sced_stats(
-                self.reports['thermal_detail'].write_record)
-
-            # set up renewables detail
-            self.reports['renewables_detail'] = ListMultiRowReporter(
-                lambda ops: ops.observed_renewables_levels.keys(), {
-                    'Date': lambda ops, g: str(ops.timestamp.date()),
-                    'Hour': lambda ops, g: ops.timestamp.hour,
-                    'Minute': lambda ops, g: ops.timestamp.minute,
-                    'Generator': lambda ops, g: g,
-                    'Output': lambda ops, g: self._round(
-                        ops.observed_renewables_levels[g]),
-                    'Output DA': lambda ops, g: (
-                        self._round(ops.renewable_gen_cleared_DA[g])
-                        if options.compute_market_settlements else None
-                    ),
-                    'Curtailment': lambda ops, g: self._round(
-                        ops.observed_renewables_curtailment[g]),
-                    'Unit Market Revenue': lambda ops, g: (
-                        self._round(ops.renewable_gen_revenue[g])
-                        if options.compute_market_settlements else None
-                    ),
-                    'Unit Uplift Payment': lambda ops, g: (
-                        self._round(ops.renewable_uplift[g])
-                        if options.compute_market_settlements else None
-                    )
-                    }
-                )
-
-
-            stats_manager.register_for_sced_stats(
-                self.reports['renewables_detail'].write_record)
-
-            # set up bus detail
-            self.reports['bus_detail'] = ListMultiRowReporter(
-                lambda ops: ops.observed_bus_mismatches.keys(), {
-                    'Date': lambda ops, b: str(ops.timestamp.date()),
-                    'Hour': lambda ops, b: ops.timestamp.hour,
-                    'Minute': lambda ops, b: ops.timestamp.minute,
-                    'Bus': lambda ops, b: b,
-                    'Demand': lambda ops, b: self._round(ops.bus_demands[b]),
-                    'Shortfall': lambda ops, b: (
-                        self._round(ops.observed_bus_mismatches[b])
-                        if ops.observed_bus_mismatches[b] > 0.0 else 0.0
-                        ),
-                    'Overgeneration': lambda ops, b: (
-                        self._round(-ops.observed_bus_mismatches[b])
-                        if ops.observed_bus_mismatches[b] < 0.0 else 0.0
-                        ),
-                    'LMP': lambda ops, b: self._round(
-                        ops.observed_bus_LMPs[b]),
-                    'LMP DA': lambda ops, b: (
-                        self._round(ops.planning_energy_prices[b])
-                        if options.compute_market_settlements else None
-                        )
-                    }
-                )
-
-            stats_manager.register_for_sced_stats(
-                self.reports['bus_detail'].write_record)
-
-            # set up line detail
-            self.reports['line_detail'] = ListMultiRowReporter(
-                lambda ops: ops.observed_flow_levels.keys(), {
-                    'Date': lambda ops, l: str(ops.timestamp.date()),
-                    'Hour': lambda ops, l: ops.timestamp.hour,
-                    'Minute': lambda ops, l: ops.timestamp.minute,
-                    'Line': lambda ops, l: l,
-                    'Flow': lambda ops, l: self._round(
-                        ops.observed_flow_levels[l])
-                    }
-                )
-
-            stats_manager.register_for_sced_stats(
-                self.reports['line_detail'].write_record)
-
-        # set up hourly generator summary
-        self.reports['hourly_gen_summary'] = ListReporter({
-            'Date': lambda hourly: str(hourly.date),
-            'Hour': lambda hourly: hourly.hour,
-            'Load shedding': lambda hourly: self._round(hourly.load_shedding),
-            'Reserve shortfall': lambda hourly: self._round(
-                hourly.reserve_shortfall),
-            'Available reserves': lambda hourly: self._round(
-                hourly.available_reserve),
-            'Over generation': lambda hourly: self._round(
-                hourly.over_generation),
-            'Reserve Price DA': lambda hourly: (
-                self._round(hourly.planning_reserve_price)
-                if options.compute_market_settlements else None
-                ),
-            'Reserve Price RT': lambda hourly: self._round(
-                hourly.reserve_RT_price)
-            })
-
-        stats_manager.register_for_hourly_stats(
-            self.reports['hourly_gen_summary'].write_record)
-
-        # set up hourly summary
-
-        self.reports['hourly_summary'] = ListReporter({
-            'Date': lambda hourly: str(hourly.date),
-            'Hour': lambda hourly: hourly.hour,
-            'TotalCosts': lambda hourly: self._round(hourly.total_costs),
-            'FixedCosts': lambda hourly: self._round(hourly.fixed_costs),
-            'VariableCosts': lambda hourly: self._round(hourly.variable_costs),
-            'LoadShedding': lambda hourly: self._round(hourly.load_shedding),
-            'OverGeneration': lambda hourly: self._round(
-                hourly.over_generation),
-            'ReserveShortfall': lambda hourly: self._round(
-                hourly.reserve_shortfall),
-            'RenewablesUsed': lambda hourly: self._round(
-                hourly.renewables_used),
-            'RenewablesCurtailment': lambda hourly: self._round(
-                hourly.renewables_curtailment),
-            'Demand': lambda hourly: self._round(hourly.total_demand),
-            'Price': lambda hourly: self._round(hourly.price)
-            })
-
-        stats_manager.register_for_hourly_stats(
-            self.reports['hourly_summary'].write_record)
-
-        # set up daily summary
-        daily_columns = {
-            'Date': lambda daily: str(daily.date),
-            'Demand': lambda daily: self._round(daily.this_date_demand),
-            'Renewables available': lambda daily: self._round(
-                daily.this_date_renewables_available),
-            'Renewables used': lambda daily: self._round(
-                daily.this_date_renewables_used),
-            'Renewables penetration rate': lambda daily: self._round(
-                daily.this_date_renewables_penetration_rate),
-
-            # TODO: Implement
-            'Average price': lambda daily: self._round(
-                daily.this_date_average_price),
-            'Fixed costs': lambda daily: self._round(
-                daily.this_date_fixed_costs),
-            'Generation costs': lambda daily: self._round(
-                daily.this_date_variable_costs),
-            'Load shedding': lambda daily: self._round(
-                daily.this_date_load_shedding),
-            'Over generation': lambda daily: self._round(
-                daily.this_date_over_generation),
-            'Reserve shortfall': lambda daily: self._round(
-                daily.this_date_reserve_shortfall),
-            'Renewables curtailment': lambda daily: self._round(
-                daily.this_date_renewables_curtailment),
-            'Number on/offs': lambda daily: daily.this_date_on_offs,
-            'Sum on/off ramps': lambda daily: self._round(
-                daily.this_date_sum_on_off_ramps),
-            'Sum nominal ramps': lambda daily: self._round(
-                daily.this_date_sum_nominal_ramps)}
-
-        if options.compute_market_settlements:
-            daily_columns.update({
-                'Renewables energy payments': lambda daily: self._round(
-                    daily.this_date_renewable_energy_payments),
-                'Renewables uplift payments': lambda daily: self._round(
-                    daily.this_date_renewable_uplift),
-                'Thermal energy payments': lambda daily: self._round(
-                    daily.this_date_thermal_energy_payments),
-                'Thermal uplift payments': lambda daily: self._round(
-                    daily.this_date_thermal_uplift),
-                'Total energy payments': lambda daily: self._round(
-                    daily.this_date_energy_payments),
-                'Total uplift payments': lambda daily: self._round(
-                    daily.this_date_uplift_payments),
-                'Total reserve payments': lambda daily: self._round(
-                    daily.this_date_reserve_payments),
-                'Total payments': lambda daily: self._round(
-                    daily.this_date_total_payments),
-                'Average payments': lambda daily: self._round(
-                    daily.this_date_average_payments)
-                })
-
-        self.reports['daily_summary'] = ListReporter(daily_columns)
-        stats_manager.register_for_daily_stats(
-            self.reports['daily_summary'].write_record)
-
-        # set up overall simulation output
-        overall_cols = {
-            'Total demand': lambda overall: self._round(
-                overall.cumulative_demand),
-            'Total fixed costs': lambda overall: self._round(
-                overall.total_overall_fixed_costs),
-            'Total generation costs': lambda overall: self._round(
-                overall.total_overall_generation_costs),
-            'Total costs': lambda overall: self._round(
-                overall.total_overall_costs),
-            'Total load shedding': lambda overall: self._round(
-                overall.total_overall_load_shedding),
-            'Total over generation': lambda overall: self._round(
-                overall.total_overall_over_generation),
-            'Total reserve shortfall': lambda overall: self._round(
-                overall.total_overall_reserve_shortfall),
-            'Total renewables curtailment': lambda overall: self._round(
-                overall.total_overall_renewables_curtailment),
-            'Total on/offs': lambda overall: overall.total_on_offs,
-            'Total sum on/off ramps': lambda overall: self._round(
-                overall.total_sum_on_off_ramps),
-            'Total sum nominal ramps': lambda overall: self._round(
-                overall.total_sum_nominal_ramps),
-            'Maximum observed demand': lambda overall: self._round(
-                overall.max_hourly_demand),
-            'Overall renewables penetration rate': lambda overall: self._round(
-                overall.overall_renewables_penetration_rate),
-            'Cumulative average price': lambda overall: self._round(
-                overall.cumulative_average_price)
+    def collect_sced_solution(self,
+                              time_step: VaticTime,
+                              sced: VaticModelData, lmp_sced: VaticModelData,
+                              pre_quickstart_cache) -> None:
+        #TODO: fleet capacity is a constant, doesn't need to be recalculated,
+        # keep it here until we decide on a better place to keep it
+        new_sced_data = {
+            'runtime': sced.model_runtime,
+            'duration_minutes': sced.duration_minutes,
+            'thermal_fleet_capacity': sced.thermal_fleet_capacity,
+            'total_demand': sced.total_demand,
+            'fixed_costs': sced.fixed_costs,
+            'variable_costs': sced.variable_costs,
+            'thermal_generation': sum(sced.thermal_generation.values()),
+            'renewable_generation': sum(sced.renewable_generation.values()),
+            'load_shedding': sced.load_shedding,
+            'over_generation': sced.over_generation,
+            'reserve_shortfall': sced.reserve_shortfall,
+            'available_reserve': sum(sced.available_reserve.values()),
+            'available_quickstart': sced.available_quickstart,
+            'available_renewables': sced.available_renewables,
+            'renewables_curtailment': sum(sced.curtailment.values()),
+            'on_offs': sced.on_offs,
+            'sum_on_off_ramps': sced.on_off_ramps,
+            'sum_nominal_ramps': sced.nominal_ramps,
+            'price': sced.price
             }
 
-        if options.compute_market_settlements:
-            overall_cols.update({
-                'Total energy payments': lambda overall: self._round(
-                    overall.total_energy_payments),
-                'Total reserve payments': lambda overall: self._round(
-                    overall.total_reserve_payments),
-                'Total uplift payments': lambda overall: self._round(
-                    overall.total_uplift_payments),
-                'Total payments': lambda overall: self._round(
-                    overall.total_payments),
-                'Cumulative average payments': lambda overall: self._round(
-                    overall.cumulative_average_payments)
-                })
+        if pre_quickstart_cache is None:
+            new_sced_data['quick_start_additional_costs'] = 0.
+            new_sced_data['quick_start_additional_power_generated'] = 0.
+            new_sced_data['used_as_quickstart'] = {
+                gen: False for gen in sced.quickstart_generators}
 
-        self.reports['overall'] = ListReporter(overall_cols)
-        stats_manager.register_for_overall_stats(
-            self.reports['overall'].write_record)
+        else:
+            new_sced_data['quick_start_additional_costs'] = (
+                sced.total_costs - pre_quickstart_cache.total_cost)
+            new_sced_data['quick_start_additional_power_generated'] = (
+                sced.thermal_generation - pre_quickstart_cache.power_generated)
 
-        # set up daily stack graph
-        if graphutils_functional and not options.disable_stackgraphs:
-            stats_manager.register_for_daily_stats(
-                lambda daily_stats: ReportingManager.generate_stack_graph(
-                    options, daily_stats) )
+            new_sced_data['used_as_quickstart'] = {
+                gen: (gen in pre_quickstart_cache.quickstart_generators_off
+                      and sced.is_generator_on(gen))
+                for gen in sced.quickstart_generators
+                }
 
-            stats_manager.register_for_overall_stats(
-                lambda overall_stats: ReportingManager.generate_cost_summary_graph(
-                    options, overall_stats))
+        new_sced_data['generator_fuels'] = sced.fuels
+        new_sced_data['observed_thermal_dispatch_levels'] = sced.thermal_generation
+        new_sced_data['observed_thermal_headroom_levels'] = sced.available_reserve
+        new_sced_data['observed_thermal_states'] = sced.thermal_states
+        new_sced_data['observed_costs'] = sced.generator_costs
+        new_sced_data['observed_renewables_levels'] = sced.renewable_generation
+        new_sced_data['observed_renewables_curtailment'] = sced.curtailment
 
-        super().__init__()
+        new_sced_data['observed_flow_levels'] = sced.flows
+        new_sced_data['bus_demands'] = sced.bus_demands
+        new_sced_data['observed_bus_mismatches'] = sced.bus_mismatches
+
+        new_sced_data['storage_input_dispatch_levels'] = sced.storage_inputs
+        new_sced_data['storage_output_dispatch_levels'] = sced.storage_outputs
+        new_sced_data['storage_soc_dispatch_levels'] = sced.storage_states
+        new_sced_data['storage_types'] = sced.storage_types
+
+        new_sced_data['observed_bus_LMPs'] = lmp_sced.bus_LMPs
+        new_sced_data['reserve_RT_price'] = lmp_sced.reserve_RT_price
+
+        if self.verbosity > 0:
+            print("Fixed costs:    %12.2f" % new_sced_data['fixed_costs'])
+            print("Variable costs: %12.2f" % new_sced_data['variable_costs'])
+            print("")
+
+            if new_sced_data['load_shedding'] != 0.0:
+                print("Load shedding reported at t=%d -     total=%12.2f"
+                      % (1, new_sced_data['load_shedding']))
+            if new_sced_data['over_generation'] != 0.0:
+                print("Over-generation reported at t=%d -   total=%12.2f"
+                      % (1, new_sced_data['over_generation']))
+
+            if new_sced_data['reserve_shortfall'] != 0.0:
+                print("Reserve shortfall reported at t=%2d: %12.2f"
+                      % (1, new_sced_data['reserve_shortfall']))
+                print("Quick start generation capacity available at t=%2d: "
+                      "%12.2f" % (1, new_sced_data['available_quickstart']))
+                print("")
+
+            if new_sced_data['renewables_curtailment'] > 0:
+                print("Renewables curtailment reported at t=%d - total=%12.2f"
+                      % (1, new_sced_data['renewables_curtailment']))
+                print("")
+
+            print("Number on/offs:       %12d" % new_sced_data['on_offs'])
+            print("Sum on/off ramps:     %12.2f"
+                  % new_sced_data['sum_on_off_ramps'])
+            print("Sum nominal ramps:    %12.2f"
+                  % new_sced_data['sum_nominal_ramps'])
+            print("")
+
+        self._sced_stats[time_step] = new_sced_data
 
     def save_output(self):
-        report_dfs = {output_type: pd.DataFrame(reporter.data,
-                                                columns=reporter.headers)
-                      for output_type, reporter in self.reports.items()}
+        report_dfs = dict()
+
+        report_dfs['runtimes'] = pd.DataFrame.from_records([
+            {**time_step.labels(),
+             **{'Type': 'SCED', 'Solve Time': stats['runtime']}}
+            for time_step, stats in self._sced_stats.items()
+            ])
+
+        if not self.light_output:
+            report_dfs['thermal_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen,
+                    'Dispatch': stats['observed_thermal_dispatch_levels'][gen],
+                    'Headroom': stats['observed_thermal_dispatch_levels'][gen],
+                    'Unit State': gen_state,
+                    'Unit Cost': stats['observed_costs'][gen]}}
+                for time_step, stats in self._sced_stats.items()
+                for gen, gen_state in stats['observed_thermal_states'].items()
+                ])
+
+            report_dfs['renew_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen, 'Output': gen_output,
+                    'Curtailment': stats['observed_renewables_curtailment'][
+                        gen]}}
+                for time_step, stats in self._sced_stats.items()
+                for gen, gen_output in
+                stats['observed_renewables_levels'].items()
+                ])
+
+            report_dfs['bus_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Bus': bus, 'Demand': bus_demand,
+                    'Mismatch': stats['observed_bus_mismatches'][bus],
+                    'LMP': stats['observed_bus_LMPs']}}
+                for time_step, stats in self._sced_stats.items()
+                for bus, bus_demand in stats['bus_demands'].items()
+                ])
+
+            report_dfs['line_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(), **{'Line': line, 'Flow': line_flow}}
+                for time_step, stats in self._sced_stats.items()
+                for line, line_flow in stats['observed_flow_levels'].items()
+                ])
+
+
+        report_dfs['hourly_summary'] = pd.DataFrame.from_records([
+            {**time_step.labels(),
+             **{'FixedCosts': stats['fixed_costs'],
+                'VariableCosts': stats['variable_costs'],
+                'LoadShedding': stats['load_shedding'],
+                'OverGeneration': stats['over_generation'],
+                'AvailableReserves': stats['available_reserve'],
+                'ReserveShortfall': stats['reserve_shortfall'],
+                'RenewablesUsed': stats['renewable_generation'],
+                'RenewablesAvailable': stats['available_renewables'],
+                'RenewablesCurtailment': stats['renewables_curtailment'],
+                'Demand': stats['total_demand'], 'Price': stats['price'],
+                'Number on/offs': stats['on_offs'],
+                'Sum on/off ramps': stats['sum_on_off_ramps'],
+                'Sum nominal ramps': stats['sum_nominal_ramps']}}
+            for time_step, stats in self._sced_stats.items()
+            ]).drop('Minute', axis=1)
 
         with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
             pickle.dump(report_dfs, f, protocol=-1)
