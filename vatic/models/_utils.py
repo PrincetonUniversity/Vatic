@@ -9,6 +9,7 @@ class ModelError(Exception):
     pass
 
 
+#TODO: clean this up and get it to return VaticModelData
 def _save_uc_results(m, relaxed):
     # dual suffix is on top-level model
     if relaxed:

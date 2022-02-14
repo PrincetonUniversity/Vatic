@@ -3,7 +3,7 @@ import dill as pickle
 from pathlib import Path
 from copy import copy, deepcopy
 
-from typing import (TypeVar, Union, Optional, Iterable, Iterator,
+from typing import (Any, TypeVar, Union, Optional, Iterable, Iterator,
                     List, Tuple, Dict)
 VModelData = TypeVar('VModelData', bound='VaticModelData')
 
@@ -46,9 +46,41 @@ class VaticModelData(object):
     def __deepcopy__(self, memo):
         return VaticModelData(deepcopy(self._data))
 
+    def clone_in_service(self) -> VModelData:
+        """Returns a version of this grid without out-of-service elements."""
+
+        new_dict = {'system': self._data['system'], 'elements': dict()}
+        for element_type, elements in self._data['elements'].items():
+            new_dict['elements'][element_type] = dict()
+
+            # only copy elements which are in service or for which service
+            # status is not defined in the first place
+            for name, elem in elements.items():
+                if 'in_service' not in elem or elem['in_service']:
+                    new_dict['elements'][element_type][name] = elem
+
+        return VaticModelData(new_dict)
+
     def get_reserve_requirement(self, time_index):
         return self._data[
             'system']['reserve_requirement']['values'][time_index]
+
+    def attributes(self, element_type: str, **element_args) -> dict:
+        if element_type not in self._data['elements']:
+            raise ModelError("This model does not include the element "
+                             "type `{}`!".format(element_type))
+
+        attr_dict = {'names': list()}
+        for name, elem in self.elements(element_type, **element_args):
+            attr_dict['names'].append(name)
+
+            for attr, value in elem.items():
+                if attr not in attr_dict:
+                    attr_dict[attr] = {name: value}
+                else:
+                    attr_dict[attr][name] = value
+
+        return attr_dict
 
     def elements(self,
                  element_type: str,
@@ -74,6 +106,20 @@ class VaticModelData(object):
             if all(k in elem and elem[k] == v
                    for k, v in element_args.items()):
                 yield name, elem
+
+    def get_system_attr(self, attr: str, default: Optional[Any] = None) -> Any:
+        if attr in self._data['system']:
+            return self._data['system'][attr]
+
+        elif default is None:
+            raise ModelError("This model does not include the system-level "
+                             "attribute `{}`!".format(attr))
+
+        else:
+            return default
+
+    def set_system_attr(self, attr: str, value: Any) -> None:
+        self._data['system'][attr] = value
 
     def get_forecastables(self) -> Iterator[List[float]]:
         """Retrieves grid elements' timeseries that can be forecast."""
