@@ -21,6 +21,9 @@ from egret.model_library.unit_commitment.params import (
     _add_initial_time_periods_on_off_line
     )
 
+from ..model_data import VaticModelData
+from typing import Optional
+
 import math
 from ._utils import ModelError
 
@@ -28,58 +31,45 @@ component_name = 'data_loader'
 
 
 @add_model_attr(component_name)
-def load_params(model, model_data):
+def load_params(model: pe.ConcreteModel,
+                model_data: Optional[VaticModelData] = None):
     """This loads unit commitment params from a GridModel object."""
 
-    md = model_data
-    model.model_data = model_data
+    if model_data is None:
+        model_data = model.model_data
+
     warn_neg_load = False
+    time_keys = model_data.get_system_attr('time_keys')
 
-    system = md.data['system']
-    elements = md.data['elements']
+    ## NOTE: generator, bus, and load should be in here for
+    # a well-defined problem
+    loads = dict(model_data.elements(element_type='load'))
+    thermal_gens = dict(model_data.elements(element_type='generator',
+                                            generator_type='thermal'))
+    renewable_gens = dict(model_data.elements(element_type='generator',
+                                              generator_type='renewable'))
+    gens = dict(model_data.elements(element_type='generator'))
 
-    time_keys = system['time_keys']
+    buses = dict(model_data.elements(element_type='bus'))
+    shunts = dict()
+    branches = dict(model_data.elements(element_type='branch'))
+    interfaces = dict(model_data.elements(element_type='interface'))
+    contingencies = dict()
+    storage = dict(model_data.elements(element_type='storage'))
+    dc_branches = dict()
 
-    ## insert potentially missing keys
-    if 'branch' not in elements:
-        elements['branch'] = dict()
-    if 'interface' not in elements:
-        elements['interface'] = dict()
-    if 'storage' not in elements:
-        elements['storage'] = dict()
-    if 'dc_branch' not in elements:
-        elements['dc_branch'] = dict()
+    thermal_gen_attrs = model_data.attributes(element_type='generator',
+                                              generator_type='thermal')
+    renewable_gen_attrs = model_data.attributes(element_type='generator',
+                                                generator_type='renewable')
+    gen_attrs = model_data.attributes(element_type='generator')
 
-    ## NOTE: generator, bus, and load should be in here for a well-defined problem
-
-    loads = dict(md.elements(element_type='load'))
-    thermal_gens = dict(md.elements(element_type='generator',
-                                    generator_type='thermal'))
-    renewable_gens = dict(md.elements(element_type='generator',
-                                      generator_type='renewable'))
-    gens = dict(md.elements(element_type='generator'))
-
-    buses = dict(md.elements(element_type='bus'))
-    shunts = dict(md.elements(element_type='shunt'))
-    branches = dict(md.elements(element_type='branch'))
-    interfaces = dict(md.elements(element_type='interface'))
-    contingencies = dict(md.elements(element_type='contingency'))
-    storage = dict(md.elements(element_type='storage'))
-    dc_branches = dict(md.elements(element_type='dc_branch'))
-
-    thermal_gen_attrs = md.attributes(element_type='generator',
-                                      generator_type='thermal')
-    renewable_gen_attrs = md.attributes(element_type='generator',
-                                        generator_type='renewable')
-    gen_attrs = md.attributes(element_type='generator')
-
-    bus_attrs = md.attributes(element_type='bus')
-    branch_attrs = md.attributes(element_type='branch')
-    load_attrs = md.attributes(element_type='load')
-    interface_attrs = md.attributes(element_type='interface')
-    storage_attrs = md.attributes(element_type='storage')
-    dc_branch_attrs = md.attributes(element_type='dc_branch')
-
+    bus_attrs = model_data.attributes(element_type='bus')
+    branch_attrs = model_data.attributes(element_type='branch')
+    load_attrs = model_data.attributes(element_type='load')
+    interface_attrs = model_data.attributes(element_type='interface')
+    storage_attrs = model_data.attributes(element_type='storage')
+    dc_branch_attrs = dict(names=list())
 
     inlet_branches_by_bus, outlet_branches_by_bus = \
         tx_utils.inlet_outlet_branches_by_bus(branches, buses)
@@ -114,18 +104,13 @@ def load_params(model, model_data):
 
     model.Buses = pe.Set(initialize=bus_attrs['names'])
 
-    if 'reference_bus' in system and system['reference_bus'] in model.Buses:
-        reference_bus = system['reference_bus']
-    else:
-        reference_bus = list(sorted(model.Buses))[0]
+    ref_bus = model_data.get_system_attr('reference_bus', '')
+    if not ref_bus or ref_bus not in model.Buses:
+        ref_bus = list(sorted(model.Buses))[0]
 
-    model.ReferenceBus = pe.Param(within=model.Buses, initialize=reference_bus)
+    model.ReferenceBus = pe.Param(within=model.Buses, initialize=ref_bus)
 
-    if 'reference_bus_angle' in system:
-        ref_angle = system['reference_bus_angle']
-    else:
-        ref_angle = 0.
-
+    ref_angle = model_data.get_system_attr('reference_bus_angle', 0.)
     model.ReferenceBusAngle = pe.Param(within=pe.Reals, initialize=ref_angle)
 
     ################################
@@ -133,7 +118,7 @@ def load_params(model, model_data):
     ## in minutes, assert that this must be a positive integer
     model.TimePeriodLengthMinutes = pe.Param(
         default=60, within=pe.PositiveIntegers,
-        initialize=system['time_period_length_minutes']
+        initialize=model_data.get_system_attr('time_period_length_minutes')
         )
 
     ## IN HOURS, assert athat this must be a positive number
@@ -143,7 +128,7 @@ def load_params(model, model_data):
         )
 
     model.NumTimePeriods = pe.Param(within=pe.PositiveIntegers,
-                                    initialize=len(system['time_keys']))
+                                    initialize=len(time_keys))
 
     model.InitialTime = pe.Param(within=pe.PositiveIntegers, default=1)
     model.TimePeriods = pe.RangeSet(model.InitialTime, model.NumTimePeriods)
@@ -450,12 +435,12 @@ def load_params(model, model_data):
     # the global system reserve, for each time period. units are MW. #
     ##################################################################
 
-    reserve_requirement = system.get("reserve_requirement", 0.)
-    model.ReserveRequirement = pe.Param(
-        model.TimePeriods,
-        within=pe.NonNegativeReals,
-        initialize=TimeMapper(reserve_requirement), mutable=True
-        )
+    reserve_req = TimeMapper(
+        model_data.get_system_attr('reserve_requirement', 0.))
+
+    model.ReserveRequirement = pe.Param(model.TimePeriods,
+                                        within=pe.NonNegativeReals,
+                                        initialize=reserve_req, mutable=True)
 
     ##########################################################################################################
     # the minimum number of time periods that a generator must be on-line (off-line) once brought up (down). #
@@ -1087,27 +1072,7 @@ def load_params(model, model_data):
         )
 
     ## FUEL-SUPPLY Sets
-
     def fuel_supply_gens_init(m):
-        if ('fuel_supply' not in elements
-                and ('fuel_supply' in thermal_gen_attrs
-                     or 'aux_fuel_supply' in thermal_gen_attrs)):
-            logger.warning("WARNING: Some generators have <fuel_supply> "
-                           "marked, but no fuel supply was found on "
-                           "<ModelData.data[<system>]>")
-
-            return iter(())
-
-        if ('fuel_supply' in elements
-                and ('fuel_supply' not in thermal_gen_attrs
-                     and 'aux_fuel_supply' not in thermal_gen_attrs)):
-            logger.warning(
-                "WARNING: <fuel_supply> in <ModelData.data[<elements>]>, but "
-                "no generators are attached to any fuel supply"
-                )
-
-            return iter(())
-
         if 'fuel_supply' not in thermal_gen_attrs:
             thermal_gen_attrs['fuel_supply'] = dict()
 
@@ -1604,22 +1569,24 @@ def load_params(model, model_data):
     # penalty costs for constraint violation #
     #########################################
 
-    ModeratelyBigPenalty = 1e3*system['baseMVA']
+    kinda_big_penalty = 1e3 * model_data.get_system_attr('baseMVA')
+    big_penalty = 1e4 * model_data.get_system_attr('baseMVA')
 
     model.ReserveShortfallPenalty = pe.Param(
-        within=pe.NonNegativeReals, default=ModeratelyBigPenalty, mutable=True,
-        initialize=system.get('reserve_shortfall_cost', ModeratelyBigPenalty)
+        within=pe.NonNegativeReals, mutable=True,
+        initialize=model_data.get_system_attr('reserve_shortfall_cost',
+                                              kinda_big_penalty)
         )
-
-    BigPenalty = 1e4*system['baseMVA']
 
     model.LoadMismatchPenalty = pe.Param(
         within=pe.NonNegativeReals, mutable=True,
-        initialize=system.get('load_mismatch_cost', BigPenalty)
+        initialize=model_data.get_system_attr('load_mismatch_cost',
+                                              big_penalty)
         )
     model.LoadMismatchPenaltyReactive = pe.Param(
         within=pe.NonNegativeReals, mutable=True,
-        initialize=system.get('q_load_mismatch_cost', BigPenalty / 2.)
+        initialize=model_data.get_system_attr('q_load_mismatch_cost',
+                                              big_penalty / 2.)
         )
 
     model.Contingencies = pe.Set(initialize=contingencies.keys())
@@ -1627,8 +1594,8 @@ def load_params(model, model_data):
     # leaving this unindexed for now for simpility
     model.ContingencyLimitPenalty = pe.Param(
         within=pe.NonNegativeReals,
-        initialize=system.get('contingency_flow_violation_cost',
-                              BigPenalty / 2.),
+        initialize=model_data.get_system_attr(
+            'contingency_flow_violation_cost', big_penalty / 2.),
         mutable=True
         )
 
