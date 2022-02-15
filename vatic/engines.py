@@ -5,24 +5,23 @@ import time
 import math
 from pathlib import Path
 import dill as pickle
+from copy import deepcopy
 from typing import Union, Tuple, Dict, Any, Callable
 
 from .data_providers import (
     PickleProvider, AllocationPickleProvider, AutoAllocationPickleProvider)
-from .simulation_state import VaticSimulationState
+from .model_data import VaticModelData
+from .simulation_state import VaticSimulationState, VaticStateWithScedOffset
+from .models import UCModel
 from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
-from .models import UCModel
 
 from prescient.engine.egret.engine import EgretEngine
-from egret.data.model_data import ModelData as EgretModel
+from prescient.engine.egret.ptdf_manager import PTDFManager
+from prescient.engine.modeling_engine import ForecastErrorMethod
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from pyomo.environ import Suffix as PyomoSuffix
-
-from prescient.data.simulation_state.state_with_offset import StateWithOffset
-from prescient.engine.egret.ptdf_manager import PTDFManager
-from prescient.engine.modeling_engine import ForecastErrorMethod
 
 
 class Simulator(EgretEngine):
@@ -97,22 +96,29 @@ class Simulator(EgretEngine):
         self.ruc_model = UCModel(**self.ruc_formulations)
         self.sced_model = UCModel(**self.sced_formulations)
 
-    def simulate(self):
+    def simulate(self) -> None:
+        """Top-level runner of a simulation's alternating RUCs and SCEDs.
+
+        See prescient.simulator.Simulator.simulate() for the original
+        implementation of this logic.
+
+        """
         self.initialize_oracle()
 
         for time_step in self._time_manager.time_steps():
             self._current_timestep = time_step
 
+            # run the day-ahead RUC at some point in the day before
             if time_step.is_planning_time:
                 self.call_planning_oracle()
 
+            # activate the day-ahead RUC we already ran for this day
             if time_step.is_ruc_activation_time:
                 self._ruc_market_active = self._ruc_market_pending
                 self._ruc_market_pending = None
 
+            # run the SCED to simulate this time step
             self.call_oracle()
-
-        self._stats_manager.end_simulation()
 
         if self.verbosity > 0:
             self.simulation_end_time = time.time()
@@ -123,7 +129,7 @@ class Simulator(EgretEngine):
 
         self._stats_manager.save_output()
 
-    def initialize_oracle(self):
+    def initialize_oracle(self) -> None:
         """
         merge of OracleManager.call_initialization_oracle
              and OracleManager._generate_ruc
@@ -154,7 +160,7 @@ class Simulator(EgretEngine):
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
         self._ruc_market_active = ruc_market
 
-    def call_planning_oracle(self):
+    def call_planning_oracle(self) -> None:
         projected_state = self._get_projected_state()
 
         uc_datetime = self._time_manager.get_uc_activation_time(
@@ -165,7 +171,7 @@ class Simulator(EgretEngine):
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._ruc_market_pending = ruc_market
 
-    def call_oracle(self):
+    def call_oracle(self) -> None:
         """port of OracleManager.call_operation_oracle"""
 
         # determine the SCED execution mode, in terms of how discrepancies
@@ -231,11 +237,9 @@ class Simulator(EgretEngine):
         self._simulation_state.apply_sced(current_sced_instance)
         self._prior_sced_instance = current_sced_instance
 
-        from .model_data import VaticModelData
-
         self._stats_manager.collect_sced_solution(
-            self._current_timestep, VaticModelData(current_sced_instance.data),
-            VaticModelData(lmp_sced.data), pre_quickstart_cache
+            self._current_timestep, current_sced_instance, lmp_sced,
+            pre_quickstart_cache
             )
 
         if self.options.compute_market_settlements:
@@ -258,7 +262,7 @@ class Simulator(EgretEngine):
             )
 
         # update in case lines were taken out
-        # TODO: lol what
+        # TODO: why is this necessary?
         self._ptdf_manager.PTDF_matrix_dict = self.ruc_model.pyo_instance._PTDFs
 
         # TODO: better error handling
@@ -303,9 +307,11 @@ class Simulator(EgretEngine):
 
         return self.create_simulation_actuals(time_step), ruc_plan, ruc_market
 
-    def solve_sced(self,
-                   current_state, hours_in_objective,
-                   sced_horizon, forecast_error_method):
+    def solve_sced(
+            self,
+            current_state: VaticSimulationState, hours_in_objective: int,
+            sced_horizon: int, forecast_error_method: ForecastErrorMethod
+            ) -> VaticModelData:
 
         sced_model_data = self._data_provider.create_sced_instance(
             current_state, sced_horizon=sced_horizon,
@@ -363,23 +369,19 @@ class Simulator(EgretEngine):
         return sced_results
 
     def solve_lmp(self, sced_instance):
-        lmp_sced_instance = sced_instance.clone()
+        lmp_sced_instance = deepcopy(sced_instance)
 
-        # In case of demand shortfall, the price skyrockets, so we
-        # threshold the value.
-        if ('load_mismatch_cost' not in lmp_sced_instance.data['system']
-                or (lmp_sced_instance.data['system']['load_mismatch_cost']
-                    > self.options.price_threshold)):
-            lmp_sced_instance.data[
-                'system']['load_mismatch_cost'] = self.options.price_threshold
+        # in the case of a shortfall in meeting demand or the reserve
+        # requirement, the price skyrockets, so we set max price values
+        for cost_lbl, max_price in zip(
+                ['load_mismatch_cost', 'reserve_shortfall_cost'],
+                [self.options.price_threshold,
+                 self.options.reserve_price_threshold]
+                ):
+            shortfall_cost = sced_instance.get_system_attr(cost_lbl, max_price)
 
-        # In case of reserve shortfall, the price skyrockets, so we
-        # threshold the value.
-        if ('reserve_shortfall_cost' not in lmp_sced_instance.data['system']
-                or (lmp_sced_instance.data['system']['reserve_shortfall_cost']
-                    > self.options.reserve_price_threshold)):
-            lmp_sced_instance.data['system']['reserve_shortfall_cost'] = \
-                self.options.reserve_price_threshold
+            if shortfall_cost >= max_price:
+                sced_instance.set_system_attr(cost_lbl, max_price)
 
         if self.sced_model.pyo_instance is None:
             self._ptdf_manager.mark_active(lmp_sced_instance)
@@ -395,10 +397,11 @@ class Simulator(EgretEngine):
             uc_instance_binary_relaxer(self.sced_model.pyo_instance,
                                        self.sced_model.solver)
 
-            ## reset the penalites
-            system = lmp_sced_instance.data['system']
+            ## reset the penalties
             update_obj = False
-            new_load_penalty = system['baseMVA'] * system['load_mismatch_cost']
+            base_MVA = lmp_sced_instance.get_system_attr('baseMVA')
+            new_load_penalty = base_MVA * lmp_sced_instance.get_system_attr(
+                'load_mismatch_cost')
 
             if not math.isclose(
                     new_load_penalty,
@@ -407,8 +410,8 @@ class Simulator(EgretEngine):
                 self.sced_model.pyo_instance.LoadMismatchPenalty.value = new_load_penalty
                 update_obj = True
 
-            new_reserve_penalty = (system['baseMVA']
-                                   * system['reserve_shortfall_cost'])
+            new_reserve_penalty = base_MVA * lmp_sced_instance.get_system_attr(
+                'reserve_shortfall_cost')
 
             if not math.isclose(
                     new_reserve_penalty,
@@ -446,7 +449,7 @@ class Simulator(EgretEngine):
 
         return lmp_sced_results
 
-    def _get_projected_state(self) -> StateWithOffset:
+    def _get_projected_state(self) -> VaticStateWithScedOffset:
         """
         Get the simulation state as we project it will appear
         after the RUC delay.
@@ -502,8 +505,8 @@ class Simulator(EgretEngine):
             forecast_error_method=sced_forecast_error_method,
             )
 
-        return StateWithOffset(current_state, proj_sced_instance,
-                               self._simulation_state.ruc_delay)
+        return VaticStateWithScedOffset(current_state, proj_sced_instance,
+                                        self._simulation_state.ruc_delay)
 
     def create_simulation_actuals(self, time_step):
         """
@@ -551,7 +554,7 @@ class Simulator(EgretEngine):
                 for t in range(timesteps_per_day, total_step_count):
                     vals[t] = vals[t - timesteps_per_day]
 
-        return sim_model.to_egret()
+        return sim_model
 
 
 class AllocationSimulator(Simulator):
@@ -574,19 +577,13 @@ class AllocationSimulator(Simulator):
 
 class AutoAllocationSimulator(AllocationSimulator):
 
-    def __new__(cls,
-                cost_vals, in_dir, out_dir, light_output, init_ruc_file,
-                save_init_ruc, verbosity, prescient_options):
-
+    def __new__(cls, cost_vals, **sim_args):
         cls.data_provider_class = cls.auto_provider_factory(cost_vals)
 
         return super().__new__(cls)
 
-    def __init__(self,
-                 cost_vals, in_dir, out_dir, light_output, init_ruc_file,
-                 save_init_ruc, verbosity, prescient_options):
-        super().__init__(in_dir, out_dir, light_output, init_ruc_file,
-                         save_init_ruc, verbosity, prescient_options)
+    def __init__(self, cost_vals, **sim_args):
+        super().__init__(**sim_args)
 
     @staticmethod
     def auto_provider_factory(cost_vals):
