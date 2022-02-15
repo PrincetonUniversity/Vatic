@@ -9,8 +9,7 @@ import itertools
 
 
 class VaticSimulationState:
-    ''' A simulation state that can be updated with data pulled from RUCs and sceds.
-    '''
+    """A system state that can be updated with data from RUCs and SCEDs."""
 
     def __init__(self, options):
         self._forecasts = list()
@@ -21,15 +20,14 @@ class VaticSimulationState:
         self._init_power_gen = dict()
         self._init_soc = dict()
 
-        # Timestep durations
+        # timestep durations; how often a SCED is run
         self._minutes_per_forecast_step = 60
         self._minutes_per_actuals_step = 60
-        # How often a SCED is run
         self._sced_frequency = 60
 
-        # The current simulation minute
+        # the current simulation minute and the next minute when forecasts
+        # should be popped
         self._simulation_minute = 0
-        # Next simulation minute when forecasts should be popped
         self._next_forecast_pop_minute = 0
         self._next_actuals_pop_minute = 0
 
@@ -40,68 +38,71 @@ class VaticSimulationState:
 
     @property
     def timestep_count(self) -> int:
-        ''' The number of timesteps we have data for '''
+        """The number of timesteps we have data for."""
         return len(self._forecasts[0]) if len(self._forecasts) > 0 else 0
 
     @property
     def minutes_per_step(self) -> int:
-        ''' The duration of each time step in minutes '''
+        """The duration of each time step in minutes."""
         return self._minutes_per_forecast_step
 
     def get_generator_commitment(self, g:G, time_index:int) -> int:
-        ''' Get whether the generator is committed to be on (1) or off (0) for each time period
-        '''
+        """Is the gen committed to be on (1) or off (0) for a time step?"""
         return self._commits[g][time_index]
 
     def get_initial_generator_state(self, g:G) -> float:
-        ''' Get the generator's state in the previous time period '''
+        """Get the generator's state in the previous time period."""
         return self._init_gen_state[g]
 
     def get_initial_power_generated(self, g:G) -> float:
-        ''' Get how much power was generated in the previous time period '''
+        """Get how much power was generated in the previous period."""
         return self._init_power_gen[g]
 
     def get_initial_state_of_charge(self, s:S) -> float:
-        ''' Get state of charge in the previous time period '''
+        """Get state of charge in the previous time period."""
         return self._init_soc[s]
 
     def get_current_actuals(self) -> Iterable[float]:
-        ''' Get the current actual value for each forecastable.
+        """Get the current actual value for each forecastable.
 
         This is the actual value for the current time period (time index 0).
-        Values are returned in the same order as forecast_helper.get_forecastables,
-        but instead of returning arrays it returns a single value.
-        '''
+        Values are returned in the same order as
+        VaticModelData.get_forecastables, but instead of returning arrays it
+        returns a single value.
+
+        """
         for forecastable in self._actuals:
             yield forecastable[0]
 
     def get_forecasts(self) -> Iterable[Sequence[float]]:
-        ''' Get the forecast values for each forecastable
+        """Get the forecast values for each forecastable.
 
-        This is very similar to forecast_helper.get_forecastables(); the
+        This is very similar to VaticModelData.get_forecastables(); the
         function yields an array per forecastable, in the same order as
         get_forecastables().
 
         Note that the value at index 0 is the forecast for the current time,
         not the actual value for the current time.
-        '''
+
+        """
         for forecastable in self._forecasts:
             yield forecastable
 
     def get_future_actuals(self) -> Iterable[Sequence[float]]:
-        ''' Warning: Returns actual values for the current time AND FUTURE TIMES.
+        """Warning: Returns actual values for current time AND FUTURE TIMES.
 
         Be aware that this function returns information that is not yet known!
         The function lets you peek into the future.  Future actuals may be used
         by some (probably unrealistic) algorithm options, such as
-        '''
+
+        """
         for forecastable in self._actuals:
             yield forecastable
 
     def apply_initial_ruc(self,
                           ruc: VaticModelData,
                           sim_actuals: VaticModelData) -> None:
-        # The is the first RUC, save initial state
+        """This is the first RUC; save initial state."""
 
         for gen, gen_data in ruc.elements('generator',
                                           generator_type='thermal'):
@@ -112,7 +113,8 @@ class VaticSimulationState:
         for store, store_data in ruc.elements('storage'):
             self._init_soc[store] = store_data['initial_state_of_charge']
 
-        # If this is first RUC, also save data to indicate when to pop RUC-related state
+        # if this is first RUC, also save data to indicate when to pop
+        # RUC-related state
         self._minutes_per_forecast_step = ruc.get_system_attr(
             'time_period_length_minutes')
         self._next_forecast_pop_minute = self._minutes_per_forecast_step
@@ -127,17 +129,17 @@ class VaticSimulationState:
     def apply_planning_ruc(self,
                            ruc: VaticModelData,
                            sim_actuals: VaticModelData) -> None:
-        ''' Incorporate a RUC instance into the current state.
+        """Incorporate a RUC instance into the current state.
 
         This will save the ruc's forecasts, and for the very first ruc
         this will also save initial state info.
 
         If there is a ruc delay, as indicated by options.ruc_execution_hour and
-        options.ruc_every_hours, then the RUC is applied to future time periods,
-        offset by the ruc delay.  This does not apply to the very first RUC, which
-        is used to set up the initial simulation state with no offset.
-        '''
-
+        options.ruc_every_hours, then the RUC is applied to future time
+        periods, offset by the ruc delay.  This does not apply to the very
+        first RUC, which is used to set up the initial simulation state with no
+        offset.
+        """
 
         # Now save all generator commitments
         # Keep the first "ruc_delay" commitments from the prior ruc
@@ -155,11 +157,12 @@ class VaticSimulationState:
             self._actuals[i] += tuple(new_ruc_vals)
 
     def apply_sced(self, sced: VaticModelData) -> None:
-        ''' Incorporate a sced's results into the current state, and move to the next time period.
+        """Merge a sced into the current state, and move to next time period.
 
-        This saves the sced's first time period of data as initial state information,
-        and advances the current time forward by one time period.
-        '''
+        This saves the sced's first time period of data as initial state
+        information, and advances the current time forward by one time period.
+
+        """
         for gen, status, generated in self.get_generator_states_at_sced_offset(
                 sced, 0):
             self._init_gen_state[gen] = status
@@ -186,8 +189,10 @@ class VaticSimulationState:
 
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
 
+    #TODO: if this is always returning itself then we can probably simplify
     def get_state_with_step_length(self, minutes_per_step:int):
-        # If our data matches what's stored here, no need to create an interpolated view
+        # if our data matches what's stored here,
+        # no need to create an interpolated view
         if self._minutes_per_forecast_step == minutes_per_step and \
            self._minutes_per_actuals_step == minutes_per_step and \
            self._sced_frequency == minutes_per_step:
@@ -203,7 +208,8 @@ class VaticSimulationState:
     def get_generator_states_at_sced_offset(
             self, sced: VaticModelData, sced_index: int) -> Tuple:
         # We'll be converting between time periods and hours.
-        # Make the data type of hours_per_period an int if it's an integer number of hours, float if fractional
+        # Make the data type of hours_per_period an int if it's an integer
+        # number of hours, float if fractional
 
         minutes_per_period = sced.get_system_attr('time_period_length_minutes')
         hours_per_period = minutes_per_period // 60 if minutes_per_period % 60 == 0 \
@@ -236,11 +242,11 @@ class VaticSimulationState:
             ### Get how much power was generated, within bounds ###
             power_generated = g_dict['pg']['values'][sced_index]
 
-            # the validators are rather picky, in that tolerances are not acceptable.
-            # given that the average power generated comes from an optimization
-            # problem solve, the average power generated can wind up being less
-            # than or greater than the bounds by a small epsilon. touch-up in this
-            # case.
+            # the validators are rather picky, in that tolerances are not
+            # acceptable. given that the average power generated comes from an
+            # optimization problem solve, the average power generated can wind
+            # up being less than or greater than the bounds by a small epsilon.
+            # touch-up in this case.
             if isinstance(g_dict['p_min'], dict):
                 min_power_output = g_dict['p_min']['values'][sced_index]
             else:
@@ -273,36 +279,89 @@ class VaticSimulationState:
 
 
 class VaticStateWithOffset:
+    """Get expected state some number of time steps from the current state.
 
-    def __init__(self, parent_state, offset):
+    The offset state is identical to the state being offset, except that time
+    periods before the offset time are skipped.
+    """
+
+    def __init__(self, parent_state: VaticSimulationState, offset: int):
         self._parent = parent_state
         self._offset = offset
 
+    @property
+    def timestep_count(self) -> int:
+        """The number of timesteps we have data for."""
+        return self._parent.timestep_count - self._offset
+
+    def get_generator_commitment(self, g: G, time_index: int) -> int:
+        """Is the gen committed to be on (1) or off (0) for a time step?"""
+        return self._parent.get_generator_commitment(g,
+                                                     time_index + self._offset)
+
+    def get_current_actuals(self) -> Iterable[float]:
+        """Get the current actual value for each forecastable.
+
+        This is the actual value for the current time period (time index 0).
+        Values are returned in the same order as
+        VaticModelData.get_forecastables, but instead of returning arrays it
+        returns a single value.
+
+        """
+        for actual in self._parent.get_future_actuals():
+            yield actual[self._offset]
+
+    def get_forecasts(self) -> Iterable[Sequence[float]]:
+        """Get the forecast values for each forecastable.
+
+        This is very similar to VaticModelData.get_forecastables(); the
+        function yields an array per forecastable, in the same order as
+        get_forecastables().
+
+        Note that the value at index 0 is the forecast for the current time,
+        not the actual value for the current time.
+
+        """
+        for forecast in self._parent.get_forecasts():
+            # Copy the relevant portion to a new array
+            portion = list(itertools.islice(forecast, self._offset, None))
+            yield portion
+
+    def get_future_actuals(self) -> Iterable[Sequence[float]]:
+        """Warning: Returns actual values for current time AND FUTURE TIMES.
+
+        Be aware that this function returns information that is not yet known!
+        The function lets you peek into the future.  Future actuals may be used
+        by some (probably unrealistic) algorithm options, such as
+
+        """
+        for future in self._parent.get_future_actuals():
+            # Copy the relevent portion to a new array
+            portion = list(itertools.islice(future, self._offset, None))
+            yield portion
+
 
 class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):
-    ''' Get the expected state some number of time periods from the current state.
+    """Get the future expected state, using a SCED for the initial state.
 
-    The offset state is identical to the state being offset, except that time periods
-    before the offset time are skipped, and the initial state of generators and storage
-    is provided by a sced instance.  The sced instance is also offset, so that the
-    initial state comes from the Nth time period of the sced.
-    '''
+    The offset state is identical to the state being offset, except that time
+    periods before the offset time are skipped, and the initial state of
+    generators and storage is provided by a sced instance.  The sced instance
+    is also offset, so that the initial state comes from the Nth time period
+    of the sced.
+
+    Args
+    ----
+        parent_state    The state to project into the future.
+        sced    A sced instance whose state after the offset is used as
+                the initial state.
+        offset  The number of time periods into the future this state
+                should reflect.
+    """
 
     def __init__(self,
                  parent_state: VaticSimulationState, sced: VaticModelData,
                  offset: int) -> None:
-        ''' Constructor.
-
-        Arguments
-        ---------
-        parent_state:
-            The state to project into the future.
-        sced:
-            A sced instance whose state after the offset is used as the initial state.
-        offset:
-            The number of time periods into the future this state should reflect.
-        '''
-
         self._init_gen_state = dict()
         self._init_power_gen = dict()
         self._init_soc = dict()
@@ -317,51 +376,3 @@ class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):
             self._init_soc[store] = soc
 
         super().__init__(parent_state, offset)
-
-    @property
-    def timestep_count(self) -> int:
-        ''' The number of timesteps we have data for '''
-        return self._parent.timestep_count - self._offset
-
-    def get_generator_commitment(self, g: G, time_index: int) -> int:
-        ''' Get whether the generator is committed to be on (1) or off (0)
-        '''
-        return self._parent.get_generator_commitment(g,
-                                                     time_index + self._offset)
-
-    def get_current_actuals(self) -> Iterable[float]:
-        ''' Get the current actual value for each forecastable.
-
-        This is the actual value for the current time period (time index 0).
-        Values are returned in the same order as forecast_helper.get_forecastables,
-        but instead of returning arrays it returns a single value.
-        '''
-        for actual in self._parent.get_future_actuals():
-            yield actual[self._offset]
-
-    def get_forecasts(self) -> Iterable[Sequence[float]]:
-        ''' Get the forecast values for each forecastable
-
-        This is very similar to forecast_helper.get_forecastables(); the
-        function yields an array per forecastable, in the same order as
-        get_forecastables().
-
-        Note that the value at index 0 is the forecast for the current time,
-        not the actual value for the current time.
-        '''
-        for forecast in self._parent.get_forecasts():
-            # Copy the relevent portion to a new array
-            portion = list(itertools.islice(forecast, self._offset, None))
-            yield portion
-
-    def get_future_actuals(self) -> Iterable[Sequence[float]]:
-        ''' Warning: Returns actual values for the current time AND FUTURE TIMES.
-
-        Be aware that this function returns information that is not yet known!
-        The function lets you peek into the future.  Future actuals may be used
-        by some (probably unrealistic) algorithm options, such as
-        '''
-        for future in self._parent.get_future_actuals():
-            # Copy the relevent portion to a new array
-            portion = list(itertools.islice(future, self._offset, None))
-            yield portion
