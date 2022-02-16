@@ -2,7 +2,7 @@
 
 Vatic is a Python package for applying Pyomo and Egret to simulating the
 optimized behaviour of power grids under a given set of scenarios. It is
-meant as a lightweight replacement for Prescient, which is available
+meant as a lightweight adaptation of Prescient, which is available
 [here](https://github.com/grid-parity-exchange/Prescient).
 
 

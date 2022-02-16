@@ -6,22 +6,29 @@ from egret.model_library.unit_commitment.params import load_params \
     as default_params
 from .params import load_params as renewable_cost_params
 
+from ..model_data import VaticModelData
+
 from egret.model_library.unit_commitment import (
     services, fuel_supply, fuel_consumption, security_constraints)
-from egret.models.unit_commitment import _solve_unit_commitment
+from egret.common.solver_interface import _solve_model
+from egret.models.unit_commitment import _outer_lazy_ptdf_solve_loop
 from egret.common.log import logger as egret_logger
-
-from egret.model_library.transmission.tx_utils import scale_ModelData_to_pu
-from egret.data.model_data import ModelData as EgretModel
 import egret.common.lazy_ptdf_utils as lpu
 
 import importlib
 import logging
 from ast import literal_eval
 from ._utils import ModelError, _save_uc_results
+from typing import Callable
 
 
-class UCModel(object):
+class UCModel:
+    """An instance of a specific Pyomo model formulation.
+
+    This class takes a list of Egret formulation labels specifying a model in
+    Pyomo and creates a model instance that can be populated with data and
+    optimized with a solver.
+    """
 
     def __init__(self,
                  params_forml, status_forml, power_forml, reserve_forml,
@@ -53,12 +60,25 @@ class UCModel(object):
                           else 'basic_objective')
             }
 
-    def _load_params(self, model, model_data):
-        eval(self.params)(model, model_data)
+    def _load_params(self, model: pe.ConcreteModel) -> None:
+        """Populates model parameters using the specified formulation."""
 
-    def _load_formulation(self, model_part):
+        if self.params == 'renewable_cost_params':
+            renewable_cost_params(model, VaticModelData(model.model_data.data))
+
+        elif self.params == 'default_params':
+            default_params(model, model.model_data)
+
+        else:
+            raise ModelError(
+                "Unrecognized model formulation `{}`!".format(self.params))
+
+    def _get_formulation(self,
+                         model_part: str) -> Callable[[pe.ConcreteModel],
+                                                      None]:
+        """Finds the specified model formulation and make it callable."""
+
         part_fx = None
-
         egret_pkg = 'egret.model_library.unit_commitment'
         egret_library = importlib.import_module(egret_pkg)
 
@@ -90,21 +110,21 @@ class UCModel(object):
         return part_fx
 
     def generate_model(self,
-                       model_data: EgretModel,
+                       model_data: VaticModelData,
                        relax_binaries: bool,
                        ptdf_options, ptdf_matrix_dict, objective_hours=None):
 
         #TODO: do we need to add scaling back in if baseMVA is always 1?
         use_model = model_data.clone_in_service()
         model = pe.ConcreteModel()
-        model.model_data = use_model
+        model.model_data = use_model.to_egret()
         model.name = "UnitCommitment"
 
         ## munge PTDF options if necessary
         if self.model_parts['power_balance'] == 'ptdf_power_flow':
             _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
 
-            baseMVA = model_data.data['system']['baseMVA']
+            baseMVA = model_data.get_system_attr('baseMVA')
             lpu.check_and_scale_ptdf_options(_ptdf_options, baseMVA)
 
             model._ptdf_options = _ptdf_options
@@ -118,23 +138,23 @@ class UCModel(object):
         model.enforce_t1_ramp_rates = True
         model.relax_binaries = relax_binaries
 
-        self._load_params(model, model_data)
-        self._load_formulation('status_vars')(model)
-        self._load_formulation('power_vars')(model)
-        self._load_formulation('reserve_vars')(model)
-        self._load_formulation('non_dispatchable_vars')(model)
-        self._load_formulation('generation_limits')(model)
-        self._load_formulation('ramping_limits')(model)
-        self._load_formulation('production_costs')(model)
-        self._load_formulation('uptime_downtime')(model)
-        self._load_formulation('startup_costs')(model)
+        self._load_params(model)
+        self._get_formulation('status_vars')(model)
+        self._get_formulation('power_vars')(model)
+        self._get_formulation('reserve_vars')(model)
+        self._get_formulation('non_dispatchable_vars')(model)
+        self._get_formulation('generation_limits')(model)
+        self._get_formulation('ramping_limits')(model)
+        self._get_formulation('production_costs')(model)
+        self._get_formulation('uptime_downtime')(model)
+        self._get_formulation('startup_costs')(model)
         services.storage_services(model)
         services.ancillary_services(model)
-        self._load_formulation('power_balance')(model)
-        self._load_formulation('reserve_requirement')(model)
+        self._get_formulation('power_balance')(model)
+        self._get_formulation('reserve_requirement')(model)
 
-        if 'fuel_supply' in model_data.data['elements'] and bool(
-                model_data.data['elements']['fuel_supply']):
+        if 'fuel_supply' in model_data._data['elements'] and bool(
+                model_data._data['elements']['fuel_supply']):
             fuel_consumption.fuel_consumption_model(model)
             fuel_supply.fuel_supply_model(model)
 
@@ -142,13 +162,13 @@ class UCModel(object):
             model.fuel_supply = None
             model.fuel_consumption = None
 
-        if 'security_constraint' in model_data.data['elements'] and bool(
-                model_data.data['elements']['security_constraint']):
+        if 'security_constraint' in model_data._data['elements'] and bool(
+                model_data._data['elements']['security_constraint']):
             security_constraints.security_constraint_model(model)
         else:
             model.security_constraints = None
 
-        self._load_formulation('objective')(model)
+        self._get_formulation('objective')(model)
 
         if objective_hours:
             zero_cost_hours = set(model.TimePeriods)
@@ -189,7 +209,8 @@ class UCModel(object):
 
     def solve_model(self,
                     solver=None, solver_options=None,
-                    relaxed=False, set_instance=True, options=None):
+                    relaxed=False, set_instance=True,
+                    options=None) -> VaticModelData:
 
         if self.pyo_instance is None:
             raise ModelError("Cannot solve a model until it "
@@ -212,20 +233,38 @@ class UCModel(object):
         solver_options_dict = {option: literal_eval(val)
                                for option, val in solver_options_list}
 
-        m, results, self.solver = _solve_unit_commitment(
-            m=self.pyo_instance, solver=use_solver, mipgap=options.ruc_mipgap,
-            timelimit=None, solver_tee=options.output_solver_logs,
-            symbolic_solver_labels=options.symbolic_solver_labels,
-            solver_options=solver_options_dict, solve_method_options=None,
-            #solve_method_options=self.options.solve_method_options,
-            relaxed=relaxed, set_instance=set_instance
-            )
+        network = list(self.pyo_instance.model_data.elements('branch'))
 
-        md = _save_uc_results(m, relaxed)
+        if (self.pyo_instance.power_balance == 'ptdf_power_flow'
+                and self.pyo_instance._ptdf_options['lazy']
+                and len(network) > 0):
+            if isinstance(self.pyo_instance.model_data, VaticModelData):
+                self.pyo_instance.model_data \
+                    = self.pyo_instance.model_data.to_egret()
+
+            m, results, self.solver = _outer_lazy_ptdf_solve_loop(
+                self.pyo_instance, use_solver, options.ruc_mipgap,
+                timelimit=None, solver_tee=options.output_solver_logs,
+                symbolic_solver_labels=options.symbolic_solver_labels,
+                solver_options=solver_options_dict, solve_method_options=None,
+                relaxed=relaxed, set_instance=set_instance
+                )
+
+        else:
+            m, results, self.solver = _solve_model(
+                self.pyo_instance, use_solver, options.ruc_mipgap,
+                timelimit=None, solver_tee=options.output_solver_logs,
+                symbolic_solver_labels=options.symbolic_solver_labels,
+                solver_options=solver_options_dict, solve_method_options=None,
+                return_solver=True, set_instance=set_instance
+                )
 
         if hasattr(results, 'egret_metasolver_status'):
             time = results.egret_metasolver_status['time']
         else:
             time = results.solver.wallclock_time
 
-        return md, time
+        md = _save_uc_results(m, relaxed)
+        md.data['system']['solver_runtime'] = time
+
+        return VaticModelData(md.data)
