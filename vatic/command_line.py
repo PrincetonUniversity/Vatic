@@ -14,15 +14,20 @@ def run_deterministic():
 
     parser.add_argument('in_dir', type=Path,
                         help="directory containing input datasets")
-    parser.add_argument('run_dates', nargs=2, type=str,
-                        #type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
+    parser.add_argument('start_date',
+                        type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
                         help="start and end dates for the scenario")
+
+    parser.add_argument('--num-days', '-d', type=int,
+                        default=1, dest='num_days',
+                        help="how many days to run the simulation for")
 
     parser.add_argument('--out_dir', '-o', type=Path,
                         help="directory where output will be stored")
     parser.add_argument('--light-output', '-l',
                         action='store_true', dest='light_output',
                         help="don't create hourly asset digests")
+
     parser.add_argument('--renew-costs', '-c', nargs='*',
                         default=False, dest='renew_costs',
                         help="use costs for renewables from input directory")
@@ -70,7 +75,6 @@ def run_deterministic():
                              "of the simulator and its solvers")
 
     args = parser.parse_args()
-    start_date, end_date = args.run_dates
 
     if not args.in_dir.exists():
         raise ValueError(
@@ -83,9 +87,6 @@ def run_deterministic():
 
     if args.solver_args is None:
         args.solver_args = list()
-
-    ndays = (datetime.strptime(end_date, "%Y-%m-%d")
-             - datetime.strptime(start_date, "%Y-%m-%d")).days
 
     solver_args = ' '.join(["Threads={}".format(args.threads)]
                            + args.solver_args)
@@ -102,7 +103,6 @@ def run_deterministic():
         simulator_args += ['--output-solver-logs']
 
     simulator_args += [
-        '--start-date', start_date, '--num-days', str(ndays),
         '--sced-horizon', str(args.sced_horizon),
         '--ruc-mipgap', str(args.ruc_mipgap),
         '--reserve-factor', str(args.reserve_factor),
@@ -120,6 +120,7 @@ def run_deterministic():
 
     if args.renew_costs is False:
         Simulator(in_dir=args.in_dir, out_dir=out_dir,
+                  start_date=args.start_date, num_days=args.num_days,
                   light_output=args.light_output,
                   init_ruc_file=args.init_ruc_file,
                   save_init_ruc=args.save_init_ruc, verbosity=args.verbose,
@@ -127,6 +128,7 @@ def run_deterministic():
 
     elif not args.renew_costs:
         AllocationSimulator(in_dir=args.in_dir, out_dir=out_dir,
+                            start_date=args.start_date, num_days=args.num_days,
                             light_output=args.light_output,
                             init_ruc_file=args.init_ruc_file,
                             save_init_ruc=args.save_init_ruc,
@@ -136,6 +138,8 @@ def run_deterministic():
     else:
         AutoAllocationSimulator(cost_vals=args.renew_costs, in_dir=args.in_dir,
                                 out_dir=out_dir,
+                                start_date=args.start_date,
+                                num_days=args.num_days,
                                 light_output=args.light_output,
                                 init_ruc_file=args.init_ruc_file,
                                 save_init_ruc=args.save_init_ruc,

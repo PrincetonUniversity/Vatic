@@ -1,24 +1,22 @@
 
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, date, timedelta
 from copy import deepcopy
 from pathlib import Path
 import dill as pickle
 import pandas as pd
 import math
+from typing import Optional
 
-from egret.data.model_data import ModelData as EgretModel
 from prescient.engine.modeling_engine import ForecastErrorMethod
-from prescient.simulator.time_manager import PrescientTime
-
 from prescient.simulator.options import Options
-from typing import Union
-from prescient.data.simulation_state import MutableSimulationState
 from prescient.engine.egret.reporting import (
     report_initial_conditions_for_deterministic_ruc,
     report_demand_for_deterministic_ruc
     )
 
 from .model_data import VaticModelData
+from .time_manager import VaticTime
+from .simulation_state import VaticSimulationState
 
 
 class ProviderError(Exception):
@@ -36,7 +34,9 @@ class PickleProvider:
 
     """
 
-    def __init__(self, data_dir: str, options: Options) -> None:
+    def __init__(self,
+                 data_dir: str, start_date: datetime, num_days: int,
+                 options: Options) -> None:
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
@@ -70,8 +70,8 @@ class PickleProvider:
         with open(Path(data_dir, "load-data.p"), 'rb') as f:
             self.load_data: pd.DataFrame = pickle.load(f)
 
-        self._first_day = pd.Timestamp(options.start_date).date()
-        self._final_day = self._first_day + pd.Timedelta(days=options.num_days)
+        self._first_day = pd.Timestamp(start_date).date()
+        self._final_day = (start_date + pd.Timedelta(days=num_days)).date()
 
         if not ((self.gen_data.index.date >= self._first_day)
                 & (self.gen_data.index.date <= self._final_day)).all():
@@ -178,7 +178,7 @@ class PickleProvider:
 
     def _copy_initial_state_into_model(
             self,
-            use_state: MutableSimulationState, num_time_steps: int,
+            use_state: VaticSimulationState, num_time_steps: int,
             minutes_per_timestep: int) -> VaticModelData:
         """Creates a model with initial generator states from a simulation.
 
@@ -217,7 +217,7 @@ class PickleProvider:
     def get_populated_model(
             self,
             use_actuals: bool, start_time: datetime, num_time_periods: int,
-            use_state: Union[None, MutableSimulationState] = None,
+            use_state: Optional[VaticSimulationState] = None,
             ) -> VaticModelData:
         """Creates a model with all grid asset data for a given time period.
 
@@ -288,7 +288,10 @@ class PickleProvider:
         return new_model
 
     def create_deterministic_ruc(
-            self, time_step: PrescientTime, current_state=None) -> EgretModel:
+            self,
+            time_step: VaticTime,
+            current_state: Optional[VaticSimulationState] = None
+            ) -> VaticModelData:
         """Generates a Reliability Unit Commitment model.
 
         This a merge of Prescient's EgretEngine.create_deterministic_ruc and
@@ -302,9 +305,8 @@ class PickleProvider:
                             pulled from the input datasets.
 
         """
-        start_time = datetime.combine(time_step.date, time(time_step.hour))
         copy_first_day = not self._run_ruc_with_next_day_data
-        copy_first_day &= time_step.hour != 0
+        copy_first_day &= time_step.hour() != 0
 
         forecast_request_count = 24
         if not copy_first_day:
@@ -312,7 +314,7 @@ class PickleProvider:
 
         # create a new model using the forecasts for the given time steps
         ruc_model = self.get_populated_model(
-            use_actuals=False, start_time=start_time,
+            use_actuals=False, start_time=time_step.when,
             num_time_periods=forecast_request_count, use_state=current_state,
             )
 
@@ -334,7 +336,7 @@ class PickleProvider:
 
         # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
-            for vals, in ruc_model.get_forecastables():
+            for vals in ruc_model.get_forecastables():
                 for t in range(24, self._ruc_horizon):
                     vals[t] = vals[t - 24]
 
@@ -343,13 +345,13 @@ class PickleProvider:
             report_demand_for_deterministic_ruc(ruc_model,
                                                 self._ruc_every_hours)
 
-        return ruc_model.to_egret()
+        return ruc_model
 
     def create_sced_instance(
             self,
-            current_state: MutableSimulationState, sced_horizon: int,
+            current_state: VaticSimulationState, sced_horizon: int,
             forecast_error_method=ForecastErrorMethod.PRESCIENT
-            ) -> EgretModel:
+            ) -> VaticModelData:
         """Generates a Security Constrained Economic Dispatch model.
 
         This a merge of Prescient's EgretEngine.create_sced_instance and
@@ -516,7 +518,7 @@ class PickleProvider:
                     * gen_data['initial_p_output'] + 1.
                     )
 
-        return sced_model.to_egret()
+        return sced_model
 
     # adapted from prescient.engine.egret.egret_plugin
     @staticmethod
@@ -567,7 +569,7 @@ class PickleProvider:
 
     def _get_model_for_date(self,
                             requested_date: date,
-                            use_actuals) -> VaticModelData:
+                            use_actuals: bool) -> VaticModelData:
         """Retrieves the data for a given day and creates a model template.
 
         Args
