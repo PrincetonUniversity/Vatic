@@ -93,7 +93,7 @@ class PickleProvider:
 
         self.data_freq = int(
             tuple(data_freq)[0].astype('timedelta64[m]').astype('int'))
-        self.date_cache = {'actual': dict(), 'fcst': dict()}
+        self.date_cache = {'actl': dict(), 'fcst': dict()}
 
         # TODO: better generalize this across different power grids
         self.renewables = self.gen_data.columns.get_level_values(
@@ -322,21 +322,20 @@ class PickleProvider:
         if self._ruc_prescience_hour > self._ruc_delay + 1:
             improved_hour_count = self._ruc_prescience_hour - self._ruc_delay
             improved_hour_count -= 1
-            future_actuals = current_state.get_future_actuals()
 
-            for forecast, actuals in zip(ruc_model.get_forecastables(),
-                                         future_actuals):
+            for fcst_key, fcst_vals in ruc_model.get_forecastables():
                 for t in range(improved_hour_count):
                     forecast_portion = (self._ruc_delay + t)
                     forecast_portion /= self._ruc_prescience_hour
                     actuals_portion = 1 - forecast_portion
+                    actl_val = current_state.get_future_actuals(fcst_key)[t]
 
-                    forecast[t] = forecast_portion * forecast[t]
-                    forecast[t] += actuals_portion * actuals[t]
+                    fcst_vals[t] = forecast_portion * fcst_vals[t]
+                    fcst_vals[t] += actuals_portion * actl_val
 
         # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
-            for vals in ruc_model.get_forecastables():
+            for _, vals in ruc_model.get_forecastables():
                 for t in range(24, self._ruc_horizon):
                     vals[t] = vals[t - 24]
 
@@ -377,24 +376,20 @@ class PickleProvider:
 
         # add the forecasted load demands and renewable generator outputs, and
         # adjust them to be closer to the corresponding actual values
-        sced_forecastables = sced_model.get_forecastables()
         if forecast_error_method is ForecastErrorMethod.PRESCIENT:
-            future_actuals = current_state.get_future_actuals()
+            for k, sced_data in sced_model.get_forecastables():
+                future = current_state.get_future_actuals(k)
 
-            # this error method makes the forecasts equal to the actuals!
-            for future, sced_data in zip(future_actuals, sced_forecastables):
+                # this error method makes the forecasts equal to the actuals!
                 for t in range(sced_horizon):
                     sced_data[t] = future[t]
 
+        # this error method adjusts future forecasts based on how much the
+        # current forecast over/underestimated the current actual value
         else:
-            current_actuals = current_state.get_current_actuals()
-            forecasts = current_state.get_forecasts()
-
-            # this error method adjusts future forecasts based on how much the
-            # current forecast over/underestimated the current actual value
-            for current_actual, forecast, sced_data in zip(current_actuals,
-                                                           forecasts,
-                                                           sced_forecastables):
+            for k, sced_data in sced_model.get_forecastables():
+                current_actual = current_state.get_current_actuals(k)
+                forecast = current_state.get_forecasts(k)
                 sced_data[0] = current_actual
 
                 # find how much the first forecast was off from the actual as
@@ -580,7 +575,7 @@ class PickleProvider:
 
         """
         if use_actuals:
-            use_lbl = 'actual'
+            use_lbl = 'actl'
         else:
             use_lbl = 'fcst'
 

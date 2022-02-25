@@ -12,8 +12,8 @@ class VaticSimulationState:
     """A system state that can be updated with data from RUCs and SCEDs."""
 
     def __init__(self, options):
-        self._forecasts = list()
-        self._actuals = list()
+        self._forecasts = None
+        self._actuals = None
         self._commits = dict()
 
         self._init_gen_state = dict()
@@ -39,7 +39,12 @@ class VaticSimulationState:
     @property
     def timestep_count(self) -> int:
         """The number of timesteps we have data for."""
-        return len(self._forecasts[0]) if len(self._forecasts) > 0 else 0
+        if len(self._forecasts) > 0:
+            steps = len(tuple(self._forecasts.values())[0])
+        else:
+            steps = 0
+
+        return steps
 
     @property
     def minutes_per_step(self) -> int:
@@ -62,7 +67,7 @@ class VaticSimulationState:
         """Get state of charge in the previous time period."""
         return self._init_soc[s]
 
-    def get_current_actuals(self) -> Iterable[float]:
+    def get_current_actuals(self, k: Tuple[str, str]) -> float:
         """Get the current actual value for each forecastable.
 
         This is the actual value for the current time period (time index 0).
@@ -71,10 +76,9 @@ class VaticSimulationState:
         returns a single value.
 
         """
-        for forecastable in self._actuals:
-            yield forecastable[0]
+        return self._actuals[k][0]
 
-    def get_forecasts(self) -> Iterable[Sequence[float]]:
+    def get_forecasts(self, k: Tuple[str, str]) -> Sequence[float]:
         """Get the forecast values for each forecastable.
 
         This is very similar to VaticModelData.get_forecastables(); the
@@ -85,10 +89,9 @@ class VaticSimulationState:
         not the actual value for the current time.
 
         """
-        for forecastable in self._forecasts:
-            yield forecastable
+        return self._forecasts[k]
 
-    def get_future_actuals(self) -> Iterable[Sequence[float]]:
+    def get_future_actuals(self, k: Tuple[str, str]) -> Sequence[float]:
         """Warning: Returns actual values for current time AND FUTURE TIMES.
 
         Be aware that this function returns information that is not yet known!
@@ -96,8 +99,7 @@ class VaticSimulationState:
         by some (probably unrealistic) algorithm options, such as
 
         """
-        for forecastable in self._actuals:
-            yield forecastable
+        return self._actuals[k]
 
     def apply_initial_ruc(self,
                           ruc: VaticModelData,
@@ -123,8 +125,8 @@ class VaticSimulationState:
             'time_period_length_minutes')
         self._next_actuals_pop_minute = self._minutes_per_actuals_step
 
-        self._forecasts = list(ruc.get_forecastables())
-        self._actuals = list(sim_actuals.get_forecastables())
+        self._forecasts = dict(ruc.get_forecastables())
+        self._actuals = dict(sim_actuals.get_forecastables())
 
     def apply_planning_ruc(self,
                            ruc: VaticModelData,
@@ -148,13 +150,13 @@ class VaticSimulationState:
             self._commits[gen] = self._commits[gen][:self.ruc_delay]
             self._commits[gen] += tuple(gen_data['commitment']['values'])
 
-        for i, new_ruc_vals in enumerate(ruc.get_forecastables()):
-            self._forecasts[i] = self._forecasts[i][:self.ruc_delay]
-            self._forecasts[i] += tuple(new_ruc_vals)
+        for k, new_ruc_vals in ruc.get_forecastables():
+            self._forecasts[k] = self._forecasts[k][:self.ruc_delay]
+            self._forecasts[k] += tuple(new_ruc_vals)
 
-        for i, new_ruc_vals in enumerate(sim_actuals.get_forecastables()):
-            self._actuals[i] = self._actuals[i][:self.ruc_delay]
-            self._actuals[i] += tuple(new_ruc_vals)
+        for k, new_ruc_vals in sim_actuals.get_forecastables():
+            self._actuals[k] = self._actuals[k][:self.ruc_delay]
+            self._actuals[k] += tuple(new_ruc_vals)
 
     def apply_sced(self, sced: VaticModelData) -> None:
         """Merge a sced into the current state, and move to next time period.
@@ -175,8 +177,8 @@ class VaticSimulationState:
         self._simulation_minute += self._sced_frequency
 
         while self._next_forecast_pop_minute <= self._simulation_minute:
-            for i in range(len(self._forecasts)):
-                self._forecasts[i] = self._forecasts[i][1:]
+            for k in self._forecasts:
+                self._forecasts[k] = self._forecasts[k][1:]
 
             for gen in self._commits:
                 self._commits[gen] = self._commits[gen][1:]
@@ -184,8 +186,8 @@ class VaticSimulationState:
             self._next_forecast_pop_minute += self._minutes_per_forecast_step
 
         while self._simulation_minute >= self._next_actuals_pop_minute:
-            for i in range(len(self._actuals)):
-                self._actuals[i] = self._actuals[i][1:]
+            for k in self._actuals:
+                self._actuals[k] = self._actuals[k][1:]
 
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
 
@@ -299,7 +301,7 @@ class VaticStateWithOffset:
         return self._parent.get_generator_commitment(g,
                                                      time_index + self._offset)
 
-    def get_current_actuals(self) -> Iterable[float]:
+    def get_current_actuals(self, k: Tuple[str, str]) -> float:
         """Get the current actual value for each forecastable.
 
         This is the actual value for the current time period (time index 0).
@@ -308,10 +310,9 @@ class VaticStateWithOffset:
         returns a single value.
 
         """
-        for actual in self._parent.get_future_actuals():
-            yield actual[self._offset]
+        return self._parent.get_future_actuals(k)[self._offset]
 
-    def get_forecasts(self) -> Iterable[Sequence[float]]:
+    def get_forecasts(self, k: Tuple[str, str]) -> Sequence[float]:
         """Get the forecast values for each forecastable.
 
         This is very similar to VaticModelData.get_forecastables(); the
@@ -322,12 +323,10 @@ class VaticStateWithOffset:
         not the actual value for the current time.
 
         """
-        for forecast in self._parent.get_forecasts():
-            # Copy the relevant portion to a new array
-            portion = list(itertools.islice(forecast, self._offset, None))
-            yield portion
+        return list(itertools.islice(self._parent.get_forecasts(k),
+                                     self._offset, None))
 
-    def get_future_actuals(self) -> Iterable[Sequence[float]]:
+    def get_future_actuals(self, k: Tuple[str, str]) -> Sequence[float]:
         """Warning: Returns actual values for current time AND FUTURE TIMES.
 
         Be aware that this function returns information that is not yet known!
@@ -335,10 +334,8 @@ class VaticStateWithOffset:
         by some (probably unrealistic) algorithm options, such as
 
         """
-        for future in self._parent.get_future_actuals():
-            # Copy the relevent portion to a new array
-            portion = list(itertools.islice(future, self._offset, None))
-            yield portion
+        return list(itertools.islice(self._parent.get_future_actuals(k),
+                                     self._offset, None))
 
 
 class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):

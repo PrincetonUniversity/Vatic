@@ -550,7 +550,7 @@ class Simulator(EgretEngine):
             sim_model = self._data_provider.get_populated_model(
                 use_actuals, start_time, steps_to_request)
 
-            for vals, in sim_model.get_forecastables():
+            for _, vals in sim_model.get_forecastables():
                 for t in range(timesteps_per_day, total_step_count):
                     vals[t] = vals[t - timesteps_per_day]
 

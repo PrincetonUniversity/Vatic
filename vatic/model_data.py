@@ -121,18 +121,19 @@ class VaticModelData(object):
     def set_system_attr(self, attr: str, value: Any) -> None:
         self._data['system'][attr] = value
 
-    def get_forecastables(self) -> Iterator[List[float]]:
+    def get_forecastables(self) -> Iterator[Tuple[Tuple[str, str], List[float]]]:
         """Retrieves grid elements' timeseries that can be forecast."""
 
         for gen, gen_data in self.elements('generator',
                                            generator_type='renewable'):
-            yield gen_data['p_min']['values']
-            yield gen_data['p_max']['values']
+            yield ('p_min', gen), gen_data['p_min']['values']
+            yield ('p_max', gen), gen_data['p_max']['values']
 
         for bus, bus_data in self.elements('load'):
-            yield bus_data['p_load']['values']
+            yield ('p_load', bus), bus_data['p_load']['values']
 
-        yield self._data['system']['reserve_requirement']['values']
+        yield ('req', 'reserve'), self._data[
+            'system']['reserve_requirement']['values']
 
     def time_series(self,
                     element_types: Optional[Iterable[str]] = None,
