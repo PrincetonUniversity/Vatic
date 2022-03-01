@@ -95,20 +95,19 @@ class PickleProvider:
             tuple(data_freq)[0].astype('timedelta64[m]').astype('int'))
         self.date_cache = {'actl': dict(), 'fcst': dict()}
 
-        # TODO: better generalize this across different power grids
+        # get list of generators with available forecasted output values
         self.renewables = self.gen_data.columns.get_level_values(
             level=1).unique().tolist()
 
-        rnwbl_info = {gen: gen.split('_')
-                      for gen in self.template['NondispatchableGenerators']
-                      if gen in self.renewables}
-
-        self.dispatch_renewables = {gen for gen, gen_info in rnwbl_info.items()
-                                    if gen_info[1] not in {'HYDRO', 'RTPV'}}
-        self.nondisp_renewables = {gen for gen, gen_info in rnwbl_info.items()
-                                   if gen_info[1] in {'HYDRO', 'RTPV'}}
-        self.forecast_renewables = {gen for gen, gen_info in rnwbl_info.items()
-                                    if gen_info[1] != 'HYDRO'}
+        # get generators with forecasts whose output can be adjusted (or not)
+        self.template['DispatchRenewables'] = [
+            gen for gen in self.template['DispatchRenewables']
+            if gen in self.renewables
+            ]
+        self.template['NondispatchRenewables'] = [
+            gen for gen in self.template['NondispatchRenewables']
+            if gen in self.renewables
+            ]
 
         # create an empty template model
         self.init_model = self._get_model_for_date(self._first_day,
@@ -600,23 +599,26 @@ class PickleProvider:
                 (gen, i + 1): val for i, val in enumerate(gen_data[gen])})
 
         # we need a second day's worth of values for e.g. extended RUC horizons
-        for gen in self.dispatch_renewables:
-            if 'WIND' in gen:
-                day_data['MaxNondispatchablePower'].update({
-                    (gen, i): gen_data[gen][-1] for i in range(25, 49)})
-            else:
+        gen_types = self.template['NondispatchableGeneratorType']
+        for gen in self.renewables:
+            if gen_types[gen] in {'S', 'H'}:
                 day_data['MaxNondispatchablePower'].update({
                     (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
 
-            # for dispatchable renewables, minimum output is always zero
+            # for generators whose output does not depend on the time of day
+            # we can just copy the final value of the first day
+            else:
+                day_data['MaxNondispatchablePower'].update({
+                    (gen, i): float(gen_data[gen][-1]) for i in range(25, 49)})
+
+        # for dispatchable renewables, minimum output is always zero
+        for gen in self.template['DispatchRenewables']:
             day_data['MinNondispatchablePower'].update({
-                (gen, i + 1): 0 for i in range(48)})
+                (gen, i + 1): 0. for i in range(48)})
 
         # for non-dispatchable renewables (RTPV), min output is equal to max
         # output, and we create a second day of values like we do for PV
-        for gen in self.nondisp_renewables:
-            day_data['MaxNondispatchablePower'].update({
-                (gen, i + 25): val for i, val in enumerate(gen_data[gen])})
+        for gen in self.template['NondispatchRenewables']:
             day_data['MinNondispatchablePower'].update({
                 (gen, i + 1): day_data['MaxNondispatchablePower'][gen, i + 1]
                 for i in range(48)
@@ -628,10 +630,9 @@ class PickleProvider:
         day_data['Demand'] = dict()
 
         for bus in self.template['Buses']:
-            day_data['Demand'].update({
-                (bus, i + 1): val for i, val in enumerate(load_data[bus])})
-            day_data['Demand'].update({
-                (bus, i + 25): val for i, val in enumerate(load_data[bus])})
+            for i, load_val in enumerate(load_data[bus]):
+                day_data['Demand'][bus, i + 1] = load_val
+                day_data['Demand'][bus, i + 25] = load_val
 
         # use the loaded data to create a model dictionary that is
         # interpretable by an Egret model formulation, save it to our cache
@@ -791,7 +792,7 @@ class AllocationPickleProvider(PickleProvider):
                     for gen in self.template['NondispatchableGenerators']}
 
         for gen in self.template['NondispatchableGenerators']:
-            if gen in self.forecast_renewables:
+            if gen in self.template['ForecastRenewables']:
                 pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
                 pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
                              for t in range(data['NumTimePeriods'])]
@@ -814,7 +815,7 @@ class AllocationPickleProvider(PickleProvider):
                                       'values': pmax_vals}
 
         for gen, cost_vals in self.renew_costs.items():
-            if gen not in self.forecast_renewables:
+            if gen not in self.template['ForecastRenewables']:
                 raise ProviderError("Costs have been provided for generator "
                                     "`{}` which is not a forecastable (WIND, "
                                     "PV, RTPV) renewable!".format(gen))
@@ -835,7 +836,7 @@ class AutoAllocationPickleProvider(PickleProvider):
                     for gen in self.template['NondispatchableGenerators']}
 
         for gen in self.template['NondispatchableGenerators']:
-            if gen in self.forecast_renewables:
+            if gen in self.template['ForecastRenewables']:
                 pmin_vals = [0. for _ in range(data['NumTimePeriods'])]
                 pmax_vals = [data['MaxNondispatchablePower'][gen, t + 1]
                              for t in range(data['NumTimePeriods'])]
@@ -857,7 +858,7 @@ class AutoAllocationPickleProvider(PickleProvider):
             gen_dict[gen]['p_max'] = {'data_type': 'time_series',
                                       'values': pmax_vals}
 
-        for gen in self.forecast_renewables:
+        for gen in self.template['ForecastRenewables']:
             gen_dict[gen]['p_cost'] = {
                 'data_type': 'time_series',
 
