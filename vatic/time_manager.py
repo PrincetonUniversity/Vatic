@@ -80,6 +80,12 @@ class VaticTimeManager:
 
     See prescient.simulator.time_manager.TimeManager for the original
     implementation of this class.
+
+    Args
+    ----
+        start_date  The first day of the simulation run.
+        num_days    How many days the simulation will run for.
+        options     Other options passed from the simulation engine.
     """
 
     def __init__(self, start_date: datetime, num_days: int, options):
@@ -119,18 +125,25 @@ class VaticTimeManager:
         current_time = datetime.combine(self.start_date, time(0))
         end_time = datetime.combine(self.end_date, time(0))
 
+        # figure out when the initial RUC will be activated and when the next
+        # planning RUC is to be created
         next_activation_time = current_time + self.ruc_interval
         next_planning_time = next_activation_time - self.ruc_delay
 
         while current_time < end_time:
             is_planning_time = current_time == next_planning_time
-            is_activation_time = current_time == next_activation_time
 
+            # if the next plan won't be activated until after the simulation
+            # has finished, don't bother generating the plan
+            is_planning_time &= (current_time + self.ruc_delay) < end_time
             if is_planning_time:
                 next_planning_time += self.ruc_interval
+
+            is_activation_time = current_time == next_activation_time
             if is_activation_time:
                 next_activation_time += self.ruc_interval
 
+            # produce a time point and update the time state of the simulation
             time_step = VaticTime(current_time,
                                   is_planning_time, is_activation_time)
 
@@ -140,6 +153,8 @@ class VaticTimeManager:
             current_time += self.sced_interval
 
     def get_first_timestep(self) -> VaticTime:
+        """Gets e.g. when the simulation's initialization RUC will run."""
+
         return VaticTime(datetime.combine(self.start_date, time(0)),
                          False, False)
 
