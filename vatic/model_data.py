@@ -61,27 +61,6 @@ class VaticModelData(object):
 
         return VaticModelData(new_dict)
 
-    def get_reserve_requirement(self, time_index):
-        return self._data[
-            'system']['reserve_requirement']['values'][time_index]
-
-    def attributes(self, element_type: str, **element_args) -> dict:
-        if element_type not in self._data['elements']:
-            raise ModelError("This model does not include the element "
-                             "type `{}`!".format(element_type))
-
-        attr_dict = {'names': list()}
-        for name, elem in self.elements(element_type, **element_args):
-            attr_dict['names'].append(name)
-
-            for attr, value in elem.items():
-                if attr not in attr_dict:
-                    attr_dict[attr] = {name: value}
-                else:
-                    attr_dict[attr][name] = value
-
-        return attr_dict
-
     def elements(self,
                  element_type: str,
                  **element_args) -> Iterator[Tuple[str, Dict]]:
@@ -107,6 +86,32 @@ class VaticModelData(object):
                    for k, v in element_args.items()):
                 yield name, elem
 
+    def attributes(self, element_type: str, **element_args) -> dict:
+        """Retrieves grid elements and organizes their data by attribute.
+
+        This function is identical to the above `elements` function, but it
+        arranges the data of the elements matching the given criteria in a
+        dictionary whose top-level keys are attribute names (e.g. 'base_kv',
+        'fuel', 'p_min', etc.), each of whose entries list the element names
+        and their corresponding attribute values.
+
+        """
+        if element_type not in self._data['elements']:
+            raise ModelError("This model does not include the element "
+                             "type `{}`!".format(element_type))
+
+        attr_dict = {'names': list()}
+        for name, elem in self.elements(element_type, **element_args):
+            attr_dict['names'].append(name)
+
+            for attr, value in elem.items():
+                if attr not in attr_dict:
+                    attr_dict[attr] = {name: value}
+                else:
+                    attr_dict[attr][name] = value
+
+        return attr_dict
+
     def get_system_attr(self, attr: str, default: Optional[Any] = None) -> Any:
         if attr in self._data['system']:
             return self._data['system'][attr]
@@ -121,7 +126,12 @@ class VaticModelData(object):
     def set_system_attr(self, attr: str, value: Any) -> None:
         self._data['system'][attr] = value
 
-    def get_forecastables(self) -> Iterator[Tuple[Tuple[str, str], List[float]]]:
+    def get_reserve_requirement(self, time_index):
+        return self._data[
+            'system']['reserve_requirement']['values'][time_index]
+
+    def get_forecastables(self) -> Iterator[Tuple[Tuple[str, str],
+                                                  List[float]]]:
         """Retrieves grid elements' timeseries that can be forecast."""
 
         for gen, gen_data in self.elements('generator',
@@ -220,8 +230,8 @@ class VaticModelData(object):
 
         Args
         ----
-            other   The model data object we will be copying from.
-            time_index      Which time step to replace in this model data.
+            other               The model data object we will be copying from.
+            time_index          Which time step to replace in this model data.
             other_time_index    Which time step to copy from in the other data.
 
         """
@@ -321,6 +331,18 @@ class VaticModelData(object):
         return self.fixed_costs + self.variable_costs
 
     @property
+    def all_fixed_costs(self):
+        return sum(sum(gen_data['commitment_cost']['values'])
+                   for _, gen_data in self.elements(element_type='generator',
+                                                    generator_type='thermal'))
+
+    @property
+    def all_variable_costs(self):
+        return sum(sum(gen_data['production_cost']['values'])
+                   for _, gen_data in self.elements(element_type='generator',
+                                                    generator_type='thermal'))
+
+    @property
     def thermal_generation(self):
         return {gen: gen_data['pg']['values'][0]
                 for gen, gen_data in self.elements(element_type='generator',
@@ -333,6 +355,17 @@ class VaticModelData(object):
             for gen, gen_data in self.elements(element_type='generator',
                                                generator_type='renewable')
             }
+
+    @property
+    def generation(self):
+        return {gen: gen_data['pg']['values']
+                for gen, gen_data in self.elements(element_type='generator')}
+
+    @property
+    def reserves(self):
+        return {gen: gen_data['rg']['values']
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
 
     @property
     def load_shedding(self):
@@ -406,6 +439,13 @@ class VaticModelData(object):
     def was_generator_on(self, gen: str) -> bool:
         return self._data['elements']['generator'][gen]['initial_status'] > 0
 
+    #TODO: put this in a sibling RUCModelData class?
+    @property
+    def commitments(self):
+        return {gen: [bool(cmt) for cmt in gen_data['commitment']['values']]
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
+
     @property
     def available_renewables(self):
         return sum(self.get_max_power_output(gen)
@@ -457,8 +497,10 @@ class VaticModelData(object):
 
     @property
     def fuels(self):
-        return {gen: gen_data['fuel']
-                for gen, gen_data in self._data['elements']['generator'].items()}
+        return {
+            gen: gen_data['fuel']
+            for gen, gen_data in self._data['elements']['generator'].items()
+            }
 
     @property
     def thermal_states(self):
