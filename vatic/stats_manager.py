@@ -1,40 +1,18 @@
-#  ___________________________________________________________________________
-#
-#  Prescient
-#  Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC
-#  (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
-#  Government retains certain rights in this software.
-#  This software is distributed under the Revised BSD License.
-#  ___________________________________________________________________________
 
 import os
 from pathlib import Path
 import bz2
 import dill as pickle
-from typing import TypeVar, Callable, Iterable, Any, Union, Dict
 import pandas as pd
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
 
-from prescient.simulator.reporting_manager import (
-    _collect_time, _collect_time_assert_equal,
-    _add_timeseries_attribute_to_egret_dict
-    )
-
-from prescient.stats.overall_stats import OverallStats
-from prescient.stats.daily_stats import DailyStats
-from egret.data.model_data import ModelData
-from egret.models.unit_commitment import _time_series_dict
-
-# If appropriate back-ends for Matplotlib are not installed
-# (e.g, gtk), then graphing will not be available.
-try:
-    from prescient.util import graphutils
-    graphutils_functional = True
-except ValueError:
-    print("***Unable to load Gtk back-end for matplotlib - graphics generation is disabled")
-    graphutils_functional = False
+import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
+plt.rcParams['axes.facecolor'] = 'white'
+plt.rcParams['savefig.facecolor'] = 'white'
+plt.rcParams['axes.edgecolor'] = 'white'
 
 
 class StatsManager:
@@ -51,8 +29,15 @@ class StatsManager:
         self._round = lambda entry: (
             round(entry, options.output_max_decimal_places)
             if isinstance(entry, (int, float))
+
             else {k: round(val, options.output_max_decimal_places)
                   for k, val in entry.items()}
+            if isinstance(entry, dict) and isinstance(tuple(entry.values())[0],
+                                                      (int, float))
+
+            else {k: [round(val, options.output_max_decimal_places)
+                      for val in vals]
+                  for k, vals in entry.items()}
             )
 
         if not options.disable_stackgraphs:
@@ -65,7 +50,9 @@ class StatsManager:
                         'duration_minutes': ruc.duration_minutes,
                         'fixed_costs': self._round(ruc.all_fixed_costs),
                         'variable_costs': self._round(ruc.all_variable_costs),
-                        'commitments': ruc.commitments}
+                        'commitments': ruc.commitments,
+                        'generation': self._round(ruc.generation),
+                        'reserves': self._round(ruc.reserves)}
 
         if self.verbosity > 0:
             print("Fixed costs:    %12.2f" % new_ruc_data['fixed_costs'])
@@ -251,11 +238,22 @@ class StatsManager:
         if not self.light_output:
             report_dfs['daily_commits'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
-                 **{'Generator': gen, **dict(enumerate(cmt))}}
+                 **{'Generator': gen,
+                    **{'Commit {}'.format(i + 1): val
+                       for i, val in enumerate(cmt)},
+                    **{'Output {}'.format(i + 1): val
+                       for i, val in enumerate(stats['generation'][gen])},
+                    **{'Reserve {}'.format(i + 1): val
+                       for i, val in enumerate(stats['reserves'][gen])}}}
                 for time_step, stats in self._ruc_stats.items()
                 for gen, cmt in stats['commitments'].items()
                 ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
+
+            report_dfs['daily_commits'].columns = pd.MultiIndex.from_tuples(
+                [tuple(x)
+                 for x in report_dfs['daily_commits'].columns.str.split(' ')]
+                )
 
             report_dfs['bus_detail'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -277,126 +275,22 @@ class StatsManager:
         with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
             pickle.dump(report_dfs, f, protocol=-1)
 
-    @staticmethod
-    def generate_stack_graph(options, daily_stats: DailyStats):
+    def generate_stack_graph(self) -> None:
+        stack_data = pd.DataFrame({
+            time_step: {'Demand': stats['total_demand'],
+                        'Thermal': stats['thermal_generation'],
+                        'Renews': stats['renewable_generation'],
+                        'Shedding': stats['load_shedding'],
+                        'OverGen': stats['over_generation']}
+            for time_step, stats in self._sced_stats.items()
+            }).transpose()
 
-        md_dict = ModelData.empty_model_data_dict()
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ind = list(range(stack_data.shape[0]))
 
-        system = md_dict['system']
+        ax.bar(ind, stack_data.Thermal, color='r', width=0.79)
+        ax.bar(ind, stack_data.Renews, bottom=stack_data.Thermal,
+               color='g', width=0.79)
 
-        # put just the HH:MM in the graph
-        system['time_keys'] = [
-            str(opstats.timestamp.time())[0:5]
-            for opstats in daily_stats.operations_stats()
-            ]
-
-        system['reserve_requirement'] = _time_series_dict([
-            opstats.reserve_requirement
-            for opstats in daily_stats.operations_stats()
-            ])
-        system['reserve_shortfall'] = _time_series_dict([
-            opstats.reserve_shortfall
-            for opstats in daily_stats.operations_stats()
-            ])
-
-        elements = md_dict['elements']
-
-        elements['load'] = {'system_load': {'p_load': _time_series_dict([
-            opstats.total_demand
-            for opstats in daily_stats.operations_stats()
-            ])}}
-
-        elements['bus'] = {'system_load_shed': {
-            'p_balance_violation': _time_series_dict([
-                opstats.load_shedding
-                for opstats in daily_stats.operations_stats()])
-            },
-
-            'system_over_generation': {
-                'p_balance_violation' : _time_series_dict([
-                    -opstats.over_generation
-                    for opstats in daily_stats.operations_stats()
-                    ])
-                }
-            }
-
-        ## load in generation, storage
-        generator_fuels = {}
-        thermal_quickstart = {}
-        thermal_dispatch = {}
-        thermal_headroom = {}
-        thermal_states = {}
-        renewables_dispatch = {}
-        renewables_curtailment = {}
-        storage_input_dispatch = {}
-        storage_output_dispatch = {}
-        storage_types = {}
-
-        for opstats in daily_stats.operations_stats():
-            _collect_time_assert_equal(opstats.generator_fuels, generator_fuels)
-            _collect_time_assert_equal(opstats.quick_start_capable, thermal_quickstart)
-            _collect_time_assert_equal(opstats.storage_types, storage_types)
-
-            _collect_time(opstats.observed_thermal_dispatch_levels, thermal_dispatch)
-            _collect_time(opstats.observed_thermal_headroom_levels, thermal_headroom)
-            _collect_time(opstats.observed_thermal_states, thermal_states)
-
-            _collect_time(opstats.observed_renewables_levels, renewables_dispatch)
-            _collect_time(opstats.observed_renewables_curtailment, renewables_curtailment)
-
-            _collect_time(opstats.storage_input_dispatch_levels, storage_input_dispatch)
-            _collect_time(opstats.storage_output_dispatch_levels, storage_output_dispatch)
-
-        # load generation
-        gen_dict = {}
-        for g, fuel in generator_fuels.items():
-            gen_dict[g] = { 'fuel' : fuel , 'generator_type' : 'renewable' } # will get re-set below for thermal units
-        for g, quickstart in thermal_quickstart.items():
-            gen_dict[g]['fast_start'] = quickstart
-            gen_dict[g]['generator_type'] = 'thermal'
-
-        _add_timeseries_attribute_to_egret_dict(gen_dict, thermal_dispatch, 'pg')
-        _add_timeseries_attribute_to_egret_dict(gen_dict, thermal_headroom, 'headroom')
-        _add_timeseries_attribute_to_egret_dict(gen_dict, thermal_states, 'commitment')
-
-        _add_timeseries_attribute_to_egret_dict(gen_dict, renewables_dispatch, 'pg')
-        _add_timeseries_attribute_to_egret_dict(gen_dict, renewables_curtailment, 'curtailment')
-        for g_dict in gen_dict.values():
-            if g_dict['generator_type'] == 'renewable':
-                pg = g_dict['pg']['values']
-                curtailment = g_dict['curtailment']['values']
-                g_dict['p_max'] = _time_series_dict([pg_val+c_val for pg_val, c_val in zip(pg, curtailment)])
-
-        elements['generator'] = gen_dict
-
-        # load storage
-        storage_dict = {}
-        for s, stype in storage_types.items():
-            storage_dict[s] = { 'fuel' : stype }
-        _add_timeseries_attribute_to_egret_dict(storage_dict, storage_input_dispatch, 'p_charge')
-        _add_timeseries_attribute_to_egret_dict(storage_dict, storage_output_dispatch, 'p_discharge')
-
-        elements['storage'] = storage_dict
-
-        figure_path = os.path.join(options.output_directory, "plots","stackgraph_"+str(daily_stats.date)+".png")
-
-        graphutils.generate_stack_graph(ModelData(md_dict),
-                                        bar_width=1,
-                                        x_tick_frequency=4*(60//options.sced_frequency_minutes),
-                                        title=str(daily_stats.date),
-                                        save_fig=figure_path)
-
-    @staticmethod
-    def generate_cost_summary_graph(options, overall_stats: OverallStats):
-        daily_fixed_costs = [daily_stats.this_date_fixed_costs for daily_stats in overall_stats.daily_stats]
-        daily_generation_costs = [daily_stats.this_date_variable_costs for daily_stats in overall_stats.daily_stats]
-        daily_load_shedding = [daily_stats.this_date_load_shedding for daily_stats in overall_stats.daily_stats]
-        daily_over_generation = [daily_stats.this_date_over_generation for daily_stats in overall_stats.daily_stats]
-        daily_reserve_shortfall = [daily_stats.this_date_reserve_shortfall for daily_stats in overall_stats.daily_stats]
-        daily_renewables_curtailment = [daily_stats.this_date_renewables_curtailment for daily_stats in overall_stats.daily_stats]
-
-        graphutils.generate_cost_summary_graph(daily_fixed_costs, daily_generation_costs,
-                                               daily_load_shedding, daily_over_generation,
-                                               daily_reserve_shortfall,
-                                               daily_renewables_curtailment,
-                                               output_directory=os.path.join(options.output_directory, "plots"))
+        fig.savefig(Path(self.write_dir, "plots", "stack-graph.pdf"),
+                    bbox_inches='tight', format='pdf')
