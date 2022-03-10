@@ -7,7 +7,6 @@ import pandas as pd
 import math
 from typing import Optional
 
-from prescient.engine.modeling_engine import ForecastErrorMethod
 from prescient.simulator.options import Options
 from prescient.engine.egret.reporting import (
     report_initial_conditions_for_deterministic_ruc,
@@ -53,6 +52,8 @@ class PickleProvider:
         self._output_ruc_initial_conditions \
             = options.output_ruc_initial_conditions
 
+        self._sced_persistent_forecast_errors \
+            = options.run_sced_with_persistent_forecast_errors
         self._no_startup_shutdown_curves = options.no_startup_shutdown_curves
         self._enforce_sced_shutdown_ramprate \
             = options.enforce_sced_shutdown_ramprate
@@ -345,11 +346,9 @@ class PickleProvider:
 
         return ruc_model
 
-    def create_sced_instance(
-            self,
-            current_state: VaticSimulationState, sced_horizon: int,
-            forecast_error_method=ForecastErrorMethod.PRESCIENT
-            ) -> VaticModelData:
+    def create_sced_instance(self,
+                             current_state: VaticSimulationState,
+                             sced_horizon: int) -> VaticModelData:
         """Generates a Security Constrained Economic Dispatch model.
 
         This a merge of Prescient's EgretEngine.create_sced_instance and
@@ -360,10 +359,7 @@ class PickleProvider:
             current_state   The simulation state of a power grid which will
                             be used as the basis for the data included in this
                             model.
-
             sced_horizon    How many time steps this SCED will simulate over.
-            forecast_error_method   How the forecasts used in this model will
-                                    be adjusted to be closer to the actuals.
 
         """
         assert current_state is not None
@@ -375,25 +371,18 @@ class PickleProvider:
 
         # add the forecasted load demands and renewable generator outputs, and
         # adjust them to be closer to the corresponding actual values
-        if forecast_error_method is ForecastErrorMethod.PRESCIENT:
-            for k, sced_data in sced_model.get_forecastables():
-                future = current_state.get_future_actuals(k)
-
-                # this error method makes the forecasts equal to the actuals!
-                for t in range(sced_horizon):
-                    sced_data[t] = future[t]
-
-        # this error method adjusts future forecasts based on how much the
-        # current forecast over/underestimated the current actual value
-        else:
+        if self._sced_persistent_forecast_errors:
             for k, sced_data in sced_model.get_forecastables():
                 current_actual = current_state.get_current_actuals(k)
                 forecast = current_state.get_forecasts(k)
+
+                # this error method adjusts future forecasts based on how much
+                # the forecast over/underestimated the current actual value
                 sced_data[0] = current_actual
+                current_forecast = forecast[0]
 
                 # find how much the first forecast was off from the actual as
                 # a fraction of the forecast
-                current_forecast = forecast[0]
                 if current_forecast == 0.0:
                     forecast_error_ratio = 0.0
                 else:
@@ -402,6 +391,14 @@ class PickleProvider:
                 # adjust the remaining forecasts based on the initial error
                 for t in range(1, sced_horizon):
                     sced_data[t] = forecast[t] * forecast_error_ratio
+
+        else:
+            for k, sced_data in sced_model.get_forecastables():
+                future = current_state.get_future_actuals(k)
+
+                # this error method makes the forecasts equal to the actuals!
+                for t in range(sced_horizon):
+                    sced_data[t] = future[t]
 
         # set aside a proportion of the total demand as the model's reserve
         # requirement (if any) at each time point

@@ -22,7 +22,6 @@ from pyomo.environ import Suffix as PyomoSuffix
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from prescient.engine.egret.ptdf_manager import PTDFManager
-from prescient.engine.modeling_engine import ForecastErrorMethod
 
 
 class Simulator:
@@ -219,11 +218,6 @@ class Simulator:
         # stochastic RUC. persistent processing differs, as there is no point
         # forecast for stochastic RUC.
 
-        if self.options.run_sced_with_persistent_forecast_errors:
-            forecast_error_method = ForecastErrorMethod.PERSISTENT
-        else:
-            forecast_error_method = ForecastErrorMethod.PRESCIENT
-
         lp_filename = None
         if self.options.write_sced_instances:
             lp_filename = self.options.output_directory + os.sep + str(
@@ -238,8 +232,7 @@ class Simulator:
 
         current_sced_instance = self.solve_sced(
             cur_state,
-            hours_in_objective=1, sced_horizon=self.options.sced_horizon,
-            forecast_error_method=forecast_error_method,
+            hours_in_objective=1, sced_horizon=self.options.sced_horizon
             )
 
         pre_quickstart_cache = None
@@ -346,25 +339,20 @@ class Simulator:
 
         return self.create_simulation_actuals(time_step), ruc_plan, ruc_market
 
-    def solve_sced(
-            self,
-            current_state: VaticSimulationState, hours_in_objective: int,
-            sced_horizon: int, forecast_error_method: ForecastErrorMethod
-            ) -> VaticModelData:
+    def solve_sced(self,
+                   current_state: VaticSimulationState,
+                   hours_in_objective: int,
+                   sced_horizon: int) -> VaticModelData:
 
         sced_model_data = self._data_provider.create_sced_instance(
-            current_state, sced_horizon=sced_horizon,
-            forecast_error_method=forecast_error_method,
-            )
+            current_state, sced_horizon=sced_horizon)
+        self._ptdf_manager.mark_active(sced_model_data)
 
         self._hours_in_objective = hours_in_objective
-
         if self._hours_in_objective > 10:
             ptdf_options = self._ptdf_manager.look_ahead_sced_ptdf_options
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
-
-        self._ptdf_manager.mark_active(sced_model_data)
 
         self.sced_model.generate_model(
             sced_model_data, relax_binaries=False, ptdf_options=ptdf_options,
@@ -503,46 +491,37 @@ class Simulator:
 
             return self._simulation_state
 
-        uc_datetime = self._time_manager.get_uc_activation_time(
-            self._current_timestep)
-        if self.verbosity > 0:
-            print("Creating and solving SCED to determine UC initial "
-                  "conditions for date:", str(uc_datetime.date()),
-                  "hour:", uc_datetime.hour)
-
         # determine the SCED execution mode, in terms of how discrepancies
         # between forecast and actuals are handled. prescient processing is
         # identical in the case of deterministic and stochastic RUC.
         # persistent processing differs, as there is no point forecast
         # for stochastic RUC.
 
-        # always the default
-        sced_forecast_error_method = ForecastErrorMethod.PRESCIENT
+        if self.verbosity > 0:
+            uc_datetime = self._time_manager.get_uc_activation_time(
+                self._current_timestep)
 
-        if self.options.run_sced_with_persistent_forecast_errors:
-            sced_forecast_error_method = ForecastErrorMethod.PERSISTENT
+            print("Creating and solving SCED to determine UC initial "
+                  "conditions for date:", str(uc_datetime.date()),
+                  "hour:", uc_datetime.hour)
 
-            if self.verbosity > 0:
+            if self.options.run_sced_with_persistent_forecast_errors:
                 print("Using persistent forecast error model when projecting "
                       "demand and renewables in SCED\n")
-
-        else:
-            if self.verbosity > 0:
+            else:
                 print("Using prescient forecast error model when projecting "
                       "demand and renewables in SCED\n")
 
-        # NOTE: the projected sced probably doesn't have to be run for a full
+        #TODO: the projected SCED probably doesn't have to be run for a full
         #       24 hours - just enough to get you to midnight and a few hours
         #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
         current_state = self._simulation_state.get_state_with_step_length(60)
         proj_hours = min(24, current_state.timestep_count)
 
-        proj_sced_instance = self.solve_sced(
-            current_state,
-            hours_in_objective=proj_hours, sced_horizon=proj_hours,
-            forecast_error_method=sced_forecast_error_method,
-            )
+        proj_sced_instance = self.solve_sced(current_state,
+                                             hours_in_objective=proj_hours,
+                                             sced_horizon=proj_hours)
 
         return VaticStateWithScedOffset(current_state, proj_sced_instance,
                                         self._simulation_state.ruc_delay)
