@@ -96,6 +96,7 @@ def run_deterministic():
         '--simulate-out-of-sample',
         '--run-sced-with-persistent-forecast-errors',
         '--symbolic-solver-labels',
+        '--output-max-decimal-places', '4',
         '--traceback',
         ]
 

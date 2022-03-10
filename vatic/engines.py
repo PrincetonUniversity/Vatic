@@ -1,3 +1,4 @@
+"""Running a simulation of alternating UC and ED grid optimization steps."""
 
 import os
 import datetime
@@ -16,15 +17,15 @@ from .models import UCModel
 from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
 
-from prescient.engine.egret.engine import EgretEngine
+from pyomo.environ import SolverFactory
+from pyomo.environ import Suffix as PyomoSuffix
+from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
+from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 from prescient.engine.egret.ptdf_manager import PTDFManager
 from prescient.engine.modeling_engine import ForecastErrorMethod
-from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
-from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
-from pyomo.environ import Suffix as PyomoSuffix
 
 
-class Simulator(EgretEngine):
+class Simulator:
 
     ruc_formulations = dict(
         params_forml='default_params',
@@ -54,16 +55,50 @@ class Simulator(EgretEngine):
 
     data_provider_class = PickleProvider
 
+    supported_solvers = ['xpress', 'xpress_direct', 'xpress_persistent',
+                         'gurobi', 'gurobi_direct', 'gurobi_persistent',
+                         'cplex', 'cplex_direct', 'cplex_persistent',
+                         'cbc', 'glpk']
+    supported_persistent_solvers = ('xpress', 'gurobi', 'cplex')
+
+    @classmethod
+    def _verify_solver(cls, solver_type: str, solver_lbl: str) -> str:
+        if solver_type not in cls.supported_solvers:
+            raise RuntimeError("Unknown {} solver `{}` specified!".format(
+                solver_lbl, solver_type))
+
+        if solver_type in cls.supported_persistent_solvers:
+            available = SolverFactory(solver_type + '_persistent').available()
+
+            if not available:
+                print(f"WARNING: {solver_lbl} Solver {solver_type} supports "
+                      f"persistence, which improves the performance of "
+                      f"Prescient. Consider installing the Python bindings "
+                      f"for {solver_type}.")
+
+            else:
+                solver_type += '_persistent'
+
+        if not SolverFactory(solver_type).available():
+            raise RuntimeError(
+                f"Solver {solver_type} is not available to Pyomo!")
+
+        return solver_type
+
     def __init__(self,
                  in_dir, out_dir, start_date, num_days, light_output,
                  init_ruc_file, save_init_ruc, verbosity, prescient_options):
+        self._ruc_solver = self._verify_solver(
+            prescient_options.deterministic_ruc_solver_type, 'RUC')
+        self._sced_solver = self._verify_solver(
+            prescient_options.sced_solver_type, 'SCED')
+
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
         self._current_timestep = None
 
         self.options = prescient_options
         self.verbosity = verbosity
-        self._setup_solvers(prescient_options)
         self._hours_in_objective = None
 
         self._data_provider = self.data_provider_class(
@@ -128,16 +163,19 @@ class Simulator(EgretEngine):
                 self.simulation_end_time - self.simulation_start_time))
 
         self._stats_manager.save_output()
+        if not self.options.disable_stackgraphs:
+            self._stats_manager.generate_stack_graph()
+            self._stats_manager.generate_cost_graph()
 
     def initialize_oracle(self) -> None:
         """
         merge of OracleManager.call_initialization_oracle
              and OracleManager._generate_ruc
         """
+        first_step = self._time_manager.get_first_timestep()
 
         if self.init_ruc_file:
-            sim_actuals = self.create_simulation_actuals(
-                self._time_manager.get_first_timestep())
+            sim_actuals = self.create_simulation_actuals(first_step)
 
             with open(self.init_ruc_file, 'rb') as f:
                 ruc = pickle.load(f)
@@ -145,8 +183,7 @@ class Simulator(EgretEngine):
             ruc_market = None
 
         else:
-            sim_actuals, ruc, ruc_market = self.solve_ruc(
-                self._time_manager.get_first_timestep())
+            sim_actuals, ruc, ruc_market = self.solve_ruc(first_step)
 
         if self.save_init_ruc:
             if not isinstance(self.save_init_ruc, (str, Path)):
@@ -159,6 +196,7 @@ class Simulator(EgretEngine):
 
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
         self._ruc_market_active = ruc_market
+        self._stats_manager.collect_ruc_solution(first_step, ruc)
 
     def call_planning_oracle(self) -> None:
         projected_state = self._get_projected_state()
@@ -170,6 +208,7 @@ class Simulator(EgretEngine):
 
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._ruc_market_pending = ruc_market
+        self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
     def call_oracle(self) -> None:
         """port of OracleManager.call_operation_oracle"""
