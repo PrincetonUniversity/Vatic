@@ -14,12 +14,11 @@ def run_deterministic():
 
     parser.add_argument('in_dir', type=Path,
                         help="directory containing input datasets")
-    parser.add_argument('start_date',
-                        type=lambda s: datetime.strptime(s, '%Y-%m-%d'),
+    parser.add_argument('--start_date', '-s',
+                        type=lambda s: datetime.strptime(s, '%Y-%m-%d').date(),
                         help="start and end dates for the scenario")
 
-    parser.add_argument('--num-days', '-d', type=int,
-                        default=1, dest='num_days',
+    parser.add_argument('--num-days', '-d', type=int, dest='num_days',
                         help="how many days to run the simulation for")
 
     parser.add_argument('--out_dir', '-o', type=Path,

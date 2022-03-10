@@ -101,7 +101,7 @@ class Simulator:
         self._hours_in_objective = None
 
         self._data_provider = self.data_provider_class(
-            in_dir, start_date, num_days, prescient_options)
+            in_dir, prescient_options, start_date, num_days)
         self.init_ruc_file = init_ruc_file
         self.save_init_ruc = save_init_ruc
 
@@ -111,9 +111,12 @@ class Simulator:
         self._prior_sced_instance = None
         self._ptdf_manager = PTDFManager()
 
-        self._time_manager = VaticTimeManager(start_date, num_days,
+        self._time_manager = VaticTimeManager(self._data_provider.first_day,
+                                              self._data_provider.final_day,
                                               prescient_options)
+
         self._stats_manager = StatsManager(out_dir, light_output, verbosity,
+                                           self._data_provider.init_model,
                                            prescient_options)
 
         self._actuals_step_frequency = 60

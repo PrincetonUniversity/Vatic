@@ -1,5 +1,6 @@
+"""Retrieving optimization model inputs from power grid datasets."""
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 from copy import deepcopy
 from pathlib import Path
 import dill as pickle
@@ -31,11 +32,17 @@ class PickleProvider:
         options     Miscelleanous properties of the simulation engine, some of
                     which also apply to data provision.
 
+        start_date  The first day to use for the simulation. If not given, the
+                    first day available in the input data will be used.
+        num_days    How many days to run the simulation for. If not given, all
+                    of the days available in the input data will be used.
     """
 
     def __init__(self,
-                 data_dir: str, start_date: datetime, num_days: int,
-                 options: Options) -> None:
+                 data_dir: str, options: Options,
+                 start_date: Optional[datetime] = None,
+                 num_days: Optional[int] = None,
+                 ) -> None:
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
@@ -65,28 +72,44 @@ class PickleProvider:
 
         # load renewable generator forecasted and actual outputs
         with open(Path(data_dir, "gen-data.p"), 'rb') as f:
-            self.gen_data: pd.DataFrame = pickle.load(f).round(8)
+            gen_data: pd.DataFrame = pickle.load(f)
 
         # load bus forecasted and actual outputs
         with open(Path(data_dir, "load-data.p"), 'rb') as f:
-            self.load_data: pd.DataFrame = pickle.load(f)
+            load_data: pd.DataFrame = pickle.load(f)
 
-        self._first_day = pd.Timestamp(start_date).date()
-        self._final_day = (start_date + pd.Timedelta(days=num_days)).date()
-
-        if not ((self.gen_data.index.date >= self._first_day)
-                & (self.gen_data.index.date <= self._final_day)).all():
-            raise ProviderError("The generator data in the input directory "
-                                "does not match the given start/end dates!")
-
-        if not ((self.load_data.index.date >= self._first_day)
-                & (self.load_data.index.date <= self._final_day)).all():
-            raise ProviderError("The bus demand data in the input directory "
-                                "does not match the given start/end dates!")
+        self.gen_data = gen_data.sort_index().round(8)
+        self.load_data = load_data.sort_index()
 
         if not (self.gen_data.index == self.load_data.index).all():
             raise ProviderError("The generator and the bus demand datasets "
                                 "have inconsistent time points!")
+
+        if start_date:
+            self.first_day = start_date
+        else:
+            self.first_day = self.gen_data.index[0].date()
+
+        if num_days:
+            self.final_day = self.first_day + pd.Timedelta(days=num_days)
+        else:
+            self.final_day = self.gen_data.index[-1].date()
+
+        for run_date in pd.date_range(self.first_day, self.final_day,
+                                      freq='D'):
+            if (self.gen_data.index.date == run_date.date()).sum() != 24:
+                raise ProviderError(
+                    "The generator data in the input directory does not have "
+                    "the correct number of observed values for simulation day "
+                    "{}!".format(run_date.strftime('%F'))
+                    )
+
+            if (self.load_data.index.date == run_date.date()).sum() != 24:
+                raise ProviderError(
+                    "The generator data in the input directory does not have "
+                    "the correct number of observed values for simulation day "
+                    "{}!".format(run_date.strftime('%F'))
+                    )
 
         data_freq = set(self.gen_data.index.to_series().diff()[1:].values)
         if len(data_freq) != 1:
@@ -111,7 +134,7 @@ class PickleProvider:
             ]
 
         # create an empty template model
-        self.init_model = self._get_model_for_date(self._first_day,
+        self.init_model = self._get_model_for_date(self.first_day,
                                                    use_actuals=False)
         self.init_model.reset_timeseries()
         self.shutdown_curves = dict()
@@ -157,10 +180,10 @@ class PickleProvider:
                                     values in each timeseries.
 
         """
-        if day < self._first_day:
-            day = self._first_day
-        elif day > self._final_day:
-            day = self._final_day
+        if day < self.first_day:
+            day = self.first_day
+        elif day > self.final_day:
+            day = self.final_day
 
         # get a model with empty timeseries and the model with initial states
         new_model = self._get_initial_model(num_time_steps,
@@ -264,8 +287,8 @@ class PickleProvider:
 
             # if we have advanced beyond the last day, just repeat the
             # final day's values
-            if day > self._final_day:
-                day = self._final_day
+            if day > self.final_day:
+                day = self.final_day
 
             # if we cross midnight and we didn't start at midnight, we start
             # pulling data from the next day
