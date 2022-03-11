@@ -1,3 +1,4 @@
+"""Representations of grid states used as optimization model input/output."""
 
 import dill as pickle
 from pathlib import Path
@@ -262,7 +263,16 @@ class VaticModelData(object):
     def set_time_steps(self,
                        time_steps: Union[int, List[int]],
                        period_minutes: int) -> None:
+        """Initializes time indices, creates empty placeholder timeseries.
 
+        Args
+        ----
+            time_steps      How many time steps there will be (creating time
+                            indices [1,2,...,<time_steps>]) or a list of the
+                            time indices themselves.
+            period_minutes      How many minutes are in each time step.
+
+        """
         if isinstance(time_steps, int):
             self._data['system']['time_keys'] = [
                 str(i + 1) for i in range(time_steps)]
@@ -276,7 +286,17 @@ class VaticModelData(object):
             time_entry['values'] = [None
                                     for _ in self._data['system']['time_keys']]
 
-    def honor_reserve_factor(self, reserve_factor: float, time_index: int):
+    def honor_reserve_factor(self,
+                             reserve_factor: float, time_index: int) -> None:
+        """Sets reserve requirement at a time point as a ratio of all demand.
+
+        Args
+        ---
+            reserve_factor      The proportion of total system demand (load)
+                                that is necessary for the reserve requirement.
+            time_index          Which time step to set the reserve req at.
+        """
+
         if reserve_factor > 0:
             total_load = sum(bus_data['p_load']['values'][time_index]
                              for bus, bus_data in self.elements('load'))
@@ -294,9 +314,8 @@ class VaticModelData(object):
     def duration_minutes(self):
         return self._data['system']['time_period_length_minutes']
 
-    def get_max_power_output(self, gen):
-        gen_data = self._data['elements']['generator'][gen]
-
+    @staticmethod
+    def get_max_power_output(gen_data):
         if isinstance(gen_data['p_max'], dict):
             return gen_data['p_max']['values'][0]
         else:
@@ -304,9 +323,21 @@ class VaticModelData(object):
 
     @property
     def thermal_fleet_capacity(self):
-        return sum(self.get_max_power_output(gen)
-                   for gen, _ in self.elements(element_type='generator',
-                                               generator_type='thermal'))
+        return sum(self.get_max_power_output(gen_data)
+                   for _, gen_data in self.elements(element_type='generator',
+                                                    generator_type='thermal'))
+
+    @property
+    def thermal_capacities(self):
+        return {gen: self.get_max_power_output(gen_data)
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
+
+    @property
+    def thermal_minimum_outputs(self):
+        return {gen: gen_data['p_min']
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
 
     @property
     def total_demand(self):
@@ -411,7 +442,7 @@ class VaticModelData(object):
     def available_quickstart(self):
         return sum(
             min(self._data['elements']['generator'][gen]['startup_capacity'],
-                self.get_max_power_output(gen))
+                self.get_max_power_output(gen_data))
             for gen, gen_data in self.elements(element_type='generator',
                                                fast_start=True)
 
@@ -448,9 +479,11 @@ class VaticModelData(object):
 
     @property
     def available_renewables(self):
-        return sum(self.get_max_power_output(gen)
-                   for gen, _ in self.elements(element_type='generator',
-                                               generator_type='renewable'))
+        return sum(
+            self.get_max_power_output(gen_data)
+            for _, gen_data in self.elements(element_type='generator',
+                                             generator_type='renewable')
+            )
 
     @property
     def on_offs(self):
@@ -522,7 +555,7 @@ class VaticModelData(object):
 
     @property
     def curtailment(self):
-        return {gen: (self.get_max_power_output(gen)
+        return {gen: (self.get_max_power_output(gen_data)
                       - gen_data['pg']['values'][0])
                 for gen, gen_data in self.elements(element_type='generator',
                                                    generator_type='renewable')}

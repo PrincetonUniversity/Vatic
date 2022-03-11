@@ -33,7 +33,7 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir, light_output, verbosity, options):
+                 write_dir, light_output, verbosity, init_model, options):
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
@@ -58,6 +58,17 @@ class StatsManager:
         if not options.disable_stackgraphs:
             os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
 
+        # static information regarding the characteristics of the power grid
+        self._grid_data = {
+            'generator_fuels': init_model.fuels,
+            'storage_types': init_model.storage_types,
+
+            'thermal_fleet_capacity': self._round(
+                init_model.thermal_fleet_capacity),
+            'thermal_capacities': init_model.thermal_capacities,
+            'thermal_min_outputs': init_model.thermal_minimum_outputs
+            }
+
     def collect_ruc_solution(self,
                              time_step: VaticTime,
                              ruc: VaticModelData) -> None:
@@ -80,13 +91,10 @@ class StatsManager:
                               time_step: VaticTime,
                               sced: VaticModelData, lmp_sced: VaticModelData,
                               pre_quickstart_cache) -> None:
-        #TODO: fleet capacity is a constant, doesn't need to be recalculated,
-        # keep it here until we decide on a better place to keep it
         new_sced_data = {
             'runtime': self._round(sced.model_runtime),
             'duration_minutes': sced.duration_minutes,
 
-            'thermal_fleet_capacity': self._round(sced.thermal_fleet_capacity),
             'total_demand': self._round(sced.total_demand),
             'fixed_costs': self._round(sced.fixed_costs),
             'variable_costs': self._round(sced.variable_costs),
@@ -130,7 +138,6 @@ class StatsManager:
                 for gen in sced.quickstart_generators
                 }
 
-        new_sced_data['generator_fuels'] = sced.fuels
         new_sced_data[
             'observed_thermal_dispatch_levels'] = sced.thermal_generation
         new_sced_data[
@@ -151,7 +158,6 @@ class StatsManager:
         new_sced_data['storage_input_dispatch_levels'] = sced.storage_inputs
         new_sced_data['storage_output_dispatch_levels'] = sced.storage_outputs
         new_sced_data['storage_soc_dispatch_levels'] = sced.storage_states
-        new_sced_data['storage_types'] = sced.storage_types
 
         new_sced_data['observed_bus_LMPs'] = self._round(lmp_sced.bus_LMPs)
         new_sced_data['reserve_RT_price'] = self._round(
@@ -190,7 +196,22 @@ class StatsManager:
 
         self._sced_stats[time_step] = new_sced_data
 
-    def save_output(self):
+    def save_output(self) -> None:
+        """Consolidate collected model stats into tables written to file.
+
+        This function collects the data pulled from UC and ED models that were
+        solved during the course of the simulation and organizes them into
+        pandas dataframes. These dataframes generally have rows corresponding
+        to time steps of the simulation and columns corresponding to various
+        model data fields. These dataframes are all stored in a single
+        dictionary that is then serialized and saved as a compressed pickle
+        object.
+
+        Note that depending on the `light_output` simulator option, this
+        output dictionary may omit certain types of model outputs that are
+        particularly space-intensive.
+
+        """
         report_dfs = dict()
 
         report_dfs['runtimes'] = pd.DataFrame.from_records([
@@ -291,6 +312,8 @@ class StatsManager:
             pickle.dump(report_dfs, f, protocol=-1)
 
     def generate_stack_graph(self) -> None:
+        """Stacked bar plots of power output by time and generator type."""
+
         stack_data = pd.DataFrame({
             time_step.when: {'Demand': stats['total_demand'],
                              'Thermal': stats['thermal_generation'],
@@ -328,6 +351,8 @@ class StatsManager:
                     bbox_inches='tight', format='pdf')
 
     def generate_cost_graph(self) -> None:
+        """Line chart of various types of costs over time."""
+
         cost_data = pd.DataFrame({
             time_step.when: {'Fixed': stats['fixed_costs'],
                              'Variable': stats['variable_costs'],

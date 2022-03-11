@@ -88,9 +88,9 @@ class VaticTimeManager:
         options     Other options passed from the simulation engine.
     """
 
-    def __init__(self, start_date: datetime, num_days: int, options):
+    def __init__(self, start_date: date, end_date: date, options) -> None:
         self.start_date = start_date
-        self.end_date = self.start_date + timedelta(days=num_days)
+        self.end_date = end_date
 
         if 60 % options.sced_frequency_minutes != 0:
             raise ValueError(
