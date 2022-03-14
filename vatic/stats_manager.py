@@ -4,12 +4,15 @@ import os
 from pathlib import Path
 import bz2
 import dill as pickle
+import numpy as np
 import pandas as pd
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
 
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 from matplotlib.dates import DateFormatter
 import matplotlib.ticker as ticker
 from matplotlib.patches import Patch
@@ -372,16 +375,63 @@ class StatsManager:
         ax.grid(lw=0.7, alpha=0.53)
         ax.axhline(0, c='black', lw=1.1)
         ax.legend(handles=lgnd_ptchs, frameon=False,
-                  fontsize=17, ncol=1, handletextpad=0.7)
+                  loc=8, bbox_to_anchor=(0.5, 1.),
+                  fontsize=18, ncol=3, handletextpad=0.7)
 
         ax.xaxis.set_major_formatter(DateFormatter("%m/%d\n%H:%M"))
         ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
         ax.yaxis.set_major_locator(ticker.MaxNLocator(4, steps=[1, 2, 5]))
         ax.set_ylabel("Costs ($)", size=19, weight='semibold')
 
-        ax.tick_params(axis='x', labelsize=16)
-        ax.tick_params(axis='y', labelsize=13)
+        ax.tick_params(axis='x', labelsize=15)
+        ax.tick_params(axis='y', labelsize=12)
         ax.yaxis.get_offset_text().set_weight('semibold')
 
         fig.savefig(Path(self.write_dir, "plots", "costs.pdf"),
                     bbox_inches='tight', format='pdf')
+
+    def generate_commitment_heatmaps(self) -> None:
+        """When are thermal generators planned to be turned on by each RUC?"""
+
+        for ruc_time, ruc_data in self._ruc_stats.items():
+            commits = pd.DataFrame.from_dict({
+                gen: {
+                    i: ((output - self._grid_data['thermal_min_outputs'][gen])
+                        / (self._grid_data['thermal_capacities'][gen]
+                           - self._grid_data['thermal_min_outputs'][gen])
+                        if output > 0. else np.NaN)
+                    for i, output in enumerate(outputs)
+                    }
+
+                for gen, outputs in ruc_data['generation'].items()
+                if self._grid_data['generator_fuels'][gen] in {'C', 'O',
+                                                               'G', 'N'}
+                }, orient='index')
+
+            use_cmap = sns.cubehelix_palette(start=0.45, rot=0.43,
+                                             light=0.87, dark=0.03,
+                                             as_cmap=True)
+
+            xlbls = [
+                t.strftime('%m/%d\n%-I%p') if i % 6 == 0 else ""
+                for i, t in enumerate(pd.date_range(start=ruc_time.when,
+                                                    periods=commits.shape[1],
+                                                    freq='H'))
+                ]
+
+            fig, ax = plt.subplots(figsize=(4, 13))
+            sns.heatmap(commits, cbar=False, vmin=0., vmax=1., ax=ax,
+                        cmap=use_cmap, xticklabels=xlbls, yticklabels=True)
+
+            for i in range(commits.shape[1]):
+                if i % 12 == 0:
+                    ax.axvline(i, c='black', lw=0.07, linestyle=':')
+
+            ax.tick_params(axis='x', labelsize=10)
+            ax.tick_params(axis='y', labelsize=7)
+            ax.set_xlim(-0.23, ax.get_xlim()[1])
+
+            date_lbl = ruc_time.labels()['Date']
+            fig.savefig(Path(self.write_dir, "plots",
+                             "{}_commits.pdf".format(date_lbl)),
+                        bbox_inches='tight', format='pdf')
