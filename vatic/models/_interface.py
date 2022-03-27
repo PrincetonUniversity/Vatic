@@ -17,7 +17,6 @@ import egret.common.lazy_ptdf_utils as lpu
 
 import importlib
 import logging
-from ast import literal_eval
 from ._utils import ModelError, _save_uc_results
 from typing import Callable
 
@@ -31,12 +30,16 @@ class UCModel:
     """
 
     def __init__(self,
+                 mipgap, output_solver_logs, symbolic_solver_labels,
                  params_forml, status_forml, power_forml, reserve_forml,
                  generation_forml, ramping_forml, production_forml,
                  updown_forml, startup_forml, network_forml):
 
         self.pyo_instance = None
         self.solver = None
+        self.mipgap = mipgap
+        self.output_solver_logs = output_solver_logs
+        self.symbolic_solver_labels = symbolic_solver_labels
         self.params = params_forml
 
         self.model_parts = {
@@ -209,8 +212,7 @@ class UCModel:
 
     def solve_model(self,
                     solver=None, solver_options=None,
-                    relaxed=False, set_instance=True,
-                    options=None) -> VaticModelData:
+                    relaxed=False, set_instance=True) -> VaticModelData:
 
         if self.pyo_instance is None:
             raise ModelError("Cannot solve a model until it "
@@ -225,13 +227,8 @@ class UCModel:
         else:
             use_solver = solver
 
-        if not options.output_solver_logs:
+        if not self.output_solver_logs:
             egret_logger.setLevel(logging.WARNING)
-
-        solver_options_list = [opt.split('=')
-                               for opt in solver_options[0].split(' ')]
-        solver_options_dict = {option: literal_eval(val)
-                               for option, val in solver_options_list}
 
         network = list(self.pyo_instance.model_data.elements('branch'))
 
@@ -243,19 +240,19 @@ class UCModel:
                     = self.pyo_instance.model_data.to_egret()
 
             m, results, self.solver = _outer_lazy_ptdf_solve_loop(
-                self.pyo_instance, use_solver, options.ruc_mipgap,
-                timelimit=None, solver_tee=options.output_solver_logs,
-                symbolic_solver_labels=options.symbolic_solver_labels,
-                solver_options=solver_options_dict, solve_method_options=None,
+                self.pyo_instance, use_solver, self.mipgap,
+                timelimit=None, solver_tee=self.output_solver_logs,
+                symbolic_solver_labels=self.symbolic_solver_labels,
+                solver_options=solver_options, solve_method_options=None,
                 relaxed=relaxed, set_instance=set_instance
                 )
 
         else:
             m, results, self.solver = _solve_model(
-                self.pyo_instance, use_solver, options.ruc_mipgap,
-                timelimit=None, solver_tee=options.output_solver_logs,
-                symbolic_solver_labels=options.symbolic_solver_labels,
-                solver_options=solver_options_dict, solve_method_options=None,
+                self.pyo_instance, use_solver, self.mipgap,
+                timelimit=None, solver_tee=self.output_solver_logs,
+                symbolic_solver_labels=self.symbolic_solver_labels,
+                solver_options=solver_options, solve_method_options=None,
                 return_solver=True, set_instance=set_instance
                 )
 

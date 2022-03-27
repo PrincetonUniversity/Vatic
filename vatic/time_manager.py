@@ -85,37 +85,38 @@ class VaticTimeManager:
     ----
         start_date  The first day of the simulation run.
         num_days    How many days the simulation will run for.
-        options     Other options passed from the simulation engine.
     """
 
-    def __init__(self, start_date: date, end_date: date, options) -> None:
+    def __init__(self,
+                 start_date: date, end_date: date, ruc_execution_hour: int,
+                 ruc_every_hours: int, ruc_horizon: int,
+                 sced_frequency_minutes: int) -> None:
         self.start_date = start_date
         self.end_date = end_date
 
-        if 60 % options.sced_frequency_minutes != 0:
+        if 60 % sced_frequency_minutes != 0:
             raise ValueError(
                 "Given SCED frequency ({} minutes) does not divide evenly "
-                "into an hour!".format(options.sced_frequency_minutes)
+                "into an hour!".format(sced_frequency_minutes)
                 )
 
-        if 24 % options.ruc_every_hours != 0:
+        if 24 % ruc_every_hours != 0:
             raise ValueError(
                 "Given RUC frequency (every {} hours) does not divide evenly "
-                "into a day!".format(options.ruc_every_hours)
+                "into a day!".format(ruc_every_hours)
                 )
 
-        if not options.ruc_every_hours <= options.ruc_horizon <= 48:
+        if not ruc_every_hours <= ruc_horizon <= 48:
             raise ValueError(
                 "Given RUC horizon ({} hours) is not between the given "
                 "RUC frequency interval ({} hours) "
-                "and 2 days!".format(options.ruc_horizon,
-                                     options.ruc_every_hours)
+                "and 2 days!".format(ruc_horizon, ruc_every_hours)
                 )
 
-        self.sced_interval = timedelta(minutes=options.sced_frequency_minutes)
-        self.ruc_delay = timedelta(hours=-(options.ruc_execution_hour
-                                            % -options.ruc_every_hours))
-        self.ruc_interval = timedelta(hours=options.ruc_every_hours)
+        self.sced_interval = timedelta(minutes=sced_frequency_minutes)
+        self.ruc_delay = timedelta(
+            hours=-(ruc_execution_hour % -ruc_every_hours))
+        self.ruc_interval = timedelta(hours=ruc_every_hours)
 
         self._current_time = None
 

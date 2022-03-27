@@ -1,6 +1,5 @@
 
 from prescient.data.simulation_state.time_interpolated_state import TimeInterpolatedState
-from prescient.engine.abstract_types import G, S
 from typing import Iterator, Iterable, Sequence, Tuple
 
 from .model_data import VaticModelData
@@ -11,7 +10,8 @@ import itertools
 class VaticSimulationState:
     """A system state that can be updated with data from RUCs and SCEDs."""
 
-    def __init__(self, options):
+    def __init__(self,
+                 ruc_execution_hour, ruc_every_hours, sced_frequency_minutes):
         self._forecasts = None
         self._actuals = None
         self._commits = dict()
@@ -32,9 +32,8 @@ class VaticSimulationState:
         self._next_actuals_pop_minute = 0
 
         #TODO: should this be here or in the time manager?
-        self.ruc_delay = -(options.ruc_execution_hour
-                           % (-options.ruc_every_hours))
-        self._sced_frequency = options.sced_frequency_minutes
+        self.ruc_delay = -(ruc_execution_hour % -ruc_every_hours)
+        self._sced_frequency = sced_frequency_minutes
 
     @property
     def timestep_count(self) -> int:
@@ -51,19 +50,19 @@ class VaticSimulationState:
         """The duration of each time step in minutes."""
         return self._minutes_per_forecast_step
 
-    def get_generator_commitment(self, g:G, time_index:int) -> int:
+    def get_generator_commitment(self, g: str, time_index: int) -> int:
         """Is the gen committed to be on (1) or off (0) for a time step?"""
         return self._commits[g][time_index]
 
-    def get_initial_generator_state(self, g:G) -> float:
+    def get_initial_generator_state(self, g: str) -> float:
         """Get the generator's state in the previous time period."""
         return self._init_gen_state[g]
 
-    def get_initial_power_generated(self, g:G) -> float:
+    def get_initial_power_generated(self, g: str) -> float:
         """Get how much power was generated in the previous period."""
         return self._init_power_gen[g]
 
-    def get_initial_state_of_charge(self, s:S) -> float:
+    def get_initial_state_of_charge(self, s: str) -> float:
         """Get state of charge in the previous time period."""
         return self._init_soc[s]
 
@@ -296,7 +295,7 @@ class VaticStateWithOffset:
         """The number of timesteps we have data for."""
         return self._parent.timestep_count - self._offset
 
-    def get_generator_commitment(self, g: G, time_index: int) -> int:
+    def get_generator_commitment(self, g: str, time_index: int) -> int:
         """Is the gen committed to be on (1) or off (0) for a time step?"""
         return self._parent.get_generator_commitment(g,
                                                      time_index + self._offset)

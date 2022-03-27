@@ -36,7 +36,8 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir, light_output, verbosity, init_model, options):
+                 write_dir, light_output, verbosity, init_model,
+                 output_max_decimals, create_plots):
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
@@ -45,20 +46,21 @@ class StatsManager:
         self.write_dir = write_dir
 
         self._round = lambda entry: (
-            round(entry, options.output_max_decimal_places)
+            round(entry, output_max_decimals)
             if isinstance(entry, (int, float))
 
-            else {k: round(val, options.output_max_decimal_places)
+            else {k: round(val, output_max_decimals)
                   for k, val in entry.items()}
             if isinstance(entry, dict) and isinstance(tuple(entry.values())[0],
                                                       (int, float))
 
-            else {k: [round(val, options.output_max_decimal_places)
+            else {k: [round(val, output_max_decimals)
                       for val in vals]
                   for k, vals in entry.items()}
             )
 
-        if not options.disable_stackgraphs:
+        self.create_plots = create_plots
+        if create_plots:
             os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
 
         # static information regarding the characteristics of the power grid
@@ -313,6 +315,11 @@ class StatsManager:
 
         with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
             pickle.dump(report_dfs, f, protocol=-1)
+
+        if self.create_plots:
+            self.generate_stack_graph()
+            self.generate_cost_graph()
+            self.generate_commitment_heatmaps()
 
     def generate_stack_graph(self) -> None:
         """Stacked bar plots of power output by time and generator type."""
