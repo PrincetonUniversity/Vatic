@@ -16,12 +16,12 @@ from .simulation_state import VaticSimulationState, VaticStateWithScedOffset
 from .models import UCModel
 from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
+from .ptdf_manager import VaticPTDFManager
 
 from pyomo.environ import SolverFactory
 from pyomo.environ import Suffix as PyomoSuffix
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
-from prescient.engine.egret.ptdf_manager import PTDFManager
 
 
 class Simulator:
@@ -85,53 +85,59 @@ class Simulator:
         return solver_type
 
     def __init__(self,
-                 in_dir, out_dir, start_date, num_days, light_output,
-                 init_ruc_file, save_init_ruc, verbosity, prescient_options):
-        self._ruc_solver = self._verify_solver(
-            prescient_options.deterministic_ruc_solver_type, 'RUC')
-        self._sced_solver = self._verify_solver(
-            prescient_options.sced_solver_type, 'SCED')
+                 in_dir, out_dir, start_date, num_days, solver, solver_options,
+                 mipgap, reserve_factor,
+                 light_output, prescient_sced_forecasts, ruc_prescience_hour,
+                 ruc_execution_hour, ruc_every_hours, ruc_horizon,
+                 sced_horizon, enforce_sced_shutdown_ramprate,
+                 no_startup_shutdown_curves, init_ruc_file, save_init_ruc,
+                 verbosity, output_max_decimals, create_plots):
+        self._ruc_solver = self._verify_solver(solver, 'RUC')
+        self._sced_solver = self._verify_solver(solver, 'SCED')
+
+        self.solver_options = solver_options
+        self.sced_horizon = sced_horizon
+        self._hours_in_objective = None
 
         self.simulation_start_time = time.time()
         self.simulation_end_time = None
         self._current_timestep = None
 
-        self.options = prescient_options
-        self.verbosity = verbosity
-        self._hours_in_objective = None
-
         self._data_provider = self.data_provider_class(
-            in_dir, prescient_options, start_date, num_days)
+            in_dir, reserve_factor, prescient_sced_forecasts,
+            ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
+            ruc_horizon, enforce_sced_shutdown_ramprate,
+            no_startup_shutdown_curves, verbosity, start_date, num_days
+            )
+
+        self._sced_frequency_minutes = self._data_provider.data_freq
+        self._actuals_step_frequency = 60
+
         self.init_ruc_file = init_ruc_file
         self.save_init_ruc = save_init_ruc
+        self.verbosity = verbosity
 
-        self._ruc_market_active = None
-        self._ruc_market_pending = None
-        self._simulation_state = VaticSimulationState(prescient_options)
+        self._simulation_state = VaticSimulationState(
+            ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
         self._prior_sced_instance = None
-        self._ptdf_manager = PTDFManager()
+        self._ptdf_manager = VaticPTDFManager()
 
-        self._time_manager = VaticTimeManager(self._data_provider.first_day,
-                                              self._data_provider.final_day,
-                                              prescient_options)
+        self._time_manager = VaticTimeManager(
+            self._data_provider.first_day, self._data_provider.final_day,
+            ruc_execution_hour, ruc_every_hours, ruc_horizon,
+            self._sced_frequency_minutes
+            )
 
         self._stats_manager = StatsManager(out_dir, light_output, verbosity,
                                            self._data_provider.init_model,
-                                           prescient_options)
+                                           output_max_decimals, create_plots)
 
-        self._actuals_step_frequency = 60
-        if prescient_options.simulate_out_of_sample:
-            if self._data_provider.data_freq != prescient_options.sced_frequency_minutes:
-                raise ValueError(
-                    "Given SCED frequency of `{}` minutes doesn't match what "
-                    "is available in the data!".format(
-                        prescient_options.sced_frequency_minutes)
-                    )
-
-            self._actuals_step_frequency = prescient_options.sced_frequency_minutes
-
-        self.ruc_model = UCModel(**self.ruc_formulations)
-        self.sced_model = UCModel(**self.sced_formulations)
+        self.ruc_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
+                                 symbolic_solver_labels=True,
+                                 **self.ruc_formulations)
+        self.sced_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
+                                  symbolic_solver_labels=True,
+                                  **self.sced_formulations)
 
     def simulate(self) -> None:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
@@ -149,11 +155,6 @@ class Simulator:
             if time_step.is_planning_time:
                 self.call_planning_oracle()
 
-            # activate the day-ahead RUC we already ran for this day
-            if time_step.is_ruc_activation_time:
-                self._ruc_market_active = self._ruc_market_pending
-                self._ruc_market_pending = None
-
             # run the SCED to simulate this time step
             self.call_oracle()
 
@@ -165,9 +166,6 @@ class Simulator:
                 self.simulation_end_time - self.simulation_start_time))
 
         self._stats_manager.save_output()
-        if not self.options.disable_stackgraphs:
-            self._stats_manager.generate_stack_graph()
-            self._stats_manager.generate_cost_graph()
 
     def initialize_oracle(self) -> None:
         """
@@ -182,10 +180,8 @@ class Simulator:
             with open(self.init_ruc_file, 'rb') as f:
                 ruc = pickle.load(f)
 
-            ruc_market = None
-
         else:
-            sim_actuals, ruc, ruc_market = self.solve_ruc(first_step)
+            sim_actuals, ruc = self.solve_ruc(first_step)
 
         if self.save_init_ruc:
             if not isinstance(self.save_init_ruc, (str, Path)):
@@ -197,7 +193,6 @@ class Simulator:
                 pickle.dump(ruc, f, protocol=-1)
 
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
-        self._ruc_market_active = ruc_market
         self._stats_manager.collect_ruc_solution(first_step, ruc)
 
     def call_planning_oracle(self) -> None:
@@ -205,65 +200,23 @@ class Simulator:
 
         uc_datetime = self._time_manager.get_uc_activation_time(
             self._current_timestep)
-        sim_actuals, ruc, ruc_market = self.solve_ruc(
-            VaticTime(uc_datetime, False, False), projected_state)
+        sim_actuals, ruc = self.solve_ruc(VaticTime(uc_datetime, False, False),
+                                          projected_state)
 
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
-        self._ruc_market_pending = ruc_market
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
     def call_oracle(self) -> None:
         """port of OracleManager.call_operation_oracle"""
 
-        # determine the SCED execution mode, in terms of how discrepancies
-        # between forecast and actuals are handled.
-        # prescient processing is identical in the case of deterministic and
-        # stochastic RUC. persistent processing differs, as there is no point
-        # forecast for stochastic RUC.
-
-        lp_filename = None
-        if self.options.write_sced_instances:
-            lp_filename = self.options.output_directory + os.sep + str(
-                self._current_timestep.date()) + os.sep + "sced_hour_"\
-                          + str(self._current_timestep.hour()) + ".lp"
-
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
         cur_state = self._simulation_state.get_state_with_step_length(
-            self.options.sced_frequency_minutes)
+            self._sced_frequency_minutes)
 
         current_sced_instance = self.solve_sced(
-            cur_state,
-            hours_in_objective=1, sced_horizon=self.options.sced_horizon
-            )
-
-        pre_quickstart_cache = None
-        if self.options.enable_quick_start_generator_commitment:
-            # Determine whether we are going to run a quickstart optimization
-
-            # TODO: Why the "if True" here?
-            if True or engine.operations_data_extractor.has_load_shedding(
-                    current_sced_instance):
-                # Yep, we're doing it.  Cache data we can use to compare
-                # results with and without quickstart
-                pre_quickstart_cache = engine.operations_data_extractor \
-                    .get_pre_quickstart_data(current_sced_instance)
-
-                # TODO: report solution/load shedding before unfixing
-                #  Quick Start Generators
-                # print("")
-                # print("SCED Solution before unfixing Quick Start Generators")
-                # print("")
-                # self.report_sced_stats()
-
-                # Set up the quickstart run, allowing quickstart
-                # generators to turn on
-                print("Re-solving SCED after unfixing Quick Start Generators")
-
-                current_sced_instance = self.engine \
-                    .enable_quickstart_and_solve(options,
-                                                 current_sced_instance)
+            cur_state, hours_in_objective=1, sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
@@ -274,15 +227,8 @@ class Simulator:
 
         self._stats_manager.collect_sced_solution(
             self._current_timestep, current_sced_instance, lmp_sced,
-            pre_quickstart_cache
+            pre_quickstart_cache=None
             )
-
-        if self.options.compute_market_settlements:
-            self.simulator.stats_manager.collect_market_settlement(
-                current_sced_instance,
-                self.engine.operations_data_extractor,
-                self.simulator.data_manager.ruc_market_active,
-                self._current_timestep.hour() % options.ruc_every_hours)
 
     def solve_ruc(self, time_step, sim_state_for_ruc=None):
 
@@ -302,11 +248,8 @@ class Simulator:
 
         # TODO: better error handling
         try:
-            ruc_plan = self.ruc_model.solve_model(
-                self._ruc_solver,
-                self.options.deterministic_ruc_solver_options,
-                options=self.options
-                )
+            ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
+                                                  self.solver_options)
 
         except:
             print("Failed to solve deterministic RUC instance - likely "
@@ -321,14 +264,6 @@ class Simulator:
         # TODO: add the reporting stuff in
         #  egret_plugin._solve_deterministic_ruc
 
-        if self.options.compute_market_settlements:
-            print("Solving day-ahead market")
-            ruc_market = self.create_and_solve_day_ahead_pricing(
-                self.options, ruc_plan)
-
-        else:
-            ruc_market = None
-
         # the RUC instance to simulate only exists to store the actual demand
         # and renewables outputs to be realized during the course of a day. it
         # also serves to provide a concrete instance, from which static data
@@ -340,7 +275,7 @@ class Simulator:
         if self.verbosity > 0:
             print("\nExtracting scenario to simulate")
 
-        return self.create_simulation_actuals(time_step), ruc_plan, ruc_market
+        return self.create_simulation_actuals(time_step), ruc_plan
 
     def solve_sced(self,
                    current_state: VaticSimulationState,
@@ -367,10 +302,8 @@ class Simulator:
         self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
 
         try:
-            sced_results = self.sced_model.solve_model(
-                self._sced_solver, self.options.sced_solver_options,
-                options=self.options
-                )
+            sced_results = self.sced_model.solve_model(self._sced_solver,
+                                                       self.solver_options)
 
         except:
             print("Some isssue with SCED, writing instance")
@@ -405,8 +338,7 @@ class Simulator:
         # requirement, the price skyrockets, so we set max price values
         for cost_lbl, max_price in zip(
                 ['load_mismatch_cost', 'reserve_shortfall_cost'],
-                [self.options.price_threshold,
-                 self.options.reserve_price_threshold]
+                [10000., 1000.]
                 ):
             shortfall_cost = sced_instance.get_system_attr(cost_lbl, max_price)
 
@@ -462,10 +394,8 @@ class Simulator:
 
         try:
             lmp_sced_results = self.sced_model.solve_model(
-                solver_options=self.options.sced_solver_options,
-                relaxed=True,
+                solver_options=self.solver_options, relaxed=True,
                 set_instance=(self.sced_model.pyo_instance is None),
-                options=self.options
                 )
 
         except:
@@ -508,11 +438,11 @@ class Simulator:
                   "conditions for date:", str(uc_datetime.date()),
                   "hour:", uc_datetime.hour)
 
-            if self.options.run_sced_with_persistent_forecast_errors:
-                print("Using persistent forecast error model when projecting "
+            if self._data_provider.prescient_sced_forecasts:
+                print("Using prescient forecast error model when projecting "
                       "demand and renewables in SCED\n")
             else:
-                print("Using prescient forecast error model when projecting "
+                print("Using persistent forecast error model when projecting "
                       "demand and renewables in SCED\n")
 
         #TODO: the projected SCED probably doesn't have to be run for a full
@@ -543,25 +473,15 @@ class Simulator:
         start_time = datetime.datetime.combine(
             time_step.date(), datetime.time(time_step.hour()))
 
-        # Pick whether we're getting actuals or forecasts
-        if self.options.simulate_out_of_sample:
-            use_actuals = True
-        else:
-            print("")
-            print("***WARNING: Simulating the forecast scenario when running "
-                  "deterministic RUC - time consistency across midnight "
-                  "boundaries is not guaranteed, and may lead to "
-                  "threshold events.")
-
-            use_actuals = False
-
         # Get a new model
-        total_step_count = self.options.ruc_horizon * 60
+        total_step_count = self._data_provider.ruc_horizon * 60
         total_step_count //= self._actuals_step_frequency
 
         if time_step.hour() == 0:
             sim_model = self._data_provider.get_populated_model(
-                use_actuals, start_time, total_step_count)
+                use_actuals=True, start_time=start_time,
+                num_time_periods=total_step_count
+                )
 
         else:
             # only get up to 24 hours of data, then copy it
@@ -569,7 +489,9 @@ class Simulator:
             steps_to_request = min(timesteps_per_day, total_step_count)
 
             sim_model = self._data_provider.get_populated_model(
-                use_actuals, start_time, steps_to_request)
+                use_actuals=True, start_time=start_time,
+                num_time_periods=steps_to_request
+                )
 
             for _, vals in sim_model.get_forecastables():
                 for t in range(timesteps_per_day, total_step_count):
