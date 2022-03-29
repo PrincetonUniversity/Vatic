@@ -4,23 +4,22 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.2.0-b0',
-    description='Pyomo + Egret',
+    version='0.2.0-b1',
+    description='lightweight power grid interface for Egret + Pyomo',
+
     author='Michal Radoslaw Grzadkowski',
     author_email='mg2332@princeton.edu',
-    python_requires='==3.8.*',
 
     packages=setuptools.find_packages(exclude=["vatic.tests"]),
-
     entry_points = {
         'console_scripts': [
             'vatic-det=vatic.command_line:run_deterministic',
             ],
         },
 
+    python_requires='==3.8.*',
     install_requires = [
-        'numpy>1.21', 'dill', 'gurobipy==9.1.2',
-        'gridx-prescient'
-        '@ git+https://github.com/shrivats-pu/Prescient.git@vatic'
+        'numpy>1.21', 'pandas', 'scipy', 'dill', 'matplotlib', 'pyomo>=5.7.1',
+        'gridx-egret @ git+https://github.com/shrivats-pu/Egret.git'
         ],
     )

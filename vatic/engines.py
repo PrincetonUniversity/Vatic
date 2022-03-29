@@ -212,11 +212,8 @@ class Simulator:
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
-        cur_state = self._simulation_state.get_state_with_step_length(
-            self._sced_frequency_minutes)
-
-        current_sced_instance = self.solve_sced(
-            cur_state, hours_in_objective=1, sced_horizon=self.sced_horizon)
+        current_sced_instance = self.solve_sced(hours_in_objective=1,
+                                                sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
@@ -278,12 +275,11 @@ class Simulator:
         return self.create_simulation_actuals(time_step), ruc_plan
 
     def solve_sced(self,
-                   current_state: VaticSimulationState,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:
 
         sced_model_data = self._data_provider.create_sced_instance(
-            current_state, sced_horizon=sced_horizon)
+            self._simulation_state, sced_horizon=sced_horizon)
         self._ptdf_manager.mark_active(sced_model_data)
 
         self._hours_in_objective = hours_in_objective
@@ -449,14 +445,12 @@ class Simulator:
         #       24 hours - just enough to get you to midnight and a few hours
         #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
-        current_state = self._simulation_state.get_state_with_step_length(60)
-        proj_hours = min(24, current_state.timestep_count)
-
-        proj_sced_instance = self.solve_sced(current_state,
-                                             hours_in_objective=proj_hours,
+        proj_hours = min(24, self._simulation_state.timestep_count)
+        proj_sced_instance = self.solve_sced(hours_in_objective=proj_hours,
                                              sced_horizon=proj_hours)
 
-        return VaticStateWithScedOffset(current_state, proj_sced_instance,
+        return VaticStateWithScedOffset(self._simulation_state,
+                                        proj_sced_instance,
                                         self._simulation_state.ruc_delay)
 
     def create_simulation_actuals(self, time_step):

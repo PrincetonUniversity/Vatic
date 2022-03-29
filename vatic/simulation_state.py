@@ -1,10 +1,9 @@
+"""Storing the states of a grid's generation assets within a simulation run."""
 
-from prescient.data.simulation_state.time_interpolated_state import TimeInterpolatedState
-from typing import Iterator, Iterable, Sequence, Tuple
-
-from .model_data import VaticModelData
 import math
 import itertools
+from typing import Iterator, Sequence, Tuple
+from .model_data import VaticModelData
 
 
 class VaticSimulationState:
@@ -38,6 +37,7 @@ class VaticSimulationState:
     @property
     def timestep_count(self) -> int:
         """The number of timesteps we have data for."""
+
         if len(self._forecasts) > 0:
             steps = len(tuple(self._forecasts.values())[0])
         else:
@@ -189,22 +189,6 @@ class VaticSimulationState:
                 self._actuals[k] = self._actuals[k][1:]
 
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
-
-    #TODO: if this is always returning itself then we can probably simplify
-    def get_state_with_step_length(self, minutes_per_step:int):
-        # if our data matches what's stored here,
-        # no need to create an interpolated view
-        if self._minutes_per_forecast_step == minutes_per_step and \
-           self._minutes_per_actuals_step == minutes_per_step and \
-           self._sced_frequency == minutes_per_step:
-            return self
-
-        # Found out what fraction past the first step of each type we currently are
-        minutes_past_forecast = self._simulation_minute - self._next_forecast_pop_minute + self._minutes_per_forecast_step
-        minutes_past_actuals = self._simulation_minute - self._next_actuals_pop_minute + self._minutes_per_actuals_step
-        return TimeInterpolatedState(self, self._minutes_per_forecast_step, minutes_past_forecast,
-                                     self._minutes_per_actuals_step, minutes_past_actuals,
-                                     minutes_per_step)
 
     def get_generator_states_at_sced_offset(
             self, sced: VaticModelData, sced_index: int) -> Tuple:
