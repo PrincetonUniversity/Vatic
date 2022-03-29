@@ -1,18 +1,12 @@
 """Retrieving optimization model inputs from power grid datasets."""
 
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, date, timedelta
 from copy import deepcopy
 from pathlib import Path
 import dill as pickle
 import pandas as pd
 import math
 from typing import Optional
-
-from prescient.simulator.options import Options
-from prescient.engine.egret.reporting import (
-    report_initial_conditions_for_deterministic_ruc,
-    report_demand_for_deterministic_ruc
-    )
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
@@ -26,11 +20,14 @@ class ProviderError(Exception):
 class PickleProvider:
     """Loading data from input datasets and generating UC and ED models.
 
+    The core data retrieval functionality implemented here was based upon
+    prescient.data.providers.dat_data_provider and adapted to use pickled input
+    dataframes as opposed to .dat files. This class also includes model data
+    creation methods originally included in prescient.egret.engine.egret_plugin
+
     Args
     ----
         data_dir    The path to where the input datasets are stored.
-        options     Miscelleanous properties of the simulation engine, some of
-                    which also apply to data provision.
 
         start_date  The first day to use for the simulation. If not given, the
                     first day available in the input data will be used.
@@ -39,31 +36,30 @@ class PickleProvider:
     """
 
     def __init__(self,
-                 data_dir: str, options: Options,
+                 data_dir: str, reserve_factor: float,
+                 prescient_sced_forecasts: bool,
+                 ruc_prescience_hour: int, ruc_execution_hour: int,
+                 ruc_every_hours: int, ruc_horizon: int,
+                 enforce_sced_shutdown_ramprate: bool,
+                 no_startup_shutdown_curves: bool, verbosity: int,
                  start_date: Optional[datetime] = None,
-                 num_days: Optional[int] = None,
-                 ) -> None:
+                 num_days: Optional[int] = None) -> None:
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
-        self._reserve_factor = options.reserve_factor
+        self._reserve_factor = reserve_factor
 
-        self._ruc_execution_hour = options.ruc_execution_hour
-        self._ruc_every_hours = options.ruc_every_hours
-        self._ruc_delay = -(self._ruc_execution_hour
-                            % -options.ruc_every_hours)
+        self._ruc_execution_hour = ruc_execution_hour
+        self._ruc_every_hours = ruc_every_hours
+        self._ruc_delay = -(self._ruc_execution_hour % -ruc_every_hours)
 
-        self._run_ruc_with_next_day_data = options.run_ruc_with_next_day_data
-        self._ruc_horizon = options.ruc_horizon
-        self._ruc_prescience_hour = options.ruc_prescience_hour
-        self._output_ruc_initial_conditions \
-            = options.output_ruc_initial_conditions
+        self.ruc_horizon = ruc_horizon
+        self._ruc_prescience_hour = ruc_prescience_hour
+        self._output_ruc_initial_conditions = verbosity > 3
 
-        self._sced_persistent_forecast_errors \
-            = options.run_sced_with_persistent_forecast_errors
-        self._no_startup_shutdown_curves = options.no_startup_shutdown_curves
-        self._enforce_sced_shutdown_ramprate \
-            = options.enforce_sced_shutdown_ramprate
+        self.prescient_sced_forecasts = prescient_sced_forecasts
+        self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
+        self._no_startup_shutdown_curves = no_startup_shutdown_curves
 
         # load input datasets, starting with static grid data (e.g. network
         # topology, thermal generator outputs)
@@ -313,7 +309,8 @@ class PickleProvider:
     def create_deterministic_ruc(
             self,
             time_step: VaticTime,
-            current_state: Optional[VaticSimulationState] = None
+            current_state: Optional[VaticSimulationState] = None,
+            copy_first_day: Optional[bool] = False
             ) -> VaticModelData:
         """Generates a Reliability Unit Commitment model.
 
@@ -328,12 +325,9 @@ class PickleProvider:
                             pulled from the input datasets.
 
         """
-        copy_first_day = not self._run_ruc_with_next_day_data
-        copy_first_day &= time_step.hour() != 0
-
         forecast_request_count = 24
         if not copy_first_day:
-            forecast_request_count = self._ruc_horizon
+            forecast_request_count = self.ruc_horizon
 
         # create a new model using the forecasts for the given time steps
         ruc_model = self.get_populated_model(
@@ -359,13 +353,25 @@ class PickleProvider:
         # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
             for _, vals in ruc_model.get_forecastables():
-                for t in range(24, self._ruc_horizon):
+                for t in range(24, self.ruc_horizon):
                     vals[t] = vals[t - 24]
 
+        #TODO: add more reporting
         if self._output_ruc_initial_conditions:
-            report_initial_conditions_for_deterministic_ruc(ruc_model)
-            report_demand_for_deterministic_ruc(ruc_model,
-                                                self._ruc_every_hours)
+            tgens = dict(ruc_model.elements('generator',
+                                            generator_type='thermal'))
+            gen_label_size = max((len(gen) for gen in tgens), default=0) + 1
+
+            print("\nInitial generator conditions (gen-name t0-unit-on"
+                  " t0-unit-on-state t0-power-generated):")
+
+            for gen, gen_data in tgens.items():
+                print(' '.join([
+                    format(gen, '{}s'.format(gen_label_size)),
+                    format(str(int(gen_data['initial_status'] > 0)), '5s'),
+                    format(gen_data['initial_status'], '7d'),
+                    format(gen_data['initial_p_output'], '12.2f')
+                    ]))
 
         return ruc_model
 
@@ -394,7 +400,15 @@ class PickleProvider:
 
         # add the forecasted load demands and renewable generator outputs, and
         # adjust them to be closer to the corresponding actual values
-        if self._sced_persistent_forecast_errors:
+        if self.prescient_sced_forecasts:
+            for k, sced_data in sced_model.get_forecastables():
+                future = current_state.get_future_actuals(k)
+
+                # this error method makes the forecasts equal to the actuals!
+                for t in range(sced_horizon):
+                    sced_data[t] = future[t]
+
+        else:
             for k, sced_data in sced_model.get_forecastables():
                 current_actual = current_state.get_current_actuals(k)
                 forecast = current_state.get_forecasts(k)
@@ -414,14 +428,6 @@ class PickleProvider:
                 # adjust the remaining forecasts based on the initial error
                 for t in range(1, sced_horizon):
                     sced_data[t] = forecast[t] * forecast_error_ratio
-
-        else:
-            for k, sced_data in sced_model.get_forecastables():
-                future = current_state.get_future_actuals(k)
-
-                # this error method makes the forecasts equal to the actuals!
-                for t in range(sced_horizon):
-                    sced_data[t] = future[t]
 
         # set aside a proportion of the total demand as the model's reserve
         # requirement (if any) at each time point
@@ -799,11 +805,11 @@ class PickleProvider:
 
 class AllocationPickleProvider(PickleProvider):
 
-    def __init__(self, data_dir: str, options: Options) -> None:
+    def __init__(self, data_dir: str) -> None:
         with open(Path(data_dir, "renew-costs.p"), 'rb') as f:
             self.renew_costs: dict = pickle.load(f)
 
-        super().__init__(data_dir, options)
+        super().__init__(data_dir)
 
     def _create_renewables_model_dict(self, data: dict) -> dict:
         gen_dict = {gen: {'generator_type': 'renewable',
