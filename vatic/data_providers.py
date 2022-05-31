@@ -36,7 +36,8 @@ class PickleProvider:
     """
 
     def __init__(self,
-                 data_dir: str, reserve_factor: float,
+                 template_data: dict, gen_data: pd.DataFrame,
+                 load_data: pd.DataFrame, reserve_factor: float,
                  prescient_sced_forecasts: bool,
                  ruc_prescience_hour: int, ruc_execution_hour: int,
                  ruc_every_hours: int, ruc_horizon: int,
@@ -44,6 +45,15 @@ class PickleProvider:
                  no_startup_shutdown_curves: bool, verbosity: int,
                  start_date: Optional[datetime] = None,
                  num_days: Optional[int] = None) -> None:
+
+        if not (gen_data.index == load_data.index).all():
+            raise ProviderError("The generator and the bus demand datasets "
+                                "have inconsistent time points!")
+
+        self.template = template_data
+        self.gen_data = gen_data.sort_index().round(8)
+        self.load_data = load_data.sort_index()
+
         self._time_period_mins = 60
         self._load_mismatch_cost = 1e4
         self._reserve_mismatch_cost = 1e3
@@ -60,26 +70,6 @@ class PickleProvider:
         self.prescient_sced_forecasts = prescient_sced_forecasts
         self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
         self._no_startup_shutdown_curves = no_startup_shutdown_curves
-
-        # load input datasets, starting with static grid data (e.g. network
-        # topology, thermal generator outputs)
-        with open(Path(data_dir, "grid-template.p"), 'rb') as f:
-            self.template: dict = pickle.load(f)
-
-        # load renewable generator forecasted and actual outputs
-        with open(Path(data_dir, "gen-data.p"), 'rb') as f:
-            gen_data: pd.DataFrame = pickle.load(f)
-
-        # load bus forecasted and actual outputs
-        with open(Path(data_dir, "load-data.p"), 'rb') as f:
-            load_data: pd.DataFrame = pickle.load(f)
-
-        self.gen_data = gen_data.sort_index().round(8)
-        self.load_data = load_data.sort_index()
-
-        if not (self.gen_data.index == self.load_data.index).all():
-            raise ProviderError("The generator and the bus demand datasets "
-                                "have inconsistent time points!")
 
         if start_date:
             self.first_day = start_date

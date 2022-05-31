@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from ast import literal_eval
 
+from .input.loaders import load_input
 from .engines import Simulator, AllocationSimulator, AutoAllocationSimulator
 
 
@@ -23,8 +24,9 @@ def run_deterministic():
                         help="directory where output will be stored")
 
     # instead of using all the days in the input files we can choose a subset
-    parser.add_argument('--start_date', '-s',
+    parser.add_argument('--start-date', '-s',
                         type=lambda s: datetime.strptime(s, '%Y-%m-%d').date(),
+                        dest='start_date',
                         help="starting date for the scenario")
     parser.add_argument('--num-days', '-d', type=int, dest='num_days',
                         help="how many days to run the simulation for")
@@ -62,11 +64,8 @@ def run_deterministic():
                         help="How much precision to use when writing summary "
                              "output files.")
 
-    parser.add_argument('--init-ruc-file', dest='init_ruc_file',
+    parser.add_argument('--init-ruc-file', type=Path, dest='init_ruc_file',
                         help='where to save/load the initial RUC from')
-    parser.add_argument('--save-init-ruc', dest='save_init_ruc',
-                        nargs='?', const=True,
-                        help="whether to save the initial solved RUC to file")
 
     parser.add_argument('--renew-costs', '-c', nargs='*',
                         default=False, dest='renew_costs',
@@ -127,10 +126,8 @@ def run_deterministic():
                              "of the simulator and its solvers")
 
     args = parser.parse_args()
-
-    if not args.in_dir.exists():
-        raise ValueError(
-            "Input directory {} does not exist!".format(args.in_dir))
+    template_data, gen_data, load_data = load_input(
+        args.in_dir, args.start_date, args.num_days)
 
     if args.out_dir:
         out_dir = args.out_dir
@@ -144,7 +141,7 @@ def run_deterministic():
                 solver_args[arg_name] = literal_eval(arg_val)
 
     if args.renew_costs is False:
-        Simulator(in_dir=args.in_dir, out_dir=out_dir,
+        Simulator(template_data, gen_data, load_data, out_dir=out_dir,
                   start_date=args.start_date, num_days=args.num_days,
                   solver=args.solver, solver_options=solver_args,
                   mipgap=args.ruc_mipgap, reserve_factor=args.reserve_factor,
@@ -157,8 +154,7 @@ def run_deterministic():
                   enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
                   no_startup_shutdown_curves=args.no_startup_shutdown_curves,
                   light_output=args.light_output,
-                  init_ruc_file=args.init_ruc_file,
-                  save_init_ruc=args.save_init_ruc, verbosity=args.verbose,
+                  init_ruc_file=args.init_ruc_file, verbosity=args.verbose,
                   output_max_decimals=args.output_max_decimals,
                   create_plots=args.create_plots).simulate()
 

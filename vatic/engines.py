@@ -85,13 +85,13 @@ class Simulator:
         return solver_type
 
     def __init__(self,
-                 in_dir, out_dir, start_date, num_days, solver, solver_options,
-                 mipgap, reserve_factor,
-                 light_output, prescient_sced_forecasts, ruc_prescience_hour,
-                 ruc_execution_hour, ruc_every_hours, ruc_horizon,
-                 sced_horizon, enforce_sced_shutdown_ramprate,
-                 no_startup_shutdown_curves, init_ruc_file, save_init_ruc,
-                 verbosity, output_max_decimals, create_plots):
+                 template_data, gen_data, load_data, out_dir,
+                 start_date, num_days, solver, solver_options, mipgap,
+                 reserve_factor, light_output, prescient_sced_forecasts,
+                 ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
+                 ruc_horizon, sced_horizon, enforce_sced_shutdown_ramprate,
+                 no_startup_shutdown_curves, init_ruc_file, verbosity,
+                 output_max_decimals, create_plots):
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
@@ -104,9 +104,9 @@ class Simulator:
         self._current_timestep = None
 
         self._data_provider = self.data_provider_class(
-            in_dir, reserve_factor, prescient_sced_forecasts,
-            ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
-            ruc_horizon, enforce_sced_shutdown_ramprate,
+            template_data, gen_data, load_data, reserve_factor,
+            prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
+            ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
             no_startup_shutdown_curves, verbosity, start_date, num_days
             )
 
@@ -114,7 +114,6 @@ class Simulator:
         self._actuals_step_frequency = 60
 
         self.init_ruc_file = init_ruc_file
-        self.save_init_ruc = save_init_ruc
         self.verbosity = verbosity
 
         self._simulation_state = VaticSimulationState(
@@ -174,23 +173,16 @@ class Simulator:
         """
         first_step = self._time_manager.get_first_timestep()
 
-        if self.init_ruc_file:
-            sim_actuals = self.create_simulation_actuals(first_step)
-
+        if self.init_ruc_file and self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'rb') as f:
-                ruc = pickle.load(f)
+                sim_actuals, ruc = pickle.load(f)
 
         else:
             sim_actuals, ruc = self.solve_ruc(first_step)
 
-        if self.save_init_ruc:
-            if not isinstance(self.save_init_ruc, (str, Path)):
-                ruc_file = "init_ruc.p"
-            else:
-                ruc_file = Path(self.save_init_ruc)
-
-            with open(ruc_file, 'wb') as f:
-                pickle.dump(ruc, f, protocol=-1)
+        if self.init_ruc_file and not self.init_ruc_file.exists():
+            with open(self.init_ruc_file, 'wb') as f:
+                pickle.dump((sim_actuals, ruc), f, protocol=-1)
 
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(first_step, ruc)
