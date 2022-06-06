@@ -157,29 +157,35 @@ class Simulator:
             # run the SCED to simulate this time step
             self.call_oracle()
 
+        sim_runtime = time.time() - self.simulation_start_time
         if self.verbosity > 0:
-            self.simulation_end_time = time.time()
-
             print("Simulation Complete")
-            print("Total simulation time: {:.2f} seconds".format(
-                self.simulation_end_time - self.simulation_start_time))
+            print("Total simulation time: {:.2f} seconds".format(sim_runtime))
 
-        self._stats_manager.save_output()
+        self._stats_manager.save_output(sim_runtime)
 
     def initialize_oracle(self) -> None:
-        """
-        merge of OracleManager.call_initialization_oracle
-             and OracleManager._generate_ruc
+        """Creates a day-ahead unit commitment for the simulation's first day.
+
+        This method is a merge of
+        prescient.simulator.OracleManager.call_initialization_oracle
+        and OracleManager._generate_ruc.
+
         """
         first_step = self._time_manager.get_first_timestep()
 
+        # if an initial RUC file has been given and it exists then load the
+        # pre-solved RUC from it...
         if self.init_ruc_file and self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'rb') as f:
                 sim_actuals, ruc = pickle.load(f)
 
+        # ...otherwise, solve the initial RUC
         else:
             sim_actuals, ruc = self.solve_ruc(first_step)
 
+        # if an initial RUC file has been given and it doesn't already exist
+        # then save the solved RUC for future use
         if self.init_ruc_file and not self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'wb') as f:
                 pickle.dump((sim_actuals, ruc), f, protocol=-1)
@@ -188,8 +194,14 @@ class Simulator:
         self._stats_manager.collect_ruc_solution(first_step, ruc)
 
     def call_planning_oracle(self) -> None:
+        """Creates a day-ahead unit commitment for the simulation's next day.
+
+        This method is adapted from OracleManager.call_planning_oracle.
+
+        """
         projected_state = self._get_projected_state()
 
+        # find out when this unit commitment will come into effect and solve it
         uc_datetime = self._time_manager.get_uc_activation_time(
             self._current_timestep)
         sim_actuals, ruc = self.solve_ruc(VaticTime(uc_datetime, False, False),
@@ -199,8 +211,11 @@ class Simulator:
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
     def call_oracle(self) -> None:
-        """port of OracleManager.call_operation_oracle"""
+        """Solves the real-time economic dispatch for the current time step.
 
+        This method is adapted from OracleManager.call_operation_oracle.
+
+        """
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 

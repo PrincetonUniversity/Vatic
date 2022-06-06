@@ -1,9 +1,13 @@
 # Vatic #
 
-Vatic is a Python package for applying Pyomo and Egret to simulating the
-optimized behaviour of power grids under a given set of scenarios. It is
-meant as a lightweight adaptation of Prescient, which is available
-[here](https://github.com/grid-parity-exchange/Prescient).
+Vatic is a Python package for running simulations of a power grid using the
+[PJM](https://www.e-education.psu.edu/ebf483/node/814) framework consisting
+of alternating unit commitment (UC) and economic dispatch (ED) steps. Vatic
+has been designed as a lightweight adaptation of
+[Prescient](https://github.com/grid-parity-exchange/Prescient); it likewise
+applies mixed-integer linear programming optimization implemented in
+[Pyomo](http://www.pyomo.org/) to power grid formulations created using
+[Egret](https://github.com/grid-parity-exchange/Egret).
 
 
 ## Installing Vatic ##
@@ -24,10 +28,10 @@ pip install .
 
 ## Running Vatic ##
 
-Installing vatic adds the command `vatic-det` to your command line
-namespace, which is called the following way:
+Installing Vatic adds the command `vatic-det` to your command line
+namespace. The simplest way to invoke this command is:
 
-```vatic-det $input_dir $output_dir $start_date $end_date ```
+```vatic-det $input-dir $start-date $num-days ```
 
 `input_dir` is the directory storing the dataset to be used for the run.
 This directory should be structured in the same way as *e.g.* directories
@@ -38,21 +42,12 @@ as `input_dir`.
 `output_dir` is where the output will be stored, which will consist of a copy
 of `input_dir` along with any generated scenarios.
 
-`start_date` and `end_date` are the starting and ending dates of the simulation,
-given in YYYY-MM-DD format, *e.g.* 2018-07-10 and 2018-07-11.
-
 In addition to these required arguments, `vatic-det` accepts the following
 optional arguments:
 
 `--solver` The solver to use for RUC and SCED instances, such as `cbc` or
 `gurobi`. The default is `cbc`; note that you may have to install your
 preferred solver separately.
-
-`--scen-dir` If you have already generated scenarios using a previous run of
-Vatic or Prescient, you can specify the directory here to allow Vatic to skip
-the scenario generation process and use these cached scenarios instead. Note
-that if this option is not specified, you can find the scenarios generated
-using the present run under `$output_dir/scenarios`.
 
 `--threads` The number of compute cores to be used for parallelization.
 If you are running `vatic-det` on a remote compute cluster, do not use

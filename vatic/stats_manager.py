@@ -201,7 +201,7 @@ class StatsManager:
 
         self._sced_stats[time_step] = new_sced_data
 
-    def save_output(self) -> None:
+    def save_output(self, sim_runtime=None) -> None:
         """Consolidate collected model stats into tables written to file.
 
         This function collects the data pulled from UC and ED models that were
@@ -225,6 +225,9 @@ class StatsManager:
             for time_step, stats in self._sced_stats.items()
             ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Type'], verify_integrity=True)
+
+        if sim_runtime:
+            report_dfs['total_runtime'] = self._round(sim_runtime)
 
         report_dfs['ruc_summary'] = pd.DataFrame.from_records([
             {**time_step.labels(),

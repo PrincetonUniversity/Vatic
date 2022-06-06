@@ -19,7 +19,8 @@ setuptools.setup(
 
     python_requires='==3.8.*',
     install_requires = [
-        'numpy>1.21', 'pandas', 'scipy', 'dill', 'matplotlib', 'pyomo>=5.7.1',
+        'numpy>1.21', 'pandas', 'scipy', 'dill', 'matplotlib',
+        'pyomo>=5.7.1', 'gurobipy',
         'gridx-egret @ git+https://github.com/shrivats-pu/Egret.git'
         ],
     )

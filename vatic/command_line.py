@@ -129,6 +129,7 @@ def run_deterministic():
     template_data, gen_data, load_data = load_input(
         args.in_dir, args.start_date, args.num_days)
 
+    # output is placed in input directory if output directory is not given
     if args.out_dir:
         out_dir = args.out_dir
     else:
@@ -136,9 +137,9 @@ def run_deterministic():
 
     solver_args = {'Threads': args.threads}
     if args.solver_args:
-        for arg_str in args.solver_args.split(' '):
-            for arg_name, arg_val in arg_str.split('='):
-                solver_args[arg_name] = literal_eval(arg_val)
+        for arg_str in args.solver_args:
+            arg_name, arg_val = arg_str.split('=')
+            solver_args[arg_name] = literal_eval(arg_val)
 
     if args.renew_costs is False:
         Simulator(template_data, gen_data, load_data, out_dir=out_dir,
