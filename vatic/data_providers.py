@@ -473,7 +473,7 @@ class PickleProvider:
                     )
 
                 gen_data['startup_curve'] = [
-                    sced_startup_capc - i * ramp_up_rate_sced
+                    round(sced_startup_capc - i * ramp_up_rate_sced, 2)
                     for i in range(1, int(math.ceil(sced_startup_capc
                                                     / ramp_up_rate_sced)))
                     ]
@@ -495,7 +495,7 @@ class PickleProvider:
                     # function is also used to create long-horizon look-ahead
                     # SCEDs for the unit commitment process
                     self.shutdown_curves[gen, mins_per_step] = [
-                        power_t0 - i * ramp_down_rate_sced
+                        round(power_t0 - i * ramp_down_rate_sced, 2)
                         for i in range(
                             1, int(math.ceil(power_t0 / ramp_down_rate_sced)))
                         ]
@@ -511,7 +511,7 @@ class PickleProvider:
                         )
 
                     gen_data['shutdown_curve'] = [
-                        sced_shutdown_capc - i * ramp_down_rate_sced
+                        round(sced_shutdown_capc - i * ramp_down_rate_sced, 2)
                         for i in range(
                             1, int(math.ceil(sced_shutdown_capc
                                              / ramp_down_rate_sced))

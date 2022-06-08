@@ -4,7 +4,6 @@ import os
 import datetime
 import time
 import math
-from pathlib import Path
 import dill as pickle
 from copy import deepcopy
 from typing import Union, Tuple, Dict, Any, Callable
@@ -334,6 +333,7 @@ class Simulator:
 
         return sced_results
 
+    #TODO: figure out how to produce bus-level LMPs
     def solve_lmp(self, sced_instance):
         lmp_sced_instance = deepcopy(sced_instance)
 

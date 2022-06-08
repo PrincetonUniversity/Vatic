@@ -1,20 +1,32 @@
-"""Loading power grid datasets into a standardized interface."""
+"""Loading power grid datasets into a standardized interface.
 
-# modified version of the scripts rtsgmlc_to_dat.py and
-# process_RTS_GMLC_data.py from
-# Prescient/prescient/downloaders/rts_gmlc_prescient
+This module contains a `GridLoader` class for each power grid system; these
+classes contain methods for parsing the raw input data for a grid into formats
+suitable for use within Vatic as well as downstream analyses.
+
+The grid parsing logic implemented here was originally adapted from
+rtsgmlc_to_dat.py and process_RTS_GMLC_data.py in
+Prescient/prescient/downloaders/rts_gmlc_prescient.
+"""
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from pathlib import Path
-import math
-import pandas as pd
-
 import bz2
 import dill as pickle
 
+import math
+import pandas as pd
 
-def load_input(data_dir: Path, start_date, num_days):
+from datetime import datetime
+from typing import Tuple, Optional
+
+
+def load_input(data_dir: Path, start_date: Optional[datetime] = None,
+               num_days: Optional[int] = None) -> Tuple[dict, pd.DataFrame,
+                                                        pd.DataFrame]:
+    """Gets grid data from an input folder; creates the data if necessary."""
+
     if data_dir.exists():
         template_file = Path(data_dir, "grid-template.p")
         gen_file = Path(data_dir, "gen-data.p")
@@ -34,6 +46,8 @@ def load_input(data_dir: Path, start_date, num_days):
             with open(load_file, 'rb') as f:
                 load_data: pd.DataFrame = pickle.load(f)
 
+        # if the input datasets have not yet been saved to file, generate
+        # them from scratch
         else:
             start_date = pd.Timestamp(start_date, tz='utc')
             end_date = start_date + pd.Timedelta(days=num_days)
@@ -48,44 +62,9 @@ def load_input(data_dir: Path, start_date, num_days):
 
     else:
         raise ValueError(
-            "Input directory {} does not exist!".format(data_dir))
+            "Input directory `{}` does not exist!".format(data_dir))
 
     return template, gen_data, load_data
-
-
-def get_grid_dir(grid):
-    grid_dirs_file = Path(Path(__file__).parent.parent.resolve(),
-                          "grid-dirs.txt")
-
-    if not grid_dirs_file.exists():
-        raise RuntimeError("Grid data directory specification file does not "
-                           "exist, please create it under PERFORM-pipelines/ "
-                           "with the format:\n\n"
-                           "RTS\t<path to RTS data>"
-                           "\nT7k\t<path to T7k data>\n.\n.\n.\n")
-
-    grid_dirs = pd.read_csv(
-        grid_dirs_file, header=None, sep='\s+', names=['Grid', 'Dir']
-        ).set_index('Grid')['Dir'].to_dict()
-
-    if grid not in grid_dirs:
-        raise ValueError("There is no data directory entry for grid "
-                         "`{}` in the grid data specification "
-                         "file `{}`!".format(grid, grid_dirs_file))
-
-    return grid_dirs[grid]
-
-
-def get_loader(grid):
-    loaders = {'RTS': RtsLoader, 'T7k': T7kLoader, 'T7k_2030': T7k2030Loader}
-
-    if grid not in loaders:
-        raise ValueError(
-            "Cannot load data for given grid `{}` which is not one of the "
-            "supported grids: {}".format(grid, list(loaders))
-            )
-
-    return loaders[grid](get_grid_dir(grid))
 
 
 class GridLoader(ABC):
@@ -306,7 +285,7 @@ class GridLoader(ABC):
     def must_gen_run(cls, gen: Generator) -> bool:
         return gen.Fuel == 'Nuclear'
 
-    def create_template(self):
+    def create_template(self) -> dict:
         init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
 
         generators = [self.parse_generator(gen_info)
@@ -393,15 +372,21 @@ class GridLoader(ABC):
         template['MinimumDownTime'] = {gen.ID: round(gen.MinDownTime, 2)
                                        for gen in tgens}
 
+        # ramp rates, given in MW/min, are converted to MW/hour; if no rate is
+        # given we assume generator can ramp up/down in a single time period
         template['NominalRampUpLimit'] = {
-            gen.ID: round(gen.RampRate + 0.01
-                          * mins_per_time_period / ramp_scaling_factor, 2)
+            gen.ID: (round(gen.RampRate
+                           * mins_per_time_period / ramp_scaling_factor, 2)
+                     if gen.RampRate > 0.
+                     else template['MinimumPowerOutput'][gen.ID])
             for gen in tgens
             }
 
         template['NominalRampDownLimit'] = {
-            gen.ID: round(gen.RampRate + 0.01
-                          * mins_per_time_period / ramp_scaling_factor, 2)
+            gen.ID: (round(gen.RampRate
+                           * mins_per_time_period / ramp_scaling_factor, 2)
+                     if gen.RampRate > 0.
+                     else template['MinimumPowerOutput'][gen.ID])
             for gen in tgens
             }
 
@@ -445,10 +430,13 @@ class GridLoader(ABC):
             for gen in tgens
             }
 
+        # according to Egret, startup costs cannot be duplicated, so we
+        # introduce a small perturbation to avoid this
         for gen_id in template['StartupCosts']:
-            if len(set(template['StartupCosts'][gen_id])) < len(template['StartupCosts'][gen_id]):
+            if (len(set(template['StartupCosts'][gen_id]))
+                    < len(template['StartupCosts'][gen_id])):
                 template['StartupCosts'][gen_id] = [
-                    round(cost, 2) + i * 0.01 + 0.01
+                    round(cost, 2) + i * 0.01
                     for i, cost in enumerate(template['StartupCosts'][gen_id])
                     ]
 
