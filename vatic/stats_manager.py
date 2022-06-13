@@ -327,24 +327,80 @@ class StatsManager:
     def generate_stack_graph(self) -> None:
         """Stacked bar plots of power output by time and generator type."""
 
+        # collect statistics from the simulation
         stack_data = pd.DataFrame({
             time_step.when: {'Demand': stats['total_demand'],
                              'Thermal': stats['thermal_generation'],
-                             'Renews': stats['renewable_generation'],
-                             'Shedding': stats['load_shedding'],
-                             'OverGen': stats['over_generation']}
+                             'Renewables': stats['renewable_generation'],
+                             'Load Shedding': stats['load_shedding'],
+                             'Over Generation': stats['over_generation']}
             for time_step, stats in self._sced_stats.items()
             }).transpose()
 
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.bar(stack_data.index, stack_data.Thermal, color='r', width=1. / 29)
-        ax.bar(stack_data.index, stack_data.Renews, bottom=stack_data.Thermal,
-               color='g', width=1. / 29)
+        # define the order bars are stacked in and the size of the figure
+        plt_clrs = [('Thermal', '#C50000'), ('Renewables', '#009E00')]
+        fig, ax = plt.subplots(figsize=(9, 5))
 
-        lgnd_ptchs = [Patch(color='r', label="Thermal"),
-                      Patch(color='g', label="Renewable")]
+        # plot the bars, each on top of the one preceding it
+        for i, (plt_lbl, plt_clr) in enumerate(plt_clrs):
+            if i == 0:
+                btm_loc = 0
+            else:
+                btm_loc = sum([stack_data[lbl] for lbl, _ in plt_clrs[:i]])
 
-        ax.xaxis.set_major_formatter(DateFormatter("%m/%d\n%H:%M"))
+            ax.bar(stack_data.index, stack_data[plt_lbl], color=plt_clr,
+                   width=1. / 29, bottom=btm_loc)
+
+        # define the entries of the plot's legend
+        lgnd_ptchs = [Patch(color=plt_clr, label=plt_lbl)
+                      for plt_lbl, plt_clr in plt_clrs
+                      if stack_data[plt_lbl].sum() > 0.]
+
+        for hour, hour_data in stack_data.iterrows():
+            ax.plot([hour - pd.Timedelta(hours=0.47),
+                     hour + pd.Timedelta(hours=0.47)],
+                    [hour_data.Demand, hour_data.Demand],
+                    linewidth=1.9, c='black', alpha=0.67)
+
+        # annotate bars with percentages of demand served by each category
+        if stack_data.shape[0] < 25:
+            for hour, hour_data in stack_data.iterrows():
+                ax.text(hour, hour_data.Thermal * 0.99,
+                        format(hour_data.Thermal / hour_data.Demand, '.1%'),
+                        size=4.7, c='white', ha='center', va='top',
+                        weight='semibold', transform=ax.transData)
+
+                ax.text(hour, hour_data.Thermal * 1.005,
+                        format(hour_data.Renewables / hour_data.Demand, '.1%'),
+                        size=4.7, c='white', ha='center', va='bottom',
+                        weight='semibold', transform=ax.transData)
+
+                if hour_data['Load Shedding'] > 0.:
+                    ax.text(hour, hour_data.Demand * 0.99,
+                            format(hour_data['Load Shedding']
+                                   / hour_data.Demand, '.1%'),
+                            size=4.7, c='black', ha='center', va='top',
+                            weight='semibold', transform=ax.transData)
+
+                if hour_data['Over Generation'] > 0.:
+                    ax.text(hour, hour_data.Demand * 1.005,
+                            format(hour_data['Over Generation']
+                                   / hour_data.Demand, '.1%'),
+                            size=4.7, c='black', ha='center', va='bottom',
+                            weight='semibold', transform=ax.transData)
+
+        # create a legend for the load mismatch information
+        ax.plot([0.08, 0.16], [0.88, 0.88],
+                linewidth=2.7, c='black', alpha=0.83, transform=ax.transAxes)
+        ax.text(0.17, 0.877, "Demand", size=9, c='black', style='italic',
+                ha='left', va='center', transform=ax.transAxes)
+
+        ax.text(0.12, 0.897, "Over Generation", size=10, c='black',
+                ha='center', va='bottom', transform=ax.transAxes)
+        ax.text(0.12, 0.858, "Load Shedding", size=10, c='black',
+                ha='center', va='top', transform=ax.transAxes)
+
+        ax.xaxis.set_major_formatter(DateFormatter("%m/%d\n%I%p"))
         ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
         ax.yaxis.set_major_locator(ticker.MaxNLocator(4, steps=[1, 2, 5]))
         ax.set_ylabel("MWh Generated", size=19, weight='semibold')
@@ -352,12 +408,12 @@ class StatsManager:
         ax.grid(lw=0.7, alpha=0.53)
         ax.axhline(0, c='black', lw=1.1)
         ax.legend(handles=lgnd_ptchs, frameon=False,
-                  fontsize=17, ncol=2, handletextpad=0.7)
+                  fontsize=17, ncol=2, handletextpad=0.61)
 
-        ax.tick_params(axis='x', labelsize=16)
-        ax.tick_params(axis='y', labelsize=13)
+        ax.tick_params(axis='x', labelsize=15)
+        ax.tick_params(axis='y', labelsize=12)
         ax.yaxis.get_offset_text().set_weight('semibold')
-        ymax = stack_data.Demand.max() * 1.19
+        ymax = stack_data.Demand.max() * 1.31
         ax.set_ylim(-ymax / 61, ymax)
 
         fig.savefig(Path(self.write_dir, "plots", "stack-graph.pdf"),
