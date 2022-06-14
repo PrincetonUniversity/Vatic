@@ -19,7 +19,7 @@ import math
 import pandas as pd
 
 from datetime import datetime
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 
 
 def load_input(data_dir: Path, start_date: Optional[datetime] = None,
@@ -187,19 +187,39 @@ class GridLoader(ABC):
     def map_solar_assets(self, asset_df):
         return asset_df
 
-    def get_asset_info(self):
+    def get_asset_info(self) -> pd.DataFrame:
         type_dict = dict()
 
         for asset_type in self.timeseries_cohorts - self.no_scenario_renews:
             for asset in self.get_forecasts(asset_type).columns:
                 type_dict[asset] = asset_type
 
-        return pd.DataFrame({'Type': pd.Series(type_dict)})
+        return pd.DataFrame({'Type': pd.Series(type_dict)}).merge(
+            self.gen_df.set_index('GEN UID', verify_integrity=True),
+            left_index=True, right_index=True
+            ).rename({'Area Name of Gen': 'Area'}, axis='columns')
 
     @staticmethod
-    def process_forecasts(forecasts_file, start_date, end_date):
-        fcst_df = pd.read_csv(forecasts_file)
+    def subset_dates(df: pd.DataFrame, start_date: Optional[datetime] = None,
+                     end_date: Optional[datetime] = None) -> pd.DataFrame:
+        """Helper function to get the rows of a table matching a date range."""
 
+        sub_df = df.copy()
+        if start_date:
+            sub_df = sub_df.loc[sub_df.index >= start_date]
+        if end_date:
+            sub_df = sub_df.loc[sub_df.index
+                                < (end_date + pd.Timedelta(days=1))]
+
+        return sub_df
+
+    def process_forecasts(self,
+                          forecasts_file: Union[str, Path],
+                          start_date: Optional[datetime] = None,
+                          end_date: Optional[datetime] = None) -> pd.DataFrame:
+        """Parse forecasted load/generation values read from an input file."""
+
+        fcst_df = pd.read_csv(forecasts_file)
         df_times = [
             pd.Timestamp(year=year, month=month, day=day, hour=hour, tz='utc')
             for year, month, day, hour in zip(fcst_df.Year, fcst_df.Month,
@@ -209,29 +229,31 @@ class GridLoader(ABC):
         use_df = fcst_df.drop(columns=['Year', 'Month', 'Day', 'Period'])
         use_df.index = df_times
 
-        return use_df.loc[(use_df.index >= start_date)
-                          & (use_df.index < (end_date + pd.Timedelta(days=1)))]
+        return self.subset_dates(use_df)
 
     @staticmethod
     @abstractmethod
-    def process_actuals(actuals_file, start_date, end_date):
+    def process_actuals(actuals_file: Union[str, Path],
+                        start_date: Optional[datetime] = None,
+                        end_date: Optional[datetime] = None) -> pd.DataFrame:
+        """Parse realized load/generation values read from an input file."""
         pass
 
-    def get_forecasts(self, asset_type, start_date, end_date):
+    def get_forecasts(self, asset_type, start_date=None, end_date=None):
         data_dir = Path(self.in_dir, 'timeseries_data_files', asset_type)
         fcst_file = tuple(data_dir.glob("DAY_AHEAD*"))
         assert len(fcst_file) == 1
 
         return self.process_forecasts(fcst_file[0], start_date, end_date)
 
-    def get_actuals(self, asset_type, start_date, end_date):
+    def get_actuals(self, asset_type, start_date=None, end_date=None):
         data_dir = Path(self.in_dir, 'timeseries_data_files', asset_type)
         actl_file = tuple(data_dir.glob("REAL_TIME*"))
         assert len(actl_file) == 1
 
         return self.process_actuals(actl_file[0], start_date, end_date)
 
-    def load_by_bus(self, start_date, end_date, load_actls=None):
+    def load_by_bus(self, start_date=None, end_date=None, load_actls=None):
         load_fcsts = self.get_forecasts('Load', start_date, end_date)
 
         if load_actls is None:
@@ -465,7 +487,7 @@ class GridLoader(ABC):
 
         return template
 
-    def create_timeseries(self, start_date, end_date):
+    def create_timeseries(self, start_date=None, end_date=None):
         gen_dfs = list()
 
         for asset_type in self.timeseries_cohorts:
@@ -546,6 +568,10 @@ class GridLoader(ABC):
 
 
 class RtsLoader(GridLoader):
+    """The RTS-GMLC grid which was created for testing purposes.
+
+    See github.com/GridMod/RTS-GMLC for the raw data files used for this grid.
+    """
 
     @property
     def grid_label(self):
@@ -671,8 +697,8 @@ class RtsLoader(GridLoader):
             cost_points, cost_vals
             )
 
-    @staticmethod
-    def process_forecasts(forecasts_file, start_date, end_date):
+    def process_forecasts(self,
+                          forecasts_file, start_date=None, end_date=None):
         fcst_df = pd.read_csv(forecasts_file)
 
         df_times = [
@@ -684,11 +710,9 @@ class RtsLoader(GridLoader):
         use_df = fcst_df.drop(columns=['Year', 'Month', 'Day', 'Period'])
         use_df.index = df_times
 
-        return use_df.loc[(use_df.index >= start_date)
-                          & (use_df.index < (end_date + pd.Timedelta(days=1)))]
+        return self.subset_dates(use_df, start_date, end_date)
 
-    @staticmethod
-    def process_actuals(actuals_file, start_date, end_date):
+    def process_actuals(self, actuals_file, start_date=None, end_date=None):
         actl_df = pd.read_csv(actuals_file)
 
         actl_df['Hour'] = (actl_df.Period - 1) // 12
@@ -707,11 +731,11 @@ class RtsLoader(GridLoader):
             columns=['Year', 'Month', 'Day', 'Period', 'Hour', 'Min'])
         use_df.index = df_times
 
-        return use_df.loc[(use_df.index >= start_date)
-                          & (use_df.index < (end_date + pd.Timedelta(days=1)))]
+        return self.subset_dates(use_df, start_date, end_date)
 
 
 class T7kLoader(GridLoader):
+    """The Texas-7k grid modeling the ERCOT system, developed by Texas A&M."""
 
     thermal_gen_types = {
         'NUC (Nuclear)': 'N', 'NG (Natural Gas)': 'G',
@@ -877,8 +901,7 @@ class T7kLoader(GridLoader):
     def must_gen_run(cls, gen: GridLoader.Generator) -> bool:
         return gen.Fuel == 'NUC (Nuclear)'
 
-    @staticmethod
-    def process_actuals(actuals_file, start_date, end_date):
+    def process_actuals(self, actuals_file, start_date=None, end_date=None):
         actl_df = pd.read_csv(actuals_file)
 
         df_times = [
@@ -891,11 +914,11 @@ class T7kLoader(GridLoader):
         use_df = actl_df.drop(columns=['Year', 'Month', 'Day', 'Period'])
         use_df.index = df_times
 
-        return use_df.loc[(use_df.index >= start_date)
-                          & (use_df.index < (end_date + pd.Timedelta(days=1)))]
+        return self.subset_dates(use_df, start_date, end_date)
 
 
 class T7k2030Loader(T7kLoader):
+    """The Texas-7k grid projected into a future with more renewables."""
 
     @property
     def grid_label(self):

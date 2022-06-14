@@ -400,15 +400,15 @@ class VaticModelData(object):
 
     @property
     def load_shedding(self):
-        return sum(-bus_data['p_balance_violation']['values'][0]
-                   for bus_data in self._data['elements']['bus'].values()
-                   if bus_data['p_balance_violation']['values'][0] < 0.)
-
-    @property
-    def over_generation(self):
         return sum(bus_data['p_balance_violation']['values'][0]
                    for bus_data in self._data['elements']['bus'].values()
                    if bus_data['p_balance_violation']['values'][0] > 0.)
+
+    @property
+    def over_generation(self):
+        return sum(-bus_data['p_balance_violation']['values'][0]
+                   for bus_data in self._data['elements']['bus'].values()
+                   if bus_data['p_balance_violation']['values'][0] < 0.)
 
     @property
     def reserve_shortfall(self):
