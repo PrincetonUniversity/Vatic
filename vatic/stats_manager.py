@@ -148,6 +148,7 @@ class StatsManager:
         new_sced_data[
             'observed_thermal_headroom_levels'] = sced.available_reserve
         new_sced_data['observed_thermal_states'] = sced.thermal_states
+        new_sced_data['previous_thermal_states'] = sced.previous_thermal_states
 
         new_sced_data['observed_costs'] = self._round(sced.generator_costs)
         new_sced_data['observed_renewables_levels'] = self._round(
@@ -323,6 +324,7 @@ class StatsManager:
             self.generate_stack_graph()
             self.generate_cost_graph()
             self.generate_commitment_heatmaps()
+            self.plot_thermal_detail()
 
     def generate_stack_graph(self) -> None:
         """Stacked bar plots of power output by time and generator type."""
@@ -501,3 +503,86 @@ class StatsManager:
             fig.savefig(Path(self.write_dir, "plots",
                              "{}_commits.pdf".format(date_lbl)),
                         bbox_inches='tight', format='pdf')
+
+    def plot_thermal_detail(self) -> None:
+        """Stacked bar plots of thermal generators' production and ramping."""
+
+        # collect statistics from the simulation
+        thermal_data = pd.DataFrame.from_records([
+            {**{'Time': time_step.when},
+             **{'Generator': gen,
+                'Dispatch': stats['observed_thermal_dispatch_levels'][gen],
+                'Headroom': stats['observed_thermal_headroom_levels'][gen],
+                'Unit State': gen_state,
+                'Last Unit State': stats['previous_thermal_states'][gen]}}
+
+            for time_step, stats in self._sced_stats.items()
+            for gen, gen_state in stats['observed_thermal_states'].items()
+            ]).set_index(['Time', 'Generator'], verify_integrity=True)
+
+        plot_data = pd.DataFrame({
+            'Output': thermal_data.groupby('Time').Dispatch.sum(),
+            'Headroom': thermal_data.groupby('Time').Headroom.sum(),
+            'On': thermal_data.groupby('Time')['Unit State'].sum(),
+
+            'TurnedOn': (
+                    thermal_data['Unit State']
+                    & ~thermal_data['Last Unit State']
+                    ).groupby('Time').sum(),
+            'TurnedOff': (
+                    ~thermal_data['Unit State']
+                    & thermal_data['Last Unit State']
+                    ).groupby('Time').sum()
+            })
+
+        fig, ax = plt.subplots(figsize=(9, 5))
+        ax.bar(plot_data.index, plot_data.Output,
+               color='#C50000', width=1. / 29)
+        ax.bar(plot_data.index, plot_data.Headroom,
+               color='white', edgecolor='#C50000', lw=1.14, width=1. / 31,
+               bottom=plot_data.Output)
+
+        ax.axhline(self._grid_data['thermal_fleet_capacity'],
+                   c='black', lw=1.7, ls='--')
+        ax.text(plot_data.index[0] + pd.Timedelta(minutes=23),
+                self._grid_data['thermal_fleet_capacity'] * 1.005,
+                "Thermal Capacity", size=12, ha='left', va='bottom',
+                style='italic', transform=ax.transData)
+
+        for hour, hour_data in plot_data.iterrows():
+            ax.text(hour, hour_data.Output * 0.98, int(hour_data.On),
+                    size=8, ha='center', va='top',
+                    weight='semibold', transform=ax.transData)
+
+            onoff_lbl = ""
+            if hour_data.TurnedOff > 0:
+                onoff_lbl += "\u2212{}".format(int(hour_data.TurnedOff))
+            if hour_data.TurnedOn > 0:
+                onoff_lbl += "\n\u002B{}".format(int(hour_data.TurnedOn))
+
+            ax.text(hour, hour_data.Output * 1.005, onoff_lbl,
+                    size=8, ha='center', va='bottom', weight='semibold',
+                    transform=ax.transData)
+
+        ax.xaxis.set_major_formatter(DateFormatter("%m/%d\n%I%p"))
+        ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(4, steps=[1, 2, 5]))
+        ax.set_ylabel("MWh Generated", size=19, weight='semibold')
+
+        ax.grid(lw=0.7, alpha=0.53)
+        ax.axhline(0, c='black', lw=1.1)
+
+        ax.legend(handles=[Patch(color='#C50000', label='Generation'),
+                           Patch(facecolor='white', edgecolor='#C50000',
+                                 lw=1.7, label='Headroom')],
+                  loc=9, bbox_to_anchor=(0.5, -0.12),
+                  fontsize=17, ncol=2, handletextpad=0.61, frameon=False)
+
+        ax.tick_params(axis='x', labelsize=15)
+        ax.tick_params(axis='y', labelsize=12)
+        ax.yaxis.get_offset_text().set_weight('semibold')
+        ymax = self._grid_data['thermal_fleet_capacity'] * 1.07
+        ax.set_ylim(-ymax / 61, ymax)
+
+        fig.savefig(Path(self.write_dir, "plots", "thermal-detail.pdf"),
+                    bbox_inches='tight', format='pdf')
