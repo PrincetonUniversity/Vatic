@@ -19,7 +19,7 @@ import math
 import pandas as pd
 
 from datetime import datetime
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Set
 
 
 def load_input(data_dir: Path, start_date: Optional[datetime] = None,
@@ -162,17 +162,18 @@ class GridLoader(ABC):
 
     @property
     @abstractmethod
-    def init_state_file(self) -> Union[str, Path]:
+    def init_state_file(self) -> Path:
+        """Location of initial conditions for the grid's thermal generators."""
         pass
 
     @property
     @abstractmethod
-    def utc_offset(self) -> int:
+    def utc_offset(self) -> pd.Timedelta:
         pass
 
     @property
     @abstractmethod
-    def timeseries_cohorts(self):
+    def timeseries_cohorts(self) -> Set[str]:
         pass
 
     @property
@@ -254,7 +255,7 @@ class GridLoader(ABC):
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
-        fcst_file = tuple(data_dir.glob("DAY_AHEAD*"))
+        fcst_file = tuple(data_dir.glob("DAY_AHEAD_*.csv"))
         assert len(fcst_file) == 1
 
         return self.process_forecasts(fcst_file[0], start_date, end_date)
@@ -263,7 +264,7 @@ class GridLoader(ABC):
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
-        actl_file = tuple(data_dir.glob("REAL_TIME*"))
+        actl_file = tuple(data_dir.glob("REAL_TIME_*.csv"))
         assert len(actl_file) == 1
 
         return self.process_actuals(actl_file[0], start_date, end_date)
@@ -297,8 +298,9 @@ class GridLoader(ABC):
     def parse_generator(cls, gen_info):
         pass
 
-    def parse_bus(self, bus_info):
-        return self.Bus(
+    @classmethod
+    def parse_bus(cls, bus_info):
+        return cls.Bus(
             int(bus_info["Bus ID"]), bus_info['Bus Name'],
             bus_info["BaseKV"], bus_info["Bus Type"],
             float(bus_info["MW Load"]),
@@ -934,34 +936,27 @@ class T7k2030Loader(T7kLoader):
     def grid_dir(self) -> str:
         return "TX2030_Data"
 
-    @property
-    def timeseries_cohorts(self):
-        return {'wind', 'solar'}
-
     def get_generator_type(self, gen: str) -> str:
         return super().get_generator_type(gen).lower()
 
     def get_forecasts(self, asset_type, start_date=None, end_date=None):
         fcst_file = tuple(
             Path(self.in_dir, self.grid_dir,
-                 'timeseries_data_files', asset_type).glob("DAY_AHEAD")
+                 'timeseries_data_files', asset_type).glob("DAY_AHEAD_*.csv")
             )
 
         assert len(fcst_file) == 1
         fcst_df = pd.read_csv(fcst_file[0], parse_dates=['Forecast_time'])
+
         fcst_df.drop('Issue_time', axis=1, inplace=True)
         fcst_df.Forecast_time += self.utc_offset
         fcst_df.set_index('Forecast_time', inplace=True, verify_integrity=True)
+        fcst_df = self.subset_dates(fcst_df, start_date, end_date)
 
-        if start_date:
-            fcst_df = fcst_df.loc[fcst_df.index >= start_date]
-        if end_date:
-            fcst_df = fcst_df.loc[fcst_df.index
-                                  < (end_date + pd.Timedelta(days=1))]
-
-        if asset_type == 'wind':
+        #TODO: should scenarios and T7k(2030) output values be "pre-mapped"?
+        if asset_type == 'WIND':
             fcst_df = self.map_wind_assets(fcst_df)
-        elif asset_type == 'solar':
+        elif asset_type == 'PV':
             fcst_df = self.map_solar_assets(fcst_df)
 
         return fcst_df
@@ -969,57 +964,32 @@ class T7k2030Loader(T7kLoader):
     def get_actuals(self, asset_type, start_date=None, end_date=None):
         actl_file = tuple(
             Path(self.in_dir, self.grid_dir,
-                 'timeseries_data_files', asset_type).glob("REAL_TIME*")
+                 'timeseries_data_files', asset_type).glob("REAL_TIME_*.csv")
             )
 
         assert len(actl_file) == 1
         actl_df = pd.read_csv(actl_file[0], parse_dates=['Time'])
+
         actl_df.Time += self.utc_offset
         actl_df.set_index('Time', inplace=True, verify_integrity=True)
+        actl_df = self.subset_dates(actl_df, start_date, end_date)
 
-        if start_date:
-            actl_df = actl_df.loc[actl_df.index >= start_date]
-        if end_date:
-            actl_df = actl_df.loc[actl_df.index
-                                  < (end_date + pd.Timedelta(days=1))]
-
-        if asset_type == 'wind':
+        if asset_type == 'WIND':
             actl_df = self.map_wind_assets(actl_df)
-        elif asset_type == 'solar':
+        elif asset_type == 'PV':
             actl_df = self.map_solar_assets(actl_df)
 
         return actl_df
 
-    def load_by_bus(self, start_date, end_date, load_actls=None):
-        load_fcsts = self.get_forecasts('load', start_date, end_date)
-
-        if load_actls is None:
-            load_actls = self.get_actuals('load', start_date, end_date)
-
-        site_dfs = dict()
-        for zone, zone_df in self.bus_df.groupby('Area'):
-            area_total_load = zone_df['MW Load'].sum()
-
-            for bus_name, bus_load in zip(zone_df['Bus Name'],
-                                          zone_df['MW Load']):
-                site_df = pd.DataFrame(
-                    {'fcst': load_fcsts[str(zone)],
-                     'actl': load_actls[str(zone)]}
-                    ) * bus_load / area_total_load
-
-                site_df.columns = pd.MultiIndex.from_tuples(
-                    [(x, bus_name) for x in site_df.columns])
-                site_dfs[bus_name] = site_df
-
-        return pd.concat(site_dfs.values(), axis=1).sort_index(axis=1)
-
     #TODO: should we standardize the mapping file format between the T7k and
     #      the T7k(2030) grids instead of doing this?
     def map_wind_assets(self, asset_df):
-        wind_maps = pd.read_csv(Path(self.in_dir, "Texas7k_NREL_wind_map.csv"))
-        wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
+        wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
+                                     "Texas7k_NREL_wind_map.csv"))
 
+        wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
         mapped_vals = dict()
+
         for _, gen_info in wind_gens.iterrows():
             map_match = wind_maps['BUS UID'] == gen_info['BUS UID']
             assert map_match.sum() == 1
@@ -1041,11 +1011,12 @@ class T7k2030Loader(T7kLoader):
         return pd.concat(mapped_vals, axis=1)
 
     def map_solar_assets(self, asset_df):
-        solar_maps = pd.read_csv(Path(self.in_dir,
+        solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"))
-        solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
 
+        solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
         mapped_vals = dict()
+
         for _, gen_info in solar_gens.iterrows():
             map_match = solar_maps['BUS UID'] == gen_info['BUS UID']
             assert map_match.sum() == 1
