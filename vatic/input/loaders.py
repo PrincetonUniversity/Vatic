@@ -52,8 +52,8 @@ def load_input(data_dir: Path, start_date: Optional[datetime] = None,
             start_date = pd.Timestamp(start_date, tz='utc')
             end_date = start_date + pd.Timedelta(days=num_days)
 
-            loaders = {'RTS_Data': RtsLoader,
-                       'texas-7k': T7kLoader, 'texas-7k_2030': T7k2030Loader}
+            loaders = {'RTS-GMLC': RtsLoader,
+                       'Texas-7k': T7kLoader, 'Texas-7k_2030': T7k2030Loader}
             loader = loaders[data_dir.stem](data_dir)
 
             template = loader.create_template()
@@ -80,31 +80,36 @@ class GridLoader(ABC):
     """
 
     Generator = namedtuple(
-        'Generator', ['ID', # integer
-                      'Bus',
-                      'UnitGroup', 'UnitType',
-                      'Fuel',
-                      'MinPower', 'MaxPower',
-                      'MinDownTime', 'MinUpTime',
+        'Generator', [
+            'ID', # usually the GEN UID
+            'Bus', # the Bus ID of the load bus this gen is located at
 
-                      # units are MW/minute
-                      'RampRate',
+            # specifying the type of generator at various
+            # granularities; e.g. Group: U20, Type: CT, Fuel: Oil
+            'UnitGroup', 'UnitType', 'Fuel',
 
-                      # units are hours
-                      'StartTimeCold', 'StartTimeWarm', 'StartTimeHot',
+            'MinPower', 'MaxPower', # the operating range given in MW
 
-                      # units are MBTU
-                      'StartCostCold',
-                      'StartCostWarm',
-                      'StartCostHot',
+            # how long the generator must be on/off before being
+            # turned off/on, in hours
+            'MinDownTime', 'MinUpTime',
 
-                      # units are $
-                      'NonFuelStartCost', # units are $
+            # how quickly the output of the generator can be changed, in MW/min
+            'RampRate',
 
-                      # units are $ / MMBTU
-                      'FuelPrice',
+            # time needed after shutdown for various startup regimes, in hours
+            'StartTimeCold', 'StartTimeWarm', 'StartTimeHot',
 
-                      'TotalCostPoints', 'TotalCostValues']
+            # the cost of the above regimes in $/MBTU
+            'StartCostCold', 'StartCostWarm', 'StartCostHot',
+
+            # the cost of fuel used for generation, in $/MBTU
+            'FuelPrice',
+
+            # total cost curve for this generator, given as break points in MW
+            # and corresponding total cost values in $/MWh
+            'TotalCostPoints', 'TotalCostValues'
+            ]
         )
 
     Bus = namedtuple(
@@ -131,28 +136,38 @@ class GridLoader(ABC):
     thermal_gen_types = {'Nuclear': "N", 'NG': "G", 'Oil': "O", 'Coal': "C"}
     renew_gen_types = {'Wind': "W", 'Solar': "S", 'Hydro': "H"}
 
-    def __init__(self, in_dir):
+    def __init__(self, in_dir: Union[str, Path]) -> None:
         self.in_dir = in_dir
 
-        self.gen_df = pd.read_csv(Path(in_dir, "SourceData", "gen.csv"))
-        self.branch_df = pd.read_csv(Path(in_dir, "SourceData", "branch.csv"))
+        self.gen_df = pd.read_csv(Path(in_dir, self.grid_dir,
+                                       "SourceData", "gen.csv"))
+        self.branch_df = pd.read_csv(Path(in_dir, self.grid_dir,
+                                          "SourceData", "branch.csv"))
 
-        self.bus_df = pd.read_csv(Path(in_dir, "SourceData", "bus.csv"))
+        self.bus_df = pd.read_csv(Path(in_dir, self.grid_dir,
+                                       "SourceData", "bus.csv"))
         self.bus_df.loc[pd.isnull(self.bus_df['MW Load']), 'MW Load'] = 0.
 
     @property
     @abstractmethod
-    def grid_label(self):
+    def grid_label(self) -> str:
+        """A short name for the grid to be used in plots, file names, etc."""
         pass
 
     @property
     @abstractmethod
-    def init_state_file(self):
+    def grid_dir(self) -> str:
+        """Name of the folder inside the input path storing grid data."""
         pass
 
     @property
     @abstractmethod
-    def utc_offset(self):
+    def init_state_file(self) -> Union[str, Path]:
+        pass
+
+    @property
+    @abstractmethod
+    def utc_offset(self) -> int:
         pass
 
     @property
@@ -164,17 +179,13 @@ class GridLoader(ABC):
     def no_scenario_renews(self):
         return {'Hydro'}
 
-    @property
-    def bus_id_field(self):
-        return "Bus Name"
-
     @staticmethod
     @abstractmethod
     def get_dispatch_types(renew_types):
         pass
 
     @abstractmethod
-    def get_generator_type(self, gen):
+    def get_generator_type(self, gen: str) -> str:
         pass
 
     @abstractmethod
@@ -240,14 +251,18 @@ class GridLoader(ABC):
         pass
 
     def get_forecasts(self, asset_type, start_date=None, end_date=None):
-        data_dir = Path(self.in_dir, 'timeseries_data_files', asset_type)
+        data_dir = Path(self.in_dir, self.grid_dir,
+                        'timeseries_data_files', asset_type)
+
         fcst_file = tuple(data_dir.glob("DAY_AHEAD*"))
         assert len(fcst_file) == 1
 
         return self.process_forecasts(fcst_file[0], start_date, end_date)
 
     def get_actuals(self, asset_type, start_date=None, end_date=None):
-        data_dir = Path(self.in_dir, 'timeseries_data_files', asset_type)
+        data_dir = Path(self.in_dir, self.grid_dir,
+                        'timeseries_data_files', asset_type)
+
         actl_file = tuple(data_dir.glob("REAL_TIME*"))
         assert len(actl_file) == 1
 
@@ -264,7 +279,7 @@ class GridLoader(ABC):
         for zone, zone_df in self.bus_df.groupby('Area'):
             area_total_load = zone_df['MW Load'].sum()
 
-            for bus_name, bus_load in zip(zone_df[self.bus_id_field],
+            for bus_name, bus_load in zip(zone_df['Bus Name'],
                                           zone_df['MW Load']):
                 site_df = pd.DataFrame(
                     {'fcst': load_fcsts[str(zone)],
@@ -284,10 +299,10 @@ class GridLoader(ABC):
 
     def parse_bus(self, bus_info):
         return self.Bus(
-            int(bus_info["Bus ID"]), bus_info[self.bus_id_field],
+            int(bus_info["Bus ID"]), bus_info['Bus Name'],
             bus_info["BaseKV"], bus_info["Bus Type"],
             float(bus_info["MW Load"]),
-            int(bus_info["Area"]), int(bus_info["Sub Area"]), bus_info["Zone"],
+            bus_info["Area"], int(bus_info["Sub Area"]), bus_info["Zone"],
             bus_info["lat"], bus_info["lng"]
             )
 
@@ -434,20 +449,18 @@ class GridLoader(ABC):
             }
 
         template['StartupCosts'] = {
-            gen.ID: (
-                [gen.StartCostCold * gen.FuelPrice + gen.NonFuelStartCost]
-                if (gen.StartTimeCold <= gen.MinDownTime
-                    or (gen.StartTimeCold == gen.StartTimeWarm
-                        == gen.StartTimeHot))
+            gen.ID: ([gen.StartCostCold * gen.FuelPrice]
+                     if (gen.StartTimeCold <= gen.MinDownTime
+                         or (gen.StartTimeCold == gen.StartTimeWarm
+                             == gen.StartTimeHot))
 
-                else [gen.StartCostWarm * gen.FuelPrice + gen.NonFuelStartCost,
-                      gen.StartCostCold * gen.FuelPrice + gen.NonFuelStartCost]
-                if gen.StartTimeWarm <= gen.MinDownTime
+                     else [gen.StartCostWarm * gen.FuelPrice,
+                           gen.StartCostCold * gen.FuelPrice]
+                     if gen.StartTimeWarm <= gen.MinDownTime
 
-                else [gen.StartCostHot * gen.FuelPrice + gen.NonFuelStartCost,
-                      gen.StartCostWarm * gen.FuelPrice + gen.NonFuelStartCost,
-                      gen.StartCostCold * gen.FuelPrice + gen.NonFuelStartCost]
-                )
+                     else [gen.StartCostHot * gen.FuelPrice,
+                           gen.StartCostWarm * gen.FuelPrice,
+                           gen.StartCostCold * gen.FuelPrice])
 
             for gen in tgens
             }
@@ -574,12 +587,17 @@ class RtsLoader(GridLoader):
     """
 
     @property
-    def grid_label(self):
+    def grid_label(self) -> str:
         return "RTS-GMLC"
 
     @property
+    def grid_dir(self) -> str:
+        return "RTS_Data"
+
+    @property
     def init_state_file(self):
-        return Path(self.in_dir, 'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
+        return Path(self.in_dir, self.grid_dir,
+                    'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
                     'DAY_AHEAD Solution Files', 'noTX', 'on_time_7.12.csv')
 
     @property
@@ -607,7 +625,7 @@ class RtsLoader(GridLoader):
                                    if gen_type != 'H' and '_CSP_' not in gen}
             }
 
-    def get_generator_type(self, gen):
+    def get_generator_type(self, gen: str) -> str:
         gen_type = self.gen_df['Unit Group'][self.gen_df['GEN UID']
                                              == gen].iloc[0]
 
@@ -678,7 +696,7 @@ class RtsLoader(GridLoader):
             float(gen_info["PMin MW"]), float(gen_info["PMax MW"]),
 
             # per Brendan, PLEXOS takes the ceiling at hourly resolution for up
-            # and down times.
+            # and down times
             int(math.ceil(gen_info["Min Down Time Hr"])),
             int(math.ceil(gen_info["Min Up Time Hr"])),
 
@@ -691,9 +709,7 @@ class RtsLoader(GridLoader):
             float(gen_info["Start Heat Warm MBTU"]),
             float(gen_info["Start Heat Hot MBTU"]),
 
-            float(gen_info["Non Fuel Start Cost $"]),
             float(gen_info["Fuel Price $/MMBTU"]),
-
             cost_points, cost_vals
             )
 
@@ -752,8 +768,13 @@ class T7kLoader(GridLoader):
         return "Texas-7k"
 
     @property
+    def grid_dir(self) -> str:
+        return "TX_Data"
+
+    @property
     def init_state_file(self):
-        return Path(self.in_dir, 'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
+        return Path(self.in_dir, self.grid_dir,
+                    'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
                     'DAY_AHEAD Solution Files', 'noTX', 'on_time_7.10.csv')
 
     @property
@@ -763,10 +784,6 @@ class T7kLoader(GridLoader):
     @property
     def timeseries_cohorts(self):
         return {'WIND', 'PV'}
-
-    @property
-    def bus_id_field(self):
-        return "Sub Name"
 
     @staticmethod
     def get_dispatch_types(renew_types):
@@ -870,19 +887,8 @@ class T7kLoader(GridLoader):
             float(gen_info["Start Heat Warm MBTU"]),
             float(gen_info["Start Heat Hot MBTU"]),
 
-            float(gen_info["Non Fuel Start Cost $"]),
             float(gen_info["Fuel Price $/MMBTU"]),
-
             gen_info[break_cols].tolist() + [gen_info['PMax MW']], cost_values
-            )
-
-    def parse_bus(self, bus_info):
-        return self.Bus(
-            int(bus_info["Bus ID"]), bus_info[self.bus_id_field],
-            bus_info["BaseKV"], bus_info["Bus Type"],
-            float(bus_info["MW Load"]),
-            bus_info["Area"], int(bus_info["Sub Area"]), bus_info["Zone"],
-            bus_info["lat"], bus_info["lng"]
             )
 
     #TODO: why doesn't T7k have timeseries for the hydro plants in the system?
@@ -890,7 +896,7 @@ class T7kLoader(GridLoader):
     def no_scenario_renews(self):
         return set()
 
-    def get_generator_type(self, gen):
+    def get_generator_type(self, gen: str) -> str:
         return self.gen_df.Fuel[self.gen_df['GEN UID']
                                 == gen].iloc[0].split('(')[1][:-1]
 
@@ -925,16 +931,21 @@ class T7k2030Loader(T7kLoader):
         return "Texas-7k(2030)"
 
     @property
+    def grid_dir(self) -> str:
+        return "TX2030_Data"
+
+    @property
     def timeseries_cohorts(self):
         return {'wind', 'solar'}
 
-    @property
-    def bus_id_field(self):
-        return "Bus Name"
+    def get_generator_type(self, gen: str) -> str:
+        return super().get_generator_type(gen).lower()
 
     def get_forecasts(self, asset_type, start_date=None, end_date=None):
-        fcst_file = tuple(Path(self.in_dir, 'timeseries_data_files').glob(
-            "{}_day_ahead_forecast_*".format(asset_type)))
+        fcst_file = tuple(
+            Path(self.in_dir, self.grid_dir,
+                 'timeseries_data_files', asset_type).glob("DAY_AHEAD")
+            )
 
         assert len(fcst_file) == 1
         fcst_df = pd.read_csv(fcst_file[0], parse_dates=['Forecast_time'])
@@ -956,8 +967,10 @@ class T7k2030Loader(T7kLoader):
         return fcst_df
 
     def get_actuals(self, asset_type, start_date=None, end_date=None):
-        actl_file = tuple(Path(self.in_dir, 'timeseries_data_files').glob(
-            "{}_actual_1h_*".format(asset_type)))
+        actl_file = tuple(
+            Path(self.in_dir, self.grid_dir,
+                 'timeseries_data_files', asset_type).glob("REAL_TIME*")
+            )
 
         assert len(actl_file) == 1
         actl_df = pd.read_csv(actl_file[0], parse_dates=['Time'])
@@ -987,7 +1000,7 @@ class T7k2030Loader(T7kLoader):
         for zone, zone_df in self.bus_df.groupby('Area'):
             area_total_load = zone_df['MW Load'].sum()
 
-            for bus_name, bus_load in zip(zone_df[self.bus_id_field],
+            for bus_name, bus_load in zip(zone_df['Bus Name'],
                                           zone_df['MW Load']):
                 site_df = pd.DataFrame(
                     {'fcst': load_fcsts[str(zone)],
