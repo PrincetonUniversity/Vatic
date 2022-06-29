@@ -81,8 +81,8 @@ class GridLoader(ABC):
 
     Generator = namedtuple(
         'Generator', [
-            'ID', # usually the GEN UID
-            'Bus', # the Bus ID of the load bus this gen is located at
+            'ID',   # usually the GEN UID
+            'Bus',  # the Bus ID of the load bus this gen is located at
 
             # specifying the type of generator at various
             # granularities; e.g. Group: U20, Type: CT, Fuel: Oil
@@ -113,24 +113,31 @@ class GridLoader(ABC):
         )
 
     Bus = namedtuple(
-        'Bus', ['ID',  # integer
-                'Name',
-                'BaseKV',
-                'Type',
-                'MWLoad',
-                'Area', 'SubArea', 'Zone',
-                'Lat', 'Long']
+        'Bus', [
+            'ID',   # usually a six-digit integer
+            'Name', 'BaseKV',
+
+            'Type', # PQ vs. PV
+            'MWLoad',
+
+            # various ways of specifying the location of the bus
+            'Area', 'SubArea', 'Zone',
+            'Lat', 'Long'
+            ]
         )
 
     Branch = namedtuple(
-        'Branch', ['ID',
-                   'FromBus', 'ToBus',
-                   'R', 'X',
+        'Branch', [
+            'ID',   # usually upper-case letter followed by integer, e.g. A31
+            'FromBus', 'ToBus', # the IDs of the buses this line connects
 
-                   # csv file is in PU, multiply by 100 to make consistent with MW
-                   'B',
+            # resistance, reactance, and charging susceptance, usually given
+            # in p.u.; reactance is divided by 100 to make consistent with MW
+            'R', 'X', 'B',
 
-                   'ContRating']
+            # the capacity of the line in MW
+            'ContRating'
+            ]
         )
 
     thermal_gen_types = {'Nuclear': "N", 'NG': "G", 'Oil': "O", 'Coal': "C"}
@@ -169,6 +176,7 @@ class GridLoader(ABC):
     @property
     @abstractmethod
     def utc_offset(self) -> pd.Timedelta:
+        """Difference between the grid's local time zone and UTC in hours."""
         pass
 
     @property
@@ -177,7 +185,7 @@ class GridLoader(ABC):
         pass
 
     @property
-    def no_scenario_renews(self):
+    def no_scenario_renews(self) -> Set[str]:
         return {'Hydro'}
 
     @staticmethod
@@ -295,38 +303,37 @@ class GridLoader(ABC):
 
     @classmethod
     @abstractmethod
-    def parse_generator(cls, gen_info):
+    def parse_generator(cls, gen_info: pd.Series) -> Generator:
+        """Read in relevant generator info fields from a single dataset row."""
         pass
 
     @classmethod
-    def parse_bus(cls, bus_info):
+    def parse_bus(cls, bus_info: pd.Series) -> Bus:
+        """Read in relevant bus info fields from a single dataset row."""
+
         return cls.Bus(
             int(bus_info["Bus ID"]), bus_info['Bus Name'],
-            bus_info["BaseKV"], bus_info["Bus Type"],
-            float(bus_info["MW Load"]),
+            bus_info["BaseKV"], bus_info["Bus Type"], bus_info["MW Load"],
             bus_info["Area"], int(bus_info["Sub Area"]), bus_info["Zone"],
             bus_info["lat"], bus_info["lng"]
             )
 
     @classmethod
-    def parse_branch(cls, branch_info):
+    def parse_branch(cls, branch_info: pd.Series) -> Branch:
+        """Read in relevant branch info fields from a single dataset row."""
+
         return cls.Branch(
             branch_info["UID"], branch_info["From Bus"], branch_info["To Bus"],
-            float(branch_info["R"]),
-
-            # nix per unit
-            float(branch_info["X"]) / 100.0,
-
+            float(branch_info["R"]), float(branch_info["X"]) / 100.0,
             float(branch_info["B"]), float(branch_info["Cont Rating"])
             )
 
     @classmethod
     def must_gen_run(cls, gen: Generator) -> bool:
+        """Must this generator be turned on at all times in the grid?"""
         return gen.Fuel == 'Nuclear'
 
-    def create_template(self) -> dict:
-        init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
-
+    def create_template(self, mins_per_time_period: int = 60) -> dict:
         generators = [self.parse_generator(gen_info)
                       for _, gen_info in self.gen_df.iterrows()]
 
@@ -336,10 +343,6 @@ class GridLoader(ABC):
 
         branches = [self.parse_branch(branch_info)
                     for _, branch_info in self.branch_df.iterrows()]
-
-        mins_per_time_period = 60
-        ## we'll bring the ramping down by this factor
-        ramp_scaling_factor = 1.
 
         # remove duplicate buses while maintaining order for reference bus
         use_buses = list()
@@ -376,7 +379,9 @@ class GridLoader(ABC):
         rgen_bus_map = {bus.Name: list() for bus in buses}
         tgens = list()
         rgens = list()
+        init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
 
+        # only generators for which we have initial states get used in the grid
         for gen in generators:
             if gen.ID in init_states:
                 if gen.Fuel in self.thermal_gen_types:
@@ -414,16 +419,14 @@ class GridLoader(ABC):
         # ramp rates, given in MW/min, are converted to MW/hour; if no rate is
         # given we assume generator can ramp up/down in a single time period
         template['NominalRampUpLimit'] = {
-            gen.ID: (round(gen.RampRate
-                           * mins_per_time_period / ramp_scaling_factor, 2)
+            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
                      if gen.RampRate > 0.
                      else template['MinimumPowerOutput'][gen.ID])
             for gen in tgens
             }
 
         template['NominalRampDownLimit'] = {
-            gen.ID: (round(gen.RampRate
-                           * mins_per_time_period / ramp_scaling_factor, 2)
+            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
                      if gen.RampRate > 0.
                      else template['MinimumPowerOutput'][gen.ID])
             for gen in tgens
