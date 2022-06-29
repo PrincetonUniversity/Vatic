@@ -18,9 +18,10 @@ def run_deterministic():
         'vatic-det', description="Simulate a deterministic scenario.")
 
     # ...starting with where input and output files are stored
-    parser.add_argument('in_dir', type=Path,
-                        help="directory containing input datasets")
-    parser.add_argument('--out_dir', '-o', type=Path,
+    parser.add_argument('input_grid', type=str,
+                        help="the name of or the directory containing the "
+                             "input datasets of a power grid")
+    parser.add_argument('--out-dir', '-o', type=Path, dest='out_dir',
                         help="directory where output will be stored")
 
     # instead of using all the days in the input files we can choose a subset
@@ -127,13 +128,13 @@ def run_deterministic():
 
     args = parser.parse_args()
     template_data, gen_data, load_data = load_input(
-        args.in_dir, args.start_date, args.num_days)
+        args.input_grid, args.start_date, args.num_days)
 
-    # output is placed in input directory if output directory is not given
+    # output is placed in this code repo directory if output path is not given
     if args.out_dir:
         out_dir = args.out_dir
     else:
-        out_dir = args.in_dir
+        out_dir = Path().absolute()
 
     solver_args = {'Threads': args.threads}
     if args.solver_args:
@@ -158,6 +159,26 @@ def run_deterministic():
                   init_ruc_file=args.init_ruc_file, verbosity=args.verbose,
                   output_max_decimals=args.output_max_decimals,
                   create_plots=args.create_plots).simulate()
+
+    elif Path(args.renew_costs[0]).exists():
+        AllocationSimulator(
+            args.renew_costs[0], template_data, gen_data, load_data,
+            out_dir=out_dir, start_date=args.start_date,
+            num_days=args.num_days, solver=args.solver,
+            solver_options=solver_args, mipgap=args.ruc_mipgap,
+            reserve_factor=args.reserve_factor,
+            prescient_sced_forecasts=args.prescient_sced_forecasts,
+            ruc_prescience_hour=args.ruc_prescience_hour,
+            ruc_execution_hour=args.ruc_execution_hour,
+            ruc_every_hours=args.ruc_every_hours,
+            ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
+            enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
+            no_startup_shutdown_curves=args.no_startup_shutdown_curves,
+            light_output=args.light_output,
+            init_ruc_file=args.init_ruc_file, verbosity=args.verbose,
+            output_max_decimals=args.output_max_decimals,
+            create_plots=args.create_plots
+            ).simulate()
 
     elif not args.renew_costs:
         AllocationSimulator(in_dir=args.in_dir, out_dir=out_dir,

@@ -2,35 +2,69 @@
 
 This module contains a `GridLoader` class for each power grid system; these
 classes contain methods for parsing the raw input data for a grid into formats
-suitable for use within Vatic as well as downstream analyses.
+suitable for use within Vatic as well as for downstream analyses.
+
+In particular, these loaders are used to create the three primary grid data
+input files used by Vatic:
+    `template`  A dictionary of static grid elements including thermal
+                generators, transmission lines, load buses, etc. and their
+                characteristics, as well as the initial state of the grid.
+    `gen_data`  A dataframe of forecasted and actual renewable generator power
+                output over the timeframe to be simulated.
+    `load_data` A dataframe of forecasted and actual load bus power demand over
+                the timeframe to be simulated.
 
 The grid parsing logic implemented here was originally adapted from
 rtsgmlc_to_dat.py and process_RTS_GMLC_data.py in
 Prescient/prescient/downloaders/rts_gmlc_prescient.
 """
 
-from abc import ABC, abstractmethod
-from collections import namedtuple
+import os
 from pathlib import Path
 import bz2
 import dill as pickle
 
-import math
-import pandas as pd
-
-from datetime import datetime
+from abc import ABC, abstractmethod
+from collections import namedtuple
 from typing import Tuple, Optional, Union, Set
 
+import math
+import pandas as pd
+from datetime import datetime
 
-def load_input(data_dir: Path, start_date: Optional[datetime] = None,
+
+def load_input(input_grid: str, start_date: Optional[datetime] = None,
                num_days: Optional[int] = None) -> Tuple[dict, pd.DataFrame,
                                                         pd.DataFrame]:
-    """Gets grid data from an input folder; creates the data if necessary."""
+    """Gets grid data from a grid label or an input grid dataset directory."""
 
-    if data_dir.exists():
-        template_file = Path(data_dir, "grid-template.p")
-        gen_file = Path(data_dir, "gen-data.p")
-        load_file = Path(data_dir, "load-data.p")
+    if 'VATIC_GRIDS' in os.environ:
+        input_path = os.environ['VATIC_GRIDS']
+
+        if not Path(input_path).exists():
+            raise ValueError(
+                "Environment variable <VATIC_GRIDS> has been specified but "
+                "points to a directory `{}` that does "
+                "not exist!".format(input_grid)
+                )
+
+        if not Path(input_path, input_grid).exists():
+            avail_grids = [p.stem for p in Path(input_path).glob('*')
+                           if p.is_dir()]
+
+            raise ValueError(
+                "The given grid `{}` is not available in the global grid "
+                "repository `{}`! The available grids in this repo "
+                "are:\n{}".format(input_grid, input_path,
+                                  '\n'.join(avail_grids))
+                )
+
+        input_grid = Path(input_path, input_grid)
+
+    if Path(input_grid).exists():
+        template_file = Path(input_grid, "grid-template.p")
+        gen_file = Path(input_grid, "gen-data.p")
+        load_file = Path(input_grid, "load-data.p")
 
         # load input datasets, starting with static grid data (e.g. network
         # topology, thermal generator outputs)
@@ -49,12 +83,18 @@ def load_input(data_dir: Path, start_date: Optional[datetime] = None,
         # if the input datasets have not yet been saved to file, generate
         # them from scratch
         else:
+            if start_date is None or num_days is None:
+                raise ValueError("If not using pre-generated input datasets, "
+                                 "both the starting date and the number of "
+                                 "days the simulation will run "
+                                 "must be specified!")
+
             start_date = pd.Timestamp(start_date, tz='utc')
             end_date = start_date + pd.Timedelta(days=num_days)
 
             loaders = {'RTS-GMLC': RtsLoader,
                        'Texas-7k': T7kLoader, 'Texas-7k_2030': T7k2030Loader}
-            loader = loaders[data_dir.stem](data_dir)
+            loader = loaders[Path(input_grid).stem](input_grid)
 
             template = loader.create_template()
             gen_data, load_data = loader.create_timeseries(
@@ -62,7 +102,7 @@ def load_input(data_dir: Path, start_date: Optional[datetime] = None,
 
     else:
         raise ValueError(
-            "Input directory `{}` does not exist!".format(data_dir))
+            "Input directory `{}` does not exist!".format(input_grid))
 
     return template, gen_data, load_data
 
