@@ -514,6 +514,8 @@ class StatsManager:
                 'Dispatch': stats['observed_thermal_dispatch_levels'][gen],
                 'Headroom': stats['observed_thermal_headroom_levels'][gen],
                 'Unit State': gen_state,
+                'Min Output': (self._grid_data['thermal_min_outputs'][gen]
+                               if gen_state else 0.),
                 'Last Unit State': stats['previous_thermal_states'][gen]}}
 
             for time_step, stats in self._sced_stats.items()
@@ -524,6 +526,7 @@ class StatsManager:
             'Output': thermal_data.groupby('Time').Dispatch.sum(),
             'Headroom': thermal_data.groupby('Time').Headroom.sum(),
             'On': thermal_data.groupby('Time')['Unit State'].sum(),
+            'MinOutput': thermal_data.groupby('Time')['Min Output'].sum(),
 
             'TurnedOn': (
                     thermal_data['Unit State']
@@ -536,15 +539,18 @@ class StatsManager:
             })
 
         fig, ax = plt.subplots(figsize=(9, 5))
-        ax.bar(plot_data.index, plot_data.Output,
-               color='#C50000', width=1. / 29)
+        ax.bar(plot_data.index, plot_data.MinOutput,
+               color='#9B0000', width=1. / 29)
+        ax.bar(plot_data.index, plot_data.Output - plot_data.MinOutput,
+               color='#C50000', width=1. / 29, bottom=plot_data.MinOutput)
+
         ax.bar(plot_data.index, plot_data.Headroom,
                color='white', edgecolor='#C50000', lw=1.14, width=1. / 31,
                bottom=plot_data.Output)
 
         ax.axhline(self._grid_data['thermal_fleet_capacity'],
                    c='black', lw=1.7, ls='--')
-        ax.text(plot_data.index[0] + pd.Timedelta(minutes=23),
+        ax.text(plot_data.index[0] + pd.Timedelta(minutes=11),
                 self._grid_data['thermal_fleet_capacity'] * 1.005,
                 "Thermal Capacity", size=12, ha='left', va='bottom',
                 style='italic', transform=ax.transData)
@@ -572,11 +578,12 @@ class StatsManager:
         ax.grid(lw=0.7, alpha=0.53)
         ax.axhline(0, c='black', lw=1.1)
 
-        ax.legend(handles=[Patch(color='#C50000', label='Generation'),
+        ax.legend(handles=[Patch(color='#9B0000', label="Minimum\nGeneration"),
+                           Patch(color='#C50000', label="Generation"),
                            Patch(facecolor='white', edgecolor='#C50000',
-                                 lw=1.7, label='Headroom')],
-                  loc=9, bbox_to_anchor=(0.5, -0.12),
-                  fontsize=17, ncol=2, handletextpad=0.61, frameon=False)
+                                 lw=1.7, label="Headroom")],
+                  loc=9, bbox_to_anchor=(0.5, -0.13),
+                  fontsize=17, ncol=3, handletextpad=0.61, frameon=False)
 
         ax.tick_params(axis='x', labelsize=15)
         ax.tick_params(axis='y', labelsize=12)

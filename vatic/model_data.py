@@ -541,6 +541,12 @@ class VaticModelData(object):
                 for gen, _ in self.elements(element_type='generator',
                                             generator_type='thermal')}
 
+    @property
+    def previous_thermal_states(self):
+        return {gen: self.was_generator_on(gen)
+                for gen, _ in self.elements(element_type='generator',
+                                            generator_type='thermal')}
+
     def get_generator_cost(self, gen):
         gen_data = self._data['elements']['generator'][gen]
 

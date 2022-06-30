@@ -106,7 +106,7 @@ class Simulator:
             template_data, gen_data, load_data, reserve_factor,
             prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
             ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
-            no_startup_shutdown_curves, verbosity, start_date, num_days
+            no_startup_shutdown_curves, verbosity, start_date, num_days,
             )
 
         self._sced_frequency_minutes = self._data_provider.data_freq
@@ -176,8 +176,10 @@ class Simulator:
         # if an initial RUC file has been given and it exists then load the
         # pre-solved RUC from it...
         if self.init_ruc_file and self.init_ruc_file.exists():
+            sim_actuals = self.create_simulation_actuals(first_step)
+
             with open(self.init_ruc_file, 'rb') as f:
-                sim_actuals, ruc = pickle.load(f)
+                ruc = pickle.load(f)
 
         # ...otherwise, solve the initial RUC
         else:
@@ -187,7 +189,7 @@ class Simulator:
         # then save the solved RUC for future use
         if self.init_ruc_file and not self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'wb') as f:
-                pickle.dump((sim_actuals, ruc), f, protocol=-1)
+                pickle.dump(ruc, f, protocol=-1)
 
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(first_step, ruc)
@@ -517,6 +519,60 @@ class AllocationSimulator(Simulator):
         )
 
     data_provider_class = AllocationPickleProvider
+
+    def __init__(self,
+                 cost_vals, template_data, gen_data, load_data, out_dir,
+                 start_date, num_days, solver, solver_options, mipgap,
+                 reserve_factor, light_output, prescient_sced_forecasts,
+                 ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
+                 ruc_horizon, sced_horizon, enforce_sced_shutdown_ramprate,
+                 no_startup_shutdown_curves, init_ruc_file, verbosity,
+                 output_max_decimals, create_plots):
+        self._ruc_solver = self._verify_solver(solver, 'RUC')
+        self._sced_solver = self._verify_solver(solver, 'SCED')
+
+        self.solver_options = solver_options
+        self.sced_horizon = sced_horizon
+        self._hours_in_objective = None
+
+        self.simulation_start_time = time.time()
+        self.simulation_end_time = None
+        self._current_timestep = None
+
+        self._data_provider = self.data_provider_class(
+            cost_vals, template_data, gen_data, load_data, reserve_factor,
+            prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
+            ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
+            no_startup_shutdown_curves, verbosity, start_date, num_days,
+            )
+
+        self._sced_frequency_minutes = self._data_provider.data_freq
+        self._actuals_step_frequency = 60
+
+        self.init_ruc_file = init_ruc_file
+        self.verbosity = verbosity
+
+        self._simulation_state = VaticSimulationState(
+            ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
+        self._prior_sced_instance = None
+        self._ptdf_manager = VaticPTDFManager()
+
+        self._time_manager = VaticTimeManager(
+            self._data_provider.first_day, self._data_provider.final_day,
+            ruc_execution_hour, ruc_every_hours, ruc_horizon,
+            self._sced_frequency_minutes
+            )
+
+        self._stats_manager = StatsManager(out_dir, light_output, verbosity,
+                                           self._data_provider.init_model,
+                                           output_max_decimals, create_plots)
+
+        self.ruc_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
+                                 symbolic_solver_labels=True,
+                                 **self.ruc_formulations)
+        self.sced_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
+                                  symbolic_solver_labels=True,
+                                  **self.sced_formulations)
 
 
 class AutoAllocationSimulator(AllocationSimulator):

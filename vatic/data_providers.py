@@ -121,7 +121,7 @@ class PickleProvider:
 
         # create an empty template model
         self.init_model = self._get_model_for_date(self.first_day,
-                                                   use_actuals=False)
+                                                   use_actuals=False, add_costs=True)
         self.init_model.reset_timeseries()
         self.shutdown_curves = dict()
 
@@ -226,7 +226,7 @@ class PickleProvider:
     def get_populated_model(
             self,
             use_actuals: bool, start_time: datetime, num_time_periods: int,
-            use_state: Optional[VaticSimulationState] = None,
+            use_state: Optional[VaticSimulationState] = None, add_costs=False
             ) -> VaticModelData:
         """Creates a model with all grid asset data for a given time period.
 
@@ -264,7 +264,7 @@ class PickleProvider:
                 use_state, num_time_periods, self.data_freq)
 
         # get the data for this date from the input datasets
-        day_model = self._get_model_for_date(start_day, use_actuals)
+        day_model = self._get_model_for_date(start_day, use_actuals, add_costs)
 
         # advance through the given number of time steps
         for step_index in range(num_time_periods):
@@ -322,7 +322,7 @@ class PickleProvider:
         # create a new model using the forecasts for the given time steps
         ruc_model = self.get_populated_model(
             use_actuals=False, start_time=time_step.when,
-            num_time_periods=forecast_request_count, use_state=current_state,
+            num_time_periods=forecast_request_count, use_state=current_state, add_costs=True
             )
 
         # make some near-term forecasts more accurate if necessary
@@ -579,7 +579,7 @@ class PickleProvider:
 
     def _get_model_for_date(self,
                             requested_date: date,
-                            use_actuals: bool) -> VaticModelData:
+                            use_actuals: bool, add_costs=False) -> VaticModelData:
         """Retrieves the data for a given day and creates a model template.
 
         Args
@@ -595,8 +595,8 @@ class PickleProvider:
             use_lbl = 'fcst'
 
         # return cached model if we have already loaded it
-        if requested_date in self.date_cache[use_lbl]:
-            return VaticModelData(self.date_cache[use_lbl][requested_date])
+        #if requested_date in self.date_cache[use_lbl]:
+        #    return VaticModelData(self.date_cache[use_lbl][requested_date])
 
         # get the static power grid characteristics such as thermal generator
         # properties and network topology
@@ -652,12 +652,12 @@ class PickleProvider:
 
         # use the loaded data to create a model dictionary that is
         # interpretable by an Egret model formulation, save it to our cache
-        model_dict = self.create_vatic_model_dict(day_data)
+        model_dict = self.create_vatic_model_dict(day_data, add_costs)
         self.date_cache[use_lbl][requested_date] = deepcopy(model_dict)
 
         return VaticModelData(model_dict)
 
-    def create_vatic_model_dict(self, data: dict) -> dict:
+    def create_vatic_model_dict(self, data: dict, add_costs=False) -> dict:
         """Convert power grid data into an Egret model dictionary.
 
         Adapted from
@@ -696,7 +696,7 @@ class PickleProvider:
         # how we create the model entries for generators depends on which model
         # formulation we will use and can thus be changed by children providers
         generators = {**self._create_thermals_model_dict(data),
-                      **self._create_renewables_model_dict(data)}
+                      **self._create_renewables_model_dict(data, add_costs)}
 
         gen_buses = dict()
         for bus in data['Buses']:
@@ -766,7 +766,7 @@ class PickleProvider:
             for gen in self.template['ThermalGenerators']
             }
 
-    def _create_renewables_model_dict(self, data: dict) -> dict:
+    def _create_renewables_model_dict(self, data: dict, add_costs=False) -> dict:
         gen_dict = {gen: {'generator_type': 'renewable',
                           'fuel': data['NondispatchableGeneratorType'][gen],
                           'in_service': True}
@@ -795,13 +795,27 @@ class PickleProvider:
 
 class AllocationPickleProvider(PickleProvider):
 
-    def __init__(self, data_dir: str) -> None:
-        with open(Path(data_dir, "renew-costs.p"), 'rb') as f:
-            self.renew_costs: dict = pickle.load(f)
+    def __init__(self, renew_costs, template_data: dict, gen_data: pd.DataFrame,
+                 load_data: pd.DataFrame, reserve_factor: float,
+                 prescient_sced_forecasts: bool,
+                 ruc_prescience_hour: int, ruc_execution_hour: int,
+                 ruc_every_hours: int, ruc_horizon: int,
+                 enforce_sced_shutdown_ramprate: bool,
+                 no_startup_shutdown_curves: bool, verbosity: int,
+                 start_date: Optional[datetime] = None,
+                 num_days: Optional[int] = None) -> None:
 
-        super().__init__(data_dir)
+        with open(renew_costs, 'rb') as f:
+            costs = pickle.load(f)
 
-    def _create_renewables_model_dict(self, data: dict) -> dict:
+        self.renew_costs = {**costs['Solar'], **costs['Wind']}
+
+        super().__init__(template_data, gen_data, load_data, reserve_factor,
+            prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
+            ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
+            no_startup_shutdown_curves, verbosity, start_date, num_days)
+
+    def _create_renewables_model_dict(self, data: dict, add_costs=False) -> dict:
         gen_dict = {gen: {'generator_type': 'renewable',
                           'fuel': data['NondispatchableGeneratorType'][gen],
                           'in_service': True}
@@ -830,13 +844,35 @@ class AllocationPickleProvider(PickleProvider):
             gen_dict[gen]['p_max'] = {'data_type': 'time_series',
                                       'values': pmax_vals}
 
-        for gen, cost_vals in self.renew_costs.items():
-            if gen not in self.template['ForecastRenewables']:
-                raise ProviderError("Costs have been provided for generator "
-                                    "`{}` which is not a forecastable (WIND, "
-                                    "PV, RTPV) renewable!".format(gen))
+        if add_costs:
+            for gen, cost_vals in self.renew_costs.items():
+                use_costs = dict()
 
-            gen_dict[gen]['p_cost'] = deepcopy(cost_vals)
+                for i, vals in enumerate(cost_vals.values()):
+                    breaks = vals['break_points']
+
+                    if len(vals['reliability_cost']) == 1:
+                        cs = vals['reliability_cost'] * len(breaks)
+                    else:
+                        cs = vals['reliability_cost']
+
+                    cs = [max(c, 0.) for c in cs]
+
+                    use_costs[i] = list(zip(breaks, cs))
+                    use_costs[i + 24] = list(zip(breaks, cs))
+
+                if gen not in self.template['ForecastRenewables']:
+                    raise ProviderError("Costs have been provided for generator "
+                                        "`{}` which is not a forecastable (WIND, "
+                                        "PV, RTPV) renewable!".format(gen))
+
+                gen_dict[gen]['p_cost'] = {
+                    'data_type': 'time_series',
+                    'values': [{'data_type': 'cost_curve',
+                                'cost_curve_type': 'piecewise',
+                                'values': use_cost}
+                               for use_cost in use_costs.values()]
+                    }
 
         return gen_dict
 
