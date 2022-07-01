@@ -72,11 +72,11 @@ def load_input(input_grid: str, start_date: Optional[datetime] = None,
             with open(template_file, 'rb') as f:
                 template: dict = pickle.load(f)
 
-            # load renewable generator forecasted and actual outputs
+            # read in renewable generator forecasted and actual outputs
             with open(gen_file, 'rb') as f:
                 gen_data: pd.DataFrame = pickle.load(f)
 
-            # load bus forecasted and actual outputs
+            # read in load bus forecasted and actual outputs
             with open(load_file, 'rb') as f:
                 load_data: pd.DataFrame = pickle.load(f)
 
@@ -92,13 +92,10 @@ def load_input(input_grid: str, start_date: Optional[datetime] = None,
             start_date = pd.Timestamp(start_date, tz='utc')
             end_date = start_date + pd.Timedelta(days=num_days)
 
-            loaders = {'RTS-GMLC': RtsLoader,
-                       'Texas-7k': T7kLoader, 'Texas-7k_2030': T7k2030Loader}
-            loader = loaders[Path(input_grid).stem](input_grid)
-
-            template = loader.create_template()
+            loader: GridLoader = LOADERS[Path(input_grid).stem](input_grid)
             gen_data, load_data = loader.create_timeseries(
                 start_date, end_date)
+            template = loader.template
 
     else:
         raise ValueError(
@@ -183,8 +180,32 @@ class GridLoader(ABC):
     thermal_gen_types = {'Nuclear': "N", 'NG': "G", 'Oil': "O", 'Coal': "C"}
     renew_gen_types = {'Wind': "W", 'Solar': "S", 'Hydro': "H"}
 
-    def __init__(self, in_dir: Union[str, Path]) -> None:
+    def __init__(self,
+                 in_dir: Union[str, Path],
+                 mins_per_time_period: int = 60) -> None:
+        """Create the static characteristics of the grid.
+
+        Initializing a grid loader entails parsing the grid metadata to get the
+        characteristics of the system that remain constant across experiment
+        runs. These include fields such as:
+
+            ThermalGenerators
+                Non-renewable power plants whose output can be manipulated by
+                the operator subject to operating constraints.
+            NondispatchableGenerators
+                Power plants that rely on renewable sources of energy such as
+                wind and sun whose output levels are determined exogenously.
+
+        Args
+        ----
+            in_dir                  The folder containing grid metadata.
+            mins_per_time_period    How many minutes each time step in the
+                                    simulation will take; used to normalize
+                                    ramping rates.
+
+        """
         self.in_dir = in_dir
+        self.mins_per_time_period = mins_per_time_period
 
         self.gen_df = pd.read_csv(Path(in_dir, self.grid_dir,
                                        "SourceData", "gen.csv"))
@@ -194,6 +215,178 @@ class GridLoader(ABC):
         self.bus_df = pd.read_csv(Path(in_dir, self.grid_dir,
                                        "SourceData", "bus.csv"))
         self.bus_df.loc[pd.isnull(self.bus_df['MW Load']), 'MW Load'] = 0.
+
+        self.generators = [self.parse_generator(gen_info)
+                           for _, gen_info in self.gen_df.iterrows()]
+
+        self.buses = [self.parse_bus(bus_info)
+                      for _, bus_info in self.bus_df.iterrows()]
+        bus_name_mapping = {bus.ID: bus.Name for bus in self.buses}
+
+        self.branches = [self.parse_branch(branch_info)
+                         for _, branch_info in self.branch_df.iterrows()]
+
+        # remove duplicate buses while maintaining order for reference bus
+        use_buses = list()
+        for bus in self.buses:
+            if bus.Name not in use_buses:
+                use_buses += [bus.Name]
+
+        template = {
+            'NumTimePeriods': 48, 'TimePeriodLength': 1,
+            'StageSet': ['Stage_1', 'Stage_2'], 'CopperSheet': False,
+
+            'CommitmentTimeInStage': {'Stage_1': list(range(1, 49)),
+                                      'Stage_2': list()},
+            'GenerationTimeInStage': {'Stage_1': list(),
+                                      'Stage_2': list(range(1, 49))},
+
+            'Buses': use_buses,
+            'TransmissionLines': [branch.ID for branch in self.branches],
+
+            'BusFrom': {branch.ID: bus_name_mapping[branch.FromBus]
+                        for branch in self.branches},
+            'BusTo': {branch.ID: bus_name_mapping[branch.ToBus]
+                      for branch in self.branches},
+
+            'ThermalLimit': {branch.ID: round(branch.ContRating, 8)
+                             for branch in self.branches},
+            'Impedence': {branch.ID: round(branch.X, 8)
+                          for branch in self.branches},
+
+            'MustRun': [gen.ID for gen in self.generators
+                        if self.must_gen_run(gen)]
+            }
+
+        tgen_bus_map = {bus.Name: list() for bus in self.buses}
+        rgen_bus_map = {bus.Name: list() for bus in self.buses}
+        tgens = list()
+        rgens = list()
+        init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
+
+        # only generators for which we have initial states get used in the grid
+        for gen in self.generators:
+            if gen.ID in init_states:
+                if gen.Fuel in self.thermal_gen_types:
+                    tgens += [gen]
+                    tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+
+                if gen.Fuel in self.renew_gen_types:
+                    rgens += [gen]
+                    rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+
+        template.update({
+            'ThermalGenerators': [gen.ID for gen in tgens],
+            'NondispatchableGenerators': [gen.ID for gen in rgens],
+            'ThermalGeneratorsAtBus': tgen_bus_map,
+            'NondispatchableGeneratorsAtBus': rgen_bus_map
+            })
+
+        template['ThermalGeneratorType'] = {
+            gen.ID: self.thermal_gen_types[gen.Fuel] for gen in tgens}
+        template['NondispatchableGeneratorType'] = {
+            gen.ID: self.renew_gen_types[gen.Fuel] for gen in rgens}
+        template.update(
+            self.get_dispatch_types(template['NondispatchableGeneratorType']))
+
+        template['MinimumPowerOutput'] = {gen.ID: round(gen.MinPower, 2)
+                                          for gen in tgens}
+        template['MaximumPowerOutput'] = {gen.ID: round(gen.MaxPower, 2)
+                                          for gen in tgens}
+
+        template['MinimumUpTime'] = {gen.ID: round(gen.MinUpTime, 2)
+                                     for gen in tgens}
+        template['MinimumDownTime'] = {gen.ID: round(gen.MinDownTime, 2)
+                                       for gen in tgens}
+
+        # ramp rates, given in MW/min, are converted to MW/hour; if no rate is
+        # given we assume generator can ramp up/down in a single time period
+        template['NominalRampUpLimit'] = {
+            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
+                     if gen.RampRate > 0.
+                     else template['MinimumPowerOutput'][gen.ID])
+            for gen in tgens
+            }
+
+        template['NominalRampDownLimit'] = {
+            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
+                     if gen.RampRate > 0.
+                     else template['MinimumPowerOutput'][gen.ID])
+            for gen in tgens
+            }
+
+        template['StartupRampLimit'] = {gen.ID: round(gen.MinPower, 2)
+                                        for gen in tgens}
+        template['ShutdownRampLimit'] = {gen.ID: round(gen.MinPower, 2)
+                                         for gen in tgens}
+
+        template['StartupLags'] = {
+            gen.ID: (
+                [gen.MinDownTime]
+                if (gen.StartTimeCold <= gen.MinDownTime
+                    or (gen.StartTimeCold == gen.StartTimeWarm
+                        == gen.StartTimeHot))
+
+                else [gen.MinDownTime, gen.StartTimeCold]
+                if gen.StartTimeWarm <= gen.MinDownTime
+
+                else [gen.MinDownTime, gen.StartTimeWarm, gen.StartTimeCold]
+            )
+
+            for gen in tgens
+            }
+
+        template['StartupCosts'] = {
+            gen.ID: ([gen.StartCostCold * gen.FuelPrice]
+                     if (gen.StartTimeCold <= gen.MinDownTime
+                         or (gen.StartTimeCold == gen.StartTimeWarm
+                             == gen.StartTimeHot))
+
+                     else [gen.StartCostWarm * gen.FuelPrice,
+                           gen.StartCostCold * gen.FuelPrice]
+            if gen.StartTimeWarm <= gen.MinDownTime
+
+            else [gen.StartCostHot * gen.FuelPrice,
+                  gen.StartCostWarm * gen.FuelPrice,
+                  gen.StartCostCold * gen.FuelPrice])
+
+            for gen in tgens
+            }
+
+        # according to Egret, startup costs cannot be duplicated, so we
+        # introduce a small perturbation to avoid this
+        for gen_id in template['StartupCosts']:
+            if (len(set(template['StartupCosts'][gen_id]))
+                    < len(template['StartupCosts'][gen_id])):
+                template['StartupCosts'][gen_id] = [
+                    round(cost, 2) + i * 0.01
+                    for i, cost in enumerate(template['StartupCosts'][gen_id])
+                    ]
+
+            else:
+                template['StartupCosts'][gen_id] = [
+                    round(cost, 2)
+                    for cost in template['StartupCosts'][gen_id]
+                    ]
+
+        template['CostPiecewisePoints'] = {
+            gen.ID: [round(pnt, 2) for pnt in gen.TotalCostPoints]
+            for gen in tgens
+            }
+        template['CostPiecewiseValues'] = {
+            gen.ID: [round(cst, 4) for cst in gen.TotalCostValues]
+            for gen in tgens
+            }
+
+        template['UnitOnT0State'] = {gen.ID: init_states[gen.ID]
+                                     for gen in tgens if gen.ID in init_states}
+
+        template['PowerGeneratedT0'] = {
+            gen.ID: 0. if init_states[gen.ID] < 0 else round(gen.MinPower, 2)
+            for gen in tgens if gen.ID in init_states
+            }
+
+        self.template = template
 
     @property
     @abstractmethod
@@ -372,178 +565,6 @@ class GridLoader(ABC):
     def must_gen_run(cls, gen: Generator) -> bool:
         """Must this generator be turned on at all times in the grid?"""
         return gen.Fuel == 'Nuclear'
-
-    def create_template(self, mins_per_time_period: int = 60) -> dict:
-        generators = [self.parse_generator(gen_info)
-                      for _, gen_info in self.gen_df.iterrows()]
-
-        buses = [self.parse_bus(bus_info)
-                 for _, bus_info in self.bus_df.iterrows()]
-        bus_name_mapping = {bus.ID: bus.Name for bus in buses}
-
-        branches = [self.parse_branch(branch_info)
-                    for _, branch_info in self.branch_df.iterrows()]
-
-        # remove duplicate buses while maintaining order for reference bus
-        use_buses = list()
-        for bus in buses:
-            if bus.Name not in use_buses:
-                use_buses += [bus.Name]
-
-        template = {
-            'NumTimePeriods': 48, 'TimePeriodLength': 1,
-            'StageSet': ['Stage_1', 'Stage_2'], 'CopperSheet': False,
-
-            'CommitmentTimeInStage': {'Stage_1': list(range(1, 49)),
-                                      'Stage_2': list()},
-            'GenerationTimeInStage': {'Stage_1': list(),
-                                      'Stage_2': list(range(1, 49))},
-
-            'Buses': use_buses,
-            'TransmissionLines': [branch.ID for branch in branches],
-
-            'BusFrom': {branch.ID: bus_name_mapping[branch.FromBus]
-                        for branch in branches},
-            'BusTo': {branch.ID: bus_name_mapping[branch.ToBus]
-                      for branch in branches},
-
-            'ThermalLimit': {branch.ID: round(branch.ContRating, 8)
-                             for branch in branches},
-            'Impedence': {branch.ID: round(branch.X, 8)
-                          for branch in branches},
-
-            'MustRun': [gen.ID for gen in generators if self.must_gen_run(gen)]
-            }
-
-        tgen_bus_map = {bus.Name: list() for bus in buses}
-        rgen_bus_map = {bus.Name: list() for bus in buses}
-        tgens = list()
-        rgens = list()
-        init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
-
-        # only generators for which we have initial states get used in the grid
-        for gen in generators:
-            if gen.ID in init_states:
-                if gen.Fuel in self.thermal_gen_types:
-                    tgens += [gen]
-                    tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
-
-                if gen.Fuel in self.renew_gen_types:
-                    rgens += [gen]
-                    rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
-
-        template.update({
-            'ThermalGenerators': [gen.ID for gen in tgens],
-            'NondispatchableGenerators': [gen.ID for gen in rgens],
-            'ThermalGeneratorsAtBus': tgen_bus_map,
-            'NondispatchableGeneratorsAtBus': rgen_bus_map
-            })
-
-        template['ThermalGeneratorType'] = {
-            gen.ID: self.thermal_gen_types[gen.Fuel] for gen in tgens}
-        template['NondispatchableGeneratorType'] = {
-            gen.ID: self.renew_gen_types[gen.Fuel] for gen in rgens}
-        template.update(
-            self.get_dispatch_types(template['NondispatchableGeneratorType']))
-
-        template['MinimumPowerOutput'] = {gen.ID: round(gen.MinPower, 2)
-                                          for gen in tgens}
-        template['MaximumPowerOutput'] = {gen.ID: round(gen.MaxPower, 2)
-                                          for gen in tgens}
-
-        template['MinimumUpTime'] = {gen.ID: round(gen.MinUpTime, 2)
-                                     for gen in tgens}
-        template['MinimumDownTime'] = {gen.ID: round(gen.MinDownTime, 2)
-                                       for gen in tgens}
-
-        # ramp rates, given in MW/min, are converted to MW/hour; if no rate is
-        # given we assume generator can ramp up/down in a single time period
-        template['NominalRampUpLimit'] = {
-            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
-                     if gen.RampRate > 0.
-                     else template['MinimumPowerOutput'][gen.ID])
-            for gen in tgens
-            }
-
-        template['NominalRampDownLimit'] = {
-            gen.ID: (round(gen.RampRate * mins_per_time_period, 2)
-                     if gen.RampRate > 0.
-                     else template['MinimumPowerOutput'][gen.ID])
-            for gen in tgens
-            }
-
-        template['StartupRampLimit'] = {gen.ID: round(gen.MinPower, 2)
-                                        for gen in tgens}
-        template['ShutdownRampLimit'] = {gen.ID: round(gen.MinPower, 2)
-                                         for gen in tgens}
-
-        template['StartupLags'] = {
-            gen.ID: (
-                [gen.MinDownTime]
-                if (gen.StartTimeCold <= gen.MinDownTime
-                    or (gen.StartTimeCold == gen.StartTimeWarm
-                        == gen.StartTimeHot))
-
-                else [gen.MinDownTime, gen.StartTimeCold]
-                if gen.StartTimeWarm <= gen.MinDownTime
-
-                else [gen.MinDownTime, gen.StartTimeWarm, gen.StartTimeCold]
-                )
-
-            for gen in tgens
-            }
-
-        template['StartupCosts'] = {
-            gen.ID: ([gen.StartCostCold * gen.FuelPrice]
-                     if (gen.StartTimeCold <= gen.MinDownTime
-                         or (gen.StartTimeCold == gen.StartTimeWarm
-                             == gen.StartTimeHot))
-
-                     else [gen.StartCostWarm * gen.FuelPrice,
-                           gen.StartCostCold * gen.FuelPrice]
-                     if gen.StartTimeWarm <= gen.MinDownTime
-
-                     else [gen.StartCostHot * gen.FuelPrice,
-                           gen.StartCostWarm * gen.FuelPrice,
-                           gen.StartCostCold * gen.FuelPrice])
-
-            for gen in tgens
-            }
-
-        # according to Egret, startup costs cannot be duplicated, so we
-        # introduce a small perturbation to avoid this
-        for gen_id in template['StartupCosts']:
-            if (len(set(template['StartupCosts'][gen_id]))
-                    < len(template['StartupCosts'][gen_id])):
-                template['StartupCosts'][gen_id] = [
-                    round(cost, 2) + i * 0.01
-                    for i, cost in enumerate(template['StartupCosts'][gen_id])
-                    ]
-
-            else:
-                template['StartupCosts'][gen_id] = [
-                    round(cost, 2)
-                    for cost in template['StartupCosts'][gen_id]
-                    ]
-
-        template['CostPiecewisePoints'] = {
-            gen.ID: [round(pnt, 2) for pnt in gen.TotalCostPoints]
-            for gen in tgens
-            }
-        template['CostPiecewiseValues'] = {
-            gen.ID: [round(cst, 4) for cst in gen.TotalCostValues]
-            for gen in tgens
-            }
-
-        template['UnitOnT0State'] = {gen.ID: init_states[gen.ID]
-                                     for gen in tgens if gen.ID in init_states}
-
-        template['PowerGeneratedT0'] = {
-            gen.ID: 0. if init_states[gen.ID] < 0 else round(gen.MinPower, 2)
-            for gen in tgens if gen.ID in init_states
-            }
-
-        return template
 
     def create_timeseries(self, start_date=None, end_date=None):
         gen_dfs = list()
@@ -844,7 +865,8 @@ class T7kLoader(GridLoader):
             }
 
     def map_wind_assets(self, asset_df):
-        wind_maps = pd.read_csv(Path(self.in_dir, "Texas7k_NREL_wind_map.csv"),
+        wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
+                                     "Texas7k_NREL_wind_map.csv"),
                                 index_col=0)
         wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
 
@@ -870,7 +892,7 @@ class T7kLoader(GridLoader):
         return pd.concat(mapped_vals, axis=1)
 
     def map_solar_assets(self, asset_df):
-        solar_maps = pd.read_csv(Path(self.in_dir,
+        solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"),
                                  index_col=0)
         solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
@@ -1070,3 +1092,7 @@ class T7k2030Loader(T7kLoader):
                     )
 
         return pd.concat(mapped_vals, axis=1)
+
+
+LOADERS = {'RTS-GMLC': RtsLoader,
+           'Texas-7k': T7kLoader, 'Texas-7k_2030': T7k2030Loader}
