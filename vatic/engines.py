@@ -235,6 +235,39 @@ class Simulator:
             pre_quickstart_cache=None
             )
 
+    def perturb_oracle(self, perturb_dict: Dict[str, float]) -> dict:
+        """Simulates a perturbed economic dispatch for current time step."""
+
+        sced_model_data = self._data_provider.create_sced_instance(
+            self._simulation_state, sced_horizon=self.sced_horizon)
+
+        for k, sced_data in sced_model_data.get_forecastables():
+            if k[0] in {'p_max', 'p_load'} and k[1] in perturb_dict:
+                sced_data[0] = max(sced_data[0] + perturb_dict[k[1]], 0.)
+
+        self._ptdf_manager.mark_active(sced_model_data)
+
+        self.sced_model.generate_model(
+            sced_model_data, relax_binaries=False,
+            ptdf_options=self._ptdf_manager.sced_ptdf_options,
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+            objective_hours=1
+            )
+
+        # update in case lines were taken out
+        self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
+
+
+        sced_results = self.sced_model.solve_model(self._sced_solver,
+                                                   self.solver_options)
+        lmp_sced = self.solve_lmp(sced_results)
+
+        self._stats_manager.collect_sced_solution(self._current_timestep,
+                                                  sced_results, lmp_sced,
+                                                  pre_quickstart_cache=None)
+
+        return self._stats_manager._sced_stats[self._current_timestep]
+
     def solve_ruc(self, time_step, sim_state_for_ruc=None):
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(

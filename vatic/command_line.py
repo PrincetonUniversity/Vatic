@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from ast import literal_eval
 
-from .input.loaders import load_input
+from .input import load_input
 from .engines import Simulator, AllocationSimulator, AutoAllocationSimulator
 
 
