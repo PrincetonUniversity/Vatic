@@ -1,12 +1,15 @@
 """Running a simulation of alternating UC and ED grid optimization steps."""
 
 import os
-import datetime
-import time
-import math
 import dill as pickle
+from pathlib import Path
+import time
+
+import datetime
+import math
+import pandas as pd
 from copy import deepcopy
-from typing import Union, Tuple, Dict, Any, Callable
+from typing import Dict, Tuple, Optional
 
 from .data_providers import (
     PickleProvider, AllocationPickleProvider, AutoAllocationPickleProvider)
@@ -84,13 +87,17 @@ class Simulator:
         return solver_type
 
     def __init__(self,
-                 template_data, gen_data, load_data, out_dir,
-                 start_date, num_days, solver, solver_options, mipgap,
-                 reserve_factor, light_output, prescient_sced_forecasts,
-                 ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
-                 ruc_horizon, sced_horizon, enforce_sced_shutdown_ramprate,
-                 no_startup_shutdown_curves, init_ruc_file, verbosity,
-                 output_max_decimals, create_plots):
+                 template_data: dict, gen_data: pd.DataFrame,
+                 load_data: pd.DataFrame, out_dir: Path,
+                 start_date: datetime.date, num_days: int, solver: str,
+                 solver_options: dict, mipgap: float, reserve_factor: float,
+                 light_output: bool, prescient_sced_forecasts: bool,
+                 ruc_prescience_hour: int, ruc_execution_hour: int,
+                 ruc_every_hours: int, ruc_horizon: int, sced_horizon: int,
+                 enforce_sced_shutdown_ramprate: bool,
+                 no_startup_shutdown_curves: bool,
+                 init_ruc_file: Optional[Path], verbosity: int,
+                 output_max_decimals: int, create_plots: bool) -> None:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
@@ -241,10 +248,20 @@ class Simulator:
         sced_model_data = self._data_provider.create_sced_instance(
             self._simulation_state, sced_horizon=self.sced_horizon)
 
+        # for each asset with forecastable output/demand values, check to see
+        # if we want to perturb it
         for k, sced_data in sced_model_data.get_forecastables():
-            if k[0] in {'p_max', 'p_load'} and k[1] in perturb_dict:
-                sced_data[0] = max(sced_data[0] + perturb_dict[k[1]], 0.)
+            if k[1] in perturb_dict:
+                if k[0] in {'p_max', 'p_load'}:
+                    sced_data[0] = max(sced_data[0] + perturb_dict[k[1]], 0.)
 
+                # handles case of renewables like RTPVs which have
+                # p_min equal to p_max
+                if k[0] == 'p_min' and sced_data[0] > 0.:
+                    sced_data[0] = max(sced_data[0] + perturb_dict[k[1]], 0.)
+
+        # proceed as we would otherwise but don't update the state of the sim,
+        # just run the SCED we would have run with the perturbations added
         self._ptdf_manager.mark_active(sced_model_data)
 
         self.sced_model.generate_model(
@@ -257,7 +274,6 @@ class Simulator:
         # update in case lines were taken out
         self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
 
-
         sced_results = self.sced_model.solve_model(self._sced_solver,
                                                    self.solver_options)
         lmp_sced = self.solve_lmp(sced_results)
@@ -268,7 +284,11 @@ class Simulator:
 
         return self._stats_manager._sced_stats[self._current_timestep]
 
-    def solve_ruc(self, time_step, sim_state_for_ruc=None):
+    def solve_ruc(
+            self,
+            time_step: VaticTime,
+            sim_state_for_ruc: Optional[VaticSimulationState] = None
+            ) -> Tuple[VaticModelData, VaticModelData]:
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(
             time_step, sim_state_for_ruc)
@@ -369,7 +389,7 @@ class Simulator:
         return sced_results
 
     #TODO: figure out how to produce bus-level LMPs
-    def solve_lmp(self, sced_instance):
+    def solve_lmp(self, sced_instance: VaticModelData) -> VaticModelData:
         lmp_sced_instance = deepcopy(sced_instance)
 
         # in the case of a shortfall in meeting demand or the reserve
@@ -495,14 +515,14 @@ class Simulator:
                                         proj_sced_instance,
                                         self._simulation_state.ruc_delay)
 
-    def create_simulation_actuals(self, time_step):
+    def create_simulation_actuals(self,
+                                  time_step: VaticTime) -> VaticModelData:
         """
         merge of EgretEngine.create_simulation_actuals
              and egret_plugin.create_simulation_actuals
 
         Get an Egret model consisting of data to be treated as actuals,
         starting at a given time.
-
         """
 
         # Convert time string to time

@@ -42,7 +42,7 @@ class PickleProvider:
                  ruc_every_hours: int, ruc_horizon: int,
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool, verbosity: int,
-                 start_date: Optional[datetime] = None,
+                 start_date: Optional[date] = None,
                  num_days: Optional[int] = None) -> None:
 
         if not (gen_data.index == load_data.index).all():
