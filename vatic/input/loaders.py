@@ -26,7 +26,7 @@ import dill as pickle
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from typing import Tuple, Optional, Union, Set
+from typing import Tuple, Dict, Mapping, Optional, Union, Set, Iterable
 
 import math
 import pandas as pd
@@ -434,10 +434,10 @@ class GridLoader(ABC):
     def get_generator_zone(self, gen):
         pass
 
-    def map_wind_assets(self, asset_df):
+    def map_wind_assets(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         return asset_df
 
-    def map_solar_assets(self, asset_df):
+    def map_solar_assets(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         return asset_df
 
     def get_asset_info(self) -> pd.DataFrame:
@@ -492,7 +492,7 @@ class GridLoader(ABC):
         """Parse realized load/generation values read from an input file."""
         pass
 
-    def get_forecasts(self, asset_type, start_date=None, end_date=None):
+    def get_forecasts(self, asset_type: str, start_date=None, end_date=None):
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
@@ -501,7 +501,9 @@ class GridLoader(ABC):
 
         return self.process_forecasts(fcst_file[0], start_date, end_date)
 
-    def get_actuals(self, asset_type, start_date=None, end_date=None):
+    def get_actuals(self,
+                    asset_type: str, start_date: Optional[datetime] = None,
+                    end_date: Optional[datetime] = None) -> pd.DataFrame:
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
@@ -510,7 +512,10 @@ class GridLoader(ABC):
 
         return self.process_actuals(actl_file[0], start_date, end_date)
 
-    def load_by_bus(self, start_date=None, end_date=None, load_actls=None):
+    def load_by_bus(self,
+                    start_date: Optional[datetime] = None,
+                    end_date: Optional[datetime] = None,
+                    load_actls: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         load_fcsts = self.get_forecasts('Load', start_date, end_date)
 
         if load_actls is None:
@@ -566,7 +571,11 @@ class GridLoader(ABC):
         """Must this generator be turned on at all times in the grid?"""
         return gen.Fuel == 'Nuclear'
 
-    def create_timeseries(self, start_date=None, end_date=None):
+    def create_timeseries(
+            self,
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
+            ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         gen_dfs = list()
 
         for asset_type in self.timeseries_cohorts:
@@ -586,8 +595,55 @@ class GridLoader(ABC):
 
         return gen_df, demand_df
 
-    def create_scenario_timeseries(self,
-                                   scen_dir, start_date, end_date, scenario):
+    def load_scenarios(
+            self,
+            scen_dir: Union[str, Path], dates: Iterable[datetime],
+            scenarios: Iterable[int],
+            asset_types: Tuple[str] = ('Load', 'Wind', 'Solar')
+            ) -> Dict[str, pd.DataFrame]:
+        scens = {asset_type: dict() for asset_type in asset_types}
+
+        for scen_day in dates:
+            out_file = Path(scen_dir, "scens_{}.p.gz".format(scen_day.date()))
+
+            with bz2.BZ2File(out_file, 'r') as f:
+                day_scens = pickle.load(f)
+
+            for asset_type in asset_types:
+                scens[asset_type][scen_day] = day_scens[
+                    asset_type].iloc[scenarios]
+
+        scen_dfs = {asset_type: pd.concat(scens[asset_type].values(),
+                                          axis=1).stack()
+                    for asset_type in asset_types}
+
+        for asset_type in asset_types:
+            scen_dfs[asset_type].index = pd.MultiIndex.from_tuples(
+                [(scenario, t + self.utc_offset)
+                 for scenario, t in scen_dfs[asset_type].index],
+                names=('Scenario', 'Time')
+                )
+
+            if asset_type == 'Wind':
+                scen_dfs[asset_type] = self.map_wind_assets(
+                    scen_dfs[asset_type])
+            if asset_type == 'Solar':
+                scen_dfs[asset_type] = self.map_solar_assets(
+                    scen_dfs[asset_type])
+
+        return scen_dfs
+
+    def create_scenario_timeseries(
+            self,
+            scen_dfs: Mapping[str, pd.DataFrame],
+            start_date: datetime, end_date: datetime, scenario: int
+            ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        gen_scens = pd.concat([scen_dfs['Wind'].loc[scenario],
+                               scen_dfs['Solar'].loc[scenario]], axis=1)
+
+        gen_scens.columns = pd.MultiIndex.from_tuples(
+            [('actl', asset_name) for asset_name in gen_scens.columns])
+
         gen_df = pd.concat([self.get_forecasts(asset_type,
                                                start_date, end_date)
                             for asset_type in self.timeseries_cohorts],
@@ -595,30 +651,6 @@ class GridLoader(ABC):
 
         gen_df.columns = pd.MultiIndex.from_tuples(
             [('fcst', asset_name) for asset_name in gen_df.columns])
-
-        year_scens = {'Load': dict(), 'Wind': dict(), 'Solar': dict()}
-        for scen_day in pd.date_range(start=start_date, end=end_date,
-                                      freq='D'):
-            out_file = Path(scen_dir, "scens_{}.p.gz".format(scen_day.date()))
-
-            with bz2.BZ2File(out_file, 'r') as f:
-                day_scens = pickle.load(f)
-
-            for asset_type in ['Load', 'Wind', 'Solar']:
-                year_scens[asset_type][scen_day] = day_scens[
-                    asset_type].iloc[scenario]
-
-        wind_rts_scens = pd.concat(year_scens['Wind'].values()).unstack().T
-        wind_rts_scens.index += self.utc_offset
-        solar_rts_scens = pd.concat(year_scens['Solar'].values()).unstack().T
-        solar_rts_scens.index += self.utc_offset
-
-        gen_scens = pd.concat([self.map_wind_assets(wind_rts_scens),
-                               self.map_solar_assets(solar_rts_scens)],
-                              axis=1)
-
-        gen_scens.columns = pd.MultiIndex.from_tuples(
-            [('actl', asset_name) for asset_name in gen_scens.columns])
         gen_df = pd.concat([gen_df, gen_scens], axis=1)
 
         for asset_type in self.no_scenario_renews:
@@ -638,10 +670,8 @@ class GridLoader(ABC):
                 == sorted(gen_df['actl'].columns)), (
             "Mismatching sets of assets with forecasts and with actuals!")
 
-        load_rts_scens = pd.concat(year_scens['Load'].values()).unstack().T
-        load_rts_scens.index += self.utc_offset
         demand_df = self.load_by_bus(start_date, end_date,
-                                     load_actls=load_rts_scens)
+                                     load_actls=scen_dfs['Load'].loc[scenario])
 
         return gen_df.sort_index(axis=1), demand_df
 
