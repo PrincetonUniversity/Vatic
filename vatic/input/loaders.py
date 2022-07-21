@@ -434,10 +434,12 @@ class GridLoader(ABC):
     def get_generator_zone(self, gen):
         pass
 
-    def map_wind_assets(self, asset_df: pd.DataFrame) -> pd.DataFrame:
+    def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
+        """Transform data for NREL wind farms to those used in the grid."""
         return asset_df
 
-    def map_solar_assets(self, asset_df: pd.DataFrame) -> pd.DataFrame:
+    def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
+        """Transform data for NREL solar plants to those used in the grid."""
         return asset_df
 
     def get_asset_info(self) -> pd.DataFrame:
@@ -482,7 +484,7 @@ class GridLoader(ABC):
         use_df = fcst_df.drop(columns=['Year', 'Month', 'Day', 'Period'])
         use_df.index = df_times
 
-        return self.subset_dates(use_df)
+        return self.subset_dates(use_df, start_date, end_date)
 
     @staticmethod
     @abstractmethod
@@ -492,7 +494,11 @@ class GridLoader(ABC):
         """Parse realized load/generation values read from an input file."""
         pass
 
-    def get_forecasts(self, asset_type: str, start_date=None, end_date=None):
+    def get_forecasts(self,
+                      asset_type: str, start_date: Optional[datetime] = None,
+                      end_date: Optional[datetime] = None) -> pd.DataFrame:
+        """Find and parse forecasted values for a particular asset type."""
+
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
@@ -504,6 +510,8 @@ class GridLoader(ABC):
     def get_actuals(self,
                     asset_type: str, start_date: Optional[datetime] = None,
                     end_date: Optional[datetime] = None) -> pd.DataFrame:
+        """Find and parse realized values for a particular asset type."""
+
         data_dir = Path(self.in_dir, self.grid_dir,
                         'timeseries_data_files', asset_type)
 
@@ -516,6 +524,7 @@ class GridLoader(ABC):
                     start_date: Optional[datetime] = None,
                     end_date: Optional[datetime] = None,
                     load_actls: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        """Parse forecast and actual load demands from zone to bus level."""
         load_fcsts = self.get_forecasts('Load', start_date, end_date)
 
         if load_actls is None:
@@ -576,6 +585,7 @@ class GridLoader(ABC):
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None
             ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Get asset values using the historical sets of forecasts, actuals."""
         gen_dfs = list()
 
         for asset_type in self.timeseries_cohorts:
@@ -601,6 +611,7 @@ class GridLoader(ABC):
             scenarios: Iterable[int],
             asset_types: Tuple[str] = ('Load', 'Wind', 'Solar')
             ) -> Dict[str, pd.DataFrame]:
+        """Parse a set of scenarios saved to file."""
         scens = {asset_type: dict() for asset_type in asset_types}
 
         for scen_day in dates:
@@ -625,10 +636,10 @@ class GridLoader(ABC):
                 )
 
             if asset_type == 'Wind':
-                scen_dfs[asset_type] = self.map_wind_assets(
+                scen_dfs[asset_type] = self.map_wind_generators(
                     scen_dfs[asset_type])
             if asset_type == 'Solar':
-                scen_dfs[asset_type] = self.map_solar_assets(
+                scen_dfs[asset_type] = self.map_solar_generators(
                     scen_dfs[asset_type])
 
         return scen_dfs
@@ -638,9 +649,10 @@ class GridLoader(ABC):
             scen_dfs: Mapping[str, pd.DataFrame],
             start_date: datetime, end_date: datetime, scenario: int
             ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Get asset values corresponding to a scenario for actuals."""
+
         gen_scens = pd.concat([scen_dfs['Wind'].loc[scenario],
                                scen_dfs['Solar'].loc[scenario]], axis=1)
-
         gen_scens.columns = pd.MultiIndex.from_tuples(
             [('actl', asset_name) for asset_name in gen_scens.columns])
 
@@ -722,13 +734,7 @@ class RtsLoader(GridLoader):
             }
 
     def get_generator_type(self, gen: str) -> str:
-        gen_type = self.gen_df['Unit Group'][self.gen_df['GEN UID']
-                                             == gen].iloc[0]
-
-        if gen_type == 'WIND':
-            gen_type = 'Wind'
-
-        return gen_type
+        return self.gen_df['Unit Group'][self.gen_df['GEN UID'] == gen].iloc[0]
 
     def get_generator_zone(self, gen):
         return gen[0]
@@ -894,7 +900,7 @@ class T7kLoader(GridLoader):
                                    if gen_type != 'H'}
             }
 
-    def map_wind_assets(self, asset_df):
+    def map_wind_generators(self, asset_df):
         wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                      "Texas7k_NREL_wind_map.csv"),
                                 index_col=0)
@@ -921,7 +927,7 @@ class T7kLoader(GridLoader):
 
         return pd.concat(mapped_vals, axis=1)
 
-    def map_solar_assets(self, asset_df):
+    def map_solar_generators(self, asset_df):
         solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"),
                                  index_col=0)
@@ -1050,9 +1056,9 @@ class T7k2030Loader(T7kLoader):
 
         #TODO: should scenarios and T7k(2030) output values be "pre-mapped"?
         if asset_type == 'WIND':
-            fcst_df = self.map_wind_assets(fcst_df)
+            fcst_df = self.map_wind_generators(fcst_df)
         elif asset_type == 'PV':
-            fcst_df = self.map_solar_assets(fcst_df)
+            fcst_df = self.map_solar_generators(fcst_df)
 
         return fcst_df
 
@@ -1070,15 +1076,15 @@ class T7k2030Loader(T7kLoader):
         actl_df = self.subset_dates(actl_df, start_date, end_date)
 
         if asset_type == 'WIND':
-            actl_df = self.map_wind_assets(actl_df)
+            actl_df = self.map_wind_generators(actl_df)
         elif asset_type == 'PV':
-            actl_df = self.map_solar_assets(actl_df)
+            actl_df = self.map_solar_generators(actl_df)
 
         return actl_df
 
     #TODO: should we standardize the mapping file format between the T7k and
     #      the T7k(2030) grids instead of doing this?
-    def map_wind_assets(self, asset_df):
+    def map_wind_generators(self, asset_df):
         wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                      "Texas7k_NREL_wind_map.csv"))
 
@@ -1105,7 +1111,7 @@ class T7k2030Loader(T7kLoader):
 
         return pd.concat(mapped_vals, axis=1)
 
-    def map_solar_assets(self, asset_df):
+    def map_solar_generators(self, asset_df):
         solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"))
 
