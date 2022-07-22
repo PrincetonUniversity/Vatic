@@ -38,6 +38,8 @@ def load_input(input_grid: str, start_date: Optional[datetime] = None,
                                                         pd.DataFrame]:
     """Gets grid data from a grid label or an input grid dataset directory."""
 
+    # if we have defined an environment variable specifying where grid datasets
+    # are stored, find the given grid there
     if 'VATIC_GRIDS' in os.environ:
         input_path = os.environ['VATIC_GRIDS']
 
@@ -428,10 +430,12 @@ class GridLoader(ABC):
 
     @abstractmethod
     def get_generator_type(self, gen: str) -> str:
+        """The asset class of this generator, e.g. WIND, PV."""
         pass
 
     @abstractmethod
     def get_generator_zone(self, gen):
+        """The geographical area within the grid this generator is in."""
         pass
 
     def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
@@ -1000,8 +1004,20 @@ class T7kLoader(GridLoader):
         return set()
 
     def get_generator_type(self, gen: str) -> str:
-        return self.gen_df.Fuel[self.gen_df['GEN UID']
-                                == gen].iloc[0].split('(')[1][:-1]
+        gen_match = self.gen_df['GEN UID'] == gen
+
+        assert gen_match.sum() == 1, (
+            "Unable to find a unique record in the "
+            "metadata for generator `{}`!".format(gen)
+            )
+
+        gen_type = self.gen_df.Fuel[gen_match].iloc[0].split(
+            '(')[1][:-1].upper()
+
+        if gen_type == 'SOLAR':
+            gen_type = 'PV'
+
+        return gen_type
 
     def get_generator_zone(self, gen):
         return gen[0]
@@ -1036,9 +1052,6 @@ class T7k2030Loader(T7kLoader):
     @property
     def grid_dir(self) -> str:
         return "TX2030_Data"
-
-    def get_generator_type(self, gen: str) -> str:
-        return super().get_generator_type(gen).lower()
 
     def get_forecasts(self, asset_type, start_date=None, end_date=None):
         fcst_file = tuple(
