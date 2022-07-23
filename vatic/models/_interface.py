@@ -1,5 +1,6 @@
 
 import pyomo.environ as pe
+from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 
 #TODO: make this and _load_params below more elegant or merge with formulations
 from egret.model_library.unit_commitment.params import load_params \
@@ -11,9 +12,10 @@ from ..model_data import VaticModelData
 from egret.model_library.unit_commitment import (
     services, fuel_supply, fuel_consumption, security_constraints)
 from egret.common.solver_interface import _solve_model
-from egret.models.unit_commitment import _outer_lazy_ptdf_solve_loop
+from egret.models.unit_commitment import _lazy_ptdf_uc_solve_loop
 from egret.common.log import logger as egret_logger
 import egret.common.lazy_ptdf_utils as lpu
+import time
 
 import importlib
 import logging
@@ -232,6 +234,7 @@ class UCModel:
 
         network = list(self.pyo_instance.model_data.elements('branch'))
 
+        # adapted from egret.model.unit_commitment._outer_lazy_ptdf_solve_loop
         if (self.pyo_instance.power_balance == 'ptdf_power_flow'
                 and self.pyo_instance._ptdf_options['lazy']
                 and len(network) > 0):
@@ -239,29 +242,182 @@ class UCModel:
                 self.pyo_instance.model_data \
                     = self.pyo_instance.model_data.to_egret()
 
-            m, results, self.solver = _outer_lazy_ptdf_solve_loop(
-                self.pyo_instance, use_solver, self.mipgap,
-                timelimit=None, solver_tee=self.output_solver_logs,
-                symbolic_solver_labels=self.symbolic_solver_labels,
-                solver_options=solver_options, solve_method_options=None,
-                relaxed=relaxed, set_instance=set_instance
+            egret_metasolver_status = dict()
+            start_time = time.time()
+
+            ## cache here the variables that need to be
+            ## loaded to check transimission feasbility
+            ## for a persistent solver
+            max_demand_time = max(
+                self.pyo_instance.TotalDemand,
+                key=self.pyo_instance.TotalDemand.__getitem__
+                )
+            t_subset = [max_demand_time, ]
+
+            is_solver = isinstance(use_solver, PersistentSolver)
+            is_solver_str = (isinstance(use_solver, str)
+                             and 'persistent' in use_solver)
+
+            if is_solver or is_solver_str:
+                vars_to_load = list()
+                vars_to_load_t_subset = list()
+
+                for t in self.pyo_instance.TimePeriods:
+                    b = self.pyo_instance.TransmissionBlock[t]
+
+                    if isinstance(b.p_nw, pe.Var):
+                        vars_to_load.extend(b.p_nw.values())
+
+                        if t in t_subset:
+                            vars_to_load_t_subset.extend(b.p_nw.values())
+
+                    else:
+                        vars_to_load = None
+                        vars_to_load_t_subset = None
+                        break
+
+            else:
+                vars_to_load = None
+                vars_to_load_t_subset = None
+
+            lp_iter_limit = self.pyo_instance._ptdf_options['lp_iteration_limit']
+            lp_warmstart_iter_limit = self.pyo_instance._ptdf_options['pre_lp_iteration_limit']
+            model_data = self.pyo_instance.model_data
+
+            # if this is a MIP, iterate a few times with just the LP relaxation
+            if not relaxed and lp_iter_limit > 0:
+                lpu.uc_instance_binary_relaxer(self.pyo_instance, None)
+
+                self.pyo_instance, results_init, use_solver = _solve_model(
+                    self.pyo_instance, use_solver, self.mipgap, None,
+                    self.output_solver_logs, self.symbolic_solver_labels,
+                    solver_options, return_solver=True,
+                    vars_to_load=vars_to_load, set_instance=set_instance
+                    )
+
+                if lp_warmstart_iter_limit > 0:
+                    lp_warmstart_termination_cond, results, lp_warmstart_iterations = \
+                        _lazy_ptdf_uc_solve_loop(
+                            self.pyo_instance, model_data, use_solver,
+                            timelimit=None, solver_tee=self.output_solver_logs,
+                            iteration_limit=lp_warmstart_iter_limit,
+                            vars_to_load_t_subset=vars_to_load_t_subset,
+                            vars_to_load=vars_to_load, t_subset=t_subset,
+                            warmstart_loop=True,
+                            prepend_str="[LP warmstart phase] "
+                            )
+
+                    egret_metasolver_status[
+                        'lp_warmstart_termination_cond'] = lp_warmstart_termination_cond
+                    egret_metasolver_status[
+                        'lp_warmstart_iterations'] = lp_warmstart_iterations
+
+                lp_termination_cond, results, lp_iterations = _lazy_ptdf_uc_solve_loop(
+                    self.pyo_instance, model_data, use_solver, timelimit=None,
+                    solver_tee=self.output_solver_logs,
+                    iteration_limit=lp_iter_limit, vars_to_load=vars_to_load,
+                    add_all_lazy_violations=True, prepend_str="[LP phase] "
+                    )
+
+                ## if the initial solve was transmission feasible, then
+                ## we never re-solved the problem
+                if results is None:
+                    results = results_init
+
+                egret_metasolver_status[
+                    'lp_termination_cond'] = lp_termination_cond
+                egret_metasolver_status['lp_iterations'] = lp_iterations
+
+                if self.pyo_instance._ptdf_options['lp_cleanup_phase']:
+                    tot_removed = 0
+
+                    for t, b in self.pyo_instance.TransmissionBlock.items():
+                        tot_removed += lpu.remove_inactive(
+                            b, use_solver, t,
+                            prepend_str="[LP cleanup phase] "
+                            )
+
+                    egret_logger.info(
+                        "[LP cleanup phase] removed {0} inactive flow "
+                        "constraint(s)".format(tot_removed)
+                        )
+
+                lpu.uc_instance_binary_enforcer(self.pyo_instance, use_solver)
+
+                ## solve the MIP after enforcing binaries
+                results_init = use_solver.solve(self.pyo_instance,
+                                            tee=self.output_solver_logs,
+                                            load_solutions=False)
+
+                if isinstance(use_solver, PersistentSolver):
+                    use_solver.load_vars(vars_to_load)
+                else:
+                    self.pyo_instance.solutions.load_from(results_init)
+
+            ## else if relaxed or lp_iter_limit == 0, do an initial solve
+            else:
+                self.pyo_instance, results_init, use_solver = _solve_model(
+                    self.pyo_instance, use_solver, self.mipgap, None,
+                    self.output_solver_logs, self.symbolic_solver_labels,
+                    solver_options, return_solver=True,
+                    vars_to_load=vars_to_load, set_instance=set_instance
+                    )
+
+            iter_limit = self.pyo_instance._ptdf_options['iteration_limit']
+
+            if relaxed and lp_warmstart_iter_limit > 0:
+                lp_termination_cond, results, lp_iterations = \
+                    _lazy_ptdf_uc_solve_loop(
+                        self.pyo_instance, model_data, use_solver,
+                        timelimit=None, solver_tee=self.output_solver_logs,
+                        iteration_limit=lp_warmstart_iter_limit,
+                        vars_to_load_t_subset=vars_to_load_t_subset,
+                        vars_to_load=vars_to_load, t_subset=t_subset,
+                        warmstart_loop=True,
+                        prepend_str="[LP warmstart phase] "
+                        )
+
+            termination_cond, results, iterations = _lazy_ptdf_uc_solve_loop(
+                self.pyo_instance, model_data, use_solver, timelimit=None,
+                solver_tee=self.output_solver_logs, iteration_limit=iter_limit,
+                vars_to_load=vars_to_load, prepend_str=(
+                    "[LP phase] " if relaxed else "[MIP phase] ")
                 )
 
+            ## if the initial solve was transmission feasible, then
+            ## we never re-solved the problem
+            if results is None:
+                results = results_init
+
+            egret_metasolver_status['termination_cond'] = termination_cond
+            egret_metasolver_status['iterations'] = iterations
+
+            is_solver = isinstance(use_solver, PersistentSolver)
+            if is_solver and vars_to_load is not None:
+                use_solver.load_vars()
+
+                if hasattr(self.pyo_instance, "dual"):
+                    use_solver.load_duals()
+                if hasattr(self.pyo_instance, "slack"):
+                    use_solver.load_slacks()
+
+            egret_metasolver_status['time'] = time.time() - start_time
+            results.egret_metasolver = egret_metasolver_status
+            solve_time = results.egret_metasolver['time']
+
         else:
-            m, results, self.solver = _solve_model(
+
+            self.pyo_instance, results, use_solver = _solve_model(
                 self.pyo_instance, use_solver, self.mipgap,
                 timelimit=None, solver_tee=self.output_solver_logs,
                 symbolic_solver_labels=self.symbolic_solver_labels,
                 solver_options=solver_options, solve_method_options=None,
                 return_solver=True, set_instance=set_instance
                 )
+            solve_time = results.solver.wallclock_time
 
-        if hasattr(results, 'egret_metasolver_status'):
-            time = results.egret_metasolver_status['time']
-        else:
-            time = results.solver.wallclock_time
-
-        md = _save_uc_results(m, relaxed)
-        md.data['system']['solver_runtime'] = time
+        md = _save_uc_results(self.pyo_instance, relaxed)
+        md.data['system']['solver_runtime'] = solve_time
+        self.solver = use_solver
 
         return VaticModelData(md.data)
