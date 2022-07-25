@@ -6,6 +6,7 @@ import bz2
 import dill as pickle
 import numpy as np
 import pandas as pd
+from typing import Optional
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
@@ -92,10 +93,12 @@ class StatsManager:
 
         self._ruc_stats[time_step] = new_ruc_data
 
-    def collect_sced_solution(self,
-                              time_step: VaticTime,
-                              sced: VaticModelData, lmp_sced: VaticModelData,
-                              pre_quickstart_cache) -> None:
+    def collect_sced_solution(
+            self,
+            time_step: VaticTime, sced: VaticModelData,
+            lmp_sced: Optional[VaticModelData] = None,
+            pre_quickstart_cache = None
+            ) -> None:
         new_sced_data = {
             'runtime': self._round(sced.model_runtime),
             'duration_minutes': sced.duration_minutes,
@@ -165,9 +168,14 @@ class StatsManager:
         new_sced_data['storage_output_dispatch_levels'] = sced.storage_outputs
         new_sced_data['storage_soc_dispatch_levels'] = sced.storage_states
 
-        new_sced_data['observed_bus_LMPs'] = self._round(lmp_sced.bus_LMPs)
-        new_sced_data['reserve_RT_price'] = self._round(
-            lmp_sced.reserve_RT_price)
+        if lmp_sced:
+            new_sced_data['observed_bus_LMPs'] = self._round(lmp_sced.bus_LMPs)
+            new_sced_data['reserve_RT_price'] = self._round(
+                lmp_sced.reserve_RT_price)
+
+        else:
+            new_sced_data['observed_bus_LMPs'] = {
+                bus: np.nan for bus, _ in sced.elements('load')}
 
         if self.verbosity > 0:
             print("Fixed costs:    %12.2f" % new_sced_data['fixed_costs'])

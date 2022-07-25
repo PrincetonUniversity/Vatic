@@ -90,10 +90,11 @@ class Simulator:
                  template_data: dict, gen_data: pd.DataFrame,
                  load_data: pd.DataFrame, out_dir: Path,
                  start_date: datetime.date, num_days: int, solver: str,
-                 solver_options: dict, mipgap: float, reserve_factor: float,
-                 light_output: bool, prescient_sced_forecasts: bool,
-                 ruc_prescience_hour: int, ruc_execution_hour: int,
-                 ruc_every_hours: int, ruc_horizon: int, sced_horizon: int,
+                 solver_options: dict, run_lmps: bool, mipgap: float,
+                 reserve_factor: float, light_output: bool,
+                 prescient_sced_forecasts: bool, ruc_prescience_hour: int,
+                 ruc_execution_hour: int, ruc_every_hours: int,
+                 ruc_horizon: int, sced_horizon: int,
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: Optional[Path], verbosity: int,
@@ -101,13 +102,13 @@ class Simulator:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
+        self.run_lmps = run_lmps
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
-        self._hours_in_objective = None
 
-        self.simulation_start_time = time.time()
-        self.simulation_end_time = None
+        self._hours_in_objective = None
         self._current_timestep = None
+        self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
         self._data_provider = self.data_provider_class(
             template_data, gen_data, load_data, reserve_factor,
@@ -151,24 +152,41 @@ class Simulator:
         implementation of this logic.
 
         """
+        simulation_start_time = time.time()
+
         self.initialize_oracle()
+        self.simulation_times['Init'] += time.time() - simulation_start_time
 
         for time_step in self._time_manager.time_steps():
             self._current_timestep = time_step
 
             # run the day-ahead RUC at some point in the day before
             if time_step.is_planning_time:
+                plan_start_time = time.time()
+
                 self.call_planning_oracle()
+                self.simulation_times['Plan'] += time.time() - plan_start_time
 
             # run the SCED to simulate this time step
+            oracle_start_time = time.time()
             self.call_oracle()
+            self.simulation_times['Sim'] += time.time() - oracle_start_time
 
-        sim_runtime = time.time() - self.simulation_start_time
+        sim_time = time.time() - simulation_start_time
+
         if self.verbosity > 0:
             print("Simulation Complete")
-            print("Total simulation time: {:.2f} seconds".format(sim_runtime))
+            print("Total simulation time: {:.1f} seconds".format(sim_time))
 
-        self._stats_manager.save_output(sim_runtime)
+            if self.verbosity > 1:
+                print("Initialization time: {:.2f} seconds".format(
+                    self.simulation_times['Init']))
+                print("Planning time: {:.2f} seconds".format(
+                    self.simulation_times['Plan']))
+                print("Real-time sim time: {:.2f} seconds".format(
+                    self.simulation_times['Sim']))
+
+        self._stats_manager.save_output(sim_time)
 
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
@@ -233,7 +251,11 @@ class Simulator:
         if self.verbosity > 0:
             print("Solving for LMPs")
 
-        lmp_sced = self.solve_lmp(current_sced_instance)
+        if self.run_lmps:
+            lmp_sced = self.solve_lmp(current_sced_instance)
+        else:
+            lmp_sced = None
+
         self._simulation_state.apply_sced(current_sced_instance)
         self._prior_sced_instance = current_sced_instance
 

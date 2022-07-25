@@ -51,8 +51,11 @@ have declared an environment variable `VATIC_GRIDS` naming the folder storing al
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
                     was invoked from.
 
- - `--solver` The solver to use for RUC and SCED instances, such as `cbc` or `gurobi`. The default is `cbc`; note that
-              you may have to install your preferred solver separately.
+ - `--solver` The solver to use for RUC and SCED instances, such as `cbc` or `gurobi`. The default is
+              [cbc](https://github.com/coin-or/Cbc); note that you may have to install your preferred solver separately.
+
+ - `--lmps` If this flag is given, Vatic will calculate bus-specific locational marginal prices at each real-time SCED.
+            Note that this tends to increase SCED runtime by roughly 25%.
 
  - `--threads (-t)` The number of compute cores to be used for parallelization. If you are running `vatic-det` on a
                     remote compute cluster, do not use more cores than what has been allocated to you for a particular
@@ -72,7 +75,9 @@ have declared an environment variable `VATIC_GRIDS` naming the folder storing al
 
  - `--init-ruc-file` If this file exists, it will be treated as a saved reliability unit commitment from a previous
                      iteration of Vatic that used the same grid and starting date. If it doesn't exist, Vatic will save
-                     the RUC from this run to the file for future use.
+                     the RUC from this run to the file for future use. The cached RUC file takes the form of a `.p`
+                     pickled Python object that is in the ballpark of `600K` and `30M` in size for the RTS-GMLC and the
+                     Texas grids respectively.
 
  - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
                    given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using

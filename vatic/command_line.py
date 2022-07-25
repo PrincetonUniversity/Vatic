@@ -44,6 +44,11 @@ def run_deterministic():
                              "solver operations.")
 
     parser.add_argument(
+        '--lmps', action='store_true',
+        help="solve for locational marginal prices after each SCED"
+        )
+
+    parser.add_argument(
         '--ruc-mipgap', '-g', type=float, default=0.01, dest='ruc_mipgap',
         help="Specifies the mipgap for all deterministic RUC solves."
         )
@@ -146,7 +151,8 @@ def run_deterministic():
         Simulator(template_data, gen_data, load_data, out_dir=out_dir,
                   start_date=args.start_date, num_days=args.num_days,
                   solver=args.solver, solver_options=solver_args,
-                  mipgap=args.ruc_mipgap, reserve_factor=args.reserve_factor,
+                  run_lmps=args.lmps, mipgap=args.ruc_mipgap,
+                  reserve_factor=args.reserve_factor,
                   prescient_sced_forecasts=args.prescient_sced_forecasts,
                   ruc_prescience_hour=args.ruc_prescience_hour,
                   ruc_execution_hour=args.ruc_execution_hour,
