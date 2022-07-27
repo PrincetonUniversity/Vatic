@@ -65,18 +65,20 @@ def load_base_params(
 
     bus_attrs = model_data.attributes(element_type='bus')
     branch_attrs = model_data.attributes(element_type='branch')
-    load_attrs = model_data.attributes(element_type='load')
     interface_attrs = model_data.attributes(element_type='interface')
+
     storage_attrs = model_data.attributes(element_type='storage')
+    storage_by_bus = tx_utils.gens_by_bus(buses, storage)
+
     dc_branch_attrs = dict(names=list())
 
     inlet_branches_by_bus, outlet_branches_by_bus = \
         tx_utils.inlet_outlet_branches_by_bus(branches, buses)
     dc_inlet_branches_by_bus, dc_outlet_branches_by_bus = \
         tx_utils.inlet_outlet_branches_by_bus(dc_branches, buses)
+
     thermal_gens_by_bus = tx_utils.gens_by_bus(buses, thermal_gens)
     renewable_gens_by_bus = tx_utils.gens_by_bus(buses, renewable_gens)
-    storage_by_bus = tx_utils.gens_by_bus(buses, storage)
 
     ### get the fixed shunts at the buses
     bus_bs_fixed_shunts, bus_gs_fixed_shunts = \
@@ -168,12 +170,14 @@ def load_base_params(
         initialize=dc_branch_attrs.get('to_bus', dict())
         )
 
-    model.LinesTo = pe.Set(model.Buses, initialize=inlet_branches_by_bus)
-    model.LinesFrom = pe.Set(model.Buses, initialize=outlet_branches_by_bus)
+    model.LinesTo = pe.Set(model.Buses, within=model.TransmissionLines,
+                           initialize=inlet_branches_by_bus)
+    model.LinesFrom = pe.Set(model.Buses, within=model.TransmissionLines,
+                             initialize=outlet_branches_by_bus)
 
-    model.HVDCLinesTo = pe.Set(model.Buses,
+    model.HVDCLinesTo = pe.Set(model.Buses, within=model.HVDCLines,
                                initialize=dc_inlet_branches_by_bus)
-    model.HVDCLinesFrom = pe.Set(model.Buses,
+    model.HVDCLinesFrom = pe.Set(model.Buses, within=model.HVDCLines,
                                  initialize=dc_outlet_branches_by_bus)
 
     def _warn_neg_impedence(m, v, l):
@@ -351,11 +355,10 @@ def load_base_params(
             thermal_gen_attrs.get('fixed_commitment', dict()))
         )
 
-    model.NondispatchableGeneratorsAtBus = pe.Set(
-        model.Buses, initialize=renewable_gens_by_bus)
-
     model.AllNondispatchableGenerators = pe.Set(
         initialize=renewable_gen_attrs['names'])
+    model.NondispatchableGeneratorsAtBus = pe.Set(
+        model.Buses, initialize=renewable_gens_by_bus)
 
     model.NondispatchableGeneratorType = pe.Param(
         model.AllNondispatchableGenerators,
@@ -1591,7 +1594,7 @@ def load_base_params(
 
     model.LoadMismatchPenalty = pe.Param(
         within=pe.NonNegativeReals, mutable=True,
-        initialize=model_data.get_system_attr('load_mismatch_cost',
+        initialize=model_data.get_system_attr('load_mismtch_cost',
                                               big_penalty)
         )
     model.LoadMismatchPenaltyReactive = pe.Param(
@@ -1617,16 +1620,11 @@ def load_base_params(
     model.Storage = pe.Set(initialize=storage_attrs['names'])
     model.StorageAtBus = pe.Set(model.Buses, initialize=storage_by_bus)
 
-    def verify_storage_buses_rule(m, s):
-        for b in m.Buses:
-            if s in m.StorageAtBus[b]:
-                return
+    def verify_storage_buses_rule(m):
+        assert set(m.Storage) == {store for bus in m.Buses
+                                  for store in m.StorageAtBus[bus]}
 
-        raise ModelError("DATA ERROR: No bus assigned for storage "
-                         "element `{}`!".format(s))
-
-    model.VerifyStorageBuses = pe.BuildAction(model.Storage,
-                                              rule=verify_storage_buses_rule)
+    model.VerifyStorageBuses = pe.BuildAction(rule=verify_storage_buses_rule)
 
     ####################################################################################
     # minimum and maximum power ratings, for each storage unit. units are MW.          #

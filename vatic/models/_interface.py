@@ -1,13 +1,11 @@
 
+import importlib
+import logging
+import time
+from typing import Callable
+
 import pyomo.environ as pe
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
-
-#TODO: make this and _load_params below more elegant or merge with formulations
-from egret.model_library.unit_commitment.params import load_params \
-    as default_params
-from .params import load_params as renewable_cost_params
-
-from ..model_data import VaticModelData
 
 from egret.model_library.unit_commitment import (
     services, fuel_supply, fuel_consumption, security_constraints)
@@ -15,12 +13,10 @@ from egret.common.solver_interface import _solve_model
 from egret.models.unit_commitment import _lazy_ptdf_uc_solve_loop
 from egret.common.log import logger as egret_logger
 import egret.common.lazy_ptdf_utils as lpu
-import time
 
-import importlib
-import logging
+from .params import default_params, renew_cost_params
+from ..model_data import VaticModelData
 from ._utils import ModelError, _save_uc_results
-from typing import Callable
 
 
 class UCModel:
@@ -69,18 +65,17 @@ class UCModel:
         """Populates model parameters using the specified formulation."""
 
         if self.params == 'renewable_cost_params':
-            renewable_cost_params(model, VaticModelData(model.model_data.data))
+            renew_cost_params(model, VaticModelData(model.model_data.data))
 
         elif self.params == 'default_params':
-            default_params(model, model.model_data)
+            default_params(model, VaticModelData(model.model_data.data))
 
         else:
             raise ModelError(
                 "Unrecognized model formulation `{}`!".format(self.params))
 
-    def _get_formulation(self,
-                         model_part: str) -> Callable[[pe.ConcreteModel],
-                                                      None]:
+    def _get_formulation(
+            self, model_part: str) -> Callable[[pe.ConcreteModel], None]:
         """Finds the specified model formulation and make it callable."""
 
         part_fx = None
@@ -296,7 +291,7 @@ class UCModel:
                     )
 
                 if lp_warmstart_iter_limit > 0:
-                    lp_warmstart_termination_cond, results, lp_warmstart_iterations = \
+                    lp_warmstart_termin_cond, results, lp_warmstart_iters = \
                         _lazy_ptdf_uc_solve_loop(
                             self.pyo_instance, model_data, use_solver,
                             timelimit=None, solver_tee=self.output_solver_logs,
@@ -308,11 +303,11 @@ class UCModel:
                             )
 
                     egret_metasolver_status[
-                        'lp_warmstart_termination_cond'] = lp_warmstart_termination_cond
+                        'lp_warmstart_termination_cond'] = lp_warmstart_termin_cond
                     egret_metasolver_status[
-                        'lp_warmstart_iterations'] = lp_warmstart_iterations
+                        'lp_warmstart_iterations'] = lp_warmstart_iters
 
-                lp_termination_cond, results, lp_iterations = _lazy_ptdf_uc_solve_loop(
+                lp_termin_cond, results, lp_iters = _lazy_ptdf_uc_solve_loop(
                     self.pyo_instance, model_data, use_solver, timelimit=None,
                     solver_tee=self.output_solver_logs,
                     iteration_limit=lp_iter_limit, vars_to_load=vars_to_load,
@@ -324,9 +319,8 @@ class UCModel:
                 if results is None:
                     results = results_init
 
-                egret_metasolver_status[
-                    'lp_termination_cond'] = lp_termination_cond
-                egret_metasolver_status['lp_iterations'] = lp_iterations
+                egret_metasolver_status['lp_termination_cond'] = lp_termin_cond
+                egret_metasolver_status['lp_iterations'] = lp_iters
 
                 if self.pyo_instance._ptdf_options['lp_cleanup_phase']:
                     tot_removed = 0
@@ -346,8 +340,8 @@ class UCModel:
 
                 ## solve the MIP after enforcing binaries
                 results_init = use_solver.solve(self.pyo_instance,
-                                            tee=self.output_solver_logs,
-                                            load_solutions=False)
+                                                tee=self.output_solver_logs,
+                                                load_solutions=False)
 
                 if isinstance(use_solver, PersistentSolver):
                     use_solver.load_vars(vars_to_load)
@@ -366,18 +360,16 @@ class UCModel:
             iter_limit = self.pyo_instance._ptdf_options['iteration_limit']
 
             if relaxed and lp_warmstart_iter_limit > 0:
-                lp_termination_cond, results, lp_iterations = \
-                    _lazy_ptdf_uc_solve_loop(
-                        self.pyo_instance, model_data, use_solver,
-                        timelimit=None, solver_tee=self.output_solver_logs,
-                        iteration_limit=lp_warmstart_iter_limit,
-                        vars_to_load_t_subset=vars_to_load_t_subset,
-                        vars_to_load=vars_to_load, t_subset=t_subset,
-                        warmstart_loop=True,
-                        prepend_str="[LP warmstart phase] "
-                        )
+                lp_termin_cond, results, lp_iters = _lazy_ptdf_uc_solve_loop(
+                    self.pyo_instance, model_data, use_solver, timelimit=None,
+                    solver_tee=self.output_solver_logs,
+                    iteration_limit=lp_warmstart_iter_limit,
+                    vars_to_load_t_subset=vars_to_load_t_subset,
+                    vars_to_load=vars_to_load, t_subset=t_subset,
+                    warmstart_loop=True, prepend_str="[LP warmstart phase] "
+                    )
 
-            termination_cond, results, iterations = _lazy_ptdf_uc_solve_loop(
+            termin_cond, results, iters = _lazy_ptdf_uc_solve_loop(
                 self.pyo_instance, model_data, use_solver, timelimit=None,
                 solver_tee=self.output_solver_logs, iteration_limit=iter_limit,
                 vars_to_load=vars_to_load, prepend_str=(
@@ -389,8 +381,8 @@ class UCModel:
             if results is None:
                 results = results_init
 
-            egret_metasolver_status['termination_cond'] = termination_cond
-            egret_metasolver_status['iterations'] = iterations
+            egret_metasolver_status['termination_cond'] = termin_cond
+            egret_metasolver_status['iterations'] = iters
 
             is_solver = isinstance(use_solver, PersistentSolver)
             if is_solver and vars_to_load is not None:
@@ -406,7 +398,6 @@ class UCModel:
             solve_time = results.egret_metasolver['time']
 
         else:
-
             self.pyo_instance, results, use_solver = _solve_model(
                 self.pyo_instance, use_solver, self.mipgap,
                 timelimit=None, solver_tee=self.output_solver_logs,
