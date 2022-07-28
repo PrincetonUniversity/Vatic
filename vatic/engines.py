@@ -96,7 +96,7 @@ class Simulator:
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: Optional[Path], verbosity: int,
                  output_max_decimals: int, create_plots: bool,
-                 renew_costs) -> None:
+                 renew_costs, save_to_csv) -> None:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
@@ -140,7 +140,8 @@ class Simulator:
 
         self._stats_manager = StatsManager(out_dir, light_output, verbosity,
                                            self._data_provider.init_model,
-                                           output_max_decimals, create_plots)
+                                           output_max_decimals, create_plots,
+                                           save_to_csv)
 
         self.ruc_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
                                  symbolic_solver_labels=True,

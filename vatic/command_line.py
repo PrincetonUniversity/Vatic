@@ -58,23 +58,27 @@ def run_deterministic():
         help="Spinning reserve factor as a constant fraction of demand."
         )
 
-    # determines what kinds of output files we create
-    parser.add_argument('--light-output', '-l',
-                        action='store_true', dest='light_output',
-                        help="don't create hourly asset digests")
-    parser.add_argument('--create-plots', '-p',
-                        action='store_true', dest='create_plots',
-                        help="Create summary plots of simulation stats?")
-    parser.add_argument('--output-max-decimals',
-                        type=int, default=4, dest='output_max_decimals',
-                        help="How much precision to use when writing summary "
-                             "output files.")
-
     parser.add_argument('--init-ruc-file', type=Path, dest='init_ruc_file',
                         help='where to save/load the initial RUC from')
 
     parser.add_argument('--renew-costs', '-c', nargs='*', dest='renew_costs',
                         help="use costs for renewables from input directory")
+
+    # determines what kinds of output files we create
+    parser.add_argument('--light-output', '-l',
+                        action='store_true', dest='light_output',
+                        help="don't create hourly asset digests")
+    parser.add_argument('--output-max-decimals',
+                        type=int, default=4, dest='output_max_decimals',
+                        help="How much precision to use when writing summary "
+                             "output files.")
+
+    parser.add_argument('--create-plots', '-p',
+                        action='store_true', dest='create_plots',
+                        help="Create summary plots of simulation stats?")
+    parser.add_argument('--csv', action='store_true',
+                        help="save output data to .csv files instead of a "
+                             "compressed Python pickle")
 
     # how are reliability unit commitments run: how often, at which time, for
     # how long, and with (or without) what information?
@@ -166,5 +170,6 @@ def run_deterministic():
         no_startup_shutdown_curves=args.no_startup_shutdown_curves,
         light_output=args.light_output, init_ruc_file=args.init_ruc_file,
         verbosity=args.verbose, output_max_decimals=args.output_max_decimals,
-        create_plots=args.create_plots, renew_costs=renew_costs
+        create_plots=args.create_plots, renew_costs=renew_costs,
+        save_to_csv=args.csv
         ).simulate()

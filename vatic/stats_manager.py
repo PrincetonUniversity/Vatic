@@ -38,13 +38,14 @@ class StatsManager:
 
     def __init__(self,
                  write_dir, light_output, verbosity, init_model,
-                 output_max_decimals, create_plots):
+                 output_max_decimals, create_plots, save_to_csv):
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
         self.light_output = light_output
         self.verbosity = verbosity
         self.write_dir = write_dir
+        self.save_to_csv = save_to_csv
 
         self._round = lambda entry: (
             round(entry, output_max_decimals)
@@ -325,8 +326,15 @@ class StatsManager:
                 ]).drop('Minute', axis=1).set_index(
                     ['Date', 'Hour', 'Line'], verify_integrity=True)
 
-        with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
-            pickle.dump(report_dfs, f, protocol=-1)
+        if self.save_to_csv:
+            for report_lbl, report_df in report_dfs.items():
+                if report_lbl != 'total_runtime':
+                    report_df.to_csv(
+                        Path(self.write_dir, "{}.csv".format(report_lbl)))
+
+        else:
+            with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
+                pickle.dump(report_dfs, f, protocol=-1)
 
         if self.create_plots:
             self.generate_stack_graph()
