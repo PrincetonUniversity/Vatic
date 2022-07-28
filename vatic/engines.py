@@ -11,8 +11,7 @@ import pandas as pd
 from copy import deepcopy
 from typing import Dict, Tuple, Optional
 
-from .data_providers import (
-    PickleProvider, AllocationPickleProvider, AutoAllocationPickleProvider)
+from .data_providers import PickleProvider
 from .model_data import VaticModelData
 from .simulation_state import VaticSimulationState, VaticStateWithScedOffset
 from .models import UCModel
@@ -53,8 +52,6 @@ class Simulator:
         startup_forml='MLR_startup_costs',
         network_forml='ptdf_power_flow'
         )
-
-    data_provider_class = PickleProvider
 
     supported_solvers = ['xpress', 'xpress_direct', 'xpress_persistent',
                          'gurobi', 'gurobi_direct', 'gurobi_persistent',
@@ -98,7 +95,8 @@ class Simulator:
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: Optional[Path], verbosity: int,
-                 output_max_decimals: int, create_plots: bool) -> None:
+                 output_max_decimals: int, create_plots: bool,
+                 renew_costs) -> None:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
@@ -110,11 +108,17 @@ class Simulator:
         self._current_timestep = None
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
-        self._data_provider = self.data_provider_class(
+        if renew_costs is not None:
+            self.ruc_formulations['params_forml'] = 'renewable_cost_params'
+            self.ruc_formulations[
+                'production_forml'] = 'KOW_Vatic_production_costs_tightened'
+
+        self._data_provider = PickleProvider(
             template_data, gen_data, load_data, reserve_factor,
             prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
             ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
             no_startup_shutdown_curves, verbosity, start_date, num_days,
+            renew_costs
             )
 
         self._sced_frequency_minutes = self._data_provider.data_freq
@@ -380,32 +384,8 @@ class Simulator:
         # update in case lines were taken out
         self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
 
-        try:
-            sced_results = self.sced_model.solve_model(self._sced_solver,
-                                                       self.solver_options)
-
-        except:
-            print("Some isssue with SCED, writing instance")
-            print("Problematic SCED from to file")
-
-            # for diagnostic purposes, save the failed SCED instance.
-            if lp_filename is not None:
-                if lp_filename.endswith(".json"):
-                    infeasible_sced_filename = lp_filename[
-                                               :-5] + ".FAILED.json"
-                else:
-                    infeasible_sced_filename = lp_filename + ".FAILED.json"
-
-            else:
-                infeasible_sced_filename = (self.options.output_directory
-                                            + os.sep + "FAILED_SCED.json")
-
-            sced_model_data.write(infeasible_sced_filename)
-            print("Problematic SCED instance written to file="
-                  + infeasible_sced_filename)
-
-            raise
-
+        sced_results = self.sced_model.solve_model(self._sced_solver,
+                                                   self.solver_options)
         self._ptdf_manager.update_active(sced_results)
 
         return sced_results
@@ -563,7 +543,7 @@ class Simulator:
 
         else:
             # only get up to 24 hours of data, then copy it
-            timesteps_per_day = 24 * 60 / self._actuals_step_frequency
+            timesteps_per_day = 24 * 60 // self._actuals_step_frequency
             steps_to_request = min(timesteps_per_day, total_step_count)
 
             sim_model = self._data_provider.get_populated_model(
@@ -576,100 +556,3 @@ class Simulator:
                     vals[t] = vals[t - timesteps_per_day]
 
         return sim_model
-
-
-class AllocationSimulator(Simulator):
-
-    ruc_formulations = dict(
-        params_forml='renewable_cost_params',
-        status_forml='garver_3bin_vars',
-        power_forml='garver_power_vars',
-        reserve_forml='garver_power_avail_vars',
-        generation_forml='pan_guan_gentile_KOW_generation_limits',
-        ramping_forml='damcikurt_ramping',
-        production_forml='KOW_Vatic_production_costs_tightened',
-        updown_forml='rajan_takriti_UT_DT',
-        startup_forml='KOW_startup_costs',
-        network_forml='ptdf_power_flow'
-        )
-
-    data_provider_class = AllocationPickleProvider
-
-    def __init__(self,
-                 cost_vals, template_data, gen_data, load_data, out_dir,
-                 start_date, num_days, solver, solver_options, mipgap,
-                 reserve_factor, light_output, prescient_sced_forecasts,
-                 ruc_prescience_hour, ruc_execution_hour, ruc_every_hours,
-                 ruc_horizon, sced_horizon, enforce_sced_shutdown_ramprate,
-                 no_startup_shutdown_curves, init_ruc_file, verbosity,
-                 output_max_decimals, create_plots):
-        self._ruc_solver = self._verify_solver(solver, 'RUC')
-        self._sced_solver = self._verify_solver(solver, 'SCED')
-
-        self.solver_options = solver_options
-        self.sced_horizon = sced_horizon
-        self._hours_in_objective = None
-
-        self.simulation_start_time = time.time()
-        self.simulation_end_time = None
-        self._current_timestep = None
-
-        self._data_provider = self.data_provider_class(
-            cost_vals, template_data, gen_data, load_data, reserve_factor,
-            prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
-            ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
-            no_startup_shutdown_curves, verbosity, start_date, num_days,
-            )
-
-        self._sced_frequency_minutes = self._data_provider.data_freq
-        self._actuals_step_frequency = 60
-
-        self.init_ruc_file = init_ruc_file
-        self.verbosity = verbosity
-
-        self._simulation_state = VaticSimulationState(
-            ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
-        self._prior_sced_instance = None
-        self._ptdf_manager = VaticPTDFManager()
-
-        self._time_manager = VaticTimeManager(
-            self._data_provider.first_day, self._data_provider.final_day,
-            ruc_execution_hour, ruc_every_hours, ruc_horizon,
-            self._sced_frequency_minutes
-            )
-
-        self._stats_manager = StatsManager(out_dir, light_output, verbosity,
-                                           self._data_provider.init_model,
-                                           output_max_decimals, create_plots)
-
-        self.ruc_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
-                                 symbolic_solver_labels=True,
-                                 **self.ruc_formulations)
-        self.sced_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
-                                  symbolic_solver_labels=True,
-                                  **self.sced_formulations)
-
-
-class AutoAllocationSimulator(AllocationSimulator):
-
-    def __new__(cls, cost_vals, **sim_args):
-        cls.data_provider_class = cls.auto_provider_factory(cost_vals)
-
-        return super().__new__(cls)
-
-    def __init__(self, cost_vals, **sim_args):
-        super().__init__(**sim_args)
-
-    @staticmethod
-    def auto_provider_factory(cost_vals):
-        NewCls = AutoAllocationPickleProvider
-
-        ncosts = len(cost_vals) - 1
-        if ncosts == 0:
-            NewCls.cost_vals = [(1., float(cost_vals[0]))]
-
-        else:
-            NewCls.cost_vals = [(i / ncosts, float(c))
-                                for i, c in enumerate(cost_vals)]
-
-        return NewCls
