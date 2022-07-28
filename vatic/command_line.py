@@ -6,7 +6,7 @@ from pathlib import Path
 from ast import literal_eval
 
 from .input import load_input
-from .engines import Simulator, AllocationSimulator, AutoAllocationSimulator
+from .engines import Simulator
 
 
 def run_deterministic():
@@ -73,8 +73,7 @@ def run_deterministic():
     parser.add_argument('--init-ruc-file', type=Path, dest='init_ruc_file',
                         help='where to save/load the initial RUC from')
 
-    parser.add_argument('--renew-costs', '-c', nargs='*',
-                        default=False, dest='renew_costs',
+    parser.add_argument('--renew-costs', '-c', nargs='*', dest='renew_costs',
                         help="use costs for renewables from input directory")
 
     # how are reliability unit commitments run: how often, at which time, for
@@ -147,59 +146,25 @@ def run_deterministic():
             arg_name, arg_val = arg_str.split('=')
             solver_args[arg_name] = literal_eval(arg_val)
 
-    if args.renew_costs is False:
-        Simulator(template_data, gen_data, load_data, out_dir=out_dir,
-                  start_date=args.start_date, num_days=args.num_days,
-                  solver=args.solver, solver_options=solver_args,
-                  run_lmps=args.lmps, mipgap=args.ruc_mipgap,
-                  reserve_factor=args.reserve_factor,
-                  prescient_sced_forecasts=args.prescient_sced_forecasts,
-                  ruc_prescience_hour=args.ruc_prescience_hour,
-                  ruc_execution_hour=args.ruc_execution_hour,
-                  ruc_every_hours=args.ruc_every_hours,
-                  ruc_horizon=args.ruc_horizon,
-                  sced_horizon=args.sced_horizon,
-                  enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
-                  no_startup_shutdown_curves=args.no_startup_shutdown_curves,
-                  light_output=args.light_output,
-                  init_ruc_file=args.init_ruc_file, verbosity=args.verbose,
-                  output_max_decimals=args.output_max_decimals,
-                  create_plots=args.create_plots).simulate()
-
-    elif Path(args.renew_costs[0]).exists():
-        AllocationSimulator(
-            args.renew_costs[0], template_data, gen_data, load_data,
-            out_dir=out_dir, start_date=args.start_date,
-            num_days=args.num_days, solver=args.solver,
-            solver_options=solver_args, mipgap=args.ruc_mipgap,
-            reserve_factor=args.reserve_factor,
-            prescient_sced_forecasts=args.prescient_sced_forecasts,
-            ruc_prescience_hour=args.ruc_prescience_hour,
-            ruc_execution_hour=args.ruc_execution_hour,
-            ruc_every_hours=args.ruc_every_hours,
-            ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
-            enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
-            no_startup_shutdown_curves=args.no_startup_shutdown_curves,
-            light_output=args.light_output,
-            init_ruc_file=args.init_ruc_file, verbosity=args.verbose,
-            output_max_decimals=args.output_max_decimals,
-            create_plots=args.create_plots
-            ).simulate()
-
-    elif not args.renew_costs:
-        AllocationSimulator(in_dir=args.in_dir, out_dir=out_dir,
-                            start_date=args.start_date, num_days=args.num_days,
-                            light_output=args.light_output,
-                            init_ruc_file=args.init_ruc_file,
-                            save_init_ruc=args.save_init_ruc,
-                            verbosity=args.verbose).simulate()
-
+    if (args.renew_costs is not None and len(args.renew_costs) == 1
+            and isinstance(args.renew_costs[0], (str, Path))):
+        renew_costs = args.renew_costs[0]
     else:
-        AutoAllocationSimulator(cost_vals=args.renew_costs, in_dir=args.in_dir,
-                                out_dir=out_dir,
-                                start_date=args.start_date,
-                                num_days=args.num_days,
-                                light_output=args.light_output,
-                                init_ruc_file=args.init_ruc_file,
-                                save_init_ruc=args.save_init_ruc,
-                                verbosity=args.verbose).simulate()
+        renew_costs = args.renew_costs
+
+    Simulator(
+        template_data, gen_data, load_data, out_dir=out_dir,
+        start_date=args.start_date, num_days=args.num_days, solver=args.solver,
+        solver_options=solver_args, run_lmps=args.lmps, mipgap=args.ruc_mipgap,
+        reserve_factor=args.reserve_factor,
+        prescient_sced_forecasts=args.prescient_sced_forecasts,
+        ruc_prescience_hour=args.ruc_prescience_hour,
+        ruc_execution_hour=args.ruc_execution_hour,
+        ruc_every_hours=args.ruc_every_hours,
+        ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
+        enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
+        no_startup_shutdown_curves=args.no_startup_shutdown_curves,
+        light_output=args.light_output, init_ruc_file=args.init_ruc_file,
+        verbosity=args.verbose, output_max_decimals=args.output_max_decimals,
+        create_plots=args.create_plots, renew_costs=renew_costs
+        ).simulate()

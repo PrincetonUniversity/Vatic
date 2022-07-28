@@ -429,6 +429,8 @@ class StatsManager:
         fig.savefig(Path(self.write_dir, "plots", "stack-graph.pdf"),
                     bbox_inches='tight', format='pdf')
 
+        plt.close()
+
     def generate_cost_graph(self) -> None:
         """Line chart of various types of costs over time."""
 
@@ -465,6 +467,8 @@ class StatsManager:
 
         fig.savefig(Path(self.write_dir, "plots", "costs.pdf"),
                     bbox_inches='tight', format='pdf')
+
+        plt.close()
 
     def generate_commitment_heatmaps(self) -> None:
         """When are thermal generators planned to be turned on by each RUC?"""
@@ -511,6 +515,8 @@ class StatsManager:
             fig.savefig(Path(self.write_dir, "plots",
                              "{}_commits.pdf".format(date_lbl)),
                         bbox_inches='tight', format='pdf')
+
+            plt.close()
 
     def plot_thermal_detail(self) -> None:
         """Stacked bar plots of thermal generators' production and ramping."""
@@ -601,3 +607,5 @@ class StatsManager:
 
         fig.savefig(Path(self.write_dir, "plots", "thermal-detail.pdf"),
                     bbox_inches='tight', format='pdf')
+
+        plt.close()
