@@ -9,7 +9,7 @@ import datetime
 import math
 import pandas as pd
 from copy import deepcopy
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Union
 
 from .data_providers import PickleProvider
 from .model_data import VaticModelData
@@ -269,7 +269,10 @@ class Simulator:
             pre_quickstart_cache=None
             )
 
-    def perturb_oracle(self, perturb_dict: Dict[str, float]) -> dict:
+    def perturb_oracle(
+            self,
+            perturb_dict: Dict[str, float]
+            ) -> Dict[str, Union[float, dict]]:
         """Simulates a perturbed economic dispatch for current time step."""
 
         sced_model_data = self._data_provider.create_sced_instance(

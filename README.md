@@ -66,12 +66,18 @@ have declared an environment variable `VATIC_GRIDS` naming the folder storing al
  - `--sced-horizon` How far ahead in hours each security-constrained economic dispatch instance will look ahead.
                     Must be a positive integer; the default value is 4.
 
+ - `--ruc-horizon` How many hours each reliability unit commitment will consider in its optimization. Must be a positive
+                   integer; the default value is 48 to avoid horizon effects when planning towards the end of the
+                   current day.
+
  - `--ruc-mipgap (-g)` The relative optimality gap used by each reliability unit commitment instance to decide when to
                        terminate. Expressed as a ratio of the difference between the lower and upper objective bound and
                        the incumbent objective value. The default value is 0.01.
 
  - `--reserve-factor (-r)` How much headroom or spare capacity must the system plan for at each operating time step
                            given as a proportion of the total load demand at a time step; the default value is 0.05.
+
+ - `--csv` Save output to a collection of .csv files instead of a serialized Python pickle.
 
  - `--init-ruc-file` If this file exists, it will be treated as a saved reliability unit commitment from a previous
                      iteration of Vatic that used the same grid and starting date. If it doesn't exist, Vatic will save
