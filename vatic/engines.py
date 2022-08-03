@@ -26,7 +26,10 @@ from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
 
 class Simulator:
+    """An engine for simulating the operation of a power grid."""
 
+    # model formulations used by Egret, with separate types of models defined
+    # for unit commitments and economic dispatches
     ruc_formulations = dict(
         params_forml='default_params',
         status_forml='garver_3bin_vars',
@@ -61,6 +64,8 @@ class Simulator:
 
     @classmethod
     def _verify_solver(cls, solver_type: str, solver_lbl: str) -> str:
+        """Checks that the given MILP solver is available for use."""
+
         if solver_type not in cls.supported_solvers:
             raise RuntimeError("Unknown {} solver `{}` specified!".format(
                 solver_lbl, solver_type))
@@ -108,6 +113,8 @@ class Simulator:
         self._current_timestep = None
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
+        # if cost curves for renewable generators are given, use alternate
+        # model formulations that do not assume no costs for renewables
         if renew_costs is not None:
             self.ruc_formulations['params_forml'] = 'renewable_cost_params'
             self.ruc_formulations[
@@ -159,6 +166,7 @@ class Simulator:
         """
         simulation_start_time = time.time()
 
+        # create commitments for the first day using an RUC
         self.initialize_oracle()
         self.simulation_times['Init'] += time.time() - simulation_start_time
 
@@ -271,7 +279,7 @@ class Simulator:
 
     def perturb_oracle(
             self,
-            perturb_dict: Dict[str, float]
+            perturb_dict: Dict[str, float], run_lmps: bool = False,
             ) -> Dict[str, Union[float, dict]]:
         """Simulates a perturbed economic dispatch for current time step."""
 
@@ -306,7 +314,12 @@ class Simulator:
 
         sced_results = self.sced_model.solve_model(self._sced_solver,
                                                    self.solver_options)
-        lmp_sced = self.solve_lmp(sced_results)
+
+        # solve for locational marginal prices if necessary
+        if run_lmps:
+            lmp_sced = self.solve_lmp(sced_results)
+        else:
+            lmp_sced = None
 
         self._stats_manager.collect_sced_solution(self._current_timestep,
                                                   sced_results, lmp_sced,
@@ -473,18 +486,14 @@ class Simulator:
 
         return lmp_sced_results
 
-    def _get_projected_state(self) -> VaticStateWithScedOffset:
-        """
-        Get the simulation state as we project it will appear
-        after the RUC delay.
-        """
+    def _get_projected_state(self) -> VaticSimulationState:
+        """Gets the projection of the simulation state after the plan delay."""
 
-        # If there is no RUC delay, use the current state as is
+        # if there is no RUC delay, use the current state as is
         if self._simulation_state.ruc_delay == 0:
-            print("")
-            print("Drawing UC initial conditions for date:",
-                  self._current_timestep.date(),
-                  "hour:", self._current_timestep.hour(), "from prior SCED instance.")
+            if self.verbosity > 0:
+                print("\nDrawing UC initial conditions for {} from prior SCED "
+                      "instance.".format(self._current_timestep.when))
 
             return self._simulation_state
 
