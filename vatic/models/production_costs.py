@@ -7,7 +7,7 @@ from egret.model_library.unit_commitment.production_costs import (
     _step_coeff, _compute_total_production_cost)
 
 
-def _get_piecewise_production_generators(model):
+def _basic_production_costs_vars(model):
 
     # more than two points -> not linear
     def piecewise_generators_time_set(m):
@@ -34,16 +34,44 @@ def _get_piecewise_production_generators(model):
     # compute the per-generator, per-time period production costs
     def piecewise_production_costs_index_set_generator(m):
         return (
-            (g, t, i) for g,t in m.PiecewiseGeneratorTimeIndexSet
+            (g, t, i) for g, t in m.PiecewiseGeneratorTimeIndexSet
             for i in range(len(m.PowerGenerationPiecewisePoints[g, t]) - 1)
             )
 
     model.PiecewiseProductionCostsIndexSet = pe.Set(
         initialize=piecewise_production_costs_index_set_generator, dimen=3)
 
+    # more than two points -> not linear
+    def piecewise_generators_time_set(m):
+        for g in m.ThermalGenerators | m.AllNondispatchableGenerators:
+            for t in m.TimePeriods:
+                if len(m.PowerGenerationPiecewisePoints[g, t]) > 2:
+                    yield g, t
 
-def _basic_production_costs_vars(model):
-    _get_piecewise_production_generators(model)
+    model.PiecewiseGeneratorTimeIndexSet = pe.Set(
+        dimen=2, initialize=piecewise_generators_time_set)
+
+    # two points -> linear
+    def linear_generators_time_set(m):
+        for g in m.ThermalGenerators | m.AllNondispatchableGenerators:
+            for t in m.TimePeriods:
+                if len(m.PowerGenerationPiecewisePoints[g, t]) == 2:
+                    yield g, t
+
+    model.LinearGeneratorTimeIndexSet = pe.Set(
+        dimen=2, initialize=linear_generators_time_set)
+
+    # if there's only 1 or zero points, this has no marginal cost
+
+    # compute the per-generator, per-time period production costs
+    def piecewise_production_costs_index_set_generator(m):
+        return (
+            (g, t, i) for g, t in m.PiecewiseGeneratorTimeIndexSet
+            for i in range(len(m.PowerGenerationPiecewisePoints[g, t]) - 1)
+            )
+
+    model.PiecewiseProductionCostsIndexSet = pe.Set(
+        initialize=piecewise_production_costs_index_set_generator, dimen=3)
 
     def piecewise_production_bounds_rule(m, g, t, i):
         return (0, m.PowerGenerationPiecewisePoints[g, t][i + 1] -
@@ -70,8 +98,8 @@ def _basic_production_costs_vars(model):
 
         linear_coefs.append(-1.)
 
-        return (linear_expr(linear_vars=linear_vars,
-                            linear_coefs=linear_coefs), 0.)
+        return linear_expr(linear_vars=linear_vars,
+                           linear_coefs=linear_coefs), 0.
 
     model.PiecewiseProductionSum = pe.Constraint(
         model.PiecewiseGeneratorTimeIndexSet,
@@ -103,15 +131,19 @@ def _basic_production_costs_constr(model):
 
             linear_coefs.append(-1.)
             linear_vars.append(m.ProductionCost[g, t])
-            return (linear_expr(linear_vars=linear_vars,
-                                linear_coefs=linear_coefs), 0.)
+
+            return linear_expr(linear_vars=linear_vars,
+                               linear_coefs=linear_coefs), 0.
 
         elif (g, t) in m.LinearGeneratorTimeIndexSet:
             i = 0
             points = m.PowerGenerationPiecewisePoints[g, t]
+
+            if points[-1] == 0.:
+                return m.ProductionCost[g, t], 0.
+
             costs = m.PowerGenerationPiecewiseCostValues[g, t]
             time_scale = m.TimePeriodLengthHours
-
             slope = time_scale * costs[i + 1] - time_scale * costs[i]
             slope /= points[i + 1] - points[i]
 
@@ -126,11 +158,11 @@ def _basic_production_costs_constr(model):
             linear_vars.append(m.ProductionCost[g, t])
             linear_coefs.append(-1.)
 
-            return (linear_expr(linear_vars=linear_vars,
-                                linear_coefs=linear_coefs), 0.)
+            return linear_expr(linear_vars=linear_vars,
+                               linear_coefs=linear_coefs), 0.
 
         else:
-            return (m.ProductionCost[g, t], 0.)
+            return m.ProductionCost[g, t], 0.
 
     model.ProductionCostConstr1 = pe.Constraint(
         model.SingleFuelGenerators | model.AllNondispatchableGenerators,
@@ -149,9 +181,7 @@ def _basic_production_costs_constr(model):
                                             'ALS_state_transition_vars'],
                             'power_vars': None})
 def KOW_Vatic_production_costs_tightened(model):
-    '''
-    Base for similarities between tightend and not KOW production costs
-    '''
+    """Base for similarities between tightened and not KOW production costs."""
     _basic_production_costs_vars(model)
 
     linear_expr = get_linear_expr(model.UnitOn, model.UnitStart,
