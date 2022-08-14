@@ -65,9 +65,9 @@ def run_deterministic():
                         help="use costs for renewables from input directory")
 
     # determines what kinds of output files we create
-    parser.add_argument('--light-output', '-l',
-                        action='store_true', dest='light_output',
-                        help="don't create hourly asset digests")
+    parser.add_argument('--output-detail',
+                        type=int, default=1, dest='output_detail',
+                        help="how much information to save in the output file")
     parser.add_argument('--output-max-decimals',
                         type=int, default=4, dest='output_max_decimals',
                         help="How much precision to use when writing summary "
@@ -168,7 +168,7 @@ def run_deterministic():
         ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
         enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
         no_startup_shutdown_curves=args.no_startup_shutdown_curves,
-        light_output=args.light_output, init_ruc_file=args.init_ruc_file,
+        output_detail=args.output_detail, init_ruc_file=args.init_ruc_file,
         verbosity=args.verbose, output_max_decimals=args.output_max_decimals,
         create_plots=args.create_plots, renew_costs=renew_costs,
         save_to_csv=args.csv

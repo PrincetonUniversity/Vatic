@@ -37,12 +37,12 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir, light_output, verbosity, init_model,
+                 write_dir, output_detail, verbosity, init_model,
                  output_max_decimals, create_plots, save_to_csv):
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
-        self.light_output = light_output
+        self.output_detail = output_detail
         self.verbosity = verbosity
         self.write_dir = write_dir
         self.save_to_csv = save_to_csv
@@ -85,7 +85,8 @@ class StatsManager:
                         'variable_costs': self._round(ruc.all_variable_costs),
                         'commitments': ruc.commitments,
                         'generation': self._round(ruc.generation),
-                        'reserves': self._round(ruc.reserves)}
+                        'reserves': self._round(ruc.reserves),
+                        'costs': self._round(ruc.generator_total_prices)}
 
         if self.verbosity > 0:
             print("Fixed costs:    %12.2f" % new_ruc_data['fixed_costs'])
@@ -222,74 +223,75 @@ class StatsManager:
         dictionary that is then serialized and saved as a compressed pickle
         object.
 
-        Note that depending on the `light_output` simulator option, this
+        Note that depending on the `output_detail` simulator option, this
         output dictionary may omit certain types of model outputs that are
         particularly space-intensive.
-
         """
-        report_dfs = dict()
 
-        report_dfs['runtimes'] = pd.DataFrame.from_records([
-            {**time_step.labels(),
-             **{'Type': 'SCED', 'Solve Time': stats['runtime']}}
-            for time_step, stats in self._sced_stats.items()
-            ]).drop('Minute', axis=1).set_index(
+        report_dfs = {
+            'hourly_summary': pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'FixedCosts': stats['fixed_costs'],
+                    'VariableCosts': stats['variable_costs'],
+                    'LoadShedding': stats['load_shedding'],
+                    'OverGeneration': stats['over_generation'],
+                    'AvailableReserves': stats['available_reserve'],
+                    'ReserveShortfall': stats['reserve_shortfall'],
+                    'RenewablesUsed': stats['renewable_generation'],
+                    'RenewablesAvailable': stats['available_renewables'],
+                    'RenewablesCurtailment': stats['renewables_curtailment'],
+                    'Demand': stats['total_demand'], 'Price': stats['price'],
+                    'Number on/offs': stats['on_offs'],
+                    'Sum on/off ramps': stats['sum_on_off_ramps'],
+                    'Sum nominal ramps': stats['sum_nominal_ramps']}}
+                for time_step, stats in self._sced_stats.items()
+                ]).drop('Minute', axis=1).set_index(
+                    ['Date', 'Hour'], verify_integrity=True)
+            }
+
+        if self.output_detail > 0:
+            report_dfs['runtimes'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Type': 'SCED', 'Solve Time': stats['runtime']}}
+                for time_step, stats in self._sced_stats.items()
+                ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Type'], verify_integrity=True)
 
-        if sim_runtime:
-            report_dfs['total_runtime'] = self._round(sim_runtime)
+            if sim_runtime:
+                report_dfs['total_runtime'] = self._round(sim_runtime)
 
-        report_dfs['ruc_summary'] = pd.DataFrame.from_records([
-            {**time_step.labels(),
-             **{'FixedCosts': stats['fixed_costs'],
-                'VariableCosts': stats['variable_costs']}}
-            for time_step, stats in self._ruc_stats.items()
-            ]).drop('Minute', axis=1).set_index(
+            report_dfs['ruc_summary'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'FixedCosts': stats['fixed_costs'],
+                    'VariableCosts': stats['variable_costs']}}
+                for time_step, stats in self._ruc_stats.items()
+                ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour'], verify_integrity=True)
 
-        report_dfs['hourly_summary'] = pd.DataFrame.from_records([
-            {**time_step.labels(),
-             **{'FixedCosts': stats['fixed_costs'],
-                'VariableCosts': stats['variable_costs'],
-                'LoadShedding': stats['load_shedding'],
-                'OverGeneration': stats['over_generation'],
-                'AvailableReserves': stats['available_reserve'],
-                'ReserveShortfall': stats['reserve_shortfall'],
-                'RenewablesUsed': stats['renewable_generation'],
-                'RenewablesAvailable': stats['available_renewables'],
-                'RenewablesCurtailment': stats['renewables_curtailment'],
-                'Demand': stats['total_demand'], 'Price': stats['price'],
-                'Number on/offs': stats['on_offs'],
-                'Sum on/off ramps': stats['sum_on_off_ramps'],
-                'Sum nominal ramps': stats['sum_nominal_ramps']}}
-            for time_step, stats in self._sced_stats.items()
-            ]).drop('Minute', axis=1).set_index(
-                ['Date', 'Hour'], verify_integrity=True)
-
-        report_dfs['thermal_detail'] = pd.DataFrame.from_records([
-            {**time_step.labels(),
-             **{'Generator': gen,
-                'Dispatch': stats['observed_thermal_dispatch_levels'][gen],
-                'Headroom': stats['observed_thermal_headroom_levels'][gen],
-                'Unit State': gen_state,
-                'Unit Cost': stats['observed_costs'][gen]}}
-            for time_step, stats in self._sced_stats.items()
-            for gen, gen_state in stats['observed_thermal_states'].items()
-            ]).drop('Minute', axis=1).set_index(
+            report_dfs['thermal_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen,
+                    'Dispatch': stats['observed_thermal_dispatch_levels'][gen],
+                    'Headroom': stats['observed_thermal_headroom_levels'][gen],
+                    'Unit State': gen_state,
+                    'Unit Cost': stats['observed_costs'][gen]}}
+                for time_step, stats in self._sced_stats.items()
+                for gen, gen_state in stats['observed_thermal_states'].items()
+                ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
 
-        report_dfs['renew_detail'] = pd.DataFrame.from_records([
-            {**time_step.labels(),
-             **{'Generator': gen, 'Output': gen_output,
-                'Curtailment': stats['observed_renewables_curtailment'][
-                    gen]}}
-            for time_step, stats in self._sced_stats.items()
-            for gen, gen_output in
-            stats['observed_renewables_levels'].items()
-            ]).drop('Minute', axis=1).set_index(
+            report_dfs['renew_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen, 'Output': gen_output,
+                    'Curtailment': stats['observed_renewables_curtailment'][
+                        gen]}}
+                for time_step, stats in self._sced_stats.items()
+                for gen, gen_output in
+                stats['observed_renewables_levels'].items()
+                ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
 
-        if not self.light_output:
+        if self.output_detail > 1:
             report_dfs['daily_commits'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
                  **{'Generator': gen,
@@ -494,7 +496,7 @@ class StatsManager:
                 for gen, outputs in ruc_data['generation'].items()
                 if self._grid_data['generator_fuels'][gen] in {'C', 'O',
                                                                'G', 'N'}
-                }, orient='index')
+                }, orient='index').iloc[:, :24]
 
             use_cmap = sns.cubehelix_palette(start=0.45, rot=0.43,
                                              light=0.87, dark=0.03,
@@ -507,9 +509,13 @@ class StatsManager:
                                                     freq='H'))
                 ]
 
+            ylbls = [gen if pd.isnull(ruc_data['costs'][gen])
+                     else '   '.join([gen, "${:.2f}".format(ruc_data['costs'][gen])])
+                     for gen in commits.index]
+
             fig, ax = plt.subplots(figsize=(4, 13))
             sns.heatmap(commits, cbar=False, vmin=0., vmax=1., ax=ax,
-                        cmap=use_cmap, xticklabels=xlbls, yticklabels=True)
+                        cmap=use_cmap, xticklabels=xlbls, yticklabels=ylbls)
 
             for i in range(commits.shape[1]):
                 if i % 12 == 0:

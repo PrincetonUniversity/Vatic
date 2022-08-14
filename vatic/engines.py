@@ -93,7 +93,7 @@ class Simulator:
                  load_data: pd.DataFrame, out_dir: Path,
                  start_date: datetime.date, num_days: int, solver: str,
                  solver_options: dict, run_lmps: bool, mipgap: float,
-                 reserve_factor: float, light_output: bool,
+                 reserve_factor: float, output_detail: int,
                  prescient_sced_forecasts: bool, ruc_prescience_hour: int,
                  ruc_execution_hour: int, ruc_every_hours: int,
                  ruc_horizon: int, sced_horizon: int,
@@ -145,7 +145,7 @@ class Simulator:
             self._sced_frequency_minutes
             )
 
-        self._stats_manager = StatsManager(out_dir, light_output, verbosity,
+        self._stats_manager = StatsManager(out_dir, output_detail, verbosity,
                                            self._data_provider.init_model,
                                            output_max_decimals, create_plots,
                                            save_to_csv)
