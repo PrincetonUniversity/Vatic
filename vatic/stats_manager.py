@@ -4,16 +4,16 @@ import os
 from pathlib import Path
 import bz2
 import dill as pickle
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
-from typing import Optional
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from matplotlib.dates import DateFormatter
 import matplotlib.ticker as ticker
 from matplotlib.patches import Patch
@@ -37,8 +37,17 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir, output_detail, verbosity, init_model,
-                 output_max_decimals, create_plots, save_to_csv):
+                 write_dir: Union[Path, str], output_detail: int,
+                 verbosity: int, init_model: VaticModelData,
+                 output_max_decimals: int, create_plots: bool,
+                 save_to_csv: bool) -> None:
+        """
+        write_dir       Path to where output statistics will be saved.
+        output_detail   How much information to include in the output saved to
+                        file, with larger integers specifying more detail.
+        verbosity       How much logging about simulation running stats to do.
+
+        """
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
@@ -509,17 +518,21 @@ class StatsManager:
                                                     freq='H'))
                 ]
 
-            ylbls = [gen if pd.isnull(ruc_data['costs'][gen])
-                     else '   '.join([gen, "${:.2f}".format(ruc_data['costs'][gen])])
-                     for gen in commits.index]
+            ylbls = [
+                gen if pd.isnull(ruc_data['costs'][gen])
+                else '   '.join([gen,
+                                 "${:.2f}".format(ruc_data['costs'][gen])])
+                for gen in commits.index
+                ]
 
             fig, ax = plt.subplots(figsize=(4, 13))
             sns.heatmap(commits, cbar=False, vmin=0., vmax=1., ax=ax,
                         cmap=use_cmap, xticklabels=xlbls, yticklabels=ylbls)
 
             for i in range(commits.shape[1]):
-                if i % 12 == 0:
-                    ax.axvline(i, c='black', lw=0.07, linestyle=':')
+                if i % 6 == 0:
+                    ax.axvline(i, c='black',
+                               lw=0.07, linestyle=':', alpha=0.61)
 
             ax.tick_params(axis='x', labelsize=10)
             ax.tick_params(axis='y', labelsize=7)

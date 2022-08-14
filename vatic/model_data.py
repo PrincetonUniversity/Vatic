@@ -560,6 +560,20 @@ class VaticModelData(object):
                                             generator_type='thermal')}
 
     @property
+    def generator_total_costs(self):
+        return {gen: (sum(gen_data['commitment_cost']['values'])
+                      + sum(gen_data['production_cost']['values']))
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
+
+    @property
+    def generator_total_prices(self):
+        return {gen: (gen_data['p_cost']['values'][-1][1]
+                      / gen_data['p_cost']['values'][-1][0])
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
+
+    @property
     def curtailment(self):
         return {gen: (self.get_max_power_output(gen_data)
                       - gen_data['pg']['values'][0])

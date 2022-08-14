@@ -655,16 +655,26 @@ class GridLoader(ABC):
             ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Get asset values corresponding to a scenario for actuals."""
 
-        gen_scens = pd.concat([scen_dfs['Wind'].loc[scenario],
-                               scen_dfs['Solar'].loc[scenario]], axis=1)
+        use_scens = {asset_type: scen_df.loc[scenario]
+                     for asset_type, scen_df in scen_dfs.items()}
+
+        use_scens = {asset_type: scen_df.loc[scen_df.index >= start_date]
+                     for asset_type, scen_df in use_scens.items()}
+        use_scens = {asset_type: scen_df.loc[scen_df.index <= end_date]
+                     for asset_type, scen_df in use_scens.items()}
+
+        # consolidate scenario data for the renewable generators as the actuals
+        gen_scens = pd.concat([use_scens['Wind'], use_scens['Solar']], axis=1)
         gen_scens.columns = pd.MultiIndex.from_tuples(
             [('actl', asset_name) for asset_name in gen_scens.columns])
 
+        # consolidate forecasted output values for the renewable generators
         gen_df = pd.concat([self.get_forecasts(asset_type,
                                                start_date, end_date)
                             for asset_type in self.timeseries_cohorts],
                            axis=1)
 
+        # create one matrix with both forecasted and actual renewable outputs
         gen_df.columns = pd.MultiIndex.from_tuples(
             [('fcst', asset_name) for asset_name in gen_df.columns])
         gen_df = pd.concat([gen_df, gen_scens], axis=1)
@@ -687,7 +697,7 @@ class GridLoader(ABC):
             "Mismatching sets of assets with forecasts and with actuals!")
 
         demand_df = self.load_by_bus(start_date, end_date,
-                                     load_actls=scen_dfs['Load'].loc[scenario])
+                                     load_actls=use_scens['Load'])
 
         return gen_df.sort_index(axis=1), demand_df
 
@@ -744,7 +754,7 @@ class RtsLoader(GridLoader):
         return gen[0]
 
     @classmethod
-    def parse_generator(cls, gen_info):
+    def parse_generator(cls, gen_info: pd.Series) -> Generator:
         # round the power points to the nearest 10kW
         # IMPT: These quantities are MW
         cost_points = [
@@ -904,7 +914,7 @@ class T7kLoader(GridLoader):
                                    if gen_type != 'H'}
             }
 
-    def map_wind_generators(self, asset_df):
+    def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                      "Texas7k_NREL_wind_map.csv"),
                                 index_col=0)
@@ -931,7 +941,7 @@ class T7kLoader(GridLoader):
 
         return pd.concat(mapped_vals, axis=1)
 
-    def map_solar_generators(self, asset_df):
+    def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"),
                                  index_col=0)
@@ -950,7 +960,7 @@ class T7kLoader(GridLoader):
         return pd.concat(mapped_vals, axis=1)
 
     @classmethod
-    def parse_generator(cls, gen_info):
+    def parse_generator(cls, gen_info: pd.Series) -> Generator:
         break_cols = gen_info.index[
             gen_info.index.str.match('MW Break [0-9]*')]
         price_cols = gen_info.index[
@@ -1097,7 +1107,7 @@ class T7k2030Loader(T7kLoader):
 
     #TODO: should we standardize the mapping file format between the T7k and
     #      the T7k(2030) grids instead of doing this?
-    def map_wind_generators(self, asset_df):
+    def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                      "Texas7k_NREL_wind_map.csv"))
 
@@ -1124,7 +1134,7 @@ class T7k2030Loader(T7kLoader):
 
         return pd.concat(mapped_vals, axis=1)
 
-    def map_solar_generators(self, asset_df):
+    def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                       "Texas7k_NREL_solar_map.csv"))
 
