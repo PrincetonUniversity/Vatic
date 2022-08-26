@@ -118,6 +118,8 @@ class GridLoader(ABC):
     unusual characteristics.
     """
 
+    # the three static elements of a power grid, with the properties of each
+    # thermal generators produce power based on a partly pre-planned schedule
     Generator = namedtuple(
         'Generator', [
             'ID',   # usually the GEN UID
@@ -151,6 +153,7 @@ class GridLoader(ABC):
             ]
         )
 
+    # load buses are where demand for electricity is measured (MWLoad)
     Bus = namedtuple(
         'Bus', [
             'ID',   # usually a six-digit integer
@@ -165,6 +168,7 @@ class GridLoader(ABC):
             ]
         )
 
+    # transmission lines are how power flows from generators to load buses,
     Branch = namedtuple(
         'Branch', [
             'ID',   # usually upper-case letter followed by integer, e.g. A31
@@ -198,6 +202,50 @@ class GridLoader(ABC):
                 Power plants that rely on renewable sources of energy such as
                 wind and sun whose output levels are determined exogenously.
 
+            Buses
+                The nodes of the grid at which load demand is measured, and
+                where generators are located.
+            TransmissionLines
+                The power lines carrying electricity from generators to buses.
+
+            BusFrom, BusTo
+                The nodes of the grid that each power line connects.
+            ThermalGeneratorsAtBus, NondispatchableGeneratorsAtBus
+                Which generators are located at each bus; every generator is
+                located at a bus.
+
+            MinimumPowerOutput
+                Some generators, especially thermals, must produce a certain
+                baseline level of power once they are turned on.
+            MaximumPowerOutput
+                All generators have a maximum generation they are capable of.
+            MinimumUpTime, MinimumDownTime
+                Thermal generators must be kept on for a certain amount of time
+                once they are turned on, and kept off once they are turned off.
+
+            NominalRampUpLimit, NominalRampDownLimit
+                How rapidly thermal generators' power output can be adjusted
+                once they are turned on.
+            StartupRampLimit, ShutdownRampLimit
+                How rapidly thermal generators' power output can be brought
+                online when turned off, and how quickly it can be shut off when
+                the plant is turned on.
+
+            CostPiecewisePoints, CostPiecewiseValues
+                The marginal cost of producing a certain amount of power varies
+                according to total power output for each thermal generator; we
+                define a cost curve to capture this behaviour specifying total
+                costs of power production at particular power output levels.
+            StartupLags, StartupCosts
+                Each thermal generator also has a specific cost associated with
+                the process of being turned on, and this cost varies depending
+                on how long the generator has been turned off.
+
+            UnitOnT0State, PowerGeneratedT0
+                For the sake of the simulation we need initial conditions for
+                the thermal generators specifying how long they have been
+                turned on or off and how much power they are producing.
+
         Args
         ----
             in_dir                  The folder containing grid metadata.
@@ -209,6 +257,8 @@ class GridLoader(ABC):
         self.in_dir = in_dir
         self.mins_per_time_period = mins_per_time_period
 
+        # read in metadata about static grid elements from file, clean data
+        # where necessary, and parse grid elements to get key properties
         self.gen_df = pd.read_csv(Path(in_dir, self.grid_dir,
                                        "SourceData", "gen.csv"))
         self.branch_df = pd.read_csv(Path(in_dir, self.grid_dir,
@@ -234,6 +284,8 @@ class GridLoader(ABC):
             if bus.Name not in use_buses:
                 use_buses += [bus.Name]
 
+        # initialize grid template with basic elements that do not require any
+        # further data processing steps
         template = {
             'NumTimePeriods': 48, 'TimePeriodLength': 1,
             'StageSet': ['Stage_1', 'Stage_2'], 'CopperSheet': False,

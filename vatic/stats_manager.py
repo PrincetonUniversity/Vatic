@@ -88,6 +88,14 @@ class StatsManager:
     def collect_ruc_solution(self,
                              time_step: VaticTime,
                              ruc: VaticModelData) -> None:
+        """Gets the key statistics from a solved reliability unit commitment.
+
+        Args
+        ----
+            time_step   The time in the simulation at which the RUC was solved.
+            ruc         The solved RUC model.
+        """
+
         #TODO: add generation values per thermal generator?
         new_ruc_data = {'runtime': self._round(ruc.model_runtime),
                         'duration_minutes': ruc.duration_minutes,
@@ -105,12 +113,21 @@ class StatsManager:
 
         self._ruc_stats[time_step] = new_ruc_data
 
-    def collect_sced_solution(
-            self,
-            time_step: VaticTime, sced: VaticModelData,
-            lmp_sced: Optional[VaticModelData] = None,
-            pre_quickstart_cache = None
-            ) -> None:
+    def collect_sced_solution(self,
+                              time_step: VaticTime, sced: VaticModelData,
+                              lmp_sced: Optional[VaticModelData] = None,
+                              pre_quickstart_cache = None) -> None:
+        """Gets the key statistics from a solved economic dispatch.
+
+        Args
+        ----
+        time_step   The time in the simulation at which the RUC was solved.
+        sced        The solved security-constrained economic dispatch model.
+
+        lmp_sced    If applicable, an additional economic dispatch that was
+                    solved to get locational marginal prices.
+
+        """
         new_sced_data = {
             'runtime': self._round(sced.model_runtime),
             'duration_minutes': sced.duration_minutes,
@@ -222,7 +239,7 @@ class StatsManager:
 
         self._sced_stats[time_step] = new_sced_data
 
-    def consolidate_output(self) -> Dict[str, pd.DataFrame]:
+    def consolidate_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
         report_dfs = {
             'hourly_summary': pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -341,7 +358,7 @@ class StatsManager:
         particularly space-intensive.
 
         """
-        report_dfs = self.consolidate_output()
+        report_dfs = self.consolidate_output(sim_runtime)
 
         if self.save_to_csv:
             for report_lbl, report_df in report_dfs.items():
