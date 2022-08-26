@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import bz2
 import dill as pickle
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -88,6 +88,7 @@ class StatsManager:
     def collect_ruc_solution(self,
                              time_step: VaticTime,
                              ruc: VaticModelData) -> None:
+        #TODO: add generation values per thermal generator?
         new_ruc_data = {'runtime': self._round(ruc.model_runtime),
                         'duration_minutes': ruc.duration_minutes,
                         'fixed_costs': self._round(ruc.all_fixed_costs),
@@ -221,22 +222,7 @@ class StatsManager:
 
         self._sced_stats[time_step] = new_sced_data
 
-    def save_output(self, sim_runtime=None) -> None:
-        """Consolidate collected model stats into tables written to file.
-
-        This function collects the data pulled from UC and ED models that were
-        solved during the course of the simulation and organizes them into
-        pandas dataframes. These dataframes generally have rows corresponding
-        to time steps of the simulation and columns corresponding to various
-        model data fields. These dataframes are all stored in a single
-        dictionary that is then serialized and saved as a compressed pickle
-        object.
-
-        Note that depending on the `output_detail` simulator option, this
-        output dictionary may omit certain types of model outputs that are
-        particularly space-intensive.
-        """
-
+    def consolidate_output(self) -> Dict[str, pd.DataFrame]:
         report_dfs = {
             'hourly_summary': pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -255,7 +241,7 @@ class StatsManager:
                     'Sum nominal ramps': stats['sum_nominal_ramps']}}
                 for time_step, stats in self._sced_stats.items()
                 ]).drop('Minute', axis=1).set_index(
-                    ['Date', 'Hour'], verify_integrity=True)
+                ['Date', 'Hour'], verify_integrity=True)
             }
 
         if self.output_detail > 0:
@@ -328,14 +314,34 @@ class StatsManager:
                 for time_step, stats in self._sced_stats.items()
                 for bus, bus_demand in stats['bus_demands'].items()
                 ]).drop('Minute', axis=1).set_index(
-                    ['Date', 'Hour', 'Bus'], verify_integrity=True)
+                ['Date', 'Hour', 'Bus'], verify_integrity=True)
 
             report_dfs['line_detail'] = pd.DataFrame.from_records([
                 {**time_step.labels(), **{'Line': line, 'Flow': line_flow}}
                 for time_step, stats in self._sced_stats.items()
                 for line, line_flow in stats['observed_flow_levels'].items()
                 ]).drop('Minute', axis=1).set_index(
-                    ['Date', 'Hour', 'Line'], verify_integrity=True)
+                ['Date', 'Hour', 'Line'], verify_integrity=True)
+
+        return report_dfs
+
+    def save_output(self, sim_runtime=None) -> None:
+        """Consolidate collected model stats into tables written to file.
+
+        This function collects the data pulled from UC and ED models that were
+        solved during the course of the simulation and organizes them into
+        pandas dataframes. These dataframes generally have rows corresponding
+        to time steps of the simulation and columns corresponding to various
+        model data fields. These dataframes are all stored in a single
+        dictionary that is then serialized and saved as a compressed pickle
+        object.
+
+        Note that depending on the `output_detail` simulator option, this
+        output dictionary may omit certain types of model outputs that are
+        particularly space-intensive.
+
+        """
+        report_dfs = self.consolidate_output()
 
         if self.save_to_csv:
             for report_lbl, report_df in report_dfs.items():

@@ -157,7 +157,8 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
-    def simulate(self) -> None:
+    def simulate(self,
+                 return_report=False) -> Union[None, Dict[str, pd.DataFrame]]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 
         See prescient.simulator.Simulator.simulate() for the original
@@ -199,7 +200,10 @@ class Simulator:
                 print("Real-time sim time: {:.2f} seconds".format(
                     self.simulation_times['Sim']))
 
-        self._stats_manager.save_output(sim_time)
+        if return_report:
+            return self._stats_manager.consolidate_output()
+        else:
+            self._stats_manager.save_output(sim_time)
 
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.

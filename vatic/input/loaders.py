@@ -754,7 +754,7 @@ class RtsLoader(GridLoader):
         return gen[0]
 
     @classmethod
-    def parse_generator(cls, gen_info: pd.Series) -> Generator:
+    def parse_generator(cls, gen_info: pd.Series) -> GridLoader.Generator:
         # round the power points to the nearest 10kW
         # IMPT: These quantities are MW
         cost_points = [
@@ -960,7 +960,7 @@ class T7kLoader(GridLoader):
         return pd.concat(mapped_vals, axis=1)
 
     @classmethod
-    def parse_generator(cls, gen_info: pd.Series) -> Generator:
+    def parse_generator(cls, gen_info: pd.Series) -> GridLoader.Generator:
         break_cols = gen_info.index[
             gen_info.index.str.match('MW Break [0-9]*')]
         price_cols = gen_info.index[
