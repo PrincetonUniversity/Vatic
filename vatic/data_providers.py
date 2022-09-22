@@ -34,7 +34,7 @@ class PickleProvider:
     The core data retrieval functionality implemented here was based upon
     prescient.data.providers.dat_data_provider and adapted to use pickled input
     dataframes as opposed to .dat files. This class also includes model data
-    creation methods originally included in prescient.egret.engine.egret_plugin
+    creation methods originally included in prescient.egret.engine.egret_plugin`
 
     Attributes
     ----------
