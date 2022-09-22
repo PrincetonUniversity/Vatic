@@ -182,6 +182,7 @@ dependencies:
   - zlib=1.2.12
   - zstd=1.4.9
   - pip:
+    - gridx-egret==0.1.0
     - gurobipy==9.5.0
     - iniconfig==1.1.1
     - pluggy==1.0.0
