@@ -5,17 +5,17 @@ from pathlib import Path
 #set parent directory to the root directory to use absolute reference to import packages from files
 sys.path.insert(0, str(Path(__file__).resolve()))
 
-from Untitled.vatic.engines import Simulator
-from Untitled.vatic.input import load_input
+from Vatic.vatic.engines import Simulator
+from Vatic.vatic.input import load_input
 
 #relative import does not work when we run the file inside pycharm
 #from ..engines import Simulator
 
 #could either be key to access os environ or input dir
-input_grid = '/Users/jf3375/PycharmProjects/Vatic_Local/Untitled/vatic_test/input/Vatic_Grids/Texas-7k'
+input_grid = '/Users/jf3375/PycharmProjects/Vatic_Local/Vatic/vatic_test/input/Vatic_Grids/Texas-7k'
 start_date = datetime.strptime('2018-02-15', '%Y-%m-%d').date()
 num_days = 1
-out_dir = '/Users/jf3375/PycharmProjects/Vatic_Local/Untitled/vatic_test/output'
+out_dir = '/Users/jf3375/PycharmProjects/Vatic_Local/Vatic/vatic_test/output'
 solver = 'gurobi'
 solver_args = {'Threads': multiprocessing.cpu_count()-2}
 lmps = False
