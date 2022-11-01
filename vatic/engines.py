@@ -167,7 +167,7 @@ class Simulator:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
-        self.run_lmps = run_lmps
+        self.run_lmps = run_lmps #lmp: Locational Marginal Price
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
         self.lmp_shortfall_costs = lmp_shortfall_costs

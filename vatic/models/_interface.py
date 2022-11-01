@@ -18,6 +18,7 @@ from .params import default_params, renew_cost_params
 from ..model_data import VaticModelData
 from ._utils import ModelError, _save_uc_results
 
+import gurobipy as gp
 
 class UCModel:
     """An instance of a specific Pyomo model formulation.
@@ -124,6 +125,10 @@ class UCModel:
         model.model_data = use_model.to_egret()
         model.name = "UnitCommitment"
 
+        #TODO: create the gurobi model here
+        model_gurobi = gp.Model('UnitCommitment')
+        model_gurobi._model_data = model.model_data
+
         ## munge PTDF options if necessary
         if self.model_parts['power_balance'] == 'ptdf_power_flow':
             _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
@@ -142,7 +147,10 @@ class UCModel:
         model.enforce_t1_ramp_rates = True
         model.relax_binaries = relax_binaries
 
+        #ToDo: change whole things into gurobi; import functions from gurobi version instead
         self._load_params(model)
+
+
         self._get_formulation('status_vars')(model)
         self._get_formulation('power_vars')(model)
         self._get_formulation('reserve_vars')(model)
@@ -297,6 +305,7 @@ class UCModel:
                     vars_to_load=vars_to_load, set_instance=set_instance
                     )
 
+                #start warmstart phase for lp
                 if lp_warmstart_iter_limit > 0:
                     lp_warmstart_termin_cond, results, lp_warmstart_iters = \
                         _lazy_ptdf_uc_solve_loop(
@@ -355,7 +364,7 @@ class UCModel:
                 else:
                     self.pyo_instance.solutions.load_from(results_init)
 
-            ## else if relaxed or lp_iter_limit == 0, do an initial solve
+            ## else if relaxed or lp_iter_limit == 0, do an initial solve without network transmission constraints
             else:
                 self.pyo_instance, results_init, use_solver = _solve_model(
                     self.pyo_instance, use_solver, self.mipgap, None,

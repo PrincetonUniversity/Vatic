@@ -180,6 +180,157 @@ def load_base_params(
     model.HVDCLinesFrom = pe.Set(model.Buses, within=model.HVDCLines,
                                  initialize=dc_outlet_branches_by_bus)
 
+    def load_base_params(
+            model: pe.ConcreteModel,
+            model_data: Optional[VaticModelData] = None, renew_costs: bool = False
+    ) -> pe.ConcreteModel:
+
+        if model_data is None:
+            model_data = model.model_data
+
+        warn_neg_load = False
+        time_keys = model_data.get_system_attr('time_keys')
+
+        ## NOTE: generator, bus, and load should be in here for
+        # a well-defined problem
+        loads = dict(model_data.elements(element_type='load'))
+        gens = dict(model_data.elements(element_type='generator'))
+
+        thermal_gens = dict(model_data.elements(element_type='generator',
+                                                generator_type='thermal'))
+        renewable_gens = dict(model_data.elements(element_type='generator',
+                                                  generator_type='renewable'))
+
+        buses = dict(model_data.elements(element_type='bus'))
+        shunts = dict()
+        branches = dict(model_data.elements(element_type='branch'))
+        interfaces = dict(model_data.elements(element_type='interface'))
+        contingencies = dict()
+        storage = dict(model_data.elements(element_type='storage'))
+        dc_branches = dict()
+
+        thermal_gen_attrs = model_data.attributes(element_type='generator',
+                                                  generator_type='thermal')
+        renewable_gen_attrs = model_data.attributes(element_type='generator',
+                                                    generator_type='renewable')
+
+        bus_attrs = model_data.attributes(element_type='bus')
+        branch_attrs = model_data.attributes(element_type='branch')
+        interface_attrs = model_data.attributes(element_type='interface')
+
+        storage_attrs = model_data.attributes(element_type='storage')
+        storage_by_bus = tx_utils.gens_by_bus(buses, storage)
+
+        dc_branch_attrs = dict(names=list())
+
+        inlet_branches_by_bus, outlet_branches_by_bus = \
+            tx_utils.inlet_outlet_branches_by_bus(branches, buses)
+        dc_inlet_branches_by_bus, dc_outlet_branches_by_bus = \
+            tx_utils.inlet_outlet_branches_by_bus(dc_branches, buses)
+
+        thermal_gens_by_bus = tx_utils.gens_by_bus(buses, thermal_gens)
+        renewable_gens_by_bus = tx_utils.gens_by_bus(buses, renewable_gens)
+
+        ### get the fixed shunts at the buses
+        bus_bs_fixed_shunts, bus_gs_fixed_shunts = \
+            tx_utils.dict_of_bus_fixed_shunts(buses, shunts)
+
+        ## attach some of these to the model object for ease/speed later
+        # model._loads = loads
+        model._buses = buses
+        model._branches = branches
+        model._shunts = shunts
+        model._bus_gs_fixed_shunts = bus_gs_fixed_shunts
+        model._interfaces = interfaces
+        model._contingencies = contingencies
+        model._dc_branches = dc_branches
+
+        #
+        # Parameters
+        #
+
+        ##############################################
+        # string indentifiers for the set of busses. #
+        ##############################################
+
+        model.Buses = pe.Set(initialize=bus_attrs['names'])
+
+        ref_bus = model_data.get_system_attr('reference_bus', '')
+        if not ref_bus or ref_bus not in model.Buses:
+            ref_bus = list(sorted(model.Buses))[0]
+
+        model.ReferenceBus = pe.Param(within=model.Buses, initialize=ref_bus)
+
+        ref_angle = model_data.get_system_attr('reference_bus_angle', 0.)
+        model.ReferenceBusAngle = pe.Param(within=pe.Reals, initialize=ref_angle)
+
+        ################################
+
+        ## in minutes, assert that this must be a positive integer
+        model.TimePeriodLengthMinutes = pe.Param(
+            default=60, within=pe.PositiveIntegers,
+            initialize=model_data.get_system_attr('time_period_length_minutes')
+        )
+
+        ## IN HOURS, assert athat this must be a positive number
+        model.TimePeriodLengthHours = pe.Param(
+            default=pe.value(model.TimePeriodLengthMinutes) / 60.,
+            within=pe.PositiveReals
+        )
+
+        model.NumTimePeriods = pe.Param(within=pe.PositiveIntegers,
+                                        initialize=len(time_keys))
+
+        model.InitialTime = pe.Param(within=pe.PositiveIntegers, default=1)
+        model.TimePeriods = pe.RangeSet(model.InitialTime, model.NumTimePeriods)
+        TimeMapper = uc_time_helper(model.TimePeriods)
+
+        ## For now, hard code these. Probably need to be able to specify in model_data
+        model.StageSet = pe.Set(ordered=True, initialize=['Stage_1', 'Stage_2'])
+
+        # the following sets must must come from the data files or from an initialization function that uses
+        # a parameter that tells you when the stages end (and that thing needs to come from the data files)
+
+        model.CommitmentTimeInStage = pe.Set(
+            model.StageSet, within=model.TimePeriods,
+            initialize={'Stage_1': model.TimePeriods, 'Stage_2': list()}
+        )
+        model.GenerationTimeInStage = pe.Set(
+            model.StageSet, within=model.TimePeriods,
+            initialize={'Stage_1': list(), 'Stage_2': model.TimePeriods}
+        )
+
+        ##############################################
+        # Network definition (S)
+        ##############################################
+
+        model.TransmissionLines = pe.Set(initialize=branch_attrs['names'])
+        model.HVDCLines = pe.Set(initialize=dc_branch_attrs['names'])
+
+        model.BusFrom = pe.Param(model.TransmissionLines, within=model.Buses,
+                                 initialize=branch_attrs.get('from_bus', dict()))
+        model.BusTo = pe.Param(model.TransmissionLines, within=model.Buses,
+                               initialize=branch_attrs.get('to_bus', dict()))
+
+        model.HVDCBusFrom = pe.Param(
+            model.HVDCLines, within=model.Buses,
+            initialize=dc_branch_attrs.get('from_bus', dict())
+        )
+        model.HVDCBusTo = pe.Param(
+            model.HVDCLines, within=model.Buses,
+            initialize=dc_branch_attrs.get('to_bus', dict())
+        )
+
+        model.LinesTo = pe.Set(model.Buses, within=model.TransmissionLines,
+                               initialize=inlet_branches_by_bus)
+        model.LinesFrom = pe.Set(model.Buses, within=model.TransmissionLines,
+                                 initialize=outlet_branches_by_bus)
+
+        model.HVDCLinesTo = pe.Set(model.Buses, within=model.HVDCLines,
+                                   initialize=dc_inlet_branches_by_bus)
+        model.HVDCLinesFrom = pe.Set(model.Buses, within=model.HVDCLines,
+                                     initialize=dc_outlet_branches_by_bus)
+
     def _warn_neg_impedence(m, v, l):
         if v == 0.:
             logger.error(f"Found zero reactance for line {l}")
@@ -1551,7 +1702,7 @@ def load_base_params(
 
     if renew_costs:
         model.MinimumProductionCost = pe.Param(
-            model.SingleFuelGenerators | model.AllNondispatchableGenerators,
+            model.SingleFuelGenerators | model.AllNondispatchableGenerators, #the union of two different sets
             model.TimePeriods,
             within=pe.NonNegativeReals, initialize=_minimum_production_cost,
             mutable=True
@@ -1863,3 +2014,6 @@ def renew_cost_params(
         ) -> pe.ConcreteModel:
     """This loads unit commitment params from a GridModel object."""
     return load_base_params(model, model_data, renew_costs=True)
+
+##add model parameters
+
