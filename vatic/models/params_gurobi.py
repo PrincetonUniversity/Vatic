@@ -12,7 +12,7 @@ import math
 from ordered_set import OrderedSet
 import pyomo.environ as pe
 
-from ..model_data import VaticModelData
+from vatic.model_data import VaticModelData
 from vatic.engines import Simulator
 from vatic.input import load_input
 
@@ -178,7 +178,7 @@ model._NumTimePeriods = len(time_keys)
 
 model._InitialTime = 1
 #Pyomo start periods from 1
-model._TimePeriods = pe.RangeSet(model._InitialTime, model._NumTimePeriods)
+model._TimePeriods = [i for i in range(model._InitialTime, model._NumTimePeriods+1)]
 TimeMapper = uc_time_helper(model._TimePeriods)
 
 ## For now, hard code these. Probably need to be able to specify in model_data
@@ -571,7 +571,7 @@ def verify_must_run_t0_state_consistency_rule(m, g):
     if t0_state < 0:
         min_down_time = m._ScaledMinimumDownTime[g]
         if abs(t0_state) < min_down_time:
-            for t in range(m._TimePeriods.first(), m._InitialTimePeriodsOffLine[g] + m._TimePeriods.first()):
+            for t in range(m._TimePeriods[0], m._InitialTimePeriodsOffLine[g] + m._TimePeriods[0]):
                 fixed_commitment = m._FixedCommitment[g, t]
                 if (fixed_commitment is not None) and (fixed_commitment == 1):
                     print(
@@ -581,7 +581,7 @@ def verify_must_run_t0_state_consistency_rule(m, g):
     else:  # t0_state > 0
         min_up_time = m._ScaledMinimumUpTime[g]
         if abs(t0_state) < min_up_time:
-            for t in range(m._TimePeriods.first(), m._InitialTimePeriodsOnLine[g] + m._TimePeriods.first()):
+            for t in range(m._TimePeriods[0], m._InitialTimePeriodsOnLine[g] + m._TimePeriods[0]):
                 fixed_commitment = m._FixedCommitment[g, t]
                 if (fixed_commitment is not None) and (fixed_commitment == 0):
                     print(
@@ -679,7 +679,7 @@ model._ShutdownCurve = OrderedDict([(g, shutdown_curve_init_rule(model, g)) for 
 def power_generated_t0_validator(m):
     for g in m._ThermalGenerators:
         v = m._PowerGeneratedT0[g]
-        t = m._TimePeriods.first()
+        t = m._TimePeriods[0]
 
         if m._UnitOnT0[g]:
             v_less_max = v <= m._MaximumPowerOutput[g, t]+ m._NominalRampDownLimit[g]* m._TimePeriodLengthHours

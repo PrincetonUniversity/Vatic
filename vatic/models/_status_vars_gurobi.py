@@ -18,7 +18,7 @@ def garver_3bin_vars(model):
     0097-2460.
 
     '''
-
+    model._status_vars ='garver_3bin_vars'
     if _is_relaxed(model):
         _add_unit_on_vars(model, True)
         _add_unit_start_vars(model, True)
@@ -27,26 +27,29 @@ def garver_3bin_vars(model):
         _add_unit_on_vars(model)
         _add_unit_start_vars(model)
         _add_unit_stop_vars(model)
-
+    #use model.update(); no need to return model as output
+    model.update()
     return
 
 def _add_unit_on_vars(model, relaxed=False):
     # indicator variables for each generator, at each time period.
     if relaxed:
-        UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1)
+        model._UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitOn')
     else:
-        UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY)
+        model._UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitOn')
 
 def _add_unit_start_vars(model, relaxed=False):
     # unit start
     if relaxed:
-        UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1)
+        model._UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStart')
     else:
-        UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY)
+        model._UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStart')
 
 def _add_unit_stop_vars(model, relaxed=False):
     if relaxed:
-        UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1)
+        model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStoop')
     else:
-        UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY)
+        model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStop')
 
+garver_3bin_vars(model)
+#add var names into model

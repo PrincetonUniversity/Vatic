@@ -159,514 +159,515 @@ Minimize
    + 10000 OverGeneration(Chase_3) + 10000 OverGeneration(Chase_4)
    + 10000 OverGeneration(Chifa_1) + 10000 OverGeneration(Chifa_2)
    + 10000 OverGeneration(Chifa_3) + 10000 OverGeneration(Chifa_4)
-   + 10000 OverGeneration(Chuhsi_1) + 10000 OverGeneration(Clark_1)
-   + 10000 OverGeneration(Clark_2) + 10000 OverGeneration(Clark_3)
-   + 10000 OverGeneration(Clark_4) + 10000 OverGeneration(Cobb_1)
-   + 10000 OverGeneration(Cobb_2) + 10000 OverGeneration(Cobb_3)
-   + 10000 OverGeneration(Cobb_4) + 10000 OverGeneration(Cole_1)
-   + 10000 OverGeneration(Cole_2) + 10000 OverGeneration(Cole_3)
-   + 10000 OverGeneration(Cole_4) + 10000 OverGeneration(Comte_1)
-   + 10000 OverGeneration(Comte_2) + 10000 OverGeneration(Comte_3)
-   + 10000 OverGeneration(Comte_4) + ProductionCost(101_CT_1_1)
-   + 0 ProductionCost(101_CT_1_2) + 0 ProductionCost(101_CT_1_3)
-   + 0 ProductionCost(101_CT_1_4) + ProductionCost(101_CT_2_1)
-   + 0 ProductionCost(101_CT_2_2) + 0 ProductionCost(101_CT_2_3)
-   + 0 ProductionCost(101_CT_2_4) + ProductionCost(101_STEAM_3_1)
-   + 0 ProductionCost(101_STEAM_3_2) + 0 ProductionCost(101_STEAM_3_3)
-   + 0 ProductionCost(101_STEAM_3_4) + ProductionCost(101_STEAM_4_1)
-   + 0 ProductionCost(101_STEAM_4_2) + 0 ProductionCost(101_STEAM_4_3)
-   + 0 ProductionCost(101_STEAM_4_4) + ProductionCost(102_CT_1_1)
-   + 0 ProductionCost(102_CT_1_2) + 0 ProductionCost(102_CT_1_3)
-   + 0 ProductionCost(102_CT_1_4) + ProductionCost(102_CT_2_1)
-   + 0 ProductionCost(102_CT_2_2) + 0 ProductionCost(102_CT_2_3)
-   + 0 ProductionCost(102_CT_2_4) + ProductionCost(102_STEAM_3_1)
-   + 0 ProductionCost(102_STEAM_3_2) + 0 ProductionCost(102_STEAM_3_3)
-   + 0 ProductionCost(102_STEAM_3_4) + ProductionCost(102_STEAM_4_1)
-   + 0 ProductionCost(102_STEAM_4_2) + 0 ProductionCost(102_STEAM_4_3)
-   + 0 ProductionCost(102_STEAM_4_4) + ProductionCost(107_CC_1_1)
-   + 0 ProductionCost(107_CC_1_2) + 0 ProductionCost(107_CC_1_3)
-   + 0 ProductionCost(107_CC_1_4) + ProductionCost(113_CT_1_1)
-   + 0 ProductionCost(113_CT_1_2) + 0 ProductionCost(113_CT_1_3)
-   + 0 ProductionCost(113_CT_1_4) + ProductionCost(113_CT_2_1)
-   + 0 ProductionCost(113_CT_2_2) + 0 ProductionCost(113_CT_2_3)
-   + 0 ProductionCost(113_CT_2_4) + ProductionCost(113_CT_3_1)
-   + 0 ProductionCost(113_CT_3_2) + 0 ProductionCost(113_CT_3_3)
-   + 0 ProductionCost(113_CT_3_4) + ProductionCost(113_CT_4_1)
-   + 0 ProductionCost(113_CT_4_2) + 0 ProductionCost(113_CT_4_3)
-   + 0 ProductionCost(113_CT_4_4) + ProductionCost(115_STEAM_1_1)
-   + 0 ProductionCost(115_STEAM_1_2) + 0 ProductionCost(115_STEAM_1_3)
-   + 0 ProductionCost(115_STEAM_1_4) + ProductionCost(115_STEAM_2_1)
-   + 0 ProductionCost(115_STEAM_2_2) + 0 ProductionCost(115_STEAM_2_3)
-   + 0 ProductionCost(115_STEAM_2_4) + ProductionCost(115_STEAM_3_1)
-   + 0 ProductionCost(115_STEAM_3_2) + 0 ProductionCost(115_STEAM_3_3)
-   + 0 ProductionCost(115_STEAM_3_4) + ProductionCost(116_STEAM_1_1)
-   + 0 ProductionCost(116_STEAM_1_2) + 0 ProductionCost(116_STEAM_1_3)
-   + 0 ProductionCost(116_STEAM_1_4) + ProductionCost(118_CC_1_1)
-   + 0 ProductionCost(118_CC_1_2) + 0 ProductionCost(118_CC_1_3)
-   + 0 ProductionCost(118_CC_1_4) + ProductionCost(121_NUCLEAR_1_1)
-   + 0 ProductionCost(121_NUCLEAR_1_2) + 0 ProductionCost(121_NUCLEAR_1_3)
-   + 0 ProductionCost(121_NUCLEAR_1_4) + ProductionCost(123_CT_1_1)
-   + 0 ProductionCost(123_CT_1_2) + 0 ProductionCost(123_CT_1_3)
-   + 0 ProductionCost(123_CT_1_4) + ProductionCost(123_CT_4_1)
-   + 0 ProductionCost(123_CT_4_2) + 0 ProductionCost(123_CT_4_3)
-   + 0 ProductionCost(123_CT_4_4) + ProductionCost(123_CT_5_1)
-   + 0 ProductionCost(123_CT_5_2) + 0 ProductionCost(123_CT_5_3)
-   + 0 ProductionCost(123_CT_5_4) + ProductionCost(123_STEAM_2_1)
-   + 0 ProductionCost(123_STEAM_2_2) + 0 ProductionCost(123_STEAM_2_3)
-   + 0 ProductionCost(123_STEAM_2_4) + ProductionCost(123_STEAM_3_1)
-   + 0 ProductionCost(123_STEAM_3_2) + 0 ProductionCost(123_STEAM_3_3)
-   + 0 ProductionCost(123_STEAM_3_4) + ProductionCost(201_CT_1_1)
-   + 0 ProductionCost(201_CT_1_2) + 0 ProductionCost(201_CT_1_3)
-   + 0 ProductionCost(201_CT_1_4) + ProductionCost(201_CT_2_1)
-   + 0 ProductionCost(201_CT_2_2) + 0 ProductionCost(201_CT_2_3)
-   + 0 ProductionCost(201_CT_2_4) + ProductionCost(201_STEAM_3_1)
-   + 0 ProductionCost(201_STEAM_3_2) + 0 ProductionCost(201_STEAM_3_3)
-   + 0 ProductionCost(201_STEAM_3_4) + ProductionCost(202_CT_1_1)
-   + 0 ProductionCost(202_CT_1_2) + 0 ProductionCost(202_CT_1_3)
-   + 0 ProductionCost(202_CT_1_4) + ProductionCost(202_CT_2_1)
-   + 0 ProductionCost(202_CT_2_2) + 0 ProductionCost(202_CT_2_3)
-   + 0 ProductionCost(202_CT_2_4) + ProductionCost(202_STEAM_3_1)
-   + 0 ProductionCost(202_STEAM_3_2) + 0 ProductionCost(202_STEAM_3_3)
-   + 0 ProductionCost(202_STEAM_3_4) + ProductionCost(202_STEAM_4_1)
-   + 0 ProductionCost(202_STEAM_4_2) + 0 ProductionCost(202_STEAM_4_3)
-   + 0 ProductionCost(202_STEAM_4_4) + ProductionCost(207_CT_1_1)
-   + 0 ProductionCost(207_CT_1_2) + 0 ProductionCost(207_CT_1_3)
-   + 0 ProductionCost(207_CT_1_4) + ProductionCost(207_CT_2_1)
-   + 0 ProductionCost(207_CT_2_2) + 0 ProductionCost(207_CT_2_3)
-   + 0 ProductionCost(207_CT_2_4) + ProductionCost(213_CC_3_1)
-   + 0 ProductionCost(213_CC_3_2) + 0 ProductionCost(213_CC_3_3)
-   + 0 ProductionCost(213_CC_3_4) + ProductionCost(213_CT_1_1)
-   + 0 ProductionCost(213_CT_1_2) + 0 ProductionCost(213_CT_1_3)
-   + 0 ProductionCost(213_CT_1_4) + ProductionCost(213_CT_2_1)
-   + 0 ProductionCost(213_CT_2_2) + 0 ProductionCost(213_CT_2_3)
-   + 0 ProductionCost(213_CT_2_4) + ProductionCost(215_CT_4_1)
-   + 0 ProductionCost(215_CT_4_2) + 0 ProductionCost(215_CT_4_3)
-   + 0 ProductionCost(215_CT_4_4) + ProductionCost(215_CT_5_1)
-   + 0 ProductionCost(215_CT_5_2) + 0 ProductionCost(215_CT_5_3)
-   + 0 ProductionCost(215_CT_5_4) + ProductionCost(216_STEAM_1_1)
-   + 0 ProductionCost(216_STEAM_1_2) + 0 ProductionCost(216_STEAM_1_3)
-   + 0 ProductionCost(216_STEAM_1_4) + ProductionCost(218_CC_1_1)
-   + 0 ProductionCost(218_CC_1_2) + 0 ProductionCost(218_CC_1_3)
-   + 0 ProductionCost(218_CC_1_4) + ProductionCost(221_CC_1_1)
-   + 0 ProductionCost(221_CC_1_2) + 0 ProductionCost(221_CC_1_3)
-   + 0 ProductionCost(221_CC_1_4) + ProductionCost(223_CT_4_1)
-   + 0 ProductionCost(223_CT_4_2) + 0 ProductionCost(223_CT_4_3)
-   + 0 ProductionCost(223_CT_4_4) + ProductionCost(223_CT_5_1)
-   + 0 ProductionCost(223_CT_5_2) + 0 ProductionCost(223_CT_5_3)
-   + 0 ProductionCost(223_CT_5_4) + ProductionCost(223_CT_6_1)
-   + 0 ProductionCost(223_CT_6_2) + 0 ProductionCost(223_CT_6_3)
-   + 0 ProductionCost(223_CT_6_4) + ProductionCost(223_STEAM_1_1)
-   + 0 ProductionCost(223_STEAM_1_2) + 0 ProductionCost(223_STEAM_1_3)
-   + 0 ProductionCost(223_STEAM_1_4) + ProductionCost(223_STEAM_2_1)
-   + 0 ProductionCost(223_STEAM_2_2) + 0 ProductionCost(223_STEAM_2_3)
-   + 0 ProductionCost(223_STEAM_2_4) + ProductionCost(223_STEAM_3_1)
-   + 0 ProductionCost(223_STEAM_3_2) + 0 ProductionCost(223_STEAM_3_3)
-   + 0 ProductionCost(223_STEAM_3_4) + ProductionCost(301_CT_1_1)
-   + 0 ProductionCost(301_CT_1_2) + 0 ProductionCost(301_CT_1_3)
-   + 0 ProductionCost(301_CT_1_4) + ProductionCost(301_CT_2_1)
-   + 0 ProductionCost(301_CT_2_2) + 0 ProductionCost(301_CT_2_3)
-   + 0 ProductionCost(301_CT_2_4) + ProductionCost(301_CT_3_1)
-   + 0 ProductionCost(301_CT_3_2) + 0 ProductionCost(301_CT_3_3)
-   + 0 ProductionCost(301_CT_3_4) + ProductionCost(301_CT_4_1)
-   + 0 ProductionCost(301_CT_4_2) + 0 ProductionCost(301_CT_4_3)
-   + 0 ProductionCost(301_CT_4_4) + ProductionCost(302_CT_1_1)
-   + 0 ProductionCost(302_CT_1_2) + 0 ProductionCost(302_CT_1_3)
-   + 0 ProductionCost(302_CT_1_4) + ProductionCost(302_CT_2_1)
-   + 0 ProductionCost(302_CT_2_2) + 0 ProductionCost(302_CT_2_3)
-   + 0 ProductionCost(302_CT_2_4) + ProductionCost(302_CT_3_1)
-   + 0 ProductionCost(302_CT_3_2) + 0 ProductionCost(302_CT_3_3)
-   + 0 ProductionCost(302_CT_3_4) + ProductionCost(302_CT_4_1)
-   + 0 ProductionCost(302_CT_4_2) + 0 ProductionCost(302_CT_4_3)
-   + 0 ProductionCost(302_CT_4_4) + ProductionCost(307_CT_1_1)
-   + 0 ProductionCost(307_CT_1_2) + 0 ProductionCost(307_CT_1_3)
-   + 0 ProductionCost(307_CT_1_4) + ProductionCost(307_CT_2_1)
-   + 0 ProductionCost(307_CT_2_2) + 0 ProductionCost(307_CT_2_3)
-   + 0 ProductionCost(307_CT_2_4) + ProductionCost(313_CC_1_1)
-   + 0 ProductionCost(313_CC_1_2) + 0 ProductionCost(313_CC_1_3)
-   + 0 ProductionCost(313_CC_1_4) + ProductionCost(315_CT_6_1)
-   + 0 ProductionCost(315_CT_6_2) + 0 ProductionCost(315_CT_6_3)
-   + 0 ProductionCost(315_CT_6_4) + ProductionCost(315_CT_7_1)
-   + 0 ProductionCost(315_CT_7_2) + 0 ProductionCost(315_CT_7_3)
-   + 0 ProductionCost(315_CT_7_4) + ProductionCost(315_CT_8_1)
-   + 0 ProductionCost(315_CT_8_2) + 0 ProductionCost(315_CT_8_3)
-   + 0 ProductionCost(315_CT_8_4) + ProductionCost(315_STEAM_1_1)
-   + 0 ProductionCost(315_STEAM_1_2) + 0 ProductionCost(315_STEAM_1_3)
-   + 0 ProductionCost(315_STEAM_1_4) + ProductionCost(315_STEAM_2_1)
-   + 0 ProductionCost(315_STEAM_2_2) + 0 ProductionCost(315_STEAM_2_3)
-   + 0 ProductionCost(315_STEAM_2_4) + ProductionCost(315_STEAM_3_1)
-   + 0 ProductionCost(315_STEAM_3_2) + 0 ProductionCost(315_STEAM_3_3)
-   + 0 ProductionCost(315_STEAM_3_4) + ProductionCost(315_STEAM_4_1)
-   + 0 ProductionCost(315_STEAM_4_2) + 0 ProductionCost(315_STEAM_4_3)
-   + 0 ProductionCost(315_STEAM_4_4) + ProductionCost(315_STEAM_5_1)
-   + 0 ProductionCost(315_STEAM_5_2) + 0 ProductionCost(315_STEAM_5_3)
-   + 0 ProductionCost(315_STEAM_5_4) + ProductionCost(316_STEAM_1_1)
-   + 0 ProductionCost(316_STEAM_1_2) + 0 ProductionCost(316_STEAM_1_3)
-   + 0 ProductionCost(316_STEAM_1_4) + ProductionCost(318_CC_1_1)
-   + 0 ProductionCost(318_CC_1_2) + 0 ProductionCost(318_CC_1_3)
-   + 0 ProductionCost(318_CC_1_4) + ProductionCost(321_CC_1_1)
-   + 0 ProductionCost(321_CC_1_2) + 0 ProductionCost(321_CC_1_3)
-   + 0 ProductionCost(321_CC_1_4) + ProductionCost(322_CT_5_1)
-   + 0 ProductionCost(322_CT_5_2) + 0 ProductionCost(322_CT_5_3)
-   + 0 ProductionCost(322_CT_5_4) + ProductionCost(322_CT_6_1)
-   + 0 ProductionCost(322_CT_6_2) + 0 ProductionCost(322_CT_6_3)
-   + 0 ProductionCost(322_CT_6_4) + ProductionCost(323_CC_1_1)
-   + 0 ProductionCost(323_CC_1_2) + 0 ProductionCost(323_CC_1_3)
-   + 0 ProductionCost(323_CC_1_4) + ProductionCost(323_CC_2_1)
-   + 0 ProductionCost(323_CC_2_2) + 0 ProductionCost(323_CC_2_3)
-   + 0 ProductionCost(323_CC_2_4) + 1000 ReserveShortfall(1)
-   + 1000 ReserveShortfall(2) + 1000 ReserveShortfall(3)
-   + 1000 ReserveShortfall(4) + ShutdownCost(101_CT_1_1)
-   + ShutdownCost(101_CT_1_2) + ShutdownCost(101_CT_1_3)
-   + ShutdownCost(101_CT_1_4) + ShutdownCost(101_CT_2_1)
-   + ShutdownCost(101_CT_2_2) + ShutdownCost(101_CT_2_3)
-   + ShutdownCost(101_CT_2_4) + ShutdownCost(101_STEAM_3_1)
-   + ShutdownCost(101_STEAM_3_2) + ShutdownCost(101_STEAM_3_3)
-   + ShutdownCost(101_STEAM_3_4) + ShutdownCost(101_STEAM_4_1)
-   + ShutdownCost(101_STEAM_4_2) + ShutdownCost(101_STEAM_4_3)
-   + ShutdownCost(101_STEAM_4_4) + ShutdownCost(102_CT_1_1)
-   + ShutdownCost(102_CT_1_2) + ShutdownCost(102_CT_1_3)
-   + ShutdownCost(102_CT_1_4) + ShutdownCost(102_CT_2_1)
-   + ShutdownCost(102_CT_2_2) + ShutdownCost(102_CT_2_3)
-   + ShutdownCost(102_CT_2_4) + ShutdownCost(102_STEAM_3_1)
-   + ShutdownCost(102_STEAM_3_2) + ShutdownCost(102_STEAM_3_3)
-   + ShutdownCost(102_STEAM_3_4) + ShutdownCost(102_STEAM_4_1)
-   + ShutdownCost(102_STEAM_4_2) + ShutdownCost(102_STEAM_4_3)
-   + ShutdownCost(102_STEAM_4_4) + ShutdownCost(107_CC_1_1)
-   + ShutdownCost(107_CC_1_2) + ShutdownCost(107_CC_1_3)
-   + ShutdownCost(107_CC_1_4) + ShutdownCost(113_CT_1_1)
-   + ShutdownCost(113_CT_1_2) + ShutdownCost(113_CT_1_3)
-   + ShutdownCost(113_CT_1_4) + ShutdownCost(113_CT_2_1)
-   + ShutdownCost(113_CT_2_2) + ShutdownCost(113_CT_2_3)
-   + ShutdownCost(113_CT_2_4) + ShutdownCost(113_CT_3_1)
-   + ShutdownCost(113_CT_3_2) + ShutdownCost(113_CT_3_3)
-   + ShutdownCost(113_CT_3_4) + ShutdownCost(113_CT_4_1)
-   + ShutdownCost(113_CT_4_2) + ShutdownCost(113_CT_4_3)
-   + ShutdownCost(113_CT_4_4) + ShutdownCost(115_STEAM_1_1)
-   + ShutdownCost(115_STEAM_1_2) + ShutdownCost(115_STEAM_1_3)
-   + ShutdownCost(115_STEAM_1_4) + ShutdownCost(115_STEAM_2_1)
-   + ShutdownCost(115_STEAM_2_2) + ShutdownCost(115_STEAM_2_3)
-   + ShutdownCost(115_STEAM_2_4) + ShutdownCost(115_STEAM_3_1)
-   + ShutdownCost(115_STEAM_3_2) + ShutdownCost(115_STEAM_3_3)
-   + ShutdownCost(115_STEAM_3_4) + ShutdownCost(116_STEAM_1_1)
-   + ShutdownCost(116_STEAM_1_2) + ShutdownCost(116_STEAM_1_3)
-   + ShutdownCost(116_STEAM_1_4) + ShutdownCost(118_CC_1_1)
-   + ShutdownCost(118_CC_1_2) + ShutdownCost(118_CC_1_3)
-   + ShutdownCost(118_CC_1_4) + ShutdownCost(121_NUCLEAR_1_1)
-   + ShutdownCost(121_NUCLEAR_1_2) + ShutdownCost(121_NUCLEAR_1_3)
-   + ShutdownCost(121_NUCLEAR_1_4) + ShutdownCost(123_CT_1_1)
-   + ShutdownCost(123_CT_1_2) + ShutdownCost(123_CT_1_3)
-   + ShutdownCost(123_CT_1_4) + ShutdownCost(123_CT_4_1)
-   + ShutdownCost(123_CT_4_2) + ShutdownCost(123_CT_4_3)
-   + ShutdownCost(123_CT_4_4) + ShutdownCost(123_CT_5_1)
-   + ShutdownCost(123_CT_5_2) + ShutdownCost(123_CT_5_3)
-   + ShutdownCost(123_CT_5_4) + ShutdownCost(123_STEAM_2_1)
-   + ShutdownCost(123_STEAM_2_2) + ShutdownCost(123_STEAM_2_3)
-   + ShutdownCost(123_STEAM_2_4) + ShutdownCost(123_STEAM_3_1)
-   + ShutdownCost(123_STEAM_3_2) + ShutdownCost(123_STEAM_3_3)
-   + ShutdownCost(123_STEAM_3_4) + ShutdownCost(201_CT_1_1)
-   + ShutdownCost(201_CT_1_2) + ShutdownCost(201_CT_1_3)
-   + ShutdownCost(201_CT_1_4) + ShutdownCost(201_CT_2_1)
-   + ShutdownCost(201_CT_2_2) + ShutdownCost(201_CT_2_3)
-   + ShutdownCost(201_CT_2_4) + ShutdownCost(201_STEAM_3_1)
-   + ShutdownCost(201_STEAM_3_2) + ShutdownCost(201_STEAM_3_3)
-   + ShutdownCost(201_STEAM_3_4) + ShutdownCost(202_CT_1_1)
-   + ShutdownCost(202_CT_1_2) + ShutdownCost(202_CT_1_3)
-   + ShutdownCost(202_CT_1_4) + ShutdownCost(202_CT_2_1)
-   + ShutdownCost(202_CT_2_2) + ShutdownCost(202_CT_2_3)
-   + ShutdownCost(202_CT_2_4) + ShutdownCost(202_STEAM_3_1)
-   + ShutdownCost(202_STEAM_3_2) + ShutdownCost(202_STEAM_3_3)
-   + ShutdownCost(202_STEAM_3_4) + ShutdownCost(202_STEAM_4_1)
-   + ShutdownCost(202_STEAM_4_2) + ShutdownCost(202_STEAM_4_3)
-   + ShutdownCost(202_STEAM_4_4) + ShutdownCost(207_CT_1_1)
-   + ShutdownCost(207_CT_1_2) + ShutdownCost(207_CT_1_3)
-   + ShutdownCost(207_CT_1_4) + ShutdownCost(207_CT_2_1)
-   + ShutdownCost(207_CT_2_2) + ShutdownCost(207_CT_2_3)
-   + ShutdownCost(207_CT_2_4) + ShutdownCost(213_CC_3_1)
-   + ShutdownCost(213_CC_3_2) + ShutdownCost(213_CC_3_3)
-   + ShutdownCost(213_CC_3_4) + ShutdownCost(213_CT_1_1)
-   + ShutdownCost(213_CT_1_2) + ShutdownCost(213_CT_1_3)
-   + ShutdownCost(213_CT_1_4) + ShutdownCost(213_CT_2_1)
-   + ShutdownCost(213_CT_2_2) + ShutdownCost(213_CT_2_3)
-   + ShutdownCost(213_CT_2_4) + ShutdownCost(215_CT_4_1)
-   + ShutdownCost(215_CT_4_2) + ShutdownCost(215_CT_4_3)
-   + ShutdownCost(215_CT_4_4) + ShutdownCost(215_CT_5_1)
-   + ShutdownCost(215_CT_5_2) + ShutdownCost(215_CT_5_3)
-   + ShutdownCost(215_CT_5_4) + ShutdownCost(216_STEAM_1_1)
-   + ShutdownCost(216_STEAM_1_2) + ShutdownCost(216_STEAM_1_3)
-   + ShutdownCost(216_STEAM_1_4) + ShutdownCost(218_CC_1_1)
-   + ShutdownCost(218_CC_1_2) + ShutdownCost(218_CC_1_3)
-   + ShutdownCost(218_CC_1_4) + ShutdownCost(221_CC_1_1)
-   + ShutdownCost(221_CC_1_2) + ShutdownCost(221_CC_1_3)
-   + ShutdownCost(221_CC_1_4) + ShutdownCost(223_CT_4_1)
-   + ShutdownCost(223_CT_4_2) + ShutdownCost(223_CT_4_3)
-   + ShutdownCost(223_CT_4_4) + ShutdownCost(223_CT_5_1)
-   + ShutdownCost(223_CT_5_2) + ShutdownCost(223_CT_5_3)
-   + ShutdownCost(223_CT_5_4) + ShutdownCost(223_CT_6_1)
-   + ShutdownCost(223_CT_6_2) + ShutdownCost(223_CT_6_3)
-   + ShutdownCost(223_CT_6_4) + ShutdownCost(223_STEAM_1_1)
-   + ShutdownCost(223_STEAM_1_2) + ShutdownCost(223_STEAM_1_3)
-   + ShutdownCost(223_STEAM_1_4) + ShutdownCost(223_STEAM_2_1)
-   + ShutdownCost(223_STEAM_2_2) + ShutdownCost(223_STEAM_2_3)
-   + ShutdownCost(223_STEAM_2_4) + ShutdownCost(223_STEAM_3_1)
-   + ShutdownCost(223_STEAM_3_2) + ShutdownCost(223_STEAM_3_3)
-   + ShutdownCost(223_STEAM_3_4) + ShutdownCost(301_CT_1_1)
-   + ShutdownCost(301_CT_1_2) + ShutdownCost(301_CT_1_3)
-   + ShutdownCost(301_CT_1_4) + ShutdownCost(301_CT_2_1)
-   + ShutdownCost(301_CT_2_2) + ShutdownCost(301_CT_2_3)
-   + ShutdownCost(301_CT_2_4) + ShutdownCost(301_CT_3_1)
-   + ShutdownCost(301_CT_3_2) + ShutdownCost(301_CT_3_3)
-   + ShutdownCost(301_CT_3_4) + ShutdownCost(301_CT_4_1)
-   + ShutdownCost(301_CT_4_2) + ShutdownCost(301_CT_4_3)
-   + ShutdownCost(301_CT_4_4) + ShutdownCost(302_CT_1_1)
-   + ShutdownCost(302_CT_1_2) + ShutdownCost(302_CT_1_3)
-   + ShutdownCost(302_CT_1_4) + ShutdownCost(302_CT_2_1)
-   + ShutdownCost(302_CT_2_2) + ShutdownCost(302_CT_2_3)
-   + ShutdownCost(302_CT_2_4) + ShutdownCost(302_CT_3_1)
-   + ShutdownCost(302_CT_3_2) + ShutdownCost(302_CT_3_3)
-   + ShutdownCost(302_CT_3_4) + ShutdownCost(302_CT_4_1)
-   + ShutdownCost(302_CT_4_2) + ShutdownCost(302_CT_4_3)
-   + ShutdownCost(302_CT_4_4) + ShutdownCost(307_CT_1_1)
-   + ShutdownCost(307_CT_1_2) + ShutdownCost(307_CT_1_3)
-   + ShutdownCost(307_CT_1_4) + ShutdownCost(307_CT_2_1)
-   + ShutdownCost(307_CT_2_2) + ShutdownCost(307_CT_2_3)
-   + ShutdownCost(307_CT_2_4) + ShutdownCost(313_CC_1_1)
-   + ShutdownCost(313_CC_1_2) + ShutdownCost(313_CC_1_3)
-   + ShutdownCost(313_CC_1_4) + ShutdownCost(315_CT_6_1)
-   + ShutdownCost(315_CT_6_2) + ShutdownCost(315_CT_6_3)
-   + ShutdownCost(315_CT_6_4) + ShutdownCost(315_CT_7_1)
-   + ShutdownCost(315_CT_7_2) + ShutdownCost(315_CT_7_3)
-   + ShutdownCost(315_CT_7_4) + ShutdownCost(315_CT_8_1)
-   + ShutdownCost(315_CT_8_2) + ShutdownCost(315_CT_8_3)
-   + ShutdownCost(315_CT_8_4) + ShutdownCost(315_STEAM_1_1)
-   + ShutdownCost(315_STEAM_1_2) + ShutdownCost(315_STEAM_1_3)
-   + ShutdownCost(315_STEAM_1_4) + ShutdownCost(315_STEAM_2_1)
-   + ShutdownCost(315_STEAM_2_2) + ShutdownCost(315_STEAM_2_3)
-   + ShutdownCost(315_STEAM_2_4) + ShutdownCost(315_STEAM_3_1)
-   + ShutdownCost(315_STEAM_3_2) + ShutdownCost(315_STEAM_3_3)
-   + ShutdownCost(315_STEAM_3_4) + ShutdownCost(315_STEAM_4_1)
-   + ShutdownCost(315_STEAM_4_2) + ShutdownCost(315_STEAM_4_3)
-   + ShutdownCost(315_STEAM_4_4) + ShutdownCost(315_STEAM_5_1)
-   + ShutdownCost(315_STEAM_5_2) + ShutdownCost(315_STEAM_5_3)
-   + ShutdownCost(315_STEAM_5_4) + ShutdownCost(316_STEAM_1_1)
-   + ShutdownCost(316_STEAM_1_2) + ShutdownCost(316_STEAM_1_3)
-   + ShutdownCost(316_STEAM_1_4) + ShutdownCost(318_CC_1_1)
-   + ShutdownCost(318_CC_1_2) + ShutdownCost(318_CC_1_3)
-   + ShutdownCost(318_CC_1_4) + ShutdownCost(321_CC_1_1)
-   + ShutdownCost(321_CC_1_2) + ShutdownCost(321_CC_1_3)
-   + ShutdownCost(321_CC_1_4) + ShutdownCost(322_CT_5_1)
-   + ShutdownCost(322_CT_5_2) + ShutdownCost(322_CT_5_3)
-   + ShutdownCost(322_CT_5_4) + ShutdownCost(322_CT_6_1)
-   + ShutdownCost(322_CT_6_2) + ShutdownCost(322_CT_6_3)
-   + ShutdownCost(322_CT_6_4) + ShutdownCost(323_CC_1_1)
-   + ShutdownCost(323_CC_1_2) + ShutdownCost(323_CC_1_3)
-   + ShutdownCost(323_CC_1_4) + ShutdownCost(323_CC_2_1)
-   + ShutdownCost(323_CC_2_2) + ShutdownCost(323_CC_2_3)
-   + ShutdownCost(323_CC_2_4) + StartupCost(101_CT_1_1)
-   + StartupCost(101_CT_1_2) + StartupCost(101_CT_1_3)
-   + StartupCost(101_CT_1_4) + StartupCost(101_CT_2_1)
-   + StartupCost(101_CT_2_2) + StartupCost(101_CT_2_3)
-   + StartupCost(101_CT_2_4) + StartupCost(101_STEAM_3_1)
-   + StartupCost(101_STEAM_3_2) + StartupCost(101_STEAM_3_3)
-   + StartupCost(101_STEAM_3_4) + StartupCost(101_STEAM_4_1)
-   + StartupCost(101_STEAM_4_2) + StartupCost(101_STEAM_4_3)
-   + StartupCost(101_STEAM_4_4) + StartupCost(102_CT_1_1)
-   + StartupCost(102_CT_1_2) + StartupCost(102_CT_1_3)
-   + StartupCost(102_CT_1_4) + StartupCost(102_CT_2_1)
-   + StartupCost(102_CT_2_2) + StartupCost(102_CT_2_3)
-   + StartupCost(102_CT_2_4) + StartupCost(102_STEAM_3_1)
-   + StartupCost(102_STEAM_3_2) + StartupCost(102_STEAM_3_3)
-   + StartupCost(102_STEAM_3_4) + StartupCost(102_STEAM_4_1)
-   + StartupCost(102_STEAM_4_2) + StartupCost(102_STEAM_4_3)
-   + StartupCost(102_STEAM_4_4) + StartupCost(107_CC_1_1)
-   + StartupCost(107_CC_1_2) + StartupCost(107_CC_1_3)
-   + StartupCost(107_CC_1_4) + StartupCost(113_CT_1_1)
-   + StartupCost(113_CT_1_2) + StartupCost(113_CT_1_3)
-   + StartupCost(113_CT_1_4) + StartupCost(113_CT_2_1)
-   + StartupCost(113_CT_2_2) + StartupCost(113_CT_2_3)
-   + StartupCost(113_CT_2_4) + StartupCost(113_CT_3_1)
-   + StartupCost(113_CT_3_2) + StartupCost(113_CT_3_3)
-   + StartupCost(113_CT_3_4) + StartupCost(113_CT_4_1)
-   + StartupCost(113_CT_4_2) + StartupCost(113_CT_4_3)
-   + StartupCost(113_CT_4_4) + StartupCost(115_STEAM_1_1)
-   + StartupCost(115_STEAM_1_2) + StartupCost(115_STEAM_1_3)
-   + StartupCost(115_STEAM_1_4) + StartupCost(115_STEAM_2_1)
-   + StartupCost(115_STEAM_2_2) + StartupCost(115_STEAM_2_3)
-   + StartupCost(115_STEAM_2_4) + StartupCost(115_STEAM_3_1)
-   + StartupCost(115_STEAM_3_2) + StartupCost(115_STEAM_3_3)
-   + StartupCost(115_STEAM_3_4) + StartupCost(116_STEAM_1_1)
-   + StartupCost(116_STEAM_1_2) + StartupCost(116_STEAM_1_3)
-   + StartupCost(116_STEAM_1_4) + StartupCost(118_CC_1_1)
-   + StartupCost(118_CC_1_2) + StartupCost(118_CC_1_3)
-   + StartupCost(118_CC_1_4) + StartupCost(121_NUCLEAR_1_1)
-   + StartupCost(121_NUCLEAR_1_2) + StartupCost(121_NUCLEAR_1_3)
-   + StartupCost(121_NUCLEAR_1_4) + StartupCost(123_CT_1_1)
-   + StartupCost(123_CT_1_2) + StartupCost(123_CT_1_3)
-   + StartupCost(123_CT_1_4) + StartupCost(123_CT_4_1)
-   + StartupCost(123_CT_4_2) + StartupCost(123_CT_4_3)
-   + StartupCost(123_CT_4_4) + StartupCost(123_CT_5_1)
-   + StartupCost(123_CT_5_2) + StartupCost(123_CT_5_3)
-   + StartupCost(123_CT_5_4) + StartupCost(123_STEAM_2_1)
-   + StartupCost(123_STEAM_2_2) + StartupCost(123_STEAM_2_3)
-   + StartupCost(123_STEAM_2_4) + StartupCost(123_STEAM_3_1)
-   + StartupCost(123_STEAM_3_2) + StartupCost(123_STEAM_3_3)
-   + StartupCost(123_STEAM_3_4) + StartupCost(201_CT_1_1)
-   + StartupCost(201_CT_1_2) + StartupCost(201_CT_1_3)
-   + StartupCost(201_CT_1_4) + StartupCost(201_CT_2_1)
-   + StartupCost(201_CT_2_2) + StartupCost(201_CT_2_3)
-   + StartupCost(201_CT_2_4) + StartupCost(201_STEAM_3_1)
-   + StartupCost(201_STEAM_3_2) + StartupCost(201_STEAM_3_3)
-   + StartupCost(201_STEAM_3_4) + StartupCost(202_CT_1_1)
-   + StartupCost(202_CT_1_2) + StartupCost(202_CT_1_3)
-   + StartupCost(202_CT_1_4) + StartupCost(202_CT_2_1)
-   + StartupCost(202_CT_2_2) + StartupCost(202_CT_2_3)
-   + StartupCost(202_CT_2_4) + StartupCost(202_STEAM_3_1)
-   + StartupCost(202_STEAM_3_2) + StartupCost(202_STEAM_3_3)
-   + StartupCost(202_STEAM_3_4) + StartupCost(202_STEAM_4_1)
-   + StartupCost(202_STEAM_4_2) + StartupCost(202_STEAM_4_3)
-   + StartupCost(202_STEAM_4_4) + StartupCost(207_CT_1_1)
-   + StartupCost(207_CT_1_2) + StartupCost(207_CT_1_3)
-   + StartupCost(207_CT_1_4) + StartupCost(207_CT_2_1)
-   + StartupCost(207_CT_2_2) + StartupCost(207_CT_2_3)
-   + StartupCost(207_CT_2_4) + StartupCost(213_CC_3_1)
-   + StartupCost(213_CC_3_2) + StartupCost(213_CC_3_3)
-   + StartupCost(213_CC_3_4) + StartupCost(213_CT_1_1)
-   + StartupCost(213_CT_1_2) + StartupCost(213_CT_1_3)
-   + StartupCost(213_CT_1_4) + StartupCost(213_CT_2_1)
-   + StartupCost(213_CT_2_2) + StartupCost(213_CT_2_3)
-   + StartupCost(213_CT_2_4) + StartupCost(215_CT_4_1)
-   + StartupCost(215_CT_4_2) + StartupCost(215_CT_4_3)
-   + StartupCost(215_CT_4_4) + StartupCost(215_CT_5_1)
-   + StartupCost(215_CT_5_2) + StartupCost(215_CT_5_3)
-   + StartupCost(215_CT_5_4) + StartupCost(216_STEAM_1_1)
-   + StartupCost(216_STEAM_1_2) + StartupCost(216_STEAM_1_3)
-   + StartupCost(216_STEAM_1_4) + StartupCost(218_CC_1_1)
-   + StartupCost(218_CC_1_2) + StartupCost(218_CC_1_3)
-   + StartupCost(218_CC_1_4) + StartupCost(221_CC_1_1)
-   + StartupCost(221_CC_1_2) + StartupCost(221_CC_1_3)
-   + StartupCost(221_CC_1_4) + StartupCost(223_CT_4_1)
-   + StartupCost(223_CT_4_2) + StartupCost(223_CT_4_3)
-   + StartupCost(223_CT_4_4) + StartupCost(223_CT_5_1)
-   + StartupCost(223_CT_5_2) + StartupCost(223_CT_5_3)
-   + StartupCost(223_CT_5_4) + StartupCost(223_CT_6_1)
-   + StartupCost(223_CT_6_2) + StartupCost(223_CT_6_3)
-   + StartupCost(223_CT_6_4) + StartupCost(223_STEAM_1_1)
-   + StartupCost(223_STEAM_1_2) + StartupCost(223_STEAM_1_3)
-   + StartupCost(223_STEAM_1_4) + StartupCost(223_STEAM_2_1)
-   + StartupCost(223_STEAM_2_2) + StartupCost(223_STEAM_2_3)
-   + StartupCost(223_STEAM_2_4) + StartupCost(223_STEAM_3_1)
-   + StartupCost(223_STEAM_3_2) + StartupCost(223_STEAM_3_3)
-   + StartupCost(223_STEAM_3_4) + StartupCost(301_CT_1_1)
-   + StartupCost(301_CT_1_2) + StartupCost(301_CT_1_3)
-   + StartupCost(301_CT_1_4) + StartupCost(301_CT_2_1)
-   + StartupCost(301_CT_2_2) + StartupCost(301_CT_2_3)
-   + StartupCost(301_CT_2_4) + StartupCost(301_CT_3_1)
-   + StartupCost(301_CT_3_2) + StartupCost(301_CT_3_3)
-   + StartupCost(301_CT_3_4) + StartupCost(301_CT_4_1)
-   + StartupCost(301_CT_4_2) + StartupCost(301_CT_4_3)
-   + StartupCost(301_CT_4_4) + StartupCost(302_CT_1_1)
-   + StartupCost(302_CT_1_2) + StartupCost(302_CT_1_3)
-   + StartupCost(302_CT_1_4) + StartupCost(302_CT_2_1)
-   + StartupCost(302_CT_2_2) + StartupCost(302_CT_2_3)
-   + StartupCost(302_CT_2_4) + StartupCost(302_CT_3_1)
-   + StartupCost(302_CT_3_2) + StartupCost(302_CT_3_3)
-   + StartupCost(302_CT_3_4) + StartupCost(302_CT_4_1)
-   + StartupCost(302_CT_4_2) + StartupCost(302_CT_4_3)
-   + StartupCost(302_CT_4_4) + StartupCost(307_CT_1_1)
-   + StartupCost(307_CT_1_2) + StartupCost(307_CT_1_3)
-   + StartupCost(307_CT_1_4) + StartupCost(307_CT_2_1)
-   + StartupCost(307_CT_2_2) + StartupCost(307_CT_2_3)
-   + StartupCost(307_CT_2_4) + StartupCost(313_CC_1_1)
-   + StartupCost(313_CC_1_2) + StartupCost(313_CC_1_3)
-   + StartupCost(313_CC_1_4) + StartupCost(315_CT_6_1)
-   + StartupCost(315_CT_6_2) + StartupCost(315_CT_6_3)
-   + StartupCost(315_CT_6_4) + StartupCost(315_CT_7_1)
-   + StartupCost(315_CT_7_2) + StartupCost(315_CT_7_3)
-   + StartupCost(315_CT_7_4) + StartupCost(315_CT_8_1)
-   + StartupCost(315_CT_8_2) + StartupCost(315_CT_8_3)
-   + StartupCost(315_CT_8_4) + StartupCost(315_STEAM_1_1)
-   + StartupCost(315_STEAM_1_2) + StartupCost(315_STEAM_1_3)
-   + StartupCost(315_STEAM_1_4) + StartupCost(315_STEAM_2_1)
-   + StartupCost(315_STEAM_2_2) + StartupCost(315_STEAM_2_3)
-   + StartupCost(315_STEAM_2_4) + StartupCost(315_STEAM_3_1)
-   + StartupCost(315_STEAM_3_2) + StartupCost(315_STEAM_3_3)
-   + StartupCost(315_STEAM_3_4) + StartupCost(315_STEAM_4_1)
-   + StartupCost(315_STEAM_4_2) + StartupCost(315_STEAM_4_3)
-   + StartupCost(315_STEAM_4_4) + StartupCost(315_STEAM_5_1)
-   + StartupCost(315_STEAM_5_2) + StartupCost(315_STEAM_5_3)
-   + StartupCost(315_STEAM_5_4) + StartupCost(316_STEAM_1_1)
-   + StartupCost(316_STEAM_1_2) + StartupCost(316_STEAM_1_3)
-   + StartupCost(316_STEAM_1_4) + StartupCost(318_CC_1_1)
-   + StartupCost(318_CC_1_2) + StartupCost(318_CC_1_3)
-   + StartupCost(318_CC_1_4) + StartupCost(321_CC_1_1)
-   + StartupCost(321_CC_1_2) + StartupCost(321_CC_1_3)
-   + StartupCost(321_CC_1_4) + StartupCost(322_CT_5_1)
-   + StartupCost(322_CT_5_2) + StartupCost(322_CT_5_3)
-   + StartupCost(322_CT_5_4) + StartupCost(322_CT_6_1)
-   + StartupCost(322_CT_6_2) + StartupCost(322_CT_6_3)
-   + StartupCost(322_CT_6_4) + StartupCost(323_CC_1_1)
-   + StartupCost(323_CC_1_2) + StartupCost(323_CC_1_3)
-   + StartupCost(323_CC_1_4) + StartupCost(323_CC_2_1)
-   + StartupCost(323_CC_2_2) + StartupCost(323_CC_2_3)
-   + StartupCost(323_CC_2_4) + 0 UnitOn(101_CT_1_1) + 0 UnitOn(101_CT_1_2)
-   + 0 UnitOn(101_CT_1_3) + 0 UnitOn(101_CT_1_4) + 0 UnitOn(101_CT_2_1)
-   + 0 UnitOn(101_CT_2_2) + 0 UnitOn(101_CT_2_3) + 0 UnitOn(101_CT_2_4)
-   + 0 UnitOn(101_STEAM_3_1) + 0 UnitOn(101_STEAM_3_2)
-   + 0 UnitOn(101_STEAM_3_3) + 0 UnitOn(101_STEAM_3_4)
-   + 0 UnitOn(101_STEAM_4_1) + 0 UnitOn(101_STEAM_4_2)
-   + 0 UnitOn(101_STEAM_4_3) + 0 UnitOn(101_STEAM_4_4)
-   + 0 UnitOn(102_CT_1_1) + 0 UnitOn(102_CT_1_2) + 0 UnitOn(102_CT_1_3)
-   + 0 UnitOn(102_CT_1_4) + 0 UnitOn(102_CT_2_1) + 0 UnitOn(102_CT_2_2)
-   + 0 UnitOn(102_CT_2_3) + 0 UnitOn(102_CT_2_4) + 0 UnitOn(102_STEAM_3_1)
-   + 0 UnitOn(102_STEAM_3_2) + 0 UnitOn(102_STEAM_3_3)
-   + 0 UnitOn(102_STEAM_3_4) + 0 UnitOn(102_STEAM_4_1)
-   + 0 UnitOn(102_STEAM_4_2) + 0 UnitOn(102_STEAM_4_3)
-   + 0 UnitOn(102_STEAM_4_4) + 0 UnitOn(107_CC_1_1) + 0 UnitOn(107_CC_1_2)
-   + 0 UnitOn(107_CC_1_3) + 0 UnitOn(107_CC_1_4) + 0 UnitOn(113_CT_1_1)
-   + 0 UnitOn(113_CT_1_2) + 0 UnitOn(113_CT_1_3) + 0 UnitOn(113_CT_1_4)
-   + 0 UnitOn(113_CT_2_1) + 0 UnitOn(113_CT_2_2) + 0 UnitOn(113_CT_2_3)
-   + 0 UnitOn(113_CT_2_4) + 0 UnitOn(113_CT_3_1) + 0 UnitOn(113_CT_3_2)
-   + 0 UnitOn(113_CT_3_3) + 0 UnitOn(113_CT_3_4) + 0 UnitOn(113_CT_4_1)
-   + 0 UnitOn(113_CT_4_2) + 0 UnitOn(113_CT_4_3) + 0 UnitOn(113_CT_4_4)
-   + 0 UnitOn(115_STEAM_1_1) + 0 UnitOn(115_STEAM_1_2)
-   + 0 UnitOn(115_STEAM_1_3) + 0 UnitOn(115_STEAM_1_4)
-   + 0 UnitOn(115_STEAM_2_1) + 0 UnitOn(115_STEAM_2_2)
-   + 0 UnitOn(115_STEAM_2_3) + 0 UnitOn(115_STEAM_2_4)
-   + 0 UnitOn(115_STEAM_3_1) + 0 UnitOn(115_STEAM_3_2)
-   + 0 UnitOn(115_STEAM_3_3) + 0 UnitOn(115_STEAM_3_4)
-   + 0 UnitOn(116_STEAM_1_1) + 0 UnitOn(116_STEAM_1_2)
-   + 0 UnitOn(116_STEAM_1_3) + 0 UnitOn(116_STEAM_1_4)
-   + 0 UnitOn(118_CC_1_1) + 0 UnitOn(118_CC_1_2) + 0 UnitOn(118_CC_1_3)
-   + 0 UnitOn(118_CC_1_4) + 0 UnitOn(121_NUCLEAR_1_1)
-   + 0 UnitOn(121_NUCLEAR_1_2) + 0 UnitOn(121_NUCLEAR_1_3)
-   + 0 UnitOn(121_NUCLEAR_1_4) + 0 UnitOn(123_CT_1_1)
-   + 0 UnitOn(123_CT_1_2) + 0 UnitOn(123_CT_1_3) + 0 UnitOn(123_CT_1_4)
-   + 0 UnitOn(123_CT_4_1) + 0 UnitOn(123_CT_4_2) + 0 UnitOn(123_CT_4_3)
-   + 0 UnitOn(123_CT_4_4) + 0 UnitOn(123_CT_5_1) + 0 UnitOn(123_CT_5_2)
-   + 0 UnitOn(123_CT_5_3) + 0 UnitOn(123_CT_5_4) + 0 UnitOn(123_STEAM_2_1)
-   + 0 UnitOn(123_STEAM_2_2) + 0 UnitOn(123_STEAM_2_3)
-   + 0 UnitOn(123_STEAM_2_4) + 0 UnitOn(123_STEAM_3_1)
-   + 0 UnitOn(123_STEAM_3_2) + 0 UnitOn(123_STEAM_3_3)
-   + 0 UnitOn(123_STEAM_3_4) + 0 UnitOn(201_CT_1_1) + 0 UnitOn(201_CT_1_2)
-   + 0 UnitOn(201_CT_1_3) + 0 UnitOn(201_CT_1_4) + 0 UnitOn(201_CT_2_1)
-   + 0 UnitOn(201_CT_2_2) + 0 UnitOn(201_CT_2_3) + 0 UnitOn(201_CT_2_4)
-   + 0 UnitOn(201_STEAM_3_1) + 0 UnitOn(201_STEAM_3_2)
-   + 0 UnitOn(201_STEAM_3_3) + 0 UnitOn(201_STEAM_3_4)
-   + 0 UnitOn(202_CT_1_1) + 0 UnitOn(202_CT_1_2) + 0 UnitOn(202_CT_1_3)
-   + 0 UnitOn(202_CT_1_4) + 0 UnitOn(202_CT_2_1) + 0 UnitOn(202_CT_2_2)
-   + 0 UnitOn(202_CT_2_3) + 0 UnitOn(202_CT_2_4) + 0 UnitOn(202_STEAM_3_1)
-   + 0 UnitOn(202_STEAM_3_2) + 0 UnitOn(202_STEAM_3_3)
-   + 0 UnitOn(202_STEAM_3_4) + 0 UnitOn(202_STEAM_4_1)
-   + 0 UnitOn(202_STEAM_4_2) + 0 UnitOn(202_STEAM_4_3)
-   + 0 UnitOn(202_STEAM_4_4) + 0 UnitOn(207_CT_1_1) + 0 UnitOn(207_CT_1_2)
-   + 0 UnitOn(207_CT_1_3) + 0 UnitOn(207_CT_1_4) + 0 UnitOn(207_CT_2_1)
-   + 0 UnitOn(207_CT_2_2) + 0 UnitOn(207_CT_2_3) + 0 UnitOn(207_CT_2_4)
-   + 0 UnitOn(213_CC_3_1) + 0 UnitOn(213_CC_3_2) + 0 UnitOn(213_CC_3_3)
-   + 0 UnitOn(213_CC_3_4) + 0 UnitOn(213_CT_1_1) + 0 UnitOn(213_CT_1_2)
-   + 0 UnitOn(213_CT_1_3) + 0 UnitOn(213_CT_1_4) + 0 UnitOn(213_CT_2_1)
-   + 0 UnitOn(213_CT_2_2) + 0 UnitOn(213_CT_2_3) + 0 UnitOn(213_CT_2_4)
-   + 0 UnitOn(215_CT_4_1) + 0 UnitOn(215_CT_4_2) + 0 UnitOn(215_CT_4_3)
-   + 0 UnitOn(215_CT_4_4) + 0 UnitOn(215_CT_5_1) + 0 UnitOn(215_CT_5_2)
-   + 0 UnitOn(215_CT_5_3) + 0 UnitOn(215_CT_5_4) + 0 UnitOn(216_STEAM_1_1)
+   + 10000 OverGeneration(Chuhsi_1) + 10000 OverGeneration(Chuhsi_2)
+   + 10000 OverGeneration(Clark_1) + 10000 OverGeneration(Clark_2)
+   + 10000 OverGeneration(Clark_3) + 10000 OverGeneration(Clark_4)
+   + 10000 OverGeneration(Cobb_1) + 10000 OverGeneration(Cobb_2)
+   + 10000 OverGeneration(Cobb_3) + 10000 OverGeneration(Cobb_4)
+   + 10000 OverGeneration(Cole_1) + 10000 OverGeneration(Cole_2)
+   + 10000 OverGeneration(Cole_3) + 10000 OverGeneration(Cole_4)
+   + 10000 OverGeneration(Comte_1) + 10000 OverGeneration(Comte_2)
+   + 10000 OverGeneration(Comte_3) + 10000 OverGeneration(Comte_4)
+   + ProductionCost(101_CT_1_1) + 0 ProductionCost(101_CT_1_2)
+   + 0 ProductionCost(101_CT_1_3) + 0 ProductionCost(101_CT_1_4)
+   + ProductionCost(101_CT_2_1) + 0 ProductionCost(101_CT_2_2)
+   + 0 ProductionCost(101_CT_2_3) + 0 ProductionCost(101_CT_2_4)
+   + ProductionCost(101_STEAM_3_1) + 0 ProductionCost(101_STEAM_3_2)
+   + 0 ProductionCost(101_STEAM_3_3) + 0 ProductionCost(101_STEAM_3_4)
+   + ProductionCost(101_STEAM_4_1) + 0 ProductionCost(101_STEAM_4_2)
+   + 0 ProductionCost(101_STEAM_4_3) + 0 ProductionCost(101_STEAM_4_4)
+   + ProductionCost(102_CT_1_1) + 0 ProductionCost(102_CT_1_2)
+   + 0 ProductionCost(102_CT_1_3) + 0 ProductionCost(102_CT_1_4)
+   + ProductionCost(102_CT_2_1) + 0 ProductionCost(102_CT_2_2)
+   + 0 ProductionCost(102_CT_2_3) + 0 ProductionCost(102_CT_2_4)
+   + ProductionCost(102_STEAM_3_1) + 0 ProductionCost(102_STEAM_3_2)
+   + 0 ProductionCost(102_STEAM_3_3) + 0 ProductionCost(102_STEAM_3_4)
+   + ProductionCost(102_STEAM_4_1) + 0 ProductionCost(102_STEAM_4_2)
+   + 0 ProductionCost(102_STEAM_4_3) + 0 ProductionCost(102_STEAM_4_4)
+   + ProductionCost(107_CC_1_1) + 0 ProductionCost(107_CC_1_2)
+   + 0 ProductionCost(107_CC_1_3) + 0 ProductionCost(107_CC_1_4)
+   + ProductionCost(113_CT_1_1) + 0 ProductionCost(113_CT_1_2)
+   + 0 ProductionCost(113_CT_1_3) + 0 ProductionCost(113_CT_1_4)
+   + ProductionCost(113_CT_2_1) + 0 ProductionCost(113_CT_2_2)
+   + 0 ProductionCost(113_CT_2_3) + 0 ProductionCost(113_CT_2_4)
+   + ProductionCost(113_CT_3_1) + 0 ProductionCost(113_CT_3_2)
+   + 0 ProductionCost(113_CT_3_3) + 0 ProductionCost(113_CT_3_4)
+   + ProductionCost(113_CT_4_1) + 0 ProductionCost(113_CT_4_2)
+   + 0 ProductionCost(113_CT_4_3) + 0 ProductionCost(113_CT_4_4)
+   + ProductionCost(115_STEAM_1_1) + 0 ProductionCost(115_STEAM_1_2)
+   + 0 ProductionCost(115_STEAM_1_3) + 0 ProductionCost(115_STEAM_1_4)
+   + ProductionCost(115_STEAM_2_1) + 0 ProductionCost(115_STEAM_2_2)
+   + 0 ProductionCost(115_STEAM_2_3) + 0 ProductionCost(115_STEAM_2_4)
+   + ProductionCost(115_STEAM_3_1) + 0 ProductionCost(115_STEAM_3_2)
+   + 0 ProductionCost(115_STEAM_3_3) + 0 ProductionCost(115_STEAM_3_4)
+   + ProductionCost(116_STEAM_1_1) + 0 ProductionCost(116_STEAM_1_2)
+   + 0 ProductionCost(116_STEAM_1_3) + 0 ProductionCost(116_STEAM_1_4)
+   + ProductionCost(118_CC_1_1) + 0 ProductionCost(118_CC_1_2)
+   + 0 ProductionCost(118_CC_1_3) + 0 ProductionCost(118_CC_1_4)
+   + ProductionCost(121_NUCLEAR_1_1) + 0 ProductionCost(121_NUCLEAR_1_2)
+   + 0 ProductionCost(121_NUCLEAR_1_3) + 0 ProductionCost(121_NUCLEAR_1_4)
+   + ProductionCost(123_CT_1_1) + 0 ProductionCost(123_CT_1_2)
+   + 0 ProductionCost(123_CT_1_3) + 0 ProductionCost(123_CT_1_4)
+   + ProductionCost(123_CT_4_1) + 0 ProductionCost(123_CT_4_2)
+   + 0 ProductionCost(123_CT_4_3) + 0 ProductionCost(123_CT_4_4)
+   + ProductionCost(123_CT_5_1) + 0 ProductionCost(123_CT_5_2)
+   + 0 ProductionCost(123_CT_5_3) + 0 ProductionCost(123_CT_5_4)
+   + ProductionCost(123_STEAM_2_1) + 0 ProductionCost(123_STEAM_2_2)
+   + 0 ProductionCost(123_STEAM_2_3) + 0 ProductionCost(123_STEAM_2_4)
+   + ProductionCost(123_STEAM_3_1) + 0 ProductionCost(123_STEAM_3_2)
+   + 0 ProductionCost(123_STEAM_3_3) + 0 ProductionCost(123_STEAM_3_4)
+   + ProductionCost(201_CT_1_1) + 0 ProductionCost(201_CT_1_2)
+   + 0 ProductionCost(201_CT_1_3) + 0 ProductionCost(201_CT_1_4)
+   + ProductionCost(201_CT_2_1) + 0 ProductionCost(201_CT_2_2)
+   + 0 ProductionCost(201_CT_2_3) + 0 ProductionCost(201_CT_2_4)
+   + ProductionCost(201_STEAM_3_1) + 0 ProductionCost(201_STEAM_3_2)
+   + 0 ProductionCost(201_STEAM_3_3) + 0 ProductionCost(201_STEAM_3_4)
+   + ProductionCost(202_CT_1_1) + 0 ProductionCost(202_CT_1_2)
+   + 0 ProductionCost(202_CT_1_3) + 0 ProductionCost(202_CT_1_4)
+   + ProductionCost(202_CT_2_1) + 0 ProductionCost(202_CT_2_2)
+   + 0 ProductionCost(202_CT_2_3) + 0 ProductionCost(202_CT_2_4)
+   + ProductionCost(202_STEAM_3_1) + 0 ProductionCost(202_STEAM_3_2)
+   + 0 ProductionCost(202_STEAM_3_3) + 0 ProductionCost(202_STEAM_3_4)
+   + ProductionCost(202_STEAM_4_1) + 0 ProductionCost(202_STEAM_4_2)
+   + 0 ProductionCost(202_STEAM_4_3) + 0 ProductionCost(202_STEAM_4_4)
+   + ProductionCost(207_CT_1_1) + 0 ProductionCost(207_CT_1_2)
+   + 0 ProductionCost(207_CT_1_3) + 0 ProductionCost(207_CT_1_4)
+   + ProductionCost(207_CT_2_1) + 0 ProductionCost(207_CT_2_2)
+   + 0 ProductionCost(207_CT_2_3) + 0 ProductionCost(207_CT_2_4)
+   + ProductionCost(213_CC_3_1) + 0 ProductionCost(213_CC_3_2)
+   + 0 ProductionCost(213_CC_3_3) + 0 ProductionCost(213_CC_3_4)
+   + ProductionCost(213_CT_1_1) + 0 ProductionCost(213_CT_1_2)
+   + 0 ProductionCost(213_CT_1_3) + 0 ProductionCost(213_CT_1_4)
+   + ProductionCost(213_CT_2_1) + 0 ProductionCost(213_CT_2_2)
+   + 0 ProductionCost(213_CT_2_3) + 0 ProductionCost(213_CT_2_4)
+   + ProductionCost(215_CT_4_1) + 0 ProductionCost(215_CT_4_2)
+   + 0 ProductionCost(215_CT_4_3) + 0 ProductionCost(215_CT_4_4)
+   + ProductionCost(215_CT_5_1) + 0 ProductionCost(215_CT_5_2)
+   + 0 ProductionCost(215_CT_5_3) + 0 ProductionCost(215_CT_5_4)
+   + ProductionCost(216_STEAM_1_1) + 0 ProductionCost(216_STEAM_1_2)
+   + 0 ProductionCost(216_STEAM_1_3) + 0 ProductionCost(216_STEAM_1_4)
+   + ProductionCost(218_CC_1_1) + 0 ProductionCost(218_CC_1_2)
+   + 0 ProductionCost(218_CC_1_3) + 0 ProductionCost(218_CC_1_4)
+   + ProductionCost(221_CC_1_1) + 0 ProductionCost(221_CC_1_2)
+   + 0 ProductionCost(221_CC_1_3) + 0 ProductionCost(221_CC_1_4)
+   + ProductionCost(223_CT_4_1) + 0 ProductionCost(223_CT_4_2)
+   + 0 ProductionCost(223_CT_4_3) + 0 ProductionCost(223_CT_4_4)
+   + ProductionCost(223_CT_5_1) + 0 ProductionCost(223_CT_5_2)
+   + 0 ProductionCost(223_CT_5_3) + 0 ProductionCost(223_CT_5_4)
+   + ProductionCost(223_CT_6_1) + 0 ProductionCost(223_CT_6_2)
+   + 0 ProductionCost(223_CT_6_3) + 0 ProductionCost(223_CT_6_4)
+   + ProductionCost(223_STEAM_1_1) + 0 ProductionCost(223_STEAM_1_2)
+   + 0 ProductionCost(223_STEAM_1_3) + 0 ProductionCost(223_STEAM_1_4)
+   + ProductionCost(223_STEAM_2_1) + 0 ProductionCost(223_STEAM_2_2)
+   + 0 ProductionCost(223_STEAM_2_3) + 0 ProductionCost(223_STEAM_2_4)
+   + ProductionCost(223_STEAM_3_1) + 0 ProductionCost(223_STEAM_3_2)
+   + 0 ProductionCost(223_STEAM_3_3) + 0 ProductionCost(223_STEAM_3_4)
+   + ProductionCost(301_CT_1_1) + 0 ProductionCost(301_CT_1_2)
+   + 0 ProductionCost(301_CT_1_3) + 0 ProductionCost(301_CT_1_4)
+   + ProductionCost(301_CT_2_1) + 0 ProductionCost(301_CT_2_2)
+   + 0 ProductionCost(301_CT_2_3) + 0 ProductionCost(301_CT_2_4)
+   + ProductionCost(301_CT_3_1) + 0 ProductionCost(301_CT_3_2)
+   + 0 ProductionCost(301_CT_3_3) + 0 ProductionCost(301_CT_3_4)
+   + ProductionCost(301_CT_4_1) + 0 ProductionCost(301_CT_4_2)
+   + 0 ProductionCost(301_CT_4_3) + 0 ProductionCost(301_CT_4_4)
+   + ProductionCost(302_CT_1_1) + 0 ProductionCost(302_CT_1_2)
+   + 0 ProductionCost(302_CT_1_3) + 0 ProductionCost(302_CT_1_4)
+   + ProductionCost(302_CT_2_1) + 0 ProductionCost(302_CT_2_2)
+   + 0 ProductionCost(302_CT_2_3) + 0 ProductionCost(302_CT_2_4)
+   + ProductionCost(302_CT_3_1) + 0 ProductionCost(302_CT_3_2)
+   + 0 ProductionCost(302_CT_3_3) + 0 ProductionCost(302_CT_3_4)
+   + ProductionCost(302_CT_4_1) + 0 ProductionCost(302_CT_4_2)
+   + 0 ProductionCost(302_CT_4_3) + 0 ProductionCost(302_CT_4_4)
+   + ProductionCost(307_CT_1_1) + 0 ProductionCost(307_CT_1_2)
+   + 0 ProductionCost(307_CT_1_3) + 0 ProductionCost(307_CT_1_4)
+   + ProductionCost(307_CT_2_1) + 0 ProductionCost(307_CT_2_2)
+   + 0 ProductionCost(307_CT_2_3) + 0 ProductionCost(307_CT_2_4)
+   + ProductionCost(313_CC_1_1) + 0 ProductionCost(313_CC_1_2)
+   + 0 ProductionCost(313_CC_1_3) + 0 ProductionCost(313_CC_1_4)
+   + ProductionCost(315_CT_6_1) + 0 ProductionCost(315_CT_6_2)
+   + 0 ProductionCost(315_CT_6_3) + 0 ProductionCost(315_CT_6_4)
+   + ProductionCost(315_CT_7_1) + 0 ProductionCost(315_CT_7_2)
+   + 0 ProductionCost(315_CT_7_3) + 0 ProductionCost(315_CT_7_4)
+   + ProductionCost(315_CT_8_1) + 0 ProductionCost(315_CT_8_2)
+   + 0 ProductionCost(315_CT_8_3) + 0 ProductionCost(315_CT_8_4)
+   + ProductionCost(315_STEAM_1_1) + 0 ProductionCost(315_STEAM_1_2)
+   + 0 ProductionCost(315_STEAM_1_3) + 0 ProductionCost(315_STEAM_1_4)
+   + ProductionCost(315_STEAM_2_1) + 0 ProductionCost(315_STEAM_2_2)
+   + 0 ProductionCost(315_STEAM_2_3) + 0 ProductionCost(315_STEAM_2_4)
+   + ProductionCost(315_STEAM_3_1) + 0 ProductionCost(315_STEAM_3_2)
+   + 0 ProductionCost(315_STEAM_3_3) + 0 ProductionCost(315_STEAM_3_4)
+   + ProductionCost(315_STEAM_4_1) + 0 ProductionCost(315_STEAM_4_2)
+   + 0 ProductionCost(315_STEAM_4_3) + 0 ProductionCost(315_STEAM_4_4)
+   + ProductionCost(315_STEAM_5_1) + 0 ProductionCost(315_STEAM_5_2)
+   + 0 ProductionCost(315_STEAM_5_3) + 0 ProductionCost(315_STEAM_5_4)
+   + ProductionCost(316_STEAM_1_1) + 0 ProductionCost(316_STEAM_1_2)
+   + 0 ProductionCost(316_STEAM_1_3) + 0 ProductionCost(316_STEAM_1_4)
+   + ProductionCost(318_CC_1_1) + 0 ProductionCost(318_CC_1_2)
+   + 0 ProductionCost(318_CC_1_3) + 0 ProductionCost(318_CC_1_4)
+   + ProductionCost(321_CC_1_1) + 0 ProductionCost(321_CC_1_2)
+   + 0 ProductionCost(321_CC_1_3) + 0 ProductionCost(321_CC_1_4)
+   + ProductionCost(322_CT_5_1) + 0 ProductionCost(322_CT_5_2)
+   + 0 ProductionCost(322_CT_5_3) + 0 ProductionCost(322_CT_5_4)
+   + ProductionCost(322_CT_6_1) + 0 ProductionCost(322_CT_6_2)
+   + 0 ProductionCost(322_CT_6_3) + 0 ProductionCost(322_CT_6_4)
+   + ProductionCost(323_CC_1_1) + 0 ProductionCost(323_CC_1_2)
+   + 0 ProductionCost(323_CC_1_3) + 0 ProductionCost(323_CC_1_4)
+   + ProductionCost(323_CC_2_1) + 0 ProductionCost(323_CC_2_2)
+   + 0 ProductionCost(323_CC_2_3) + 0 ProductionCost(323_CC_2_4)
+   + 1000 ReserveShortfall(1) + 1000 ReserveShortfall(2)
+   + 1000 ReserveShortfall(3) + 1000 ReserveShortfall(4)
+   + ShutdownCost(101_CT_1_1) + ShutdownCost(101_CT_1_2)
+   + ShutdownCost(101_CT_1_3) + ShutdownCost(101_CT_1_4)
+   + ShutdownCost(101_CT_2_1) + ShutdownCost(101_CT_2_2)
+   + ShutdownCost(101_CT_2_3) + ShutdownCost(101_CT_2_4)
+   + ShutdownCost(101_STEAM_3_1) + ShutdownCost(101_STEAM_3_2)
+   + ShutdownCost(101_STEAM_3_3) + ShutdownCost(101_STEAM_3_4)
+   + ShutdownCost(101_STEAM_4_1) + ShutdownCost(101_STEAM_4_2)
+   + ShutdownCost(101_STEAM_4_3) + ShutdownCost(101_STEAM_4_4)
+   + ShutdownCost(102_CT_1_1) + ShutdownCost(102_CT_1_2)
+   + ShutdownCost(102_CT_1_3) + ShutdownCost(102_CT_1_4)
+   + ShutdownCost(102_CT_2_1) + ShutdownCost(102_CT_2_2)
+   + ShutdownCost(102_CT_2_3) + ShutdownCost(102_CT_2_4)
+   + ShutdownCost(102_STEAM_3_1) + ShutdownCost(102_STEAM_3_2)
+   + ShutdownCost(102_STEAM_3_3) + ShutdownCost(102_STEAM_3_4)
+   + ShutdownCost(102_STEAM_4_1) + ShutdownCost(102_STEAM_4_2)
+   + ShutdownCost(102_STEAM_4_3) + ShutdownCost(102_STEAM_4_4)
+   + ShutdownCost(107_CC_1_1) + ShutdownCost(107_CC_1_2)
+   + ShutdownCost(107_CC_1_3) + ShutdownCost(107_CC_1_4)
+   + ShutdownCost(113_CT_1_1) + ShutdownCost(113_CT_1_2)
+   + ShutdownCost(113_CT_1_3) + ShutdownCost(113_CT_1_4)
+   + ShutdownCost(113_CT_2_1) + ShutdownCost(113_CT_2_2)
+   + ShutdownCost(113_CT_2_3) + ShutdownCost(113_CT_2_4)
+   + ShutdownCost(113_CT_3_1) + ShutdownCost(113_CT_3_2)
+   + ShutdownCost(113_CT_3_3) + ShutdownCost(113_CT_3_4)
+   + ShutdownCost(113_CT_4_1) + ShutdownCost(113_CT_4_2)
+   + ShutdownCost(113_CT_4_3) + ShutdownCost(113_CT_4_4)
+   + ShutdownCost(115_STEAM_1_1) + ShutdownCost(115_STEAM_1_2)
+   + ShutdownCost(115_STEAM_1_3) + ShutdownCost(115_STEAM_1_4)
+   + ShutdownCost(115_STEAM_2_1) + ShutdownCost(115_STEAM_2_2)
+   + ShutdownCost(115_STEAM_2_3) + ShutdownCost(115_STEAM_2_4)
+   + ShutdownCost(115_STEAM_3_1) + ShutdownCost(115_STEAM_3_2)
+   + ShutdownCost(115_STEAM_3_3) + ShutdownCost(115_STEAM_3_4)
+   + ShutdownCost(116_STEAM_1_1) + ShutdownCost(116_STEAM_1_2)
+   + ShutdownCost(116_STEAM_1_3) + ShutdownCost(116_STEAM_1_4)
+   + ShutdownCost(118_CC_1_1) + ShutdownCost(118_CC_1_2)
+   + ShutdownCost(118_CC_1_3) + ShutdownCost(118_CC_1_4)
+   + ShutdownCost(121_NUCLEAR_1_1) + ShutdownCost(121_NUCLEAR_1_2)
+   + ShutdownCost(121_NUCLEAR_1_3) + ShutdownCost(121_NUCLEAR_1_4)
+   + ShutdownCost(123_CT_1_1) + ShutdownCost(123_CT_1_2)
+   + ShutdownCost(123_CT_1_3) + ShutdownCost(123_CT_1_4)
+   + ShutdownCost(123_CT_4_1) + ShutdownCost(123_CT_4_2)
+   + ShutdownCost(123_CT_4_3) + ShutdownCost(123_CT_4_4)
+   + ShutdownCost(123_CT_5_1) + ShutdownCost(123_CT_5_2)
+   + ShutdownCost(123_CT_5_3) + ShutdownCost(123_CT_5_4)
+   + ShutdownCost(123_STEAM_2_1) + ShutdownCost(123_STEAM_2_2)
+   + ShutdownCost(123_STEAM_2_3) + ShutdownCost(123_STEAM_2_4)
+   + ShutdownCost(123_STEAM_3_1) + ShutdownCost(123_STEAM_3_2)
+   + ShutdownCost(123_STEAM_3_3) + ShutdownCost(123_STEAM_3_4)
+   + ShutdownCost(201_CT_1_1) + ShutdownCost(201_CT_1_2)
+   + ShutdownCost(201_CT_1_3) + ShutdownCost(201_CT_1_4)
+   + ShutdownCost(201_CT_2_1) + ShutdownCost(201_CT_2_2)
+   + ShutdownCost(201_CT_2_3) + ShutdownCost(201_CT_2_4)
+   + ShutdownCost(201_STEAM_3_1) + ShutdownCost(201_STEAM_3_2)
+   + ShutdownCost(201_STEAM_3_3) + ShutdownCost(201_STEAM_3_4)
+   + ShutdownCost(202_CT_1_1) + ShutdownCost(202_CT_1_2)
+   + ShutdownCost(202_CT_1_3) + ShutdownCost(202_CT_1_4)
+   + ShutdownCost(202_CT_2_1) + ShutdownCost(202_CT_2_2)
+   + ShutdownCost(202_CT_2_3) + ShutdownCost(202_CT_2_4)
+   + ShutdownCost(202_STEAM_3_1) + ShutdownCost(202_STEAM_3_2)
+   + ShutdownCost(202_STEAM_3_3) + ShutdownCost(202_STEAM_3_4)
+   + ShutdownCost(202_STEAM_4_1) + ShutdownCost(202_STEAM_4_2)
+   + ShutdownCost(202_STEAM_4_3) + ShutdownCost(202_STEAM_4_4)
+   + ShutdownCost(207_CT_1_1) + ShutdownCost(207_CT_1_2)
+   + ShutdownCost(207_CT_1_3) + ShutdownCost(207_CT_1_4)
+   + ShutdownCost(207_CT_2_1) + ShutdownCost(207_CT_2_2)
+   + ShutdownCost(207_CT_2_3) + ShutdownCost(207_CT_2_4)
+   + ShutdownCost(213_CC_3_1) + ShutdownCost(213_CC_3_2)
+   + ShutdownCost(213_CC_3_3) + ShutdownCost(213_CC_3_4)
+   + ShutdownCost(213_CT_1_1) + ShutdownCost(213_CT_1_2)
+   + ShutdownCost(213_CT_1_3) + ShutdownCost(213_CT_1_4)
+   + ShutdownCost(213_CT_2_1) + ShutdownCost(213_CT_2_2)
+   + ShutdownCost(213_CT_2_3) + ShutdownCost(213_CT_2_4)
+   + ShutdownCost(215_CT_4_1) + ShutdownCost(215_CT_4_2)
+   + ShutdownCost(215_CT_4_3) + ShutdownCost(215_CT_4_4)
+   + ShutdownCost(215_CT_5_1) + ShutdownCost(215_CT_5_2)
+   + ShutdownCost(215_CT_5_3) + ShutdownCost(215_CT_5_4)
+   + ShutdownCost(216_STEAM_1_1) + ShutdownCost(216_STEAM_1_2)
+   + ShutdownCost(216_STEAM_1_3) + ShutdownCost(216_STEAM_1_4)
+   + ShutdownCost(218_CC_1_1) + ShutdownCost(218_CC_1_2)
+   + ShutdownCost(218_CC_1_3) + ShutdownCost(218_CC_1_4)
+   + ShutdownCost(221_CC_1_1) + ShutdownCost(221_CC_1_2)
+   + ShutdownCost(221_CC_1_3) + ShutdownCost(221_CC_1_4)
+   + ShutdownCost(223_CT_4_1) + ShutdownCost(223_CT_4_2)
+   + ShutdownCost(223_CT_4_3) + ShutdownCost(223_CT_4_4)
+   + ShutdownCost(223_CT_5_1) + ShutdownCost(223_CT_5_2)
+   + ShutdownCost(223_CT_5_3) + ShutdownCost(223_CT_5_4)
+   + ShutdownCost(223_CT_6_1) + ShutdownCost(223_CT_6_2)
+   + ShutdownCost(223_CT_6_3) + ShutdownCost(223_CT_6_4)
+   + ShutdownCost(223_STEAM_1_1) + ShutdownCost(223_STEAM_1_2)
+   + ShutdownCost(223_STEAM_1_3) + ShutdownCost(223_STEAM_1_4)
+   + ShutdownCost(223_STEAM_2_1) + ShutdownCost(223_STEAM_2_2)
+   + ShutdownCost(223_STEAM_2_3) + ShutdownCost(223_STEAM_2_4)
+   + ShutdownCost(223_STEAM_3_1) + ShutdownCost(223_STEAM_3_2)
+   + ShutdownCost(223_STEAM_3_3) + ShutdownCost(223_STEAM_3_4)
+   + ShutdownCost(301_CT_1_1) + ShutdownCost(301_CT_1_2)
+   + ShutdownCost(301_CT_1_3) + ShutdownCost(301_CT_1_4)
+   + ShutdownCost(301_CT_2_1) + ShutdownCost(301_CT_2_2)
+   + ShutdownCost(301_CT_2_3) + ShutdownCost(301_CT_2_4)
+   + ShutdownCost(301_CT_3_1) + ShutdownCost(301_CT_3_2)
+   + ShutdownCost(301_CT_3_3) + ShutdownCost(301_CT_3_4)
+   + ShutdownCost(301_CT_4_1) + ShutdownCost(301_CT_4_2)
+   + ShutdownCost(301_CT_4_3) + ShutdownCost(301_CT_4_4)
+   + ShutdownCost(302_CT_1_1) + ShutdownCost(302_CT_1_2)
+   + ShutdownCost(302_CT_1_3) + ShutdownCost(302_CT_1_4)
+   + ShutdownCost(302_CT_2_1) + ShutdownCost(302_CT_2_2)
+   + ShutdownCost(302_CT_2_3) + ShutdownCost(302_CT_2_4)
+   + ShutdownCost(302_CT_3_1) + ShutdownCost(302_CT_3_2)
+   + ShutdownCost(302_CT_3_3) + ShutdownCost(302_CT_3_4)
+   + ShutdownCost(302_CT_4_1) + ShutdownCost(302_CT_4_2)
+   + ShutdownCost(302_CT_4_3) + ShutdownCost(302_CT_4_4)
+   + ShutdownCost(307_CT_1_1) + ShutdownCost(307_CT_1_2)
+   + ShutdownCost(307_CT_1_3) + ShutdownCost(307_CT_1_4)
+   + ShutdownCost(307_CT_2_1) + ShutdownCost(307_CT_2_2)
+   + ShutdownCost(307_CT_2_3) + ShutdownCost(307_CT_2_4)
+   + ShutdownCost(313_CC_1_1) + ShutdownCost(313_CC_1_2)
+   + ShutdownCost(313_CC_1_3) + ShutdownCost(313_CC_1_4)
+   + ShutdownCost(315_CT_6_1) + ShutdownCost(315_CT_6_2)
+   + ShutdownCost(315_CT_6_3) + ShutdownCost(315_CT_6_4)
+   + ShutdownCost(315_CT_7_1) + ShutdownCost(315_CT_7_2)
+   + ShutdownCost(315_CT_7_3) + ShutdownCost(315_CT_7_4)
+   + ShutdownCost(315_CT_8_1) + ShutdownCost(315_CT_8_2)
+   + ShutdownCost(315_CT_8_3) + ShutdownCost(315_CT_8_4)
+   + ShutdownCost(315_STEAM_1_1) + ShutdownCost(315_STEAM_1_2)
+   + ShutdownCost(315_STEAM_1_3) + ShutdownCost(315_STEAM_1_4)
+   + ShutdownCost(315_STEAM_2_1) + ShutdownCost(315_STEAM_2_2)
+   + ShutdownCost(315_STEAM_2_3) + ShutdownCost(315_STEAM_2_4)
+   + ShutdownCost(315_STEAM_3_1) + ShutdownCost(315_STEAM_3_2)
+   + ShutdownCost(315_STEAM_3_3) + ShutdownCost(315_STEAM_3_4)
+   + ShutdownCost(315_STEAM_4_1) + ShutdownCost(315_STEAM_4_2)
+   + ShutdownCost(315_STEAM_4_3) + ShutdownCost(315_STEAM_4_4)
+   + ShutdownCost(315_STEAM_5_1) + ShutdownCost(315_STEAM_5_2)
+   + ShutdownCost(315_STEAM_5_3) + ShutdownCost(315_STEAM_5_4)
+   + ShutdownCost(316_STEAM_1_1) + ShutdownCost(316_STEAM_1_2)
+   + ShutdownCost(316_STEAM_1_3) + ShutdownCost(316_STEAM_1_4)
+   + ShutdownCost(318_CC_1_1) + ShutdownCost(318_CC_1_2)
+   + ShutdownCost(318_CC_1_3) + ShutdownCost(318_CC_1_4)
+   + ShutdownCost(321_CC_1_1) + ShutdownCost(321_CC_1_2)
+   + ShutdownCost(321_CC_1_3) + ShutdownCost(321_CC_1_4)
+   + ShutdownCost(322_CT_5_1) + ShutdownCost(322_CT_5_2)
+   + ShutdownCost(322_CT_5_3) + ShutdownCost(322_CT_5_4)
+   + ShutdownCost(322_CT_6_1) + ShutdownCost(322_CT_6_2)
+   + ShutdownCost(322_CT_6_3) + ShutdownCost(322_CT_6_4)
+   + ShutdownCost(323_CC_1_1) + ShutdownCost(323_CC_1_2)
+   + ShutdownCost(323_CC_1_3) + ShutdownCost(323_CC_1_4)
+   + ShutdownCost(323_CC_2_1) + ShutdownCost(323_CC_2_2)
+   + ShutdownCost(323_CC_2_3) + ShutdownCost(323_CC_2_4)
+   + StartupCost(101_CT_1_1) + StartupCost(101_CT_1_2)
+   + StartupCost(101_CT_1_3) + StartupCost(101_CT_1_4)
+   + StartupCost(101_CT_2_1) + StartupCost(101_CT_2_2)
+   + StartupCost(101_CT_2_3) + StartupCost(101_CT_2_4)
+   + StartupCost(101_STEAM_3_1) + StartupCost(101_STEAM_3_2)
+   + StartupCost(101_STEAM_3_3) + StartupCost(101_STEAM_3_4)
+   + StartupCost(101_STEAM_4_1) + StartupCost(101_STEAM_4_2)
+   + StartupCost(101_STEAM_4_3) + StartupCost(101_STEAM_4_4)
+   + StartupCost(102_CT_1_1) + StartupCost(102_CT_1_2)
+   + StartupCost(102_CT_1_3) + StartupCost(102_CT_1_4)
+   + StartupCost(102_CT_2_1) + StartupCost(102_CT_2_2)
+   + StartupCost(102_CT_2_3) + StartupCost(102_CT_2_4)
+   + StartupCost(102_STEAM_3_1) + StartupCost(102_STEAM_3_2)
+   + StartupCost(102_STEAM_3_3) + StartupCost(102_STEAM_3_4)
+   + StartupCost(102_STEAM_4_1) + StartupCost(102_STEAM_4_2)
+   + StartupCost(102_STEAM_4_3) + StartupCost(102_STEAM_4_4)
+   + StartupCost(107_CC_1_1) + StartupCost(107_CC_1_2)
+   + StartupCost(107_CC_1_3) + StartupCost(107_CC_1_4)
+   + StartupCost(113_CT_1_1) + StartupCost(113_CT_1_2)
+   + StartupCost(113_CT_1_3) + StartupCost(113_CT_1_4)
+   + StartupCost(113_CT_2_1) + StartupCost(113_CT_2_2)
+   + StartupCost(113_CT_2_3) + StartupCost(113_CT_2_4)
+   + StartupCost(113_CT_3_1) + StartupCost(113_CT_3_2)
+   + StartupCost(113_CT_3_3) + StartupCost(113_CT_3_4)
+   + StartupCost(113_CT_4_1) + StartupCost(113_CT_4_2)
+   + StartupCost(113_CT_4_3) + StartupCost(113_CT_4_4)
+   + StartupCost(115_STEAM_1_1) + StartupCost(115_STEAM_1_2)
+   + StartupCost(115_STEAM_1_3) + StartupCost(115_STEAM_1_4)
+   + StartupCost(115_STEAM_2_1) + StartupCost(115_STEAM_2_2)
+   + StartupCost(115_STEAM_2_3) + StartupCost(115_STEAM_2_4)
+   + StartupCost(115_STEAM_3_1) + StartupCost(115_STEAM_3_2)
+   + StartupCost(115_STEAM_3_3) + StartupCost(115_STEAM_3_4)
+   + StartupCost(116_STEAM_1_1) + StartupCost(116_STEAM_1_2)
+   + StartupCost(116_STEAM_1_3) + StartupCost(116_STEAM_1_4)
+   + StartupCost(118_CC_1_1) + StartupCost(118_CC_1_2)
+   + StartupCost(118_CC_1_3) + StartupCost(118_CC_1_4)
+   + StartupCost(121_NUCLEAR_1_1) + StartupCost(121_NUCLEAR_1_2)
+   + StartupCost(121_NUCLEAR_1_3) + StartupCost(121_NUCLEAR_1_4)
+   + StartupCost(123_CT_1_1) + StartupCost(123_CT_1_2)
+   + StartupCost(123_CT_1_3) + StartupCost(123_CT_1_4)
+   + StartupCost(123_CT_4_1) + StartupCost(123_CT_4_2)
+   + StartupCost(123_CT_4_3) + StartupCost(123_CT_4_4)
+   + StartupCost(123_CT_5_1) + StartupCost(123_CT_5_2)
+   + StartupCost(123_CT_5_3) + StartupCost(123_CT_5_4)
+   + StartupCost(123_STEAM_2_1) + StartupCost(123_STEAM_2_2)
+   + StartupCost(123_STEAM_2_3) + StartupCost(123_STEAM_2_4)
+   + StartupCost(123_STEAM_3_1) + StartupCost(123_STEAM_3_2)
+   + StartupCost(123_STEAM_3_3) + StartupCost(123_STEAM_3_4)
+   + StartupCost(201_CT_1_1) + StartupCost(201_CT_1_2)
+   + StartupCost(201_CT_1_3) + StartupCost(201_CT_1_4)
+   + StartupCost(201_CT_2_1) + StartupCost(201_CT_2_2)
+   + StartupCost(201_CT_2_3) + StartupCost(201_CT_2_4)
+   + StartupCost(201_STEAM_3_1) + StartupCost(201_STEAM_3_2)
+   + StartupCost(201_STEAM_3_3) + StartupCost(201_STEAM_3_4)
+   + StartupCost(202_CT_1_1) + StartupCost(202_CT_1_2)
+   + StartupCost(202_CT_1_3) + StartupCost(202_CT_1_4)
+   + StartupCost(202_CT_2_1) + StartupCost(202_CT_2_2)
+   + StartupCost(202_CT_2_3) + StartupCost(202_CT_2_4)
+   + StartupCost(202_STEAM_3_1) + StartupCost(202_STEAM_3_2)
+   + StartupCost(202_STEAM_3_3) + StartupCost(202_STEAM_3_4)
+   + StartupCost(202_STEAM_4_1) + StartupCost(202_STEAM_4_2)
+   + StartupCost(202_STEAM_4_3) + StartupCost(202_STEAM_4_4)
+   + StartupCost(207_CT_1_1) + StartupCost(207_CT_1_2)
+   + StartupCost(207_CT_1_3) + StartupCost(207_CT_1_4)
+   + StartupCost(207_CT_2_1) + StartupCost(207_CT_2_2)
+   + StartupCost(207_CT_2_3) + StartupCost(207_CT_2_4)
+   + StartupCost(213_CC_3_1) + StartupCost(213_CC_3_2)
+   + StartupCost(213_CC_3_3) + StartupCost(213_CC_3_4)
+   + StartupCost(213_CT_1_1) + StartupCost(213_CT_1_2)
+   + StartupCost(213_CT_1_3) + StartupCost(213_CT_1_4)
+   + StartupCost(213_CT_2_1) + StartupCost(213_CT_2_2)
+   + StartupCost(213_CT_2_3) + StartupCost(213_CT_2_4)
+   + StartupCost(215_CT_4_1) + StartupCost(215_CT_4_2)
+   + StartupCost(215_CT_4_3) + StartupCost(215_CT_4_4)
+   + StartupCost(215_CT_5_1) + StartupCost(215_CT_5_2)
+   + StartupCost(215_CT_5_3) + StartupCost(215_CT_5_4)
+   + StartupCost(216_STEAM_1_1) + StartupCost(216_STEAM_1_2)
+   + StartupCost(216_STEAM_1_3) + StartupCost(216_STEAM_1_4)
+   + StartupCost(218_CC_1_1) + StartupCost(218_CC_1_2)
+   + StartupCost(218_CC_1_3) + StartupCost(218_CC_1_4)
+   + StartupCost(221_CC_1_1) + StartupCost(221_CC_1_2)
+   + StartupCost(221_CC_1_3) + StartupCost(221_CC_1_4)
+   + StartupCost(223_CT_4_1) + StartupCost(223_CT_4_2)
+   + StartupCost(223_CT_4_3) + StartupCost(223_CT_4_4)
+   + StartupCost(223_CT_5_1) + StartupCost(223_CT_5_2)
+   + StartupCost(223_CT_5_3) + StartupCost(223_CT_5_4)
+   + StartupCost(223_CT_6_1) + StartupCost(223_CT_6_2)
+   + StartupCost(223_CT_6_3) + StartupCost(223_CT_6_4)
+   + StartupCost(223_STEAM_1_1) + StartupCost(223_STEAM_1_2)
+   + StartupCost(223_STEAM_1_3) + StartupCost(223_STEAM_1_4)
+   + StartupCost(223_STEAM_2_1) + StartupCost(223_STEAM_2_2)
+   + StartupCost(223_STEAM_2_3) + StartupCost(223_STEAM_2_4)
+   + StartupCost(223_STEAM_3_1) + StartupCost(223_STEAM_3_2)
+   + StartupCost(223_STEAM_3_3) + StartupCost(223_STEAM_3_4)
+   + StartupCost(301_CT_1_1) + StartupCost(301_CT_1_2)
+   + StartupCost(301_CT_1_3) + StartupCost(301_CT_1_4)
+   + StartupCost(301_CT_2_1) + StartupCost(301_CT_2_2)
+   + StartupCost(301_CT_2_3) + StartupCost(301_CT_2_4)
+   + StartupCost(301_CT_3_1) + StartupCost(301_CT_3_2)
+   + StartupCost(301_CT_3_3) + StartupCost(301_CT_3_4)
+   + StartupCost(301_CT_4_1) + StartupCost(301_CT_4_2)
+   + StartupCost(301_CT_4_3) + StartupCost(301_CT_4_4)
+   + StartupCost(302_CT_1_1) + StartupCost(302_CT_1_2)
+   + StartupCost(302_CT_1_3) + StartupCost(302_CT_1_4)
+   + StartupCost(302_CT_2_1) + StartupCost(302_CT_2_2)
+   + StartupCost(302_CT_2_3) + StartupCost(302_CT_2_4)
+   + StartupCost(302_CT_3_1) + StartupCost(302_CT_3_2)
+   + StartupCost(302_CT_3_3) + StartupCost(302_CT_3_4)
+   + StartupCost(302_CT_4_1) + StartupCost(302_CT_4_2)
+   + StartupCost(302_CT_4_3) + StartupCost(302_CT_4_4)
+   + StartupCost(307_CT_1_1) + StartupCost(307_CT_1_2)
+   + StartupCost(307_CT_1_3) + StartupCost(307_CT_1_4)
+   + StartupCost(307_CT_2_1) + StartupCost(307_CT_2_2)
+   + StartupCost(307_CT_2_3) + StartupCost(307_CT_2_4)
+   + StartupCost(313_CC_1_1) + StartupCost(313_CC_1_2)
+   + StartupCost(313_CC_1_3) + StartupCost(313_CC_1_4)
+   + StartupCost(315_CT_6_1) + StartupCost(315_CT_6_2)
+   + StartupCost(315_CT_6_3) + StartupCost(315_CT_6_4)
+   + StartupCost(315_CT_7_1) + StartupCost(315_CT_7_2)
+   + StartupCost(315_CT_7_3) + StartupCost(315_CT_7_4)
+   + StartupCost(315_CT_8_1) + StartupCost(315_CT_8_2)
+   + StartupCost(315_CT_8_3) + StartupCost(315_CT_8_4)
+   + StartupCost(315_STEAM_1_1) + StartupCost(315_STEAM_1_2)
+   + StartupCost(315_STEAM_1_3) + StartupCost(315_STEAM_1_4)
+   + StartupCost(315_STEAM_2_1) + StartupCost(315_STEAM_2_2)
+   + StartupCost(315_STEAM_2_3) + StartupCost(315_STEAM_2_4)
+   + StartupCost(315_STEAM_3_1) + StartupCost(315_STEAM_3_2)
+   + StartupCost(315_STEAM_3_3) + StartupCost(315_STEAM_3_4)
+   + StartupCost(315_STEAM_4_1) + StartupCost(315_STEAM_4_2)
+   + StartupCost(315_STEAM_4_3) + StartupCost(315_STEAM_4_4)
+   + StartupCost(315_STEAM_5_1) + StartupCost(315_STEAM_5_2)
+   + StartupCost(315_STEAM_5_3) + StartupCost(315_STEAM_5_4)
+   + StartupCost(316_STEAM_1_1) + StartupCost(316_STEAM_1_2)
+   + StartupCost(316_STEAM_1_3) + StartupCost(316_STEAM_1_4)
+   + StartupCost(318_CC_1_1) + StartupCost(318_CC_1_2)
+   + StartupCost(318_CC_1_3) + StartupCost(318_CC_1_4)
+   + StartupCost(321_CC_1_1) + StartupCost(321_CC_1_2)
+   + StartupCost(321_CC_1_3) + StartupCost(321_CC_1_4)
+   + StartupCost(322_CT_5_1) + StartupCost(322_CT_5_2)
+   + StartupCost(322_CT_5_3) + StartupCost(322_CT_5_4)
+   + StartupCost(322_CT_6_1) + StartupCost(322_CT_6_2)
+   + StartupCost(322_CT_6_3) + StartupCost(322_CT_6_4)
+   + StartupCost(323_CC_1_1) + StartupCost(323_CC_1_2)
+   + StartupCost(323_CC_1_3) + StartupCost(323_CC_1_4)
+   + StartupCost(323_CC_2_1) + StartupCost(323_CC_2_2)
+   + StartupCost(323_CC_2_3) + StartupCost(323_CC_2_4)
+   + 0 UnitOn(101_CT_1_1) + 0 UnitOn(101_CT_1_2) + 0 UnitOn(101_CT_1_3)
+   + 0 UnitOn(101_CT_1_4) + 0 UnitOn(101_CT_2_1) + 0 UnitOn(101_CT_2_2)
+   + 0 UnitOn(101_CT_2_3) + 0 UnitOn(101_CT_2_4) + 0 UnitOn(101_STEAM_3_1)
+   + 0 UnitOn(101_STEAM_3_2) + 0 UnitOn(101_STEAM_3_3)
+   + 0 UnitOn(101_STEAM_3_4) + 0 UnitOn(101_STEAM_4_1)
+   + 0 UnitOn(101_STEAM_4_2) + 0 UnitOn(101_STEAM_4_3)
+   + 0 UnitOn(101_STEAM_4_4) + 0 UnitOn(102_CT_1_1) + 0 UnitOn(102_CT_1_2)
+   + 0 UnitOn(102_CT_1_3) + 0 UnitOn(102_CT_1_4) + 0 UnitOn(102_CT_2_1)
+   + 0 UnitOn(102_CT_2_2) + 0 UnitOn(102_CT_2_3) + 0 UnitOn(102_CT_2_4)
+   + 0 UnitOn(102_STEAM_3_1) + 0 UnitOn(102_STEAM_3_2)
+   + 0 UnitOn(102_STEAM_3_3) + 0 UnitOn(102_STEAM_3_4)
+   + 0 UnitOn(102_STEAM_4_1) + 0 UnitOn(102_STEAM_4_2)
+   + 0 UnitOn(102_STEAM_4_3) + 0 UnitOn(102_STEAM_4_4)
+   + 0 UnitOn(107_CC_1_1) + 0 UnitOn(107_CC_1_2) + 0 UnitOn(107_CC_1_3)
+   + 0 UnitOn(107_CC_1_4) + 0 UnitOn(113_CT_1_1) + 0 UnitOn(113_CT_1_2)
+   + 0 UnitOn(113_CT_1_3) + 0 UnitOn(113_CT_1_4) + 0 UnitOn(113_CT_2_1)
+   + 0 UnitOn(113_CT_2_2) + 0 UnitOn(113_CT_2_3) + 0 UnitOn(113_CT_2_4)
+   + 0 UnitOn(113_CT_3_1) + 0 UnitOn(113_CT_3_2) + 0 UnitOn(113_CT_3_3)
+   + 0 UnitOn(113_CT_3_4) + 0 UnitOn(113_CT_4_1) + 0 UnitOn(113_CT_4_2)
+   + 0 UnitOn(113_CT_4_3) + 0 UnitOn(113_CT_4_4) + 0 UnitOn(115_STEAM_1_1)
+   + 0 UnitOn(115_STEAM_1_2) + 0 UnitOn(115_STEAM_1_3)
+   + 0 UnitOn(115_STEAM_1_4) + 0 UnitOn(115_STEAM_2_1)
+   + 0 UnitOn(115_STEAM_2_2) + 0 UnitOn(115_STEAM_2_3)
+   + 0 UnitOn(115_STEAM_2_4) + 0 UnitOn(115_STEAM_3_1)
+   + 0 UnitOn(115_STEAM_3_2) + 0 UnitOn(115_STEAM_3_3)
+   + 0 UnitOn(115_STEAM_3_4) + 0 UnitOn(116_STEAM_1_1)
+   + 0 UnitOn(116_STEAM_1_2) + 0 UnitOn(116_STEAM_1_3)
+   + 0 UnitOn(116_STEAM_1_4) + 0 UnitOn(118_CC_1_1) + 0 UnitOn(118_CC_1_2)
+   + 0 UnitOn(118_CC_1_3) + 0 UnitOn(118_CC_1_4)
+   + 0 UnitOn(121_NUCLEAR_1_1) + 0 UnitOn(121_NUCLEAR_1_2)
+   + 0 UnitOn(121_NUCLEAR_1_3) + 0 UnitOn(121_NUCLEAR_1_4)
+   + 0 UnitOn(123_CT_1_1) + 0 UnitOn(123_CT_1_2) + 0 UnitOn(123_CT_1_3)
+   + 0 UnitOn(123_CT_1_4) + 0 UnitOn(123_CT_4_1) + 0 UnitOn(123_CT_4_2)
+   + 0 UnitOn(123_CT_4_3) + 0 UnitOn(123_CT_4_4) + 0 UnitOn(123_CT_5_1)
+   + 0 UnitOn(123_CT_5_2) + 0 UnitOn(123_CT_5_3) + 0 UnitOn(123_CT_5_4)
+   + 0 UnitOn(123_STEAM_2_1) + 0 UnitOn(123_STEAM_2_2)
+   + 0 UnitOn(123_STEAM_2_3) + 0 UnitOn(123_STEAM_2_4)
+   + 0 UnitOn(123_STEAM_3_1) + 0 UnitOn(123_STEAM_3_2)
+   + 0 UnitOn(123_STEAM_3_3) + 0 UnitOn(123_STEAM_3_4)
+   + 0 UnitOn(201_CT_1_1) + 0 UnitOn(201_CT_1_2) + 0 UnitOn(201_CT_1_3)
+   + 0 UnitOn(201_CT_1_4) + 0 UnitOn(201_CT_2_1) + 0 UnitOn(201_CT_2_2)
+   + 0 UnitOn(201_CT_2_3) + 0 UnitOn(201_CT_2_4) + 0 UnitOn(201_STEAM_3_1)
+   + 0 UnitOn(201_STEAM_3_2) + 0 UnitOn(201_STEAM_3_3)
+   + 0 UnitOn(201_STEAM_3_4) + 0 UnitOn(202_CT_1_1) + 0 UnitOn(202_CT_1_2)
+   + 0 UnitOn(202_CT_1_3) + 0 UnitOn(202_CT_1_4) + 0 UnitOn(202_CT_2_1)
+   + 0 UnitOn(202_CT_2_2) + 0 UnitOn(202_CT_2_3) + 0 UnitOn(202_CT_2_4)
+   + 0 UnitOn(202_STEAM_3_1) + 0 UnitOn(202_STEAM_3_2)
+   + 0 UnitOn(202_STEAM_3_3) + 0 UnitOn(202_STEAM_3_4)
+   + 0 UnitOn(202_STEAM_4_1) + 0 UnitOn(202_STEAM_4_2)
+   + 0 UnitOn(202_STEAM_4_3) + 0 UnitOn(202_STEAM_4_4)
+   + 0 UnitOn(207_CT_1_1) + 0 UnitOn(207_CT_1_2) + 0 UnitOn(207_CT_1_3)
+   + 0 UnitOn(207_CT_1_4) + 0 UnitOn(207_CT_2_1) + 0 UnitOn(207_CT_2_2)
+   + 0 UnitOn(207_CT_2_3) + 0 UnitOn(207_CT_2_4) + 0 UnitOn(213_CC_3_1)
+   + 0 UnitOn(213_CC_3_2) + 0 UnitOn(213_CC_3_3) + 0 UnitOn(213_CC_3_4)
+   + 0 UnitOn(213_CT_1_1) + 0 UnitOn(213_CT_1_2) + 0 UnitOn(213_CT_1_3)
+   + 0 UnitOn(213_CT_1_4) + 0 UnitOn(213_CT_2_1) + 0 UnitOn(213_CT_2_2)
+   + 0 UnitOn(213_CT_2_3) + 0 UnitOn(213_CT_2_4) + 0 UnitOn(215_CT_4_1)
+   + 0 UnitOn(215_CT_4_2) + 0 UnitOn(215_CT_4_3) + 0 UnitOn(215_CT_4_4)
+   + 0 UnitOn(215_CT_5_1) + 0 UnitOn(215_CT_5_2) + 0 UnitOn(215_CT_5_3)
+   + 0 UnitOn(215_CT_5_4) + 0 UnitOn(216_STEAM_1_1)
    + 0 UnitOn(216_STEAM_1_2) + 0 UnitOn(216_STEAM_1_3)
    + 0 UnitOn(216_STEAM_1_4) + 0 UnitOn(218_CC_1_1) + 0 UnitOn(218_CC_1_2)
    + 0 UnitOn(218_CC_1_3) + 0 UnitOn(218_CC_1_4) + 0 UnitOn(221_CC_1_1)
@@ -719,7 +720,7 @@ Minimize
    + 0 UnitOn(322_CT_6_3) + 0 UnitOn(322_CT_6_4) + 0 UnitOn(323_CC_1_1)
    + 0 UnitOn(323_CC_1_2) + 0 UnitOn(323_CC_1_3) + 0 UnitOn(323_CC_1_4)
    + 0 UnitOn(323_CC_2_1) + 0 UnitOn(323_CC_2_2) + 0 UnitOn(323_CC_2_3)
-   + 0 UnitOn(323_CC_2_4) + 126597.24 Constant
+   + 0 UnitOn(323_CC_2_4) + 125341.16 Constant
 Subject To
  ComputeShutdownCosts(101_CT_1_1): - ShutdownCost(101_CT_1_1) = 0
  ComputeShutdownCosts(101_CT_1_2): - ShutdownCost(101_CT_1_2) = 0
@@ -1773,7 +1774,7 @@ Subject To
  DownTime(201_CT_2_3): UnitStop(201_CT_2_3) <= 1
  DownTime(201_CT_2_4): UnitStop(201_CT_2_4) <= 1
  DownTime(201_STEAM_3_4): UnitStop(201_STEAM_3_1) + UnitStop(201_STEAM_3_2)
-   + UnitStop(201_STEAM_3_3) + UnitStop(201_STEAM_3_4) <= 1
+   + UnitStop(201_STEAM_3_3) + UnitStop(201_STEAM_3_4) <= 0
  DownTime(202_CT_1_1): UnitStop(202_CT_1_1) <= 1
  DownTime(202_CT_1_2): UnitStop(202_CT_1_2) <= 1
  DownTime(202_CT_1_3): UnitStop(202_CT_1_3) <= 1
@@ -1975,7 +1976,7 @@ Subject To
    + ReserveProvided(318_CC_1_1) + ReserveProvided(321_CC_1_1)
    + ReserveProvided(322_CT_5_1) + ReserveProvided(322_CT_6_1)
    + ReserveProvided(323_CC_1_1) + ReserveProvided(323_CC_2_1)
-   + ReserveShortfall(1) >= 168.50962474875
+   + ReserveShortfall(1) >= 156.3132663279166
  EnforceReserveRequirements(2): ReserveProvided(101_CT_1_2)
    + ReserveProvided(101_CT_2_2) + ReserveProvided(101_STEAM_3_2)
    + ReserveProvided(101_STEAM_4_2) + ReserveProvided(102_CT_1_2)
@@ -2013,7 +2014,7 @@ Subject To
    + ReserveProvided(318_CC_1_2) + ReserveProvided(321_CC_1_2)
    + ReserveProvided(322_CT_5_2) + ReserveProvided(322_CT_6_2)
    + ReserveProvided(323_CC_1_2) + ReserveProvided(323_CC_2_2)
-   + ReserveShortfall(2) >= 162.4936650942241
+   + ReserveShortfall(2) >= 159.1771126984869
  EnforceReserveRequirements(3): ReserveProvided(101_CT_1_3)
    + ReserveProvided(101_CT_2_3) + ReserveProvided(101_STEAM_3_3)
    + ReserveProvided(101_STEAM_4_3) + ReserveProvided(102_CT_1_3)
@@ -2051,7 +2052,7 @@ Subject To
    + ReserveProvided(318_CC_1_3) + ReserveProvided(321_CC_1_3)
    + ReserveProvided(322_CT_5_3) + ReserveProvided(322_CT_6_3)
    + ReserveProvided(323_CC_1_3) + ReserveProvided(323_CC_2_3)
-   + ReserveShortfall(3) >= 158.4384695803668
+   + ReserveShortfall(3) >= 166.2726382837568
  EnforceReserveRequirements(4): ReserveProvided(101_CT_1_4)
    + ReserveProvided(101_CT_2_4) + ReserveProvided(101_STEAM_3_4)
    + ReserveProvided(101_STEAM_4_4) + ReserveProvided(102_CT_1_4)
@@ -2089,7 +2090,7 @@ Subject To
    + ReserveProvided(318_CC_1_4) + ReserveProvided(321_CC_1_4)
    + ReserveProvided(322_CT_5_4) + ReserveProvided(322_CT_6_4)
    + ReserveProvided(323_CC_1_4) + ReserveProvided(323_CC_2_4)
-   + ReserveShortfall(4) >= 156.4807024501159
+   + ReserveShortfall(4) >= 171.6032016536221
  Logical(101_CT_1_1): - UnitStart(101_CT_1_1) + UnitStop(101_CT_1_1) = 0
  Logical(101_CT_1_2): - UnitStart(101_CT_1_2) + UnitStop(101_CT_1_2) = 0
  Logical(101_CT_1_3): - UnitStart(101_CT_1_3) + UnitStop(101_CT_1_3) = 0
@@ -2311,7 +2312,7 @@ Subject To
  Logical(218_CC_1_3): - UnitStart(218_CC_1_3) + UnitStop(218_CC_1_3) = 0
  Logical(218_CC_1_4): - UnitStart(218_CC_1_4) + UnitStop(218_CC_1_4) = 0
  Logical(221_CC_1_1): - UnitStart(221_CC_1_1) + UnitStop(221_CC_1_1) = 0
- Logical(221_CC_1_2): - UnitStart(221_CC_1_2) + UnitStop(221_CC_1_2) = 1
+ Logical(221_CC_1_2): - UnitStart(221_CC_1_2) + UnitStop(221_CC_1_2) = 0
  Logical(221_CC_1_3): - UnitStart(221_CC_1_3) + UnitStop(221_CC_1_3) = 0
  Logical(221_CC_1_4): - UnitStart(221_CC_1_4) + UnitStop(221_CC_1_4) = 0
  Logical(223_CT_4_1): - UnitStart(223_CT_4_1) + UnitStop(223_CT_4_1) = 0
@@ -2562,7 +2563,8 @@ Subject To
  NegLoadGenerateMismatchTolerance(Chifa): OverGeneration(Chifa_1)
    + OverGeneration(Chifa_2) + OverGeneration(Chifa_3)
    + OverGeneration(Chifa_4) >= 0
- NegLoadGenerateMismatchTolerance(Chuhsi): OverGeneration(Chuhsi_1) >= 0
+ NegLoadGenerateMismatchTolerance(Chuhsi): OverGeneration(Chuhsi_1)
+   + OverGeneration(Chuhsi_2) >= 0
  NegLoadGenerateMismatchTolerance(Clark): OverGeneration(Clark_1)
    + OverGeneration(Clark_2) + OverGeneration(Clark_3)
    + OverGeneration(Clark_4) >= 0
@@ -4208,7 +4210,7 @@ Subject To
  UpTime(201_CT_2_3): UnitStart(201_CT_2_3) <= 0
  UpTime(201_CT_2_4): UnitStart(201_CT_2_4) <= 0
  UpTime(201_STEAM_3_4): UnitStart(201_STEAM_3_1) + UnitStart(201_STEAM_3_2)
-   + UnitStart(201_STEAM_3_3) + UnitStart(201_STEAM_3_4) <= 0
+   + UnitStart(201_STEAM_3_3) + UnitStart(201_STEAM_3_4) <= 1
  UpTime(202_CT_1_1): UnitStart(202_CT_1_1) <= 0
  UpTime(202_CT_1_2): UnitStart(202_CT_1_2) <= 0
  UpTime(202_CT_1_3): UnitStart(202_CT_1_3) <= 0
@@ -5011,30 +5013,30 @@ Subject To
  power_limit_from_start_stop(102_STEAM_3_1):
    PowerGeneratedAboveMinimum(102_STEAM_3_1)
    + ReserveProvided(102_STEAM_3_1) + 46 UnitStart(102_STEAM_3_1)
-   + 2.174240516013654 UnitStop(102_STEAM_3_2) <= 46
+   + 14.3 UnitStop(102_STEAM_3_2) <= 46
  power_limit_from_start_stop(102_STEAM_3_2):
    PowerGeneratedAboveMinimum(102_STEAM_3_2)
    + ReserveProvided(102_STEAM_3_2) + 46 UnitStart(102_STEAM_3_2)
-   + 2.174240516013654 UnitStop(102_STEAM_3_3) <= 46
+   + 14.3 UnitStop(102_STEAM_3_3) <= 46
  power_limit_from_start_stop(102_STEAM_3_3):
    PowerGeneratedAboveMinimum(102_STEAM_3_3)
    + ReserveProvided(102_STEAM_3_3) + 46 UnitStart(102_STEAM_3_3)
-   + 2.174240516013654 UnitStop(102_STEAM_3_4) <= 46
+   + 14.3 UnitStop(102_STEAM_3_4) <= 46
  power_limit_from_start_stop(102_STEAM_3_4):
    PowerGeneratedAboveMinimum(102_STEAM_3_4)
    + ReserveProvided(102_STEAM_3_4) + 46 UnitStart(102_STEAM_3_4) <= 46
  power_limit_from_start_stop(102_STEAM_4_1):
    PowerGeneratedAboveMinimum(102_STEAM_4_1)
    + ReserveProvided(102_STEAM_4_1) + 46 UnitStart(102_STEAM_4_1)
-   + 2.174240516013654 UnitStop(102_STEAM_4_2) <= 46
+   + 14.3 UnitStop(102_STEAM_4_2) <= 46
  power_limit_from_start_stop(102_STEAM_4_2):
    PowerGeneratedAboveMinimum(102_STEAM_4_2)
    + ReserveProvided(102_STEAM_4_2) + 46 UnitStart(102_STEAM_4_2)
-   + 2.174240516013654 UnitStop(102_STEAM_4_3) <= 46
+   + 14.3 UnitStop(102_STEAM_4_3) <= 46
  power_limit_from_start_stop(102_STEAM_4_3):
    PowerGeneratedAboveMinimum(102_STEAM_4_3)
    + ReserveProvided(102_STEAM_4_3) + 46 UnitStart(102_STEAM_4_3)
-   + 2.174240516013654 UnitStop(102_STEAM_4_4) <= 46
+   + 14.3 UnitStop(102_STEAM_4_4) <= 46
  power_limit_from_start_stop(102_STEAM_4_4):
    PowerGeneratedAboveMinimum(102_STEAM_4_4)
    + ReserveProvided(102_STEAM_4_4) + 46 UnitStart(102_STEAM_4_4) <= 46
@@ -5131,15 +5133,15 @@ Subject To
  power_limit_from_start_stop(115_STEAM_3_1):
    PowerGeneratedAboveMinimum(115_STEAM_3_1)
    + ReserveProvided(115_STEAM_3_1) + 93 UnitStart(115_STEAM_3_1)
-   + 30 UnitStop(115_STEAM_3_2) <= 93
+   + 61 UnitStop(115_STEAM_3_2) <= 93
  power_limit_from_start_stop(115_STEAM_3_2):
    PowerGeneratedAboveMinimum(115_STEAM_3_2)
    + ReserveProvided(115_STEAM_3_2) + 93 UnitStart(115_STEAM_3_2)
-   + 30 UnitStop(115_STEAM_3_3) <= 93
+   + 61 UnitStop(115_STEAM_3_3) <= 93
  power_limit_from_start_stop(115_STEAM_3_3):
    PowerGeneratedAboveMinimum(115_STEAM_3_3)
    + ReserveProvided(115_STEAM_3_3) + 93 UnitStart(115_STEAM_3_3)
-   + 30 UnitStop(115_STEAM_3_4) <= 93
+   + 61 UnitStop(115_STEAM_3_4) <= 93
  power_limit_from_start_stop(115_STEAM_3_4):
    PowerGeneratedAboveMinimum(115_STEAM_3_4)
    + ReserveProvided(115_STEAM_3_4) + 93 UnitStart(115_STEAM_3_4) <= 93
@@ -5251,45 +5253,45 @@ Subject To
  power_limit_from_start_stop(201_STEAM_3_1):
    PowerGeneratedAboveMinimum(201_STEAM_3_1)
    + ReserveProvided(201_STEAM_3_1) + 46 UnitStart(201_STEAM_3_1)
-   + 46 UnitStop(201_STEAM_3_2) <= 0
+   + 45 UnitStop(201_STEAM_3_2) <= 46
  power_limit_from_start_stop(201_STEAM_3_2):
    PowerGeneratedAboveMinimum(201_STEAM_3_2)
    + ReserveProvided(201_STEAM_3_2) + 46 UnitStart(201_STEAM_3_2)
-   + 46 UnitStop(201_STEAM_3_3) <= 0
+   + 45 UnitStop(201_STEAM_3_3) <= 46
  power_limit_from_start_stop(201_STEAM_3_3):
    PowerGeneratedAboveMinimum(201_STEAM_3_3)
    + ReserveProvided(201_STEAM_3_3) + 46 UnitStart(201_STEAM_3_3)
-   + 46 UnitStop(201_STEAM_3_4) <= 0
+   + 45 UnitStop(201_STEAM_3_4) <= 46
  power_limit_from_start_stop(201_STEAM_3_4):
    PowerGeneratedAboveMinimum(201_STEAM_3_4)
-   + ReserveProvided(201_STEAM_3_4) + 46 UnitStart(201_STEAM_3_4) <= 0
+   + ReserveProvided(201_STEAM_3_4) + 46 UnitStart(201_STEAM_3_4) <= 46
  power_limit_from_start_stop(202_STEAM_3_1):
    PowerGeneratedAboveMinimum(202_STEAM_3_1)
    + ReserveProvided(202_STEAM_3_1) + 46 UnitStart(202_STEAM_3_1)
-   + 14.3 UnitStop(202_STEAM_3_2) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_3_2) <= 46
  power_limit_from_start_stop(202_STEAM_3_2):
    PowerGeneratedAboveMinimum(202_STEAM_3_2)
    + ReserveProvided(202_STEAM_3_2) + 46 UnitStart(202_STEAM_3_2)
-   + 14.3 UnitStop(202_STEAM_3_3) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_3_3) <= 46
  power_limit_from_start_stop(202_STEAM_3_3):
    PowerGeneratedAboveMinimum(202_STEAM_3_3)
    + ReserveProvided(202_STEAM_3_3) + 46 UnitStart(202_STEAM_3_3)
-   + 14.3 UnitStop(202_STEAM_3_4) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_3_4) <= 46
  power_limit_from_start_stop(202_STEAM_3_4):
    PowerGeneratedAboveMinimum(202_STEAM_3_4)
    + ReserveProvided(202_STEAM_3_4) + 46 UnitStart(202_STEAM_3_4) <= 46
  power_limit_from_start_stop(202_STEAM_4_1):
    PowerGeneratedAboveMinimum(202_STEAM_4_1)
    + ReserveProvided(202_STEAM_4_1) + 46 UnitStart(202_STEAM_4_1)
-   + 14.3 UnitStop(202_STEAM_4_2) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_4_2) <= 46
  power_limit_from_start_stop(202_STEAM_4_2):
    PowerGeneratedAboveMinimum(202_STEAM_4_2)
    + ReserveProvided(202_STEAM_4_2) + 46 UnitStart(202_STEAM_4_2)
-   + 14.3 UnitStop(202_STEAM_4_3) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_4_3) <= 46
  power_limit_from_start_stop(202_STEAM_4_3):
    PowerGeneratedAboveMinimum(202_STEAM_4_3)
    + ReserveProvided(202_STEAM_4_3) + 46 UnitStart(202_STEAM_4_3)
-   + 14.3 UnitStop(202_STEAM_4_4) <= 46
+   + 21.61441066767941 UnitStop(202_STEAM_4_4) <= 46
  power_limit_from_start_stop(202_STEAM_4_4):
    PowerGeneratedAboveMinimum(202_STEAM_4_4)
    + ReserveProvided(202_STEAM_4_4) + 46 UnitStart(202_STEAM_4_4) <= 46
@@ -5380,15 +5382,15 @@ Subject To
  power_limit_from_start_stop(216_STEAM_1_1):
    PowerGeneratedAboveMinimum(216_STEAM_1_1)
    + ReserveProvided(216_STEAM_1_1) + 93 UnitStart(216_STEAM_1_1)
-   + 30 UnitStop(216_STEAM_1_2) <= 93
+   + 61 UnitStop(216_STEAM_1_2) <= 93
  power_limit_from_start_stop(216_STEAM_1_2):
    PowerGeneratedAboveMinimum(216_STEAM_1_2)
    + ReserveProvided(216_STEAM_1_2) + 93 UnitStart(216_STEAM_1_2)
-   + 30 UnitStop(216_STEAM_1_3) <= 93
+   + 61 UnitStop(216_STEAM_1_3) <= 93
  power_limit_from_start_stop(216_STEAM_1_3):
    PowerGeneratedAboveMinimum(216_STEAM_1_3)
    + ReserveProvided(216_STEAM_1_3) + 93 UnitStart(216_STEAM_1_3)
-   + 30 UnitStop(216_STEAM_1_4) <= 93
+   + 61 UnitStop(216_STEAM_1_4) <= 93
  power_limit_from_start_stop(216_STEAM_1_4):
    PowerGeneratedAboveMinimum(216_STEAM_1_4)
    + ReserveProvided(216_STEAM_1_4) + 93 UnitStart(216_STEAM_1_4) <= 93
@@ -5406,13 +5408,13 @@ Subject To
    + 185 UnitStart(218_CC_1_4) <= 0
  power_limit_from_start_stop(221_CC_1_1):
    PowerGeneratedAboveMinimum(221_CC_1_1) + ReserveProvided(221_CC_1_1)
-   + 185 UnitStart(221_CC_1_1) + 184 UnitStop(221_CC_1_2) <= 185
+   + 185 UnitStart(221_CC_1_1) + 185 UnitStop(221_CC_1_2) <= 0
  power_limit_from_start_stop(221_CC_1_2):
    PowerGeneratedAboveMinimum(221_CC_1_2) + ReserveProvided(221_CC_1_2)
-   + 185 UnitStart(221_CC_1_2) + 184 UnitStop(221_CC_1_3) <= 0
+   + 185 UnitStart(221_CC_1_2) + 185 UnitStop(221_CC_1_3) <= 0
  power_limit_from_start_stop(221_CC_1_3):
    PowerGeneratedAboveMinimum(221_CC_1_3) + ReserveProvided(221_CC_1_3)
-   + 185 UnitStart(221_CC_1_3) + 184 UnitStop(221_CC_1_4) <= 0
+   + 185 UnitStart(221_CC_1_3) + 185 UnitStop(221_CC_1_4) <= 0
  power_limit_from_start_stop(221_CC_1_4):
    PowerGeneratedAboveMinimum(221_CC_1_4) + ReserveProvided(221_CC_1_4)
    + 185 UnitStart(221_CC_1_4) <= 0
@@ -5565,13 +5567,13 @@ Subject To
    + 33 UnitStart(307_CT_2_4) <= 0
  power_limit_from_start_stop(313_CC_1_1):
    PowerGeneratedAboveMinimum(313_CC_1_1) + ReserveProvided(313_CC_1_1)
-   + 185 UnitStart(313_CC_1_1) + 60.7 UnitStop(313_CC_1_2) <= 185
+   + 185 UnitStart(313_CC_1_1) + 122.3 UnitStop(313_CC_1_2) <= 185
  power_limit_from_start_stop(313_CC_1_2):
    PowerGeneratedAboveMinimum(313_CC_1_2) + ReserveProvided(313_CC_1_2)
-   + 185 UnitStart(313_CC_1_2) + 60.7 UnitStop(313_CC_1_3) <= 185
+   + 185 UnitStart(313_CC_1_2) + 122.3 UnitStop(313_CC_1_3) <= 185
  power_limit_from_start_stop(313_CC_1_3):
    PowerGeneratedAboveMinimum(313_CC_1_3) + ReserveProvided(313_CC_1_3)
-   + 185 UnitStart(313_CC_1_3) + 60.7 UnitStop(313_CC_1_4) <= 185
+   + 185 UnitStart(313_CC_1_3) + 122.3 UnitStop(313_CC_1_4) <= 185
  power_limit_from_start_stop(313_CC_1_4):
    PowerGeneratedAboveMinimum(313_CC_1_4) + ReserveProvided(313_CC_1_4)
    + 185 UnitStart(313_CC_1_4) <= 185
@@ -6034,8 +6036,7 @@ Subject To
    + PowerGeneratedAboveMinimum(322_CT_5_1)
    + PowerGeneratedAboveMinimum(322_CT_6_1)
    + PowerGeneratedAboveMinimum(323_CC_1_1)
-   + PowerGeneratedAboveMinimum(323_CC_2_1) + 41.98 UnitStop(313_CC_1_1)
-   = 1740.192494975
+   + PowerGeneratedAboveMinimum(323_CC_2_1) = 1636.265326558333
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Abel): LoadShedding(Abel_1)
    + NondispatchablePowerUsed(101_PV_1_1)
    + NondispatchablePowerUsed(101_PV_2_1)
@@ -6045,7 +6046,7 @@ Subject To
    + PowerGeneratedAboveMinimum(101_CT_2_1)
    + PowerGeneratedAboveMinimum(101_STEAM_3_1)
    + PowerGeneratedAboveMinimum(101_STEAM_4_1)
-   + TransmissionBlock(1)_p_nw(Abel) = -25.22266469463158
+   + TransmissionBlock(1)_p_nw(Abel) = -23.87404710410527
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adams):
    LoadShedding(Adams_1) + NondispatchablePowerUsed(102_PV_1_1)
    + NondispatchablePowerUsed(102_PV_2_1) - OverGeneration(Adams_1)
@@ -6053,31 +6054,31 @@ Subject To
    + PowerGeneratedAboveMinimum(102_CT_2_1)
    + PowerGeneratedAboveMinimum(102_STEAM_3_1)
    + PowerGeneratedAboveMinimum(102_STEAM_4_1)
-   + TransmissionBlock(1)_p_nw(Adams) = -28.76480069795614
+   + TransmissionBlock(1)_p_nw(Adams) = -27.55354230646491
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adler):
    LoadShedding(Adler_1) + NondispatchablePowerUsed(103_PV_1_1)
-   + TransmissionBlock(1)_p_nw(Adler) = 57.96222550894737
+   + TransmissionBlock(1)_p_nw(Adler) = 60.2099214931579
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Agricola):
    LoadShedding(Agricola_1) + NondispatchablePowerUsed(104_PV_1_1)
-   + TransmissionBlock(1)_p_nw(Agricola) = 23.82891493145614
+   + TransmissionBlock(1)_p_nw(Agricola) = 24.75296772496491
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aiken):
    LoadShedding(Aiken_1) + TransmissionBlock(1)_p_nw(Aiken)
-   = 22.86287783964035
+   = 23.74946903341228
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alber):
    LoadShedding(Alber_1) + TransmissionBlock(1)_p_nw(Alber)
-   = 43.79368149564913
+   = 45.4919406837193
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alder):
    LoadShedding(Alder_1) - OverGeneration(Alder_1)
    + PowerGeneratedAboveMinimum(107_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Alder) = 40.25154549232457
+   + TransmissionBlock(1)_p_nw(Alder) = 41.81244548135965
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alger):
    LoadShedding(Alger_1) + TransmissionBlock(1)_p_nw(Alger)
-   = 55.0641142335
+   = 57.19942541850001
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Ali): LoadShedding(Ali_1)
-   + TransmissionBlock(1)_p_nw(Ali) = 56.35216368925439
+   + TransmissionBlock(1)_p_nw(Ali) = 58.53742367390351
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Allen):
    LoadShedding(Allen_1) + TransmissionBlock(1)_p_nw(Allen)
-   = 62.79241096802633
+   = 65.22741495092106
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Anna):
    TransmissionBlock(1)_p_nw(Anna) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Archer):
@@ -6088,20 +6089,20 @@ Subject To
    + PowerGeneratedAboveMinimum(113_CT_2_1)
    + PowerGeneratedAboveMinimum(113_CT_3_1)
    + PowerGeneratedAboveMinimum(113_CT_4_1)
-   + TransmissionBlock(1)_p_nw(Arne) = 85.33327644372808
+   + TransmissionBlock(1)_p_nw(Arne) = 88.64238442048246
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arnold):
    LoadShedding(Arnold_1) + TransmissionBlock(1)_p_nw(Arnold)
-   = 62.47039860408773
+   = 64.89291538707018
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arthur):
    LoadShedding(Arthur_1) - OverGeneration(Arthur_1)
    + PowerGeneratedAboveMinimum(115_STEAM_1_1)
    + PowerGeneratedAboveMinimum(115_STEAM_2_1)
    + PowerGeneratedAboveMinimum(115_STEAM_3_1)
-   + TransmissionBlock(1)_p_nw(Arthur) = 40.07791936853511
+   + TransmissionBlock(1)_p_nw(Arthur) = 44.03636174072808
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Asser):
    LoadShedding(Asser_1) - OverGeneration(Asser_1)
    + PowerGeneratedAboveMinimum(116_STEAM_1_1)
-   + TransmissionBlock(1)_p_nw(Asser) = -29.79876360614035
+   + TransmissionBlock(1)_p_nw(Asser) = -28.55004361491228
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aston):
    TransmissionBlock(1)_p_nw(Aston) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Astor):
@@ -6116,13 +6117,13 @@ Subject To
    + NondispatchablePowerUsed(118_RTPV_8_1)
    + NondispatchablePowerUsed(118_RTPV_9_1) - OverGeneration(Astor_1)
    + PowerGeneratedAboveMinimum(118_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Astor) = 107.2301171915526
+   + TransmissionBlock(1)_p_nw(Astor) = 111.3883547623421
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attar):
    LoadShedding(Attar_1) + NondispatchablePowerUsed(119_PV_1_1)
-   + TransmissionBlock(1)_p_nw(Attar) = 58.28423787288597
+   + TransmissionBlock(1)_p_nw(Attar) = 60.54442105700878
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attila):
    LoadShedding(Attila_1) + TransmissionBlock(1)_p_nw(Attila)
-   = 41.21758258414035
+   = 42.81594417291228
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attlee):
    - OverGeneration(Attlee_1) + PowerGeneratedAboveMinimum(121_NUCLEAR_1_1)
    + TransmissionBlock(1)_p_nw(Attlee) = -396
@@ -6149,38 +6150,37 @@ Subject To
    + PowerGeneratedAboveMinimum(201_CT_1_1)
    + PowerGeneratedAboveMinimum(201_CT_2_1)
    + PowerGeneratedAboveMinimum(201_STEAM_3_1)
-   + TransmissionBlock(1)_p_nw(Bach) = 42.97941869052632
+   + TransmissionBlock(1)_p_nw(Bach) = 8.842105259999997
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bacon):
    LoadShedding(Bacon_1) - OverGeneration(Bacon_1)
    + PowerGeneratedAboveMinimum(202_CT_1_1)
    + PowerGeneratedAboveMinimum(202_CT_2_1)
    + PowerGeneratedAboveMinimum(202_STEAM_3_1)
    + PowerGeneratedAboveMinimum(202_STEAM_4_1)
-   + TransmissionBlock(1)_p_nw(Bacon) = -21.39811469461988
+   + TransmissionBlock(1)_p_nw(Bacon) = -25.11403509055556
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baffin):
-   LoadShedding(Baffin_1) + TransmissionBlock(1)_p_nw(Baffin)
-   = 71.63236448421053
+   LoadShedding(Baffin_1) + TransmissionBlock(1)_p_nw(Baffin) = 64.7368421
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bailey):
    LoadShedding(Bailey_1) + TransmissionBlock(1)_p_nw(Bailey)
-   = 29.44886095461988
+   = 26.61403508555556
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bain): LoadShedding(Bain_1)
-   + TransmissionBlock(1)_p_nw(Bain) = 28.25498821321638
+   + TransmissionBlock(1)_p_nw(Bain) = 25.53508771722222
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bajer):
    LoadShedding(Bajer_1) + TransmissionBlock(1)_p_nw(Bajer)
-   = 54.12223094362572
+   = 48.91228069777778
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baker):
    LoadShedding(Baker_1) - OverGeneration(Baker_1)
    + PowerGeneratedAboveMinimum(207_CT_1_1)
    + PowerGeneratedAboveMinimum(207_CT_2_1)
-   + TransmissionBlock(1)_p_nw(Baker) = 49.74469755847953
+   + TransmissionBlock(1)_p_nw(Baker) = 44.95614034722222
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balch):
-   LoadShedding(Balch_1) + TransmissionBlock(1)_p_nw(Balch) = 68.05074626
+   LoadShedding(Balch_1) + TransmissionBlock(1)_p_nw(Balch) = 61.499999995
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balzac):
    LoadShedding(Balzac_1) + TransmissionBlock(1)_p_nw(Balzac)
-   = 69.64257658187134
+   = 62.93859648611111
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Banks):
    LoadShedding(Banks_1) + TransmissionBlock(1)_p_nw(Banks)
-   = 77.60172819122806
+   = 70.13157894166666
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bardeen):
    TransmissionBlock(1)_p_nw(Bardeen) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barkla):
@@ -6190,10 +6190,10 @@ Subject To
    - OverGeneration(Barlow_1) + PowerGeneratedAboveMinimum(213_CC_3_1)
    + PowerGeneratedAboveMinimum(213_CT_1_1)
    + PowerGeneratedAboveMinimum(213_CT_2_1)
-   + TransmissionBlock(1)_p_nw(Barlow) = 105.4587588239766
+   + TransmissionBlock(1)_p_nw(Barlow) = 95.3070175361111
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barry):
    LoadShedding(Barry_1) + TransmissionBlock(1)_p_nw(Barry)
-   = 77.20377061076023
+   = 69.77192981888888
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barton):
    LoadShedding(Barton_1) + NondispatchablePowerUsed(215_HYDRO_1_1)
    + NondispatchablePowerUsed(215_HYDRO_2_1)
@@ -6201,25 +6201,25 @@ Subject To
    + NondispatchablePowerUsed(215_PV_1_1) - OverGeneration(Barton_1)
    + PowerGeneratedAboveMinimum(215_CT_4_1)
    + PowerGeneratedAboveMinimum(215_CT_5_1)
-   + TransmissionBlock(1)_p_nw(Barton) = 126.1525530083041
+   + TransmissionBlock(1)_p_nw(Barton) = 114.0087719205556
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Basov):
    LoadShedding(Basov_1) - OverGeneration(Basov_1)
    + PowerGeneratedAboveMinimum(216_STEAM_1_1)
-   + TransmissionBlock(1)_p_nw(Basov) = -22.20424195321637
+   + TransmissionBlock(1)_p_nw(Basov) = -26.03508772222222
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bates):
    TransmissionBlock(1)_p_nw(Bates) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bayle):
    LoadShedding(Bayle_1) - OverGeneration(Bayle_1)
    + PowerGeneratedAboveMinimum(218_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Bayle) = 132.5198742957895
+   + TransmissionBlock(1)_p_nw(Bayle) = 119.763157885
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bede): LoadShedding(Bede_1)
-   + TransmissionBlock(1)_p_nw(Bede) = 72.03032206467836
+   + TransmissionBlock(1)_p_nw(Bede) = 65.09649122277777
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Beethoven):
    LoadShedding(Beethoven_1) + TransmissionBlock(1)_p_nw(Beethoven)
-   = 50.93857029988304
+   = 46.03508771555556
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Behring):
    - OverGeneration(Behring_1) + PowerGeneratedAboveMinimum(221_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Behring) = -170
+   + TransmissionBlock(1)_p_nw(Behring) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bell):
    NondispatchablePowerUsed(222_HYDRO_1_1)
    + NondispatchablePowerUsed(222_HYDRO_2_1)
@@ -6244,43 +6244,43 @@ Subject To
    + PowerGeneratedAboveMinimum(301_CT_2_1)
    + PowerGeneratedAboveMinimum(301_CT_3_1)
    + PowerGeneratedAboveMinimum(301_CT_4_1)
-   + TransmissionBlock(1)_p_nw(Cabell) = 49.95580370842105
+   + TransmissionBlock(1)_p_nw(Cabell) = 43.50094369263158
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabot):
    LoadShedding(Cabot_1) - OverGeneration(Cabot_1)
    + PowerGeneratedAboveMinimum(302_CT_1_1)
    + PowerGeneratedAboveMinimum(302_CT_2_1)
    + PowerGeneratedAboveMinimum(302_CT_3_1)
    + PowerGeneratedAboveMinimum(302_CT_4_1)
-   + TransmissionBlock(1)_p_nw(Cabot) = 44.86771258997076
+   + TransmissionBlock(1)_p_nw(Cabot) = 39.07029202023392
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caesar):
    LoadShedding(Caesar_1) + NondispatchablePowerUsed(303_WIND_1_1)
    - OverGeneration(Caesar_1) + TransmissionBlock(1)_p_nw(Caesar)
-   = 83.25967284736842
+   = 72.50157282105265
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caine):
    LoadShedding(Caine_1) + TransmissionBlock(1)_p_nw(Caine)
-   = 34.22897661502925
+   = 29.80620215976608
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Calvin):
    LoadShedding(Calvin_1) + TransmissionBlock(1)_p_nw(Calvin)
-   = 32.84131540090644
+   = 28.59784261274854
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Camus):
    LoadShedding(Camus_1) + TransmissionBlock(1)_p_nw(Camus)
-   = 62.90730837356726
+   = 54.77896613146199
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carew):
    LoadShedding(Carew_1) - OverGeneration(Carew_1)
    + PowerGeneratedAboveMinimum(307_CT_1_1)
    + PowerGeneratedAboveMinimum(307_CT_2_1)
-   + TransmissionBlock(1)_p_nw(Carew) = 57.81921725511696
+   + TransmissionBlock(1)_p_nw(Carew) = 50.34831445906433
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carrel):
    LoadShedding(Carrel_1) + NondispatchablePowerUsed(308_RTPV_1_1)
-   + TransmissionBlock(1)_p_nw(Carrel) = 79.096689205
+   + TransmissionBlock(1)_p_nw(Carrel) = 68.87649417999999
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carter):
    LoadShedding(Carter_1) + NondispatchablePowerUsed(309_WIND_1_1)
    - OverGeneration(Carter_1) + TransmissionBlock(1)_p_nw(Carter)
-   = 80.94690415716374
+   = 70.48764024269006
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caruso):
    LoadShedding(Caruso_1) + NondispatchablePowerUsed(310_PV_1_1)
    + NondispatchablePowerUsed(310_PV_2_1)
-   + TransmissionBlock(1)_p_nw(Caruso) = 90.19797891798247
+   + TransmissionBlock(1)_p_nw(Caruso) = 78.54337055614036
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cary):
    TransmissionBlock(1)_p_nw(Cary) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caxton):
@@ -6302,14 +6302,14 @@ Subject To
    + NondispatchablePowerUsed(313_RTPV_7_1)
    + NondispatchablePowerUsed(313_RTPV_8_1)
    + NondispatchablePowerUsed(313_RTPV_9_1) - OverGeneration(Cecil_1)
-   + PowerGeneratedAboveMinimum(313_CC_1_1) + 41.98 UnitStop(313_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Cecil) = -47.42325941915203
+   + PowerGeneratedAboveMinimum(313_CC_1_1)
+   + TransmissionBlock(1)_p_nw(Cecil) = -63.26157334678361
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chain):
    LoadShedding(Chain_1) + NondispatchablePowerUsed(314_PV_1_1)
    + NondispatchablePowerUsed(314_PV_2_1)
    + NondispatchablePowerUsed(314_PV_3_1)
    + NondispatchablePowerUsed(314_PV_4_1)
-   + TransmissionBlock(1)_p_nw(Chain) = 89.73542517994153
+   + TransmissionBlock(1)_p_nw(Chain) = 78.14058404046784
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chase):
    LoadShedding(Chase_1) - OverGeneration(Chase_1)
    + PowerGeneratedAboveMinimum(315_CT_6_1)
@@ -6320,21 +6320,21 @@ Subject To
    + PowerGeneratedAboveMinimum(315_STEAM_3_1)
    + PowerGeneratedAboveMinimum(315_STEAM_4_1)
    + PowerGeneratedAboveMinimum(315_STEAM_5_1)
-   + TransmissionBlock(1)_p_nw(Chase) = 146.6295349589766
+   + TransmissionBlock(1)_p_nw(Chase) = 127.6833254681871
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chifa):
    LoadShedding(Chifa_1) - OverGeneration(Chifa_1)
    + PowerGeneratedAboveMinimum(316_STEAM_1_1)
-   + TransmissionBlock(1)_p_nw(Chifa) = -15.74462619590643
+   + TransmissionBlock(1)_p_nw(Chifa) = -21.72134843274853
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chuhsi):
    NondispatchablePowerUsed(317_WIND_1_1) - OverGeneration(Chuhsi_1)
    + TransmissionBlock(1)_p_nw(Chuhsi) = 0
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clark):
    LoadShedding(Clark_1) - OverGeneration(Clark_1)
    + PowerGeneratedAboveMinimum(318_CC_1_1)
-   + TransmissionBlock(1)_p_nw(Clark) = 154.0303947676316
+   + TransmissionBlock(1)_p_nw(Clark) = 134.1279097189474
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clay): LoadShedding(Clay_1)
    + NondispatchablePowerUsed(319_PV_1_1) + TransmissionBlock(1)_p_nw(Clay)
-   = 83.72222658540936
+   = 72.90435933672515
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clive):
    LoadShedding(Clive_1) + NondispatchablePowerUsed(320_PV_1_1)
    + NondispatchablePowerUsed(320_RTPV_1_1)
@@ -6343,7 +6343,7 @@ Subject To
    + NondispatchablePowerUsed(320_RTPV_4_1)
    + NondispatchablePowerUsed(320_RTPV_5_1)
    + NondispatchablePowerUsed(320_RTPV_6_1)
-   + TransmissionBlock(1)_p_nw(Clive) = 59.20687846923977
+   + TransmissionBlock(1)_p_nw(Clive) = 51.55667400608188
  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cobb):
    - OverGeneration(Cobb_1) + PowerGeneratedAboveMinimum(321_CC_1_1)
    + TransmissionBlock(1)_p_nw(Cobb) = 0
@@ -6440,80 +6440,6 @@ Subject To
    - 0.1675139922817269 TransmissionBlock(1)_p_nw(Curie)
    + 0.0269211694367085 TransmissionBlock(1)_p_nw(Curtiss)
    + RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6) = 175
- TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1):
-   - 8.7237645759599301e-04 TransmissionBlock(1)_p_nw(Adams)
-   + 0.0273453695412714 TransmissionBlock(1)_p_nw(Adler)
-   - 0.00338071920498113 TransmissionBlock(1)_p_nw(Agricola)
-   - 0.0057193358114842 TransmissionBlock(1)_p_nw(Aiken)
-   - 0.00904425623096464 TransmissionBlock(1)_p_nw(Alber)
-   - 0.0590807856387687 TransmissionBlock(1)_p_nw(Alder)
-   - 0.0375955557402782 TransmissionBlock(1)_p_nw(Alger)
-   - 0.00543479515559573 TransmissionBlock(1)_p_nw(Ali)
-   - 0.011640530533962 TransmissionBlock(1)_p_nw(Allen)
-   - 0.0027873159442004 TransmissionBlock(1)_p_nw(Anna)
-   - 0.016507524654631 TransmissionBlock(1)_p_nw(Archer)
-   - 0.028485992620329 TransmissionBlock(1)_p_nw(Arne)
-   + 0.0254493730479906 TransmissionBlock(1)_p_nw(Arnold)
-   + 0.0824338663670007 TransmissionBlock(1)_p_nw(Arthur)
-   + 0.0651151980608304 TransmissionBlock(1)_p_nw(Asser)
-   + 0.0926149622686482 TransmissionBlock(1)_p_nw(Aston)
-   + 0.1054235062900587 TransmissionBlock(1)_p_nw(Astor)
-   + 0.0328202928300642 TransmissionBlock(1)_p_nw(Attar)
-   + 0.00473776654244149 TransmissionBlock(1)_p_nw(Attila)
-   + 0.1173171543099399 TransmissionBlock(1)_p_nw(Attlee)
-   + 0.1076076221781027 TransmissionBlock(1)_p_nw(Aubrey)
-   - 0.010707622915751 TransmissionBlock(1)_p_nw(Austen)
-   + 0.0613706175806924 TransmissionBlock(1)_p_nw(Avery)
-   - 0.1460707041453138 TransmissionBlock(1)_p_nw(Bach)
-   - 0.1470367973788866 TransmissionBlock(1)_p_nw(Bacon)
-   - 0.1157877038954402 TransmissionBlock(1)_p_nw(Baffin)
-   - 0.1498146038346087 TransmissionBlock(1)_p_nw(Bailey)
-   - 0.1524044509812052 TransmissionBlock(1)_p_nw(Bain)
-   - 0.1560865575894915 TransmissionBlock(1)_p_nw(Bajer)
-   - 0.1555255424012605 TransmissionBlock(1)_p_nw(Baker)
-   - 0.1555255424012605 TransmissionBlock(1)_p_nw(Balch)
-   - 0.152089342979452 TransmissionBlock(1)_p_nw(Balzac)
-   - 0.1589617418230692 TransmissionBlock(1)_p_nw(Banks)
-   - 0.1565885942988485 TransmissionBlock(1)_p_nw(Bardeen)
-   - 0.1733027294941294 TransmissionBlock(1)_p_nw(Barkla)
-   - 0.1749221602375867 TransmissionBlock(1)_p_nw(Barlow)
-   - 0.1416097760000404 TransmissionBlock(1)_p_nw(Barry)
-   - 0.1026827119029918 TransmissionBlock(1)_p_nw(Barton)
-   - 0.1205681026755244 TransmissionBlock(1)_p_nw(Basov)
-   - 0.0950664711712609 TransmissionBlock(1)_p_nw(Bates)
-   - 0.0969938074007304 TransmissionBlock(1)_p_nw(Bayle)
-   - 0.1591224336591625 TransmissionBlock(1)_p_nw(Bede)
-   - 0.1926479388623261 TransmissionBlock(1)_p_nw(Beethoven)
-   - 0.0987834767566663 TransmissionBlock(1)_p_nw(Behring)
-   - 0.0973224572202064 TransmissionBlock(1)_p_nw(Bell)
-   - 0.2110869667240661 TransmissionBlock(1)_p_nw(Bloch)
-   - 0.1076934441353986 TransmissionBlock(1)_p_nw(Bordet)
-   - 0.5663008958400904 TransmissionBlock(1)_p_nw(Cabell)
-   - 0.5668918270649241 TransmissionBlock(1)_p_nw(Cabot)
-   - 0.5477776624632046 TransmissionBlock(1)_p_nw(Caesar)
-   - 0.5685909307478684 TransmissionBlock(1)_p_nw(Caine)
-   - 0.5701750651701856 TransmissionBlock(1)_p_nw(Calvin)
-   - 0.5724273030416346 TransmissionBlock(1)_p_nw(Camus)
-   - 0.5720841463143012 TransmissionBlock(1)_p_nw(Carew)
-   - 0.5720841463143012 TransmissionBlock(1)_p_nw(Carrel)
-   - 0.5699823227402006 TransmissionBlock(1)_p_nw(Carter)
-   - 0.574185969888402 TransmissionBlock(1)_p_nw(Caruso)
-   - 0.569074794222826 TransmissionBlock(1)_p_nw(Cary)
-   - 0.5866175264352644 TransmissionBlock(1)_p_nw(Caxton)
-   - 0.586883706039605 TransmissionBlock(1)_p_nw(Cecil)
-   - 0.5504826442916692 TransmissionBlock(1)_p_nw(Chain)
-   - 0.5104617621772434 TransmissionBlock(1)_p_nw(Chase)
-   - 0.5243651003407583 TransmissionBlock(1)_p_nw(Chifa)
-   - 0.4882441877527472 TransmissionBlock(1)_p_nw(Chuhsi)
-   - 0.4691620213539353 TransmissionBlock(1)_p_nw(Clark)
-   - 0.5649471985757841 TransmissionBlock(1)_p_nw(Clay)
-   - 0.6002359796497196 TransmissionBlock(1)_p_nw(Clive)
-   - 0.4837022486694866 TransmissionBlock(1)_p_nw(Cobb)
-   - 0.4854875195230226 TransmissionBlock(1)_p_nw(Cole)
-   - 0.6196448092403842 TransmissionBlock(1)_p_nw(Comte)
-   - 0.5247296064042285 TransmissionBlock(1)_p_nw(Curie)
-   - 0.6419782274295076 TransmissionBlock(1)_p_nw(Curtiss)
-   + RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1) = 500
  TransmissionBlock(2)_eq_p_balance: LoadShedding(Abel_2)
    + LoadShedding(Adams_2) + LoadShedding(Adler_2)
    + LoadShedding(Agricola_2) + LoadShedding(Aiken_2)
@@ -6628,9 +6554,10 @@ Subject To
    - OverGeneration(Cabot_2) - OverGeneration(Caesar_2)
    - OverGeneration(Carew_2) - OverGeneration(Carter_2)
    - OverGeneration(Cecil_2) - OverGeneration(Chase_2)
-   - OverGeneration(Chifa_2) - OverGeneration(Clark_2)
-   - OverGeneration(Cobb_2) - OverGeneration(Cole_2)
-   - OverGeneration(Comte_2) + PowerGeneratedAboveMinimum(101_CT_1_2)
+   - OverGeneration(Chifa_2) - OverGeneration(Chuhsi_2)
+   - OverGeneration(Clark_2) - OverGeneration(Cobb_2)
+   - OverGeneration(Cole_2) - OverGeneration(Comte_2)
+   + PowerGeneratedAboveMinimum(101_CT_1_2)
    + PowerGeneratedAboveMinimum(101_CT_2_2)
    + PowerGeneratedAboveMinimum(101_STEAM_3_2)
    + PowerGeneratedAboveMinimum(101_STEAM_4_2)
@@ -6702,8 +6629,7 @@ Subject To
    + PowerGeneratedAboveMinimum(322_CT_5_2)
    + PowerGeneratedAboveMinimum(322_CT_6_2)
    + PowerGeneratedAboveMinimum(323_CC_1_2)
-   + PowerGeneratedAboveMinimum(323_CC_2_2) + 41.98 UnitStop(313_CC_1_2)
-   = 1785.910328565603
+   + PowerGeneratedAboveMinimum(323_CC_2_2) = 1690.923219113597
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Abel): LoadShedding(Abel_2)
    + NondispatchablePowerUsed(101_PV_1_2)
    + NondispatchablePowerUsed(101_PV_2_2)
@@ -6713,7 +6639,7 @@ Subject To
    + PowerGeneratedAboveMinimum(101_CT_2_2)
    + PowerGeneratedAboveMinimum(101_STEAM_3_2)
    + PowerGeneratedAboveMinimum(101_STEAM_4_2)
-   + TransmissionBlock(2)_p_nw(Abel) = -24.66966819176227
+   + TransmissionBlock(2)_p_nw(Abel) = -22.00631076452581
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adams):
    LoadShedding(Adams_2) + NondispatchablePowerUsed(102_PV_1_2)
    + NondispatchablePowerUsed(102_PV_2_2) - OverGeneration(Adams_2)
@@ -6721,31 +6647,31 @@ Subject To
    + PowerGeneratedAboveMinimum(102_CT_2_2)
    + PowerGeneratedAboveMinimum(102_STEAM_3_2)
    + PowerGeneratedAboveMinimum(102_STEAM_4_2)
-   + TransmissionBlock(2)_p_nw(Adams) = -28.26812791297166
+   + TransmissionBlock(2)_p_nw(Adams) = -25.87603837184262
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adler):
    LoadShedding(Adler_2) + NondispatchablePowerUsed(103_PV_1_2)
-   + TransmissionBlock(2)_p_nw(Adler) = 58.88388634706287
+   + TransmissionBlock(2)_p_nw(Adler) = 63.322815392457
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Agricola):
    LoadShedding(Agricola_2) + NondispatchablePowerUsed(104_PV_1_2)
-   + TransmissionBlock(2)_p_nw(Agricola) = 24.20781994268141
+   + TransmissionBlock(2)_p_nw(Agricola) = 26.03271299467677
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aiken):
    LoadShedding(Aiken_2) + TransmissionBlock(2)_p_nw(Aiken)
-   = 23.22642183689703
+   = 24.97733273813582
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alber):
    LoadShedding(Alber_2) + TransmissionBlock(2)_p_nw(Alber)
-   = 44.49004746222529
+   = 47.84390496318973
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alder):
    LoadShedding(Alder_2) - OverGeneration(Alder_2)
    + PowerGeneratedAboveMinimum(107_CC_1_2)
-   + TransmissionBlock(2)_p_nw(Alder) = 40.8915877410159
+   + TransmissionBlock(2)_p_nw(Alder) = 43.97417735587291
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alger):
    LoadShedding(Alger_2) + TransmissionBlock(2)_p_nw(Alger)
-   = 55.93969202970974
+   = 60.15667462283415
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Ali): LoadShedding(Ali_2)
-   + TransmissionBlock(2)_p_nw(Ali) = 57.24822283742225
+   + TransmissionBlock(2)_p_nw(Ali) = 61.56384829822208
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Allen):
    LoadShedding(Allen_2) + TransmissionBlock(2)_p_nw(Allen)
-   = 63.7908768759848
+   = 68.59971667516176
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Anna):
    TransmissionBlock(2)_p_nw(Anna) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Archer):
@@ -6756,20 +6682,20 @@ Subject To
    + PowerGeneratedAboveMinimum(113_CT_2_2)
    + PowerGeneratedAboveMinimum(113_CT_3_2)
    + PowerGeneratedAboveMinimum(113_CT_4_2)
-   + TransmissionBlock(2)_p_nw(Arne) = 86.69016601095369
+   + TransmissionBlock(2)_p_nw(Arne) = 93.22525599445058
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arnold):
    LoadShedding(Arnold_2) + TransmissionBlock(2)_p_nw(Arnold)
-   = 63.46374417405667
+   = 68.24792325631476
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arthur):
    LoadShedding(Arthur_2) - OverGeneration(Arthur_2)
    + PowerGeneratedAboveMinimum(115_STEAM_1_2)
    + PowerGeneratedAboveMinimum(115_STEAM_2_2)
    + PowerGeneratedAboveMinimum(115_STEAM_3_2)
-   + TransmissionBlock(2)_p_nw(Arthur) = 41.70106651121633
+   + TransmissionBlock(2)_p_nw(Arthur) = 49.51851377449371
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Asser):
    LoadShedding(Asser_2) - OverGeneration(Asser_2)
    + PowerGeneratedAboveMinimum(116_STEAM_1_2)
-   + TransmissionBlock(2)_p_nw(Asser) = -29.28672980718729
+   + TransmissionBlock(2)_p_nw(Asser) = -26.82065811530167
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aston):
    TransmissionBlock(2)_p_nw(Aston) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Astor):
@@ -6784,13 +6710,13 @@ Subject To
    + NondispatchablePowerUsed(118_RTPV_8_2)
    + NondispatchablePowerUsed(118_RTPV_9_2) - OverGeneration(Astor_2)
    + PowerGeneratedAboveMinimum(118_CC_1_2)
-   + TransmissionBlock(2)_p_nw(Astor) = 108.9351897420663
+   + TransmissionBlock(2)_p_nw(Astor) = 117.1472084760454
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attar):
    LoadShedding(Attar_2) + NondispatchablePowerUsed(119_PV_1_2)
-   + TransmissionBlock(2)_p_nw(Attar) = 59.21101904899102
+   + TransmissionBlock(2)_p_nw(Attar) = 63.67460881130398
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attila):
    LoadShedding(Attila_2) + TransmissionBlock(2)_p_nw(Attila)
-   = 41.87298584680027
+   = 45.02955761241386
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attlee):
    - OverGeneration(Attlee_2) + PowerGeneratedAboveMinimum(121_NUCLEAR_1_2)
    + TransmissionBlock(2)_p_nw(Attlee) = -396
@@ -6817,39 +6743,39 @@ Subject To
    + PowerGeneratedAboveMinimum(201_CT_1_2)
    + PowerGeneratedAboveMinimum(201_CT_2_2)
    + PowerGeneratedAboveMinimum(201_STEAM_3_2)
-   + TransmissionBlock(2)_p_nw(Bach) = 40.16276511370888
+   + TransmissionBlock(2)_p_nw(Bach) = 9.164516824164302
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bacon):
    LoadShedding(Bacon_2) - OverGeneration(Bacon_2)
    + PowerGeneratedAboveMinimum(202_CT_1_2)
    + PowerGeneratedAboveMinimum(202_CT_2_2)
    + PowerGeneratedAboveMinimum(202_STEAM_3_2)
    + PowerGeneratedAboveMinimum(202_STEAM_4_2)
-   + TransmissionBlock(2)_p_nw(Bacon) = -23.92788688861332
+   + TransmissionBlock(2)_p_nw(Bacon) = -24.82446174125984
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baffin):
    LoadShedding(Baffin_2) + TransmissionBlock(2)_p_nw(Baffin)
-   = 66.93794185618147
+   = 65.27419470694051
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bailey):
    LoadShedding(Bailey_2) + TransmissionBlock(2)_p_nw(Bailey)
-   = 27.51893165198571
+   = 26.83494671285332
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bain): LoadShedding(Bain_2)
-   + TransmissionBlock(2)_p_nw(Bain) = 26.40329928771603
+   + TransmissionBlock(2)_p_nw(Bain) = 25.74704346773765
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bajer):
    LoadShedding(Bajer_2) + TransmissionBlock(2)_p_nw(Bajer)
-   = 50.57533384689265
+   = 49.31828044524394
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baker):
    LoadShedding(Baker_2) - OverGeneration(Baker_2)
    + PowerGeneratedAboveMinimum(207_CT_1_2)
    + PowerGeneratedAboveMinimum(207_CT_2_2)
-   + TransmissionBlock(2)_p_nw(Baker) = 46.48468184457046
+   + TransmissionBlock(2)_p_nw(Baker) = 45.32930187981979
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balch):
    LoadShedding(Balch_2) + TransmissionBlock(2)_p_nw(Balch)
-   = 63.59104476337238
+   = 62.01048497159349
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balzac):
    LoadShedding(Balzac_2) + TransmissionBlock(2)_p_nw(Balzac)
-   = 65.07855458239864
+   = 63.4610226317477
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Banks):
    LoadShedding(Banks_2) + TransmissionBlock(2)_p_nw(Banks)
-   = 72.51610367752991
+   = 70.71371093251886
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bardeen):
    TransmissionBlock(2)_p_nw(Bardeen) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barkla):
@@ -6859,10 +6785,10 @@ Subject To
    - OverGeneration(Barlow_2) + PowerGeneratedAboveMinimum(213_CC_3_2)
    + PowerGeneratedAboveMinimum(213_CT_1_2)
    + PowerGeneratedAboveMinimum(213_CT_2_2)
-   + TransmissionBlock(2)_p_nw(Barlow) = 98.54752551048936
+   + TransmissionBlock(2)_p_nw(Barlow) = 96.09811998521795
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barry):
    LoadShedding(Barry_2) + TransmissionBlock(2)_p_nw(Barry)
-   = 72.14422622277337
+   = 70.35107651748032
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barton):
    LoadShedding(Barton_2) + NondispatchablePowerUsed(215_HYDRO_1_2)
    + NondispatchablePowerUsed(215_HYDRO_2_2)
@@ -6870,22 +6796,22 @@ Subject To
    + NondispatchablePowerUsed(215_PV_1_2) - OverGeneration(Barton_2)
    + PowerGeneratedAboveMinimum(215_CT_4_2)
    + PowerGeneratedAboveMinimum(215_CT_5_2)
-   + TransmissionBlock(2)_p_nw(Barton) = 117.8851531578307
+   + TransmissionBlock(2)_p_nw(Barton) = 114.955109567223
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Basov):
    LoadShedding(Basov_2) - OverGeneration(Basov_2)
    + PowerGeneratedAboveMinimum(216_STEAM_1_2)
-   + TransmissionBlock(2)_p_nw(Basov) = -24.81225452434363
+   + TransmissionBlock(2)_p_nw(Basov) = -25.73655849614416
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bates):
    TransmissionBlock(2)_p_nw(Bates) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bayle):
    LoadShedding(Bayle_2) - OverGeneration(Bayle_2)
    + PowerGeneratedAboveMinimum(218_CC_1_2)
-   + TransmissionBlock(2)_p_nw(Bayle) = 123.8351924339357
+   + TransmissionBlock(2)_p_nw(Bayle) = 120.7572602078399
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bede): LoadShedding(Bede_2)
-   + TransmissionBlock(2)_p_nw(Bede) = 67.30981931093804
+   + TransmissionBlock(2)_p_nw(Bede) = 65.63682912197906
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Beethoven):
    LoadShedding(Beethoven_2) + TransmissionBlock(2)_p_nw(Beethoven)
-   = 47.60031420884015
+   = 46.41720512493547
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Behring):
    - OverGeneration(Behring_2) + PowerGeneratedAboveMinimum(221_CC_1_2)
    + TransmissionBlock(2)_p_nw(Behring) = 0
@@ -6913,43 +6839,43 @@ Subject To
    + PowerGeneratedAboveMinimum(301_CT_2_2)
    + PowerGeneratedAboveMinimum(301_CT_3_2)
    + PowerGeneratedAboveMinimum(301_CT_4_2)
-   + TransmissionBlock(2)_p_nw(Cabell) = 47.50982079211838
+   + TransmissionBlock(2)_p_nw(Cabell) = 43.3820422436136
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabot):
    LoadShedding(Cabot_2) - OverGeneration(Cabot_2)
    + PowerGeneratedAboveMinimum(302_CT_1_2)
    + PowerGeneratedAboveMinimum(302_CT_2_2)
    + PowerGeneratedAboveMinimum(302_CT_3_2)
    + PowerGeneratedAboveMinimum(302_CT_4_2)
-   + TransmissionBlock(2)_p_nw(Cabot) = 42.67085756329151
+   + TransmissionBlock(2)_p_nw(Cabot) = 38.96350090398629
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caesar):
    LoadShedding(Caesar_2) + NondispatchablePowerUsed(303_WIND_1_2)
    - OverGeneration(Caesar_2) + TransmissionBlock(2)_p_nw(Caesar)
-   = 79.18303465353064
+   = 72.303403739356
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caine):
    LoadShedding(Caine_2) + TransmissionBlock(2)_p_nw(Caine)
-   = 32.5530253575626
+   = 29.72473264840191
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Calvin):
    LoadShedding(Calvin_2) + TransmissionBlock(2)_p_nw(Calvin)
-   = 31.23330811333709
+   = 28.51967591941265
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Camus):
    LoadShedding(Camus_2) + TransmissionBlock(2)_p_nw(Camus)
-   = 59.82718173822315
+   = 54.62923838084676
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carew):
    LoadShedding(Carew_2) - OverGeneration(Carew_2)
    + PowerGeneratedAboveMinimum(307_CT_1_2)
    + PowerGeneratedAboveMinimum(307_CT_2_2)
-   + TransmissionBlock(2)_p_nw(Carew) = 54.98821850939628
+   + TransmissionBlock(2)_p_nw(Carew) = 50.21069704121943
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carrel):
    LoadShedding(Carrel_2) + NondispatchablePowerUsed(308_RTPV_1_2)
-   + TransmissionBlock(2)_p_nw(Carrel) = 75.22388292085411
+   + TransmissionBlock(2)_p_nw(Carrel) = 68.68823355238818
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carter):
    LoadShedding(Carter_2) + NondispatchablePowerUsed(309_WIND_1_2)
    - OverGeneration(Carter_2) + TransmissionBlock(2)_p_nw(Carter)
-   = 76.98350591315477
+   = 70.29497585770721
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caruso):
    LoadShedding(Caruso_2) + NondispatchablePowerUsed(310_PV_1_2)
    + NondispatchablePowerUsed(310_PV_2_2)
-   + TransmissionBlock(2)_p_nw(Caruso) = 85.7816208746582
+   + TransmissionBlock(2)_p_nw(Caruso) = 78.32868738430233
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cary):
    TransmissionBlock(2)_p_nw(Cary) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caxton):
@@ -6971,14 +6897,14 @@ Subject To
    + NondispatchablePowerUsed(313_RTPV_7_2)
    + NondispatchablePowerUsed(313_RTPV_8_2)
    + NondispatchablePowerUsed(313_RTPV_9_2) - OverGeneration(Cecil_2)
-   + PowerGeneratedAboveMinimum(313_CC_1_2) + 41.98 UnitStop(313_CC_1_2)
-   + TransmissionBlock(2)_p_nw(Cecil) = -53.42497676007987
+   + PowerGeneratedAboveMinimum(313_CC_1_2)
+   + TransmissionBlock(2)_p_nw(Cecil) = -63.55332227261478
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chain):
    LoadShedding(Chain_2) + NondispatchablePowerUsed(314_PV_1_2)
    + NondispatchablePowerUsed(314_PV_2_2)
    + NondispatchablePowerUsed(314_PV_3_2)
    + NondispatchablePowerUsed(314_PV_4_2)
-   + TransmissionBlock(2)_p_nw(Chain) = 85.34171512658303
+   + TransmissionBlock(2)_p_nw(Chain) = 77.92700180797257
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chase):
    LoadShedding(Chase_2) - OverGeneration(Chase_2)
    + PowerGeneratedAboveMinimum(315_CT_6_2)
@@ -6989,21 +6915,21 @@ Subject To
    + PowerGeneratedAboveMinimum(315_STEAM_3_2)
    + PowerGeneratedAboveMinimum(315_STEAM_4_2)
    + PowerGeneratedAboveMinimum(315_STEAM_5_2)
-   + TransmissionBlock(2)_p_nw(Chase) = 139.4501221398289
+   + TransmissionBlock(2)_p_nw(Chase) = 127.3343276965325
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chifa):
    LoadShedding(Chifa_2) - OverGeneration(Chifa_2)
    + PowerGeneratedAboveMinimum(316_STEAM_1_2)
-   + TransmissionBlock(2)_p_nw(Chifa) = -18.00942519248297
+   + TransmissionBlock(2)_p_nw(Chifa) = -21.83144236702445
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chuhsi):
-   NondispatchablePowerUsed(317_WIND_1_2)
+   NondispatchablePowerUsed(317_WIND_1_2) - OverGeneration(Chuhsi_2)
    + TransmissionBlock(2)_p_nw(Chuhsi) = 0
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clark):
    LoadShedding(Clark_2) - OverGeneration(Clark_2)
    + PowerGeneratedAboveMinimum(318_CC_1_2)
-   + TransmissionBlock(2)_p_nw(Clark) = 146.4886141090317
+   + TransmissionBlock(2)_p_nw(Clark) = 133.7612969178086
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clay): LoadShedding(Clay_2)
    + NondispatchablePowerUsed(319_PV_1_2) + TransmissionBlock(2)_p_nw(Clay)
-   = 79.62294040160582
+   = 72.70508931568575
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clive):
    LoadShedding(Clive_2) + NondispatchablePowerUsed(320_PV_1_2)
    + NondispatchablePowerUsed(320_RTPV_1_2)
@@ -7012,7 +6938,7 @@ Subject To
    + NondispatchablePowerUsed(320_RTPV_4_2)
    + NondispatchablePowerUsed(320_RTPV_5_2)
    + NondispatchablePowerUsed(320_RTPV_6_2)
-   + TransmissionBlock(2)_p_nw(Clive) = 56.30793575362178
+   + TransmissionBlock(2)_p_nw(Clive) = 51.41575377020872
  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cobb):
    - OverGeneration(Cobb_2) + PowerGeneratedAboveMinimum(321_CC_1_2)
    + TransmissionBlock(2)_p_nw(Cobb) = 0
@@ -7109,80 +7035,6 @@ Subject To
    - 0.1675139922817269 TransmissionBlock(2)_p_nw(Curie)
    + 0.0269211694367085 TransmissionBlock(2)_p_nw(Curtiss)
    + RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6) = 175
- TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1):
-   - 8.7237645759599301e-04 TransmissionBlock(2)_p_nw(Adams)
-   + 0.0273453695412714 TransmissionBlock(2)_p_nw(Adler)
-   - 0.00338071920498113 TransmissionBlock(2)_p_nw(Agricola)
-   - 0.0057193358114842 TransmissionBlock(2)_p_nw(Aiken)
-   - 0.00904425623096464 TransmissionBlock(2)_p_nw(Alber)
-   - 0.0590807856387687 TransmissionBlock(2)_p_nw(Alder)
-   - 0.0375955557402782 TransmissionBlock(2)_p_nw(Alger)
-   - 0.00543479515559573 TransmissionBlock(2)_p_nw(Ali)
-   - 0.011640530533962 TransmissionBlock(2)_p_nw(Allen)
-   - 0.0027873159442004 TransmissionBlock(2)_p_nw(Anna)
-   - 0.016507524654631 TransmissionBlock(2)_p_nw(Archer)
-   - 0.028485992620329 TransmissionBlock(2)_p_nw(Arne)
-   + 0.0254493730479906 TransmissionBlock(2)_p_nw(Arnold)
-   + 0.0824338663670007 TransmissionBlock(2)_p_nw(Arthur)
-   + 0.0651151980608304 TransmissionBlock(2)_p_nw(Asser)
-   + 0.0926149622686482 TransmissionBlock(2)_p_nw(Aston)
-   + 0.1054235062900587 TransmissionBlock(2)_p_nw(Astor)
-   + 0.0328202928300642 TransmissionBlock(2)_p_nw(Attar)
-   + 0.00473776654244149 TransmissionBlock(2)_p_nw(Attila)
-   + 0.1173171543099399 TransmissionBlock(2)_p_nw(Attlee)
-   + 0.1076076221781027 TransmissionBlock(2)_p_nw(Aubrey)
-   - 0.010707622915751 TransmissionBlock(2)_p_nw(Austen)
-   + 0.0613706175806924 TransmissionBlock(2)_p_nw(Avery)
-   - 0.1460707041453138 TransmissionBlock(2)_p_nw(Bach)
-   - 0.1470367973788866 TransmissionBlock(2)_p_nw(Bacon)
-   - 0.1157877038954402 TransmissionBlock(2)_p_nw(Baffin)
-   - 0.1498146038346087 TransmissionBlock(2)_p_nw(Bailey)
-   - 0.1524044509812052 TransmissionBlock(2)_p_nw(Bain)
-   - 0.1560865575894915 TransmissionBlock(2)_p_nw(Bajer)
-   - 0.1555255424012605 TransmissionBlock(2)_p_nw(Baker)
-   - 0.1555255424012605 TransmissionBlock(2)_p_nw(Balch)
-   - 0.152089342979452 TransmissionBlock(2)_p_nw(Balzac)
-   - 0.1589617418230692 TransmissionBlock(2)_p_nw(Banks)
-   - 0.1565885942988485 TransmissionBlock(2)_p_nw(Bardeen)
-   - 0.1733027294941294 TransmissionBlock(2)_p_nw(Barkla)
-   - 0.1749221602375867 TransmissionBlock(2)_p_nw(Barlow)
-   - 0.1416097760000404 TransmissionBlock(2)_p_nw(Barry)
-   - 0.1026827119029918 TransmissionBlock(2)_p_nw(Barton)
-   - 0.1205681026755244 TransmissionBlock(2)_p_nw(Basov)
-   - 0.0950664711712609 TransmissionBlock(2)_p_nw(Bates)
-   - 0.0969938074007304 TransmissionBlock(2)_p_nw(Bayle)
-   - 0.1591224336591625 TransmissionBlock(2)_p_nw(Bede)
-   - 0.1926479388623261 TransmissionBlock(2)_p_nw(Beethoven)
-   - 0.0987834767566663 TransmissionBlock(2)_p_nw(Behring)
-   - 0.0973224572202064 TransmissionBlock(2)_p_nw(Bell)
-   - 0.2110869667240661 TransmissionBlock(2)_p_nw(Bloch)
-   - 0.1076934441353986 TransmissionBlock(2)_p_nw(Bordet)
-   - 0.5663008958400904 TransmissionBlock(2)_p_nw(Cabell)
-   - 0.5668918270649241 TransmissionBlock(2)_p_nw(Cabot)
-   - 0.5477776624632046 TransmissionBlock(2)_p_nw(Caesar)
-   - 0.5685909307478684 TransmissionBlock(2)_p_nw(Caine)
-   - 0.5701750651701856 TransmissionBlock(2)_p_nw(Calvin)
-   - 0.5724273030416346 TransmissionBlock(2)_p_nw(Camus)
-   - 0.5720841463143012 TransmissionBlock(2)_p_nw(Carew)
-   - 0.5720841463143012 TransmissionBlock(2)_p_nw(Carrel)
-   - 0.5699823227402006 TransmissionBlock(2)_p_nw(Carter)
-   - 0.574185969888402 TransmissionBlock(2)_p_nw(Caruso)
-   - 0.569074794222826 TransmissionBlock(2)_p_nw(Cary)
-   - 0.5866175264352644 TransmissionBlock(2)_p_nw(Caxton)
-   - 0.586883706039605 TransmissionBlock(2)_p_nw(Cecil)
-   - 0.5504826442916692 TransmissionBlock(2)_p_nw(Chain)
-   - 0.5104617621772434 TransmissionBlock(2)_p_nw(Chase)
-   - 0.5243651003407583 TransmissionBlock(2)_p_nw(Chifa)
-   - 0.4882441877527472 TransmissionBlock(2)_p_nw(Chuhsi)
-   - 0.4691620213539353 TransmissionBlock(2)_p_nw(Clark)
-   - 0.5649471985757841 TransmissionBlock(2)_p_nw(Clay)
-   - 0.6002359796497196 TransmissionBlock(2)_p_nw(Clive)
-   - 0.4837022486694866 TransmissionBlock(2)_p_nw(Cobb)
-   - 0.4854875195230226 TransmissionBlock(2)_p_nw(Cole)
-   - 0.6196448092403842 TransmissionBlock(2)_p_nw(Comte)
-   - 0.5247296064042285 TransmissionBlock(2)_p_nw(Curie)
-   - 0.6419782274295076 TransmissionBlock(2)_p_nw(Curtiss)
-   + RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1) = 500
  TransmissionBlock(3)_eq_p_balance: LoadShedding(Abel_3)
    + LoadShedding(Adams_3) + LoadShedding(Adler_3)
    + LoadShedding(Agricola_3) + LoadShedding(Aiken_3)
@@ -7371,8 +7223,7 @@ Subject To
    + PowerGeneratedAboveMinimum(322_CT_5_3)
    + PowerGeneratedAboveMinimum(322_CT_6_3)
    + PowerGeneratedAboveMinimum(323_CC_1_3)
-   + PowerGeneratedAboveMinimum(323_CC_2_3) + 41.98 UnitStop(313_CC_1_3)
-   = 1703.401254051516
+   + PowerGeneratedAboveMinimum(323_CC_2_3) = 1830.048220865076
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Abel): LoadShedding(Abel_3)
    + NondispatchablePowerUsed(101_PV_1_3)
    + NondispatchablePowerUsed(101_PV_2_3)
@@ -7382,7 +7233,7 @@ Subject To
    + PowerGeneratedAboveMinimum(101_CT_2_3)
    + PowerGeneratedAboveMinimum(101_STEAM_3_3)
    + PowerGeneratedAboveMinimum(101_STEAM_4_3)
-   + TransmissionBlock(3)_p_nw(Abel) = -24.84171156726571
+   + TransmissionBlock(3)_p_nw(Abel) = -19.09411662754783
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adams):
    LoadShedding(Adams_3) + NondispatchablePowerUsed(102_PV_1_3)
    + NondispatchablePowerUsed(102_PV_2_3) - OverGeneration(Adams_3)
@@ -7390,31 +7241,31 @@ Subject To
    + PowerGeneratedAboveMinimum(102_CT_2_3)
    + PowerGeneratedAboveMinimum(102_STEAM_3_3)
    + PowerGeneratedAboveMinimum(102_STEAM_4_3)
-   + TransmissionBlock(3)_p_nw(Adams) = -28.42264835208124
+   + TransmissionBlock(3)_p_nw(Adams) = -23.26045660066795
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adler):
    LoadShedding(Adler_3) + NondispatchablePowerUsed(103_PV_1_3)
-   + TransmissionBlock(3)_p_nw(Adler) = 58.59714738789047
+   + TransmissionBlock(3)_p_nw(Adler) = 68.1764722874203
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Agricola):
    LoadShedding(Agricola_3) + NondispatchablePowerUsed(104_PV_1_3)
-   + TransmissionBlock(3)_p_nw(Agricola) = 24.08993837057719
+   + TransmissionBlock(3)_p_nw(Agricola) = 28.02810527371723
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aiken):
    LoadShedding(Aiken_3) + TransmissionBlock(3)_p_nw(Aiken)
-   = 23.11331924744569
+   = 26.89183073559357
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alber):
    LoadShedding(Alber_3) + TransmissionBlock(3)_p_nw(Alber)
-   = 44.27340024862836
+   = 51.51111239493978
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alder):
    LoadShedding(Alder_3) - OverGeneration(Alder_3)
    + PowerGeneratedAboveMinimum(107_CC_1_3)
-   + TransmissionBlock(3)_p_nw(Alder) = 40.69246346381284
+   + TransmissionBlock(3)_p_nw(Alder) = 47.34477242181965
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alger):
    LoadShedding(Alger_3) + TransmissionBlock(3)_p_nw(Alger)
-   = 55.66729001849595
+   = 64.76764867304928
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Ali): LoadShedding(Ali_3)
-   + TransmissionBlock(3)_p_nw(Ali) = 56.96944884933797
+   + TransmissionBlock(3)_p_nw(Ali) = 66.28268139054751
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Allen):
    LoadShedding(Allen_3) + TransmissionBlock(3)_p_nw(Allen)
-   = 63.48024300354802
+   = 73.85784497803866
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Anna):
    TransmissionBlock(3)_p_nw(Anna) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Archer):
@@ -7425,20 +7276,20 @@ Subject To
    + PowerGeneratedAboveMinimum(113_CT_2_3)
    + PowerGeneratedAboveMinimum(113_CT_3_3)
    + PowerGeneratedAboveMinimum(113_CT_4_3)
-   + TransmissionBlock(3)_p_nw(Arne) = 86.26802254328321
+   + TransmissionBlock(3)_p_nw(Arne) = 100.3709175342577
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arnold):
    LoadShedding(Arnold_3) + TransmissionBlock(3)_p_nw(Arnold)
-   = 63.15470329583752
+   = 73.4790867986641
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arthur):
    LoadShedding(Arthur_3) - OverGeneration(Arthur_3)
    + PowerGeneratedAboveMinimum(115_STEAM_1_3)
    + PowerGeneratedAboveMinimum(115_STEAM_2_3)
    + PowerGeneratedAboveMinimum(115_STEAM_3_3)
-   + TransmissionBlock(3)_p_nw(Arthur) = 41.19608734422935
+   + TransmissionBlock(3)_p_nw(Arthur) = 58.06634286173464
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Asser):
    LoadShedding(Asser_3) - OverGeneration(Asser_3)
    + PowerGeneratedAboveMinimum(116_STEAM_1_3)
-   + TransmissionBlock(3)_p_nw(Asser) = -29.44602922894974
+   + TransmissionBlock(3)_p_nw(Asser) = -24.12418206254429
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aston):
    TransmissionBlock(3)_p_nw(Aston) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Astor):
@@ -7453,13 +7304,13 @@ Subject To
    + NondispatchablePowerUsed(118_RTPV_8_3)
    + NondispatchablePowerUsed(118_RTPV_9_3) - OverGeneration(Astor_3)
    + PowerGeneratedAboveMinimum(118_CC_1_3)
-   + TransmissionBlock(3)_p_nw(Astor) = 108.4047226675974
+   + TransmissionBlock(3)_p_nw(Astor) = 126.1264737317276
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attar):
    LoadShedding(Attar_3) + NondispatchablePowerUsed(119_PV_1_3)
-   + TransmissionBlock(3)_p_nw(Attar) = 58.92268709560098
+   + TransmissionBlock(3)_p_nw(Attar) = 68.55523046679485
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attila):
    LoadShedding(Attila_3) + TransmissionBlock(3)_p_nw(Attila)
-   = 41.66908258694433
+   = 48.48104695994332
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attlee):
    - OverGeneration(Attlee_3) + PowerGeneratedAboveMinimum(121_NUCLEAR_1_3)
    + TransmissionBlock(3)_p_nw(Attlee) = -396
@@ -7486,39 +7337,39 @@ Subject To
    + PowerGeneratedAboveMinimum(201_CT_1_3)
    + PowerGeneratedAboveMinimum(201_CT_2_3)
    + PowerGeneratedAboveMinimum(201_STEAM_3_3)
-   + TransmissionBlock(3)_p_nw(Bach) = 39.28043988958327
+   + TransmissionBlock(3)_p_nw(Bach) = 10.30144170010767
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bacon):
    LoadShedding(Bacon_3) - OverGeneration(Bacon_3)
    + PowerGeneratedAboveMinimum(202_CT_1_3)
    + PowerGeneratedAboveMinimum(202_CT_2_3)
    + PowerGeneratedAboveMinimum(202_STEAM_3_3)
    + PowerGeneratedAboveMinimum(202_STEAM_4_3)
-   + TransmissionBlock(3)_p_nw(Bacon) = -24.72034565472615
+   + TransmissionBlock(3)_p_nw(Bacon) = -23.80333476934774
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baffin):
    LoadShedding(Baffin_3) + TransmissionBlock(3)_p_nw(Baffin)
-   = 65.4673998159721
+   = 67.16906950017945
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bailey):
    LoadShedding(Bailey_3) + TransmissionBlock(3)_p_nw(Bailey)
-   = 26.91437547989964
+   = 27.61395079451822
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bain): LoadShedding(Bain_3)
-   + TransmissionBlock(3)_p_nw(Bain) = 25.82325214963345
+   + TransmissionBlock(3)_p_nw(Bain) = 26.49446630284857
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bajer):
    LoadShedding(Bajer_3) + TransmissionBlock(3)_p_nw(Bajer)
-   = 49.46425763873448
+   = 50.74996362235781
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baker):
    LoadShedding(Baker_3) - OverGeneration(Baker_3)
    + PowerGeneratedAboveMinimum(207_CT_1_3)
    + PowerGeneratedAboveMinimum(207_CT_2_3)
-   + TransmissionBlock(3)_p_nw(Baker) = 45.46347209442507
+   + TransmissionBlock(3)_p_nw(Baker) = 46.64518715290239
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balch):
    LoadShedding(Balch_3) + TransmissionBlock(3)_p_nw(Balch)
-   = 62.19402982517349
+   = 63.81061602517048
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balzac):
    LoadShedding(Balzac_3) + TransmissionBlock(3)_p_nw(Balzac)
-   = 63.64886093219509
+   = 65.30326201406335
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Banks):
    LoadShedding(Banks_3) + TransmissionBlock(3)_p_nw(Banks)
-   = 70.92301646730311
+   = 72.76649195852772
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bardeen):
    TransmissionBlock(3)_p_nw(Bardeen) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barkla):
@@ -7528,10 +7379,10 @@ Subject To
    - OverGeneration(Barlow_3) + PowerGeneratedAboveMinimum(213_CC_3_3)
    + PowerGeneratedAboveMinimum(213_CT_1_3)
    + PowerGeneratedAboveMinimum(213_CT_2_3)
-   + TransmissionBlock(3)_p_nw(Barlow) = 96.38256084018117
+   + TransmissionBlock(3)_p_nw(Barlow) = 98.88779676415307
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barry):
    LoadShedding(Barry_3) + TransmissionBlock(3)_p_nw(Barry)
-   = 70.55930869054771
+   = 72.39333046130452
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barton):
    LoadShedding(Barton_3) + NondispatchablePowerUsed(215_HYDRO_1_3)
    + NondispatchablePowerUsed(215_HYDRO_2_3)
@@ -7539,22 +7390,22 @@ Subject To
    + NondispatchablePowerUsed(215_PV_1_3) - OverGeneration(Barton_3)
    + PowerGeneratedAboveMinimum(215_CT_4_3)
    + PowerGeneratedAboveMinimum(215_CT_5_3)
-   + TransmissionBlock(3)_p_nw(Barton) = 115.295365231462
+   + TransmissionBlock(3)_p_nw(Barton) = 118.2921946197605
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Basov):
    LoadShedding(Basov_3) - OverGeneration(Basov_3)
    + PowerGeneratedAboveMinimum(216_STEAM_1_3)
-   + TransmissionBlock(3)_p_nw(Basov) = -25.62922232445993
+   + TransmissionBlock(3)_p_nw(Basov) = -24.68385027767808
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bates):
    TransmissionBlock(3)_p_nw(Bates) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bayle):
    LoadShedding(Bayle_3) - OverGeneration(Bayle_3)
    + PowerGeneratedAboveMinimum(218_CC_1_3)
-   + TransmissionBlock(3)_p_nw(Bayle) = 121.1146896595484
+   + TransmissionBlock(3)_p_nw(Bayle) = 124.262778575332
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bede): LoadShedding(Bede_3)
-   + TransmissionBlock(3)_p_nw(Bede) = 65.83110759272751
+   + TransmissionBlock(3)_p_nw(Bede) = 67.54223099740267
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Beethoven):
    LoadShedding(Beethoven_3) + TransmissionBlock(3)_p_nw(Beethoven)
-   = 46.55459542469128
+   = 47.76467164457206
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Behring):
    - OverGeneration(Behring_3) + PowerGeneratedAboveMinimum(221_CC_1_3)
    + TransmissionBlock(3)_p_nw(Behring) = 0
@@ -7582,43 +7433,43 @@ Subject To
    + PowerGeneratedAboveMinimum(301_CT_2_3)
    + PowerGeneratedAboveMinimum(301_CT_3_3)
    + PowerGeneratedAboveMinimum(301_CT_4_3)
-   + TransmissionBlock(3)_p_nw(Cabell) = 45.43752972595045
+   + TransmissionBlock(3)_p_nw(Cabell) = 44.60502856022197
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabot):
    LoadShedding(Cabot_3) - OverGeneration(Cabot_3)
    + PowerGeneratedAboveMinimum(302_CT_1_3)
    + PowerGeneratedAboveMinimum(302_CT_2_3)
    + PowerGeneratedAboveMinimum(302_CT_3_3)
    + PowerGeneratedAboveMinimum(302_CT_4_3)
-   + TransmissionBlock(3)_p_nw(Cabot) = 40.80963317978884
+   + TransmissionBlock(3)_p_nw(Cabot) = 40.06192379945862
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caesar):
    LoadShedding(Caesar_3) + NondispatchablePowerUsed(303_WIND_1_3)
    - OverGeneration(Caesar_3) + TransmissionBlock(3)_p_nw(Caesar)
-   = 75.72921620991742
+   = 74.34171426703661
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caine):
    LoadShedding(Caine_3) + TransmissionBlock(3)_p_nw(Caine)
-   = 31.13312221963273
+   = 30.56270475422617
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Calvin):
    LoadShedding(Calvin_3) + TransmissionBlock(3)_p_nw(Calvin)
-   = 29.8709686161341
+   = 29.32367618310889
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Camus):
    LoadShedding(Camus_3) + TransmissionBlock(3)_p_nw(Camus)
-   = 57.21763002527096
+   = 56.16929522398323
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carew):
    LoadShedding(Carew_3) - OverGeneration(Carew_3)
    + PowerGeneratedAboveMinimum(307_CT_1_3)
    + PowerGeneratedAboveMinimum(307_CT_2_3)
-   + TransmissionBlock(3)_p_nw(Carew) = 52.58973347910932
+   + TransmissionBlock(3)_p_nw(Carew) = 51.62619046321986
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carrel):
    LoadShedding(Carrel_3) + NondispatchablePowerUsed(308_RTPV_1_3)
-   + TransmissionBlock(3)_p_nw(Carrel) = 71.94275539942157
+   + TransmissionBlock(3)_p_nw(Carrel) = 70.62462855368477
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carter):
    LoadShedding(Carter_3) + NondispatchablePowerUsed(309_WIND_1_3)
    - OverGeneration(Carter_3) + TransmissionBlock(3)_p_nw(Carter)
-   = 73.62562687075304
+   = 72.27666664850783
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caruso):
    LoadShedding(Caruso_3) + NondispatchablePowerUsed(310_PV_1_3)
    + NondispatchablePowerUsed(310_PV_2_3)
-   + TransmissionBlock(3)_p_nw(Caruso) = 82.03998422741057
+   + TransmissionBlock(3)_p_nw(Caruso) = 80.53685712262302
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cary):
    TransmissionBlock(3)_p_nw(Cary) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caxton):
@@ -7640,14 +7491,14 @@ Subject To
    + NondispatchablePowerUsed(313_RTPV_7_3)
    + NondispatchablePowerUsed(313_RTPV_8_3)
    + NondispatchablePowerUsed(313_RTPV_9_3) - OverGeneration(Cecil_3)
-   + PowerGeneratedAboveMinimum(313_CC_1_3) + 41.98 UnitStop(313_CC_1_3)
-   + TransmissionBlock(3)_p_nw(Cecil) = -58.50976502428821
+   + PowerGeneratedAboveMinimum(313_CC_1_3)
+   + TransmissionBlock(3)_p_nw(Cecil) = -60.55247621797386
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chain):
    LoadShedding(Chain_3) + NondispatchablePowerUsed(314_PV_1_3)
    + NondispatchablePowerUsed(314_PV_2_3)
    + NondispatchablePowerUsed(314_PV_3_3)
    + NondispatchablePowerUsed(314_PV_4_3)
-   + TransmissionBlock(3)_p_nw(Chain) = 81.61926635957768
+   + TransmissionBlock(3)_p_nw(Chain) = 80.12384759891724
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chase):
    LoadShedding(Chase_3) - OverGeneration(Chase_3)
    + PowerGeneratedAboveMinimum(315_CT_6_3)
@@ -7658,21 +7509,21 @@ Subject To
    + PowerGeneratedAboveMinimum(315_STEAM_3_3)
    + PowerGeneratedAboveMinimum(315_STEAM_4_3)
    + PowerGeneratedAboveMinimum(315_STEAM_5_3)
-   + TransmissionBlock(3)_p_nw(Chase) = 133.3675641030212
+   + TransmissionBlock(3)_p_nw(Chase) = 130.9240190147256
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chifa):
    LoadShedding(Chifa_3) - OverGeneration(Chifa_3)
    + PowerGeneratedAboveMinimum(316_STEAM_1_3)
-   + TransmissionBlock(3)_p_nw(Chifa) = -19.92821321671253
+   + TransmissionBlock(3)_p_nw(Chifa) = -20.69904762942409
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chuhsi):
    NondispatchablePowerUsed(317_WIND_1_3)
    + TransmissionBlock(3)_p_nw(Chuhsi) = 0
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clark):
    LoadShedding(Clark_3) - OverGeneration(Clark_3)
    + PowerGeneratedAboveMinimum(318_CC_1_3)
-   + TransmissionBlock(3)_p_nw(Clark) = 140.0990499883472
+   + TransmissionBlock(3)_p_nw(Clark) = 137.5321713940178
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clay): LoadShedding(Clay_3)
    + NondispatchablePowerUsed(319_PV_1_3) + TransmissionBlock(3)_p_nw(Clay)
-   = 76.14993407775032
+   = 74.75472379074237
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clive):
    LoadShedding(Clive_3) + NondispatchablePowerUsed(320_PV_1_3)
    + NondispatchablePowerUsed(320_RTPV_1_3)
@@ -7681,7 +7532,7 @@ Subject To
    + NondispatchablePowerUsed(320_RTPV_4_3)
    + NondispatchablePowerUsed(320_RTPV_5_3)
    + NondispatchablePowerUsed(320_RTPV_6_3)
-   + TransmissionBlock(3)_p_nw(Clive) = 53.85188708260795
+   + TransmissionBlock(3)_p_nw(Clive) = 52.86521903433716
  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cobb):
    - OverGeneration(Cobb_3) + PowerGeneratedAboveMinimum(321_CC_1_3)
    + TransmissionBlock(3)_p_nw(Cobb) = 0
@@ -7778,80 +7629,6 @@ Subject To
    - 0.1675139922817269 TransmissionBlock(3)_p_nw(Curie)
    + 0.0269211694367085 TransmissionBlock(3)_p_nw(Curtiss)
    + RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6) = 175
- TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1):
-   - 8.7237645759599301e-04 TransmissionBlock(3)_p_nw(Adams)
-   + 0.0273453695412714 TransmissionBlock(3)_p_nw(Adler)
-   - 0.00338071920498113 TransmissionBlock(3)_p_nw(Agricola)
-   - 0.0057193358114842 TransmissionBlock(3)_p_nw(Aiken)
-   - 0.00904425623096464 TransmissionBlock(3)_p_nw(Alber)
-   - 0.0590807856387687 TransmissionBlock(3)_p_nw(Alder)
-   - 0.0375955557402782 TransmissionBlock(3)_p_nw(Alger)
-   - 0.00543479515559573 TransmissionBlock(3)_p_nw(Ali)
-   - 0.011640530533962 TransmissionBlock(3)_p_nw(Allen)
-   - 0.0027873159442004 TransmissionBlock(3)_p_nw(Anna)
-   - 0.016507524654631 TransmissionBlock(3)_p_nw(Archer)
-   - 0.028485992620329 TransmissionBlock(3)_p_nw(Arne)
-   + 0.0254493730479906 TransmissionBlock(3)_p_nw(Arnold)
-   + 0.0824338663670007 TransmissionBlock(3)_p_nw(Arthur)
-   + 0.0651151980608304 TransmissionBlock(3)_p_nw(Asser)
-   + 0.0926149622686482 TransmissionBlock(3)_p_nw(Aston)
-   + 0.1054235062900587 TransmissionBlock(3)_p_nw(Astor)
-   + 0.0328202928300642 TransmissionBlock(3)_p_nw(Attar)
-   + 0.00473776654244149 TransmissionBlock(3)_p_nw(Attila)
-   + 0.1173171543099399 TransmissionBlock(3)_p_nw(Attlee)
-   + 0.1076076221781027 TransmissionBlock(3)_p_nw(Aubrey)
-   - 0.010707622915751 TransmissionBlock(3)_p_nw(Austen)
-   + 0.0613706175806924 TransmissionBlock(3)_p_nw(Avery)
-   - 0.1460707041453138 TransmissionBlock(3)_p_nw(Bach)
-   - 0.1470367973788866 TransmissionBlock(3)_p_nw(Bacon)
-   - 0.1157877038954402 TransmissionBlock(3)_p_nw(Baffin)
-   - 0.1498146038346087 TransmissionBlock(3)_p_nw(Bailey)
-   - 0.1524044509812052 TransmissionBlock(3)_p_nw(Bain)
-   - 0.1560865575894915 TransmissionBlock(3)_p_nw(Bajer)
-   - 0.1555255424012605 TransmissionBlock(3)_p_nw(Baker)
-   - 0.1555255424012605 TransmissionBlock(3)_p_nw(Balch)
-   - 0.152089342979452 TransmissionBlock(3)_p_nw(Balzac)
-   - 0.1589617418230692 TransmissionBlock(3)_p_nw(Banks)
-   - 0.1565885942988485 TransmissionBlock(3)_p_nw(Bardeen)
-   - 0.1733027294941294 TransmissionBlock(3)_p_nw(Barkla)
-   - 0.1749221602375867 TransmissionBlock(3)_p_nw(Barlow)
-   - 0.1416097760000404 TransmissionBlock(3)_p_nw(Barry)
-   - 0.1026827119029918 TransmissionBlock(3)_p_nw(Barton)
-   - 0.1205681026755244 TransmissionBlock(3)_p_nw(Basov)
-   - 0.0950664711712609 TransmissionBlock(3)_p_nw(Bates)
-   - 0.0969938074007304 TransmissionBlock(3)_p_nw(Bayle)
-   - 0.1591224336591625 TransmissionBlock(3)_p_nw(Bede)
-   - 0.1926479388623261 TransmissionBlock(3)_p_nw(Beethoven)
-   - 0.0987834767566663 TransmissionBlock(3)_p_nw(Behring)
-   - 0.0973224572202064 TransmissionBlock(3)_p_nw(Bell)
-   - 0.2110869667240661 TransmissionBlock(3)_p_nw(Bloch)
-   - 0.1076934441353986 TransmissionBlock(3)_p_nw(Bordet)
-   - 0.5663008958400904 TransmissionBlock(3)_p_nw(Cabell)
-   - 0.5668918270649241 TransmissionBlock(3)_p_nw(Cabot)
-   - 0.5477776624632046 TransmissionBlock(3)_p_nw(Caesar)
-   - 0.5685909307478684 TransmissionBlock(3)_p_nw(Caine)
-   - 0.5701750651701856 TransmissionBlock(3)_p_nw(Calvin)
-   - 0.5724273030416346 TransmissionBlock(3)_p_nw(Camus)
-   - 0.5720841463143012 TransmissionBlock(3)_p_nw(Carew)
-   - 0.5720841463143012 TransmissionBlock(3)_p_nw(Carrel)
-   - 0.5699823227402006 TransmissionBlock(3)_p_nw(Carter)
-   - 0.574185969888402 TransmissionBlock(3)_p_nw(Caruso)
-   - 0.569074794222826 TransmissionBlock(3)_p_nw(Cary)
-   - 0.5866175264352644 TransmissionBlock(3)_p_nw(Caxton)
-   - 0.586883706039605 TransmissionBlock(3)_p_nw(Cecil)
-   - 0.5504826442916692 TransmissionBlock(3)_p_nw(Chain)
-   - 0.5104617621772434 TransmissionBlock(3)_p_nw(Chase)
-   - 0.5243651003407583 TransmissionBlock(3)_p_nw(Chifa)
-   - 0.4882441877527472 TransmissionBlock(3)_p_nw(Chuhsi)
-   - 0.4691620213539353 TransmissionBlock(3)_p_nw(Clark)
-   - 0.5649471985757841 TransmissionBlock(3)_p_nw(Clay)
-   - 0.6002359796497196 TransmissionBlock(3)_p_nw(Clive)
-   - 0.4837022486694866 TransmissionBlock(3)_p_nw(Cobb)
-   - 0.4854875195230226 TransmissionBlock(3)_p_nw(Cole)
-   - 0.6196448092403842 TransmissionBlock(3)_p_nw(Comte)
-   - 0.5247296064042285 TransmissionBlock(3)_p_nw(Curie)
-   - 0.6419782274295076 TransmissionBlock(3)_p_nw(Curtiss)
-   + RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1) = 500
  TransmissionBlock(4)_eq_p_balance: LoadShedding(Abel_4)
    + LoadShedding(Adams_4) + LoadShedding(Adler_4)
    + LoadShedding(Agricola_4) + LoadShedding(Aiken_4)
@@ -8040,8 +7817,7 @@ Subject To
    + PowerGeneratedAboveMinimum(322_CT_5_4)
    + PowerGeneratedAboveMinimum(322_CT_6_4)
    + PowerGeneratedAboveMinimum(323_CC_1_4)
-   + PowerGeneratedAboveMinimum(323_CC_2_4) + 41.98 UnitStop(313_CC_1_4)
-   = 1663.003272671283
+   + PowerGeneratedAboveMinimum(323_CC_2_4) = 1934.061547760631
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Abel): LoadShedding(Abel_4)
    + NondispatchablePowerUsed(101_PV_1_4)
    + NondispatchablePowerUsed(101_PV_2_4)
@@ -8051,7 +7827,7 @@ Subject To
    + PowerGeneratedAboveMinimum(101_CT_2_4)
    + PowerGeneratedAboveMinimum(101_STEAM_3_4)
    + PowerGeneratedAboveMinimum(101_STEAM_4_4)
-   + TransmissionBlock(4)_p_nw(Abel) = -24.65737938918548
+   + TransmissionBlock(4)_p_nw(Abel) = -16.69800748911906
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adams):
    LoadShedding(Adams_4) + NondispatchablePowerUsed(102_PV_1_4)
    + NondispatchablePowerUsed(102_PV_2_4) - OverGeneration(Adams_4)
@@ -8059,31 +7835,31 @@ Subject To
    + PowerGeneratedAboveMinimum(102_CT_2_4)
    + PowerGeneratedAboveMinimum(102_STEAM_3_4)
    + PowerGeneratedAboveMinimum(102_STEAM_4_4)
-   + TransmissionBlock(4)_p_nw(Adams) = -28.25709074769437
+   + TransmissionBlock(4)_p_nw(Adams) = -21.10839561522729
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adler):
    LoadShedding(Adler_4) + NondispatchablePowerUsed(103_PV_1_4)
-   + TransmissionBlock(4)_p_nw(Adler) = 58.90436768469085
+   + TransmissionBlock(4)_p_nw(Adler) = 72.16998751813492
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Agricola):
    LoadShedding(Agricola_4) + NondispatchablePowerUsed(104_PV_1_4)
-   + TransmissionBlock(4)_p_nw(Agricola) = 24.21624004815069
+   + TransmissionBlock(4)_p_nw(Agricola) = 29.66988375745547
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aiken):
    LoadShedding(Aiken_4) + TransmissionBlock(4)_p_nw(Aiken)
-   = 23.23450058673918
+   = 28.46705063215322
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alber):
    LoadShedding(Alber_4) + TransmissionBlock(4)_p_nw(Alber)
-   = 44.50552225065532
+   = 54.52843501370193
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alder):
    LoadShedding(Alder_4) - OverGeneration(Alder_4)
    + PowerGeneratedAboveMinimum(107_CC_1_4)
-   + TransmissionBlock(4)_p_nw(Alder) = 40.90581089214644
+   + TransmissionBlock(4)_p_nw(Alder) = 50.11804688759369
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alger):
    LoadShedding(Alger_4) + TransmissionBlock(4)_p_nw(Alger)
-   = 55.95914930045632
+   = 68.56148814222817
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Ali): LoadShedding(Ali_4)
-   + TransmissionBlock(4)_p_nw(Ali) = 57.26813524900501
+   + TransmissionBlock(4)_p_nw(Ali) = 70.16526564263117
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Allen):
    LoadShedding(Allen_4) + TransmissionBlock(4)_p_nw(Allen)
-   = 63.81306499174844
+   = 78.18415314464615
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Anna):
    TransmissionBlock(4)_p_nw(Anna) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Archer):
@@ -8094,20 +7870,20 @@ Subject To
    + PowerGeneratedAboveMinimum(113_CT_2_4)
    + PowerGeneratedAboveMinimum(113_CT_3_4)
    + PowerGeneratedAboveMinimum(113_CT_4_4)
-   + TransmissionBlock(4)_p_nw(Arne) = 86.72031909135046
+   + TransmissionBlock(4)_p_nw(Arne) = 106.2502594016986
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arnold):
    LoadShedding(Arnold_4) + TransmissionBlock(4)_p_nw(Arnold)
-   = 63.48581850461127
+   = 77.78320876954541
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arthur):
    LoadShedding(Arthur_4) - OverGeneration(Arthur_4)
    + PowerGeneratedAboveMinimum(115_STEAM_1_4)
    + PowerGeneratedAboveMinimum(115_STEAM_2_4)
    + PowerGeneratedAboveMinimum(115_STEAM_3_4)
-   + TransmissionBlock(4)_p_nw(Arthur) = 41.73713642248337
+   + TransmissionBlock(4)_p_nw(Arthur) = 65.0993669069376
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Asser):
    LoadShedding(Asser_4) - OverGeneration(Asser_4)
    + PowerGeneratedAboveMinimum(116_STEAM_1_4)
-   + TransmissionBlock(4)_p_nw(Asser) = -29.27535128628285
+   + TransmissionBlock(4)_p_nw(Asser) = -21.90556248992506
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aston):
    TransmissionBlock(4)_p_nw(Aston) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Astor):
@@ -8122,13 +7898,13 @@ Subject To
    + NondispatchablePowerUsed(118_RTPV_8_4)
    + NondispatchablePowerUsed(118_RTPV_9_4) - OverGeneration(Astor_4)
    + PowerGeneratedAboveMinimum(118_CC_1_4)
-   + TransmissionBlock(4)_p_nw(Astor) = 108.9730802166781
+   + TransmissionBlock(4)_p_nw(Astor) = 133.5144769085496
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attar):
    LoadShedding(Attar_4) + NondispatchablePowerUsed(119_PV_1_4)
-   + TransmissionBlock(4)_p_nw(Attar) = 59.23161417182805
+   + TransmissionBlock(4)_p_nw(Attar) = 72.57093189323565
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attila):
    LoadShedding(Attila_4) + TransmissionBlock(4)_p_nw(Attila)
-   = 41.88755035355795
+   = 51.32088001289593
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attlee):
    - OverGeneration(Attlee_4) + PowerGeneratedAboveMinimum(121_NUCLEAR_1_4)
    + TransmissionBlock(4)_p_nw(Attlee) = -396
@@ -8155,39 +7931,39 @@ Subject To
    + PowerGeneratedAboveMinimum(201_CT_1_4)
    + PowerGeneratedAboveMinimum(201_CT_2_4)
    + PowerGeneratedAboveMinimum(201_STEAM_3_4)
-   + TransmissionBlock(4)_p_nw(Bach) = 38.9241162486524
+   + TransmissionBlock(4)_p_nw(Bach) = 10.57294613736735
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bacon):
    LoadShedding(Bacon_4) - OverGeneration(Bacon_4)
    + PowerGeneratedAboveMinimum(202_CT_1_4)
    + PowerGeneratedAboveMinimum(202_CT_2_4)
    + PowerGeneratedAboveMinimum(202_STEAM_3_4)
    + PowerGeneratedAboveMinimum(202_STEAM_4_4)
-   + TransmissionBlock(4)_p_nw(Bacon) = -25.0403770729696
+   + TransmissionBlock(4)_p_nw(Bacon) = -23.55948356180896
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baffin):
    LoadShedding(Baffin_4) + TransmissionBlock(4)_p_nw(Baffin)
-   = 64.87352708108733
+   = 67.62157689561224
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bailey):
    LoadShedding(Bailey_4) + TransmissionBlock(4)_p_nw(Bailey)
-   = 26.67022780000257
+   = 27.7999816126406
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bain): LoadShedding(Bain_4)
-   + TransmissionBlock(4)_p_nw(Bain) = 25.58900234865112
+   + TransmissionBlock(4)_p_nw(Bain) = 26.67295533104706
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bajer):
    LoadShedding(Bajer_4) + TransmissionBlock(4)_p_nw(Bajer)
-   = 49.01555379459932
+   = 51.09185809890703
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baker):
    LoadShedding(Baker_4) - OverGeneration(Baker_4)
    + PowerGeneratedAboveMinimum(207_CT_1_4)
    + PowerGeneratedAboveMinimum(207_CT_2_4)
-   + TransmissionBlock(4)_p_nw(Baker) = 45.05106047297731
+   + TransmissionBlock(4)_p_nw(Baker) = 46.95942839973073
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balch):
    LoadShedding(Balch_4) + TransmissionBlock(4)_p_nw(Balch)
-   = 61.62985072703297
+   = 64.24049805083165
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balzac):
    LoadShedding(Balzac_4) + TransmissionBlock(4)_p_nw(Balzac)
-   = 63.07148466216822
+   = 65.74319975962301
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Banks):
    LoadShedding(Banks_4) + TransmissionBlock(4)_p_nw(Banks)
-   = 70.2796543378446
+   = 73.25670830357993
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bardeen):
    TransmissionBlock(4)_p_nw(Bardeen) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barkla):
@@ -8197,10 +7973,10 @@ Subject To
    - OverGeneration(Barlow_4) + PowerGeneratedAboveMinimum(213_CC_3_4)
    + PowerGeneratedAboveMinimum(213_CT_1_4)
    + PowerGeneratedAboveMinimum(213_CT_2_4)
-   + TransmissionBlock(4)_p_nw(Barlow) = 95.50824820271191
+   + TransmissionBlock(4)_p_nw(Barlow) = 99.55398820742913
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barry):
    LoadShedding(Barry_4) + TransmissionBlock(4)_p_nw(Barry)
-   = 69.91924585406079
+   = 72.88103287638208
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barton):
    LoadShedding(Barton_4) + NondispatchablePowerUsed(215_HYDRO_1_4)
    + NondispatchablePowerUsed(215_HYDRO_2_4)
@@ -8208,22 +7984,22 @@ Subject To
    + NondispatchablePowerUsed(215_PV_1_4) - OverGeneration(Barton_4)
    + PowerGeneratedAboveMinimum(215_CT_4_4)
    + PowerGeneratedAboveMinimum(215_CT_5_4)
-   + TransmissionBlock(4)_p_nw(Barton) = 114.2494893594705
+   + TransmissionBlock(4)_p_nw(Barton) = 119.0891104217171
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Basov):
    LoadShedding(Basov_4) - OverGeneration(Basov_4)
    + PowerGeneratedAboveMinimum(216_STEAM_1_4)
-   + TransmissionBlock(4)_p_nw(Basov) = -25.95915162161815
+   + TransmissionBlock(4)_p_nw(Basov) = -24.43245728021542
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bates):
    TransmissionBlock(4)_p_nw(Bates) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bayle):
    LoadShedding(Bayle_4) - OverGeneration(Bayle_4)
    + PowerGeneratedAboveMinimum(218_CC_1_4)
-   + TransmissionBlock(4)_p_nw(Bayle) = 120.0160251000116
+   + TransmissionBlock(4)_p_nw(Bayle) = 125.0999172568826
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bede): LoadShedding(Bede_4)
-   + TransmissionBlock(4)_p_nw(Bede) = 65.23393556487116
+   + TransmissionBlock(4)_p_nw(Bede) = 67.99725232281008
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Beethoven):
    LoadShedding(Beethoven_4) + TransmissionBlock(4)_p_nw(Beethoven)
-   = 46.13228592432878
+   = 48.08645468132427
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Behring):
    - OverGeneration(Behring_4) + PowerGeneratedAboveMinimum(221_CC_1_4)
    + TransmissionBlock(4)_p_nw(Behring) = 0
@@ -8251,43 +8027,43 @@ Subject To
    + PowerGeneratedAboveMinimum(301_CT_2_4)
    + PowerGeneratedAboveMinimum(301_CT_3_4)
    + PowerGeneratedAboveMinimum(301_CT_4_4)
-   + TransmissionBlock(4)_p_nw(Cabell) = 44.07865031544483
+   + TransmissionBlock(4)_p_nw(Cabell) = 45.87897263531249
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabot):
    LoadShedding(Cabot_4) - OverGeneration(Cabot_4)
    + PowerGeneratedAboveMinimum(302_CT_1_4)
    + PowerGeneratedAboveMinimum(302_CT_2_4)
    + PowerGeneratedAboveMinimum(302_CT_3_4)
    + PowerGeneratedAboveMinimum(302_CT_4_4)
-   + TransmissionBlock(4)_p_nw(Cabot) = 39.58915815368656
+   + TransmissionBlock(4)_p_nw(Cabot) = 41.20611431134547
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caesar):
    LoadShedding(Caesar_4) + NondispatchablePowerUsed(303_WIND_1_4)
    - OverGeneration(Caesar_4) + TransmissionBlock(4)_p_nw(Caesar)
-   = 73.46441719240805
+   = 76.46495439218748
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caine):
    LoadShedding(Caine_4) + TransmissionBlock(4)_p_nw(Caine)
-   = 30.20203817910109
+   = 31.43559236123263
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Calvin):
    LoadShedding(Calvin_4) + TransmissionBlock(4)_p_nw(Calvin)
-   = 28.97763122589429
+   = 30.16117645469618
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Camus):
    LoadShedding(Camus_4) + TransmissionBlock(4)_p_nw(Camus)
-   = 55.50644854537498
+   = 57.77352109631944
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carew):
    LoadShedding(Carew_4) - OverGeneration(Carew_4)
    + PowerGeneratedAboveMinimum(307_CT_1_4)
    + PowerGeneratedAboveMinimum(307_CT_2_4)
-   + TransmissionBlock(4)_p_nw(Carew) = 51.01695638361669
+   + TransmissionBlock(4)_p_nw(Carew) = 53.10066277235241
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carrel):
    LoadShedding(Carrel_4) + NondispatchablePowerUsed(308_RTPV_1_4)
-   + TransmissionBlock(4)_p_nw(Carrel) = 69.79119633278765
+   + TransmissionBlock(4)_p_nw(Carrel) = 72.6417066725781
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carter):
    LoadShedding(Carter_4) + NondispatchablePowerUsed(309_WIND_1_4)
    - OverGeneration(Carter_4) + TransmissionBlock(4)_p_nw(Carter)
-   = 71.42373893706338
+   = 74.34092788129338
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caruso):
    LoadShedding(Caruso_4) + NondispatchablePowerUsed(310_PV_1_4)
    + NondispatchablePowerUsed(310_PV_2_4)
-   + TransmissionBlock(4)_p_nw(Caruso) = 79.58645195844207
+   + TransmissionBlock(4)_p_nw(Caruso) = 82.83703392486979
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cary):
    TransmissionBlock(4)_p_nw(Cary) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caxton):
@@ -8309,14 +8085,14 @@ Subject To
    + NondispatchablePowerUsed(313_RTPV_7_4)
    + NondispatchablePowerUsed(313_RTPV_8_4)
    + NondispatchablePowerUsed(313_RTPV_9_4) - OverGeneration(Cecil_4)
-   + PowerGeneratedAboveMinimum(313_CC_1_4) + 41.98 UnitStop(313_CC_1_4)
-   + TransmissionBlock(4)_p_nw(Cecil) = -61.84405246673259
+   + PowerGeneratedAboveMinimum(313_CC_1_4)
+   + TransmissionBlock(4)_p_nw(Cecil) = -57.42659492261288
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chain):
    LoadShedding(Chain_4) + NondispatchablePowerUsed(314_PV_1_4)
    + NondispatchablePowerUsed(314_PV_2_4)
    + NondispatchablePowerUsed(314_PV_3_4)
    + NondispatchablePowerUsed(314_PV_4_4)
-   + TransmissionBlock(4)_p_nw(Chain) = 79.17831630737312
+   + TransmissionBlock(4)_p_nw(Chain) = 82.41222862269095
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chase):
    LoadShedding(Chase_4) - OverGeneration(Chase_4)
    + PowerGeneratedAboveMinimum(315_CT_6_4)
@@ -8327,21 +8103,21 @@ Subject To
    + PowerGeneratedAboveMinimum(315_STEAM_3_4)
    + PowerGeneratedAboveMinimum(315_STEAM_4_4)
    + PowerGeneratedAboveMinimum(315_STEAM_5_4)
-   + TransmissionBlock(4)_p_nw(Chase) = 129.3790013888519
+   + TransmissionBlock(4)_p_nw(Chase) = 134.6632807906857
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chifa):
    LoadShedding(Chifa_4) - OverGeneration(Chifa_4)
    + PowerGeneratedAboveMinimum(316_STEAM_1_4)
-   + TransmissionBlock(4)_p_nw(Chifa) = -21.18643489310664
+   + TransmissionBlock(4)_p_nw(Chifa) = -19.51946978211807
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chuhsi):
    NondispatchablePowerUsed(317_WIND_1_4)
    + TransmissionBlock(4)_p_nw(Chuhsi) = 0
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clark):
    LoadShedding(Clark_4) - OverGeneration(Clark_4)
    + PowerGeneratedAboveMinimum(318_CC_1_4)
-   + TransmissionBlock(4)_p_nw(Clark) = 135.9091718059549
+   + TransmissionBlock(4)_p_nw(Clark) = 141.4601656255469
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clay): LoadShedding(Clay_4)
    + NondispatchablePowerUsed(319_PV_1_4) + TransmissionBlock(4)_p_nw(Clay)
-   = 73.872552843477
+   = 76.8897596943663
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clive):
    LoadShedding(Clive_4) + NondispatchablePowerUsed(320_PV_1_4)
    + NondispatchablePowerUsed(320_RTPV_1_4)
@@ -8350,7 +8126,7 @@ Subject To
    + NondispatchablePowerUsed(320_RTPV_4_4)
    + NondispatchablePowerUsed(320_RTPV_5_4)
    + NondispatchablePowerUsed(320_RTPV_6_4)
-   + TransmissionBlock(4)_p_nw(Clive) = 52.2413633368235
+   + TransmissionBlock(4)_p_nw(Clive) = 54.37507867888888
  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cobb):
    - OverGeneration(Cobb_4) + PowerGeneratedAboveMinimum(321_CC_1_4)
    + TransmissionBlock(4)_p_nw(Cobb) = 0
@@ -8447,285 +8223,211 @@ Subject To
    - 0.1675139922817269 TransmissionBlock(4)_p_nw(Curie)
    + 0.0269211694367085 TransmissionBlock(4)_p_nw(Curtiss)
    + RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6) = 175
- TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1):
-   - 8.7237645759599301e-04 TransmissionBlock(4)_p_nw(Adams)
-   + 0.0273453695412714 TransmissionBlock(4)_p_nw(Adler)
-   - 0.00338071920498113 TransmissionBlock(4)_p_nw(Agricola)
-   - 0.0057193358114842 TransmissionBlock(4)_p_nw(Aiken)
-   - 0.00904425623096464 TransmissionBlock(4)_p_nw(Alber)
-   - 0.0590807856387687 TransmissionBlock(4)_p_nw(Alder)
-   - 0.0375955557402782 TransmissionBlock(4)_p_nw(Alger)
-   - 0.00543479515559573 TransmissionBlock(4)_p_nw(Ali)
-   - 0.011640530533962 TransmissionBlock(4)_p_nw(Allen)
-   - 0.0027873159442004 TransmissionBlock(4)_p_nw(Anna)
-   - 0.016507524654631 TransmissionBlock(4)_p_nw(Archer)
-   - 0.028485992620329 TransmissionBlock(4)_p_nw(Arne)
-   + 0.0254493730479906 TransmissionBlock(4)_p_nw(Arnold)
-   + 0.0824338663670007 TransmissionBlock(4)_p_nw(Arthur)
-   + 0.0651151980608304 TransmissionBlock(4)_p_nw(Asser)
-   + 0.0926149622686482 TransmissionBlock(4)_p_nw(Aston)
-   + 0.1054235062900587 TransmissionBlock(4)_p_nw(Astor)
-   + 0.0328202928300642 TransmissionBlock(4)_p_nw(Attar)
-   + 0.00473776654244149 TransmissionBlock(4)_p_nw(Attila)
-   + 0.1173171543099399 TransmissionBlock(4)_p_nw(Attlee)
-   + 0.1076076221781027 TransmissionBlock(4)_p_nw(Aubrey)
-   - 0.010707622915751 TransmissionBlock(4)_p_nw(Austen)
-   + 0.0613706175806924 TransmissionBlock(4)_p_nw(Avery)
-   - 0.1460707041453138 TransmissionBlock(4)_p_nw(Bach)
-   - 0.1470367973788866 TransmissionBlock(4)_p_nw(Bacon)
-   - 0.1157877038954402 TransmissionBlock(4)_p_nw(Baffin)
-   - 0.1498146038346087 TransmissionBlock(4)_p_nw(Bailey)
-   - 0.1524044509812052 TransmissionBlock(4)_p_nw(Bain)
-   - 0.1560865575894915 TransmissionBlock(4)_p_nw(Bajer)
-   - 0.1555255424012605 TransmissionBlock(4)_p_nw(Baker)
-   - 0.1555255424012605 TransmissionBlock(4)_p_nw(Balch)
-   - 0.152089342979452 TransmissionBlock(4)_p_nw(Balzac)
-   - 0.1589617418230692 TransmissionBlock(4)_p_nw(Banks)
-   - 0.1565885942988485 TransmissionBlock(4)_p_nw(Bardeen)
-   - 0.1733027294941294 TransmissionBlock(4)_p_nw(Barkla)
-   - 0.1749221602375867 TransmissionBlock(4)_p_nw(Barlow)
-   - 0.1416097760000404 TransmissionBlock(4)_p_nw(Barry)
-   - 0.1026827119029918 TransmissionBlock(4)_p_nw(Barton)
-   - 0.1205681026755244 TransmissionBlock(4)_p_nw(Basov)
-   - 0.0950664711712609 TransmissionBlock(4)_p_nw(Bates)
-   - 0.0969938074007304 TransmissionBlock(4)_p_nw(Bayle)
-   - 0.1591224336591625 TransmissionBlock(4)_p_nw(Bede)
-   - 0.1926479388623261 TransmissionBlock(4)_p_nw(Beethoven)
-   - 0.0987834767566663 TransmissionBlock(4)_p_nw(Behring)
-   - 0.0973224572202064 TransmissionBlock(4)_p_nw(Bell)
-   - 0.2110869667240661 TransmissionBlock(4)_p_nw(Bloch)
-   - 0.1076934441353986 TransmissionBlock(4)_p_nw(Bordet)
-   - 0.5663008958400904 TransmissionBlock(4)_p_nw(Cabell)
-   - 0.5668918270649241 TransmissionBlock(4)_p_nw(Cabot)
-   - 0.5477776624632046 TransmissionBlock(4)_p_nw(Caesar)
-   - 0.5685909307478684 TransmissionBlock(4)_p_nw(Caine)
-   - 0.5701750651701856 TransmissionBlock(4)_p_nw(Calvin)
-   - 0.5724273030416346 TransmissionBlock(4)_p_nw(Camus)
-   - 0.5720841463143012 TransmissionBlock(4)_p_nw(Carew)
-   - 0.5720841463143012 TransmissionBlock(4)_p_nw(Carrel)
-   - 0.5699823227402006 TransmissionBlock(4)_p_nw(Carter)
-   - 0.574185969888402 TransmissionBlock(4)_p_nw(Caruso)
-   - 0.569074794222826 TransmissionBlock(4)_p_nw(Cary)
-   - 0.5866175264352644 TransmissionBlock(4)_p_nw(Caxton)
-   - 0.586883706039605 TransmissionBlock(4)_p_nw(Cecil)
-   - 0.5504826442916692 TransmissionBlock(4)_p_nw(Chain)
-   - 0.5104617621772434 TransmissionBlock(4)_p_nw(Chase)
-   - 0.5243651003407583 TransmissionBlock(4)_p_nw(Chifa)
-   - 0.4882441877527472 TransmissionBlock(4)_p_nw(Chuhsi)
-   - 0.4691620213539353 TransmissionBlock(4)_p_nw(Clark)
-   - 0.5649471985757841 TransmissionBlock(4)_p_nw(Clay)
-   - 0.6002359796497196 TransmissionBlock(4)_p_nw(Clive)
-   - 0.4837022486694866 TransmissionBlock(4)_p_nw(Cobb)
-   - 0.4854875195230226 TransmissionBlock(4)_p_nw(Cole)
-   - 0.6196448092403842 TransmissionBlock(4)_p_nw(Comte)
-   - 0.5247296064042285 TransmissionBlock(4)_p_nw(Curie)
-   - 0.6419782274295076 TransmissionBlock(4)_p_nw(Curtiss)
-   + RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1) = 500
 Bounds
- LoadShedding(Abel_1) <= 34.77733530536842
- LoadShedding(Abel_2) <= 35.33033180823773
- LoadShedding(Abel_3) <= 35.15828843273429
- LoadShedding(Abel_4) <= 35.34262061081452
- LoadShedding(Adams_1) <= 31.23519930204386
- LoadShedding(Adams_2) <= 31.73187208702834
- LoadShedding(Adams_3) <= 31.57735164791876
- LoadShedding(Adams_4) <= 31.74290925230563
- LoadShedding(Adler_1) <= 57.96222550894737
- LoadShedding(Adler_2) <= 58.88388634706287
- LoadShedding(Adler_3) <= 58.59714738789047
- LoadShedding(Adler_4) <= 58.90436768469085
- LoadShedding(Agricola_1) <= 23.82891493145614
- LoadShedding(Agricola_2) <= 24.20781994268141
- LoadShedding(Agricola_3) <= 24.08993837057719
- LoadShedding(Agricola_4) <= 24.21624004815069
- LoadShedding(Aiken_1) <= 22.86287783964035
- LoadShedding(Aiken_2) <= 23.22642183689703
- LoadShedding(Aiken_3) <= 23.11331924744569
- LoadShedding(Aiken_4) <= 23.23450058673918
- LoadShedding(Alber_1) <= 43.79368149564913
- LoadShedding(Alber_2) <= 44.49004746222529
- LoadShedding(Alber_3) <= 44.27340024862836
- LoadShedding(Alber_4) <= 44.50552225065532
- LoadShedding(Alder_1) <= 40.25154549232457
- LoadShedding(Alder_2) <= 40.8915877410159
- LoadShedding(Alder_3) <= 40.69246346381284
- LoadShedding(Alder_4) <= 40.90581089214644
- LoadShedding(Alger_1) <= 55.0641142335
- LoadShedding(Alger_2) <= 55.93969202970974
- LoadShedding(Alger_3) <= 55.66729001849595
- LoadShedding(Alger_4) <= 55.95914930045632
- LoadShedding(Ali_1) <= 56.35216368925439
- LoadShedding(Ali_2) <= 57.24822283742225
- LoadShedding(Ali_3) <= 56.96944884933797
- LoadShedding(Ali_4) <= 57.26813524900501
- LoadShedding(Allen_1) <= 62.79241096802633
- LoadShedding(Allen_2) <= 63.7908768759848
- LoadShedding(Allen_3) <= 63.48024300354802
- LoadShedding(Allen_4) <= 63.81306499174844
- LoadShedding(Arne_1) <= 85.33327644372808
- LoadShedding(Arne_2) <= 86.69016601095369
- LoadShedding(Arne_3) <= 86.26802254328321
- LoadShedding(Arne_4) <= 86.72031909135046
- LoadShedding(Arnold_1) <= 62.47039860408773
- LoadShedding(Arnold_2) <= 63.46374417405667
- LoadShedding(Arnold_3) <= 63.15470329583752
- LoadShedding(Arnold_4) <= 63.48581850461127
- LoadShedding(Arthur_1) <= 102.0779193685351
- LoadShedding(Arthur_2) <= 103.7010665112163
- LoadShedding(Arthur_3) <= 103.1960873442294
- LoadShedding(Arthur_4) <= 103.7371364224834
- LoadShedding(Asser_1) <= 32.20123639385965
- LoadShedding(Asser_2) <= 32.71327019281271
- LoadShedding(Asser_3) <= 32.55397077105026
- LoadShedding(Asser_4) <= 32.72464871371715
- LoadShedding(Astor_1) <= 107.2301171915526
- LoadShedding(Astor_2) <= 108.9351897420663
- LoadShedding(Astor_3) <= 108.4047226675974
- LoadShedding(Astor_4) <= 108.9730802166781
- LoadShedding(Attar_1) <= 58.28423787288597
- LoadShedding(Attar_2) <= 59.21101904899102
- LoadShedding(Attar_3) <= 58.92268709560098
- LoadShedding(Attar_4) <= 59.23161417182805
- LoadShedding(Attila_1) <= 41.21758258414035
- LoadShedding(Attila_2) <= 41.87298584680027
- LoadShedding(Attila_3) <= 41.66908258694433
- LoadShedding(Attila_4) <= 41.88755035355795
- LoadShedding(Bach_1) <= 42.97941869052632
- LoadShedding(Bach_2) <= 40.16276511370888
- LoadShedding(Bach_3) <= 39.28043988958327
- LoadShedding(Bach_4) <= 38.9241162486524
- LoadShedding(Bacon_1) <= 38.60188530538012
- LoadShedding(Bacon_2) <= 36.07211311138668
- LoadShedding(Bacon_3) <= 35.27965434527385
- LoadShedding(Bacon_4) <= 34.9596229270304
- LoadShedding(Baffin_1) <= 71.63236448421053
- LoadShedding(Baffin_2) <= 66.93794185618147
- LoadShedding(Baffin_3) <= 65.4673998159721
- LoadShedding(Baffin_4) <= 64.87352708108733
- LoadShedding(Bailey_1) <= 29.44886095461988
- LoadShedding(Bailey_2) <= 27.51893165198571
- LoadShedding(Bailey_3) <= 26.91437547989964
- LoadShedding(Bailey_4) <= 26.67022780000257
- LoadShedding(Bain_1) <= 28.25498821321638
- LoadShedding(Bain_2) <= 26.40329928771603
- LoadShedding(Bain_3) <= 25.82325214963345
- LoadShedding(Bain_4) <= 25.58900234865112
- LoadShedding(Bajer_1) <= 54.12223094362572
- LoadShedding(Bajer_2) <= 50.57533384689265
- LoadShedding(Bajer_3) <= 49.46425763873448
- LoadShedding(Bajer_4) <= 49.01555379459932
- LoadShedding(Baker_1) <= 49.74469755847953
- LoadShedding(Baker_2) <= 46.48468184457046
- LoadShedding(Baker_3) <= 45.46347209442507
- LoadShedding(Baker_4) <= 45.05106047297731
- LoadShedding(Balch_1) <= 68.05074626
- LoadShedding(Balch_2) <= 63.59104476337238
- LoadShedding(Balch_3) <= 62.19402982517349
- LoadShedding(Balch_4) <= 61.62985072703297
- LoadShedding(Balzac_1) <= 69.64257658187134
- LoadShedding(Balzac_2) <= 65.07855458239864
- LoadShedding(Balzac_3) <= 63.64886093219509
- LoadShedding(Balzac_4) <= 63.07148466216822
- LoadShedding(Banks_1) <= 77.60172819122806
- LoadShedding(Banks_2) <= 72.51610367752991
- LoadShedding(Banks_3) <= 70.92301646730311
- LoadShedding(Banks_4) <= 70.2796543378446
- LoadShedding(Barlow_1) <= 105.4587588239766
- LoadShedding(Barlow_2) <= 98.54752551048936
- LoadShedding(Barlow_3) <= 96.38256084018117
- LoadShedding(Barlow_4) <= 95.50824820271191
- LoadShedding(Barry_1) <= 77.20377061076023
- LoadShedding(Barry_2) <= 72.14422622277337
- LoadShedding(Barry_3) <= 70.55930869054771
- LoadShedding(Barry_4) <= 69.91924585406079
- LoadShedding(Barton_1) <= 126.1525530083041
- LoadShedding(Barton_2) <= 117.8851531578307
- LoadShedding(Barton_3) <= 115.295365231462
- LoadShedding(Barton_4) <= 114.2494893594705
- LoadShedding(Basov_1) <= 39.79575804678363
- LoadShedding(Basov_2) <= 37.18774547565637
- LoadShedding(Basov_3) <= 36.37077767554007
- LoadShedding(Basov_4) <= 36.04084837838185
- LoadShedding(Bayle_1) <= 132.5198742957895
- LoadShedding(Bayle_2) <= 123.8351924339357
- LoadShedding(Bayle_3) <= 121.1146896595484
- LoadShedding(Bayle_4) <= 120.0160251000116
- LoadShedding(Bede_1) <= 72.03032206467836
- LoadShedding(Bede_2) <= 67.30981931093804
- LoadShedding(Bede_3) <= 65.83110759272751
- LoadShedding(Bede_4) <= 65.23393556487116
- LoadShedding(Beethoven_1) <= 50.93857029988304
- LoadShedding(Beethoven_2) <= 47.60031420884015
- LoadShedding(Beethoven_3) <= 46.55459542469128
- LoadShedding(Beethoven_4) <= 46.13228592432878
- LoadShedding(Cabell_1) <= 49.95580370842105
- LoadShedding(Cabell_2) <= 47.50982079211838
- LoadShedding(Cabell_3) <= 45.43752972595045
- LoadShedding(Cabell_4) <= 44.07865031544483
- LoadShedding(Cabot_1) <= 44.86771258997076
- LoadShedding(Cabot_2) <= 42.67085756329151
- LoadShedding(Cabot_3) <= 40.80963317978884
- LoadShedding(Cabot_4) <= 39.58915815368656
- LoadShedding(Caesar_1) <= 83.25967284736842
- LoadShedding(Caesar_2) <= 79.18303465353064
- LoadShedding(Caesar_3) <= 75.72921620991742
- LoadShedding(Caesar_4) <= 73.46441719240805
- LoadShedding(Caine_1) <= 34.22897661502925
- LoadShedding(Caine_2) <= 32.5530253575626
- LoadShedding(Caine_3) <= 31.13312221963273
- LoadShedding(Caine_4) <= 30.20203817910109
- LoadShedding(Calvin_1) <= 32.84131540090644
- LoadShedding(Calvin_2) <= 31.23330811333709
- LoadShedding(Calvin_3) <= 29.8709686161341
- LoadShedding(Calvin_4) <= 28.97763122589429
- LoadShedding(Camus_1) <= 62.90730837356726
- LoadShedding(Camus_2) <= 59.82718173822315
- LoadShedding(Camus_3) <= 57.21763002527096
- LoadShedding(Camus_4) <= 55.50644854537498
- LoadShedding(Carew_1) <= 57.81921725511696
- LoadShedding(Carew_2) <= 54.98821850939628
- LoadShedding(Carew_3) <= 52.58973347910932
- LoadShedding(Carew_4) <= 51.01695638361669
- LoadShedding(Carrel_1) <= 79.096689205
- LoadShedding(Carrel_2) <= 75.22388292085411
- LoadShedding(Carrel_3) <= 71.94275539942157
- LoadShedding(Carrel_4) <= 69.79119633278765
- LoadShedding(Carter_1) <= 80.94690415716374
- LoadShedding(Carter_2) <= 76.98350591315477
- LoadShedding(Carter_3) <= 73.62562687075304
- LoadShedding(Carter_4) <= 71.42373893706338
- LoadShedding(Caruso_1) <= 90.19797891798247
- LoadShedding(Caruso_2) <= 85.7816208746582
- LoadShedding(Caruso_3) <= 82.03998422741057
- LoadShedding(Caruso_4) <= 79.58645195844207
- LoadShedding(Cecil_1) <= 122.576740580848
- LoadShedding(Cecil_2) <= 116.5750232399201
- LoadShedding(Cecil_3) <= 111.4902349757118
- LoadShedding(Cecil_4) <= 108.1559475332674
- LoadShedding(Chain_1) <= 89.73542517994153
- LoadShedding(Chain_2) <= 85.34171512658303
- LoadShedding(Chain_3) <= 81.61926635957768
- LoadShedding(Chain_4) <= 79.17831630737312
- LoadShedding(Chase_1) <= 146.6295349589766
- LoadShedding(Chase_2) <= 139.4501221398289
- LoadShedding(Chase_3) <= 133.3675641030212
- LoadShedding(Chase_4) <= 129.3790013888519
- LoadShedding(Chifa_1) <= 46.25537380409357
- LoadShedding(Chifa_2) <= 43.99057480751703
- LoadShedding(Chifa_3) <= 42.07178678328747
- LoadShedding(Chifa_4) <= 40.81356510689336
- LoadShedding(Clark_1) <= 154.0303947676316
- LoadShedding(Clark_2) <= 146.4886141090317
- LoadShedding(Clark_3) <= 140.0990499883472
- LoadShedding(Clark_4) <= 135.9091718059549
- LoadShedding(Clay_1) <= 83.72222658540936
- LoadShedding(Clay_2) <= 79.62294040160582
- LoadShedding(Clay_3) <= 76.14993407775032
- LoadShedding(Clay_4) <= 73.872552843477
- LoadShedding(Clive_1) <= 59.20687846923977
- LoadShedding(Clive_2) <= 56.30793575362178
- LoadShedding(Clive_3) <= 53.85188708260795
- LoadShedding(Clive_4) <= 52.2413633368235
+ LoadShedding(Abel_1) <= 36.12595289589473
+ LoadShedding(Abel_2) <= 37.99368923547419
+ LoadShedding(Abel_3) <= 40.90588337245217
+ LoadShedding(Abel_4) <= 43.30199251088094
+ LoadShedding(Adams_1) <= 32.44645769353509
+ LoadShedding(Adams_2) <= 34.12396162815738
+ LoadShedding(Adams_3) <= 36.73954339933205
+ LoadShedding(Adams_4) <= 38.89160438477271
+ LoadShedding(Adler_1) <= 60.2099214931579
+ LoadShedding(Adler_2) <= 63.322815392457
+ LoadShedding(Adler_3) <= 68.1764722874203
+ LoadShedding(Adler_4) <= 72.16998751813492
+ LoadShedding(Agricola_1) <= 24.75296772496491
+ LoadShedding(Agricola_2) <= 26.03271299467677
+ LoadShedding(Agricola_3) <= 28.02810527371723
+ LoadShedding(Agricola_4) <= 29.66988375745547
+ LoadShedding(Aiken_1) <= 23.74946903341228
+ LoadShedding(Aiken_2) <= 24.97733273813582
+ LoadShedding(Aiken_3) <= 26.89183073559357
+ LoadShedding(Aiken_4) <= 28.46705063215322
+ LoadShedding(Alber_1) <= 45.4919406837193
+ LoadShedding(Alber_2) <= 47.84390496318973
+ LoadShedding(Alber_3) <= 51.51111239493978
+ LoadShedding(Alber_4) <= 54.52843501370193
+ LoadShedding(Alder_1) <= 41.81244548135965
+ LoadShedding(Alder_2) <= 43.97417735587291
+ LoadShedding(Alder_3) <= 47.34477242181965
+ LoadShedding(Alder_4) <= 50.11804688759369
+ LoadShedding(Alger_1) <= 57.19942541850001
+ LoadShedding(Alger_2) <= 60.15667462283415
+ LoadShedding(Alger_3) <= 64.76764867304928
+ LoadShedding(Alger_4) <= 68.56148814222817
+ LoadShedding(Ali_1) <= 58.53742367390351
+ LoadShedding(Ali_2) <= 61.56384829822208
+ LoadShedding(Ali_3) <= 66.28268139054751
+ LoadShedding(Ali_4) <= 70.16526564263117
+ LoadShedding(Allen_1) <= 65.22741495092106
+ LoadShedding(Allen_2) <= 68.59971667516176
+ LoadShedding(Allen_3) <= 73.85784497803866
+ LoadShedding(Allen_4) <= 78.18415314464615
+ LoadShedding(Arne_1) <= 88.64238442048246
+ LoadShedding(Arne_2) <= 93.22525599445058
+ LoadShedding(Arne_3) <= 100.3709175342577
+ LoadShedding(Arne_4) <= 106.2502594016986
+ LoadShedding(Arnold_1) <= 64.89291538707018
+ LoadShedding(Arnold_2) <= 68.24792325631476
+ LoadShedding(Arnold_3) <= 73.4790867986641
+ LoadShedding(Arnold_4) <= 77.78320876954541
+ LoadShedding(Arthur_1) <= 106.0363617407281
+ LoadShedding(Arthur_2) <= 111.5185137744937
+ LoadShedding(Arthur_3) <= 120.0663428617346
+ LoadShedding(Arthur_4) <= 127.0993669069376
+ LoadShedding(Asser_1) <= 33.44995638508772
+ LoadShedding(Asser_2) <= 35.17934188469833
+ LoadShedding(Asser_3) <= 37.87581793745571
+ LoadShedding(Asser_4) <= 40.09443751007494
+ LoadShedding(Astor_1) <= 111.3883547623421
+ LoadShedding(Astor_2) <= 117.1472084760454
+ LoadShedding(Astor_3) <= 126.1264737317276
+ LoadShedding(Astor_4) <= 133.5144769085496
+ LoadShedding(Attar_1) <= 60.54442105700878
+ LoadShedding(Attar_2) <= 63.67460881130398
+ LoadShedding(Attar_3) <= 68.55523046679485
+ LoadShedding(Attar_4) <= 72.57093189323565
+ LoadShedding(Attila_1) <= 42.81594417291228
+ LoadShedding(Attila_2) <= 45.02955761241386
+ LoadShedding(Attila_3) <= 48.48104695994332
+ LoadShedding(Attila_4) <= 51.32088001289593
+ LoadShedding(Bach_1) <= 38.84210526
+ LoadShedding(Bach_2) <= 39.1645168241643
+ LoadShedding(Bach_3) <= 40.30144170010767
+ LoadShedding(Bach_4) <= 40.57294613736735
+ LoadShedding(Bacon_1) <= 34.88596490944444
+ LoadShedding(Bacon_2) <= 35.17553825874016
+ LoadShedding(Bacon_3) <= 36.19666523065226
+ LoadShedding(Bacon_4) <= 36.44051643819104
+ LoadShedding(Baffin_1) <= 64.7368421
+ LoadShedding(Baffin_2) <= 65.27419470694051
+ LoadShedding(Baffin_3) <= 67.16906950017945
+ LoadShedding(Baffin_4) <= 67.62157689561224
+ LoadShedding(Bailey_1) <= 26.61403508555556
+ LoadShedding(Bailey_2) <= 26.83494671285332
+ LoadShedding(Bailey_3) <= 27.61395079451822
+ LoadShedding(Bailey_4) <= 27.7999816126406
+ LoadShedding(Bain_1) <= 25.53508771722222
+ LoadShedding(Bain_2) <= 25.74704346773765
+ LoadShedding(Bain_3) <= 26.49446630284857
+ LoadShedding(Bain_4) <= 26.67295533104706
+ LoadShedding(Bajer_1) <= 48.91228069777778
+ LoadShedding(Bajer_2) <= 49.31828044524394
+ LoadShedding(Bajer_3) <= 50.74996362235781
+ LoadShedding(Bajer_4) <= 51.09185809890703
+ LoadShedding(Baker_1) <= 44.95614034722222
+ LoadShedding(Baker_2) <= 45.32930187981979
+ LoadShedding(Baker_3) <= 46.64518715290239
+ LoadShedding(Baker_4) <= 46.95942839973073
+ LoadShedding(Balch_1) <= 61.499999995
+ LoadShedding(Balch_2) <= 62.01048497159349
+ LoadShedding(Balch_3) <= 63.81061602517048
+ LoadShedding(Balch_4) <= 64.24049805083165
+ LoadShedding(Balzac_1) <= 62.93859648611111
+ LoadShedding(Balzac_2) <= 63.4610226317477
+ LoadShedding(Balzac_3) <= 65.30326201406335
+ LoadShedding(Balzac_4) <= 65.74319975962301
+ LoadShedding(Banks_1) <= 70.13157894166666
+ LoadShedding(Banks_2) <= 70.71371093251886
+ LoadShedding(Banks_3) <= 72.76649195852772
+ LoadShedding(Banks_4) <= 73.25670830357993
+ LoadShedding(Barlow_1) <= 95.3070175361111
+ LoadShedding(Barlow_2) <= 96.09811998521795
+ LoadShedding(Barlow_3) <= 98.88779676415307
+ LoadShedding(Barlow_4) <= 99.55398820742913
+ LoadShedding(Barry_1) <= 69.77192981888888
+ LoadShedding(Barry_2) <= 70.35107651748032
+ LoadShedding(Barry_3) <= 72.39333046130452
+ LoadShedding(Barry_4) <= 72.88103287638208
+ LoadShedding(Barton_1) <= 114.0087719205556
+ LoadShedding(Barton_2) <= 114.955109567223
+ LoadShedding(Barton_3) <= 118.2921946197605
+ LoadShedding(Barton_4) <= 119.0891104217171
+ LoadShedding(Basov_1) <= 35.96491227777778
+ LoadShedding(Basov_2) <= 36.26344150385584
+ LoadShedding(Basov_3) <= 37.31614972232192
+ LoadShedding(Basov_4) <= 37.56754271978458
+ LoadShedding(Bayle_1) <= 119.763157885
+ LoadShedding(Bayle_2) <= 120.7572602078399
+ LoadShedding(Bayle_3) <= 124.262778575332
+ LoadShedding(Bayle_4) <= 125.0999172568826
+ LoadShedding(Bede_1) <= 65.09649122277777
+ LoadShedding(Bede_2) <= 65.63682912197906
+ LoadShedding(Bede_3) <= 67.54223099740267
+ LoadShedding(Bede_4) <= 67.99725232281008
+ LoadShedding(Beethoven_1) <= 46.03508771555556
+ LoadShedding(Beethoven_2) <= 46.41720512493547
+ LoadShedding(Beethoven_3) <= 47.76467164457206
+ LoadShedding(Beethoven_4) <= 48.08645468132427
+ LoadShedding(Cabell_1) <= 43.50094369263158
+ LoadShedding(Cabell_2) <= 43.3820422436136
+ LoadShedding(Cabell_3) <= 44.60502856022197
+ LoadShedding(Cabell_4) <= 45.87897263531249
+ LoadShedding(Cabot_1) <= 39.07029202023392
+ LoadShedding(Cabot_2) <= 38.96350090398629
+ LoadShedding(Cabot_3) <= 40.06192379945862
+ LoadShedding(Cabot_4) <= 41.20611431134547
+ LoadShedding(Caesar_1) <= 72.50157282105265
+ LoadShedding(Caesar_2) <= 72.303403739356
+ LoadShedding(Caesar_3) <= 74.34171426703661
+ LoadShedding(Caesar_4) <= 76.46495439218748
+ LoadShedding(Caine_1) <= 29.80620215976608
+ LoadShedding(Caine_2) <= 29.72473264840191
+ LoadShedding(Caine_3) <= 30.56270475422617
+ LoadShedding(Caine_4) <= 31.43559236123263
+ LoadShedding(Calvin_1) <= 28.59784261274854
+ LoadShedding(Calvin_2) <= 28.51967591941265
+ LoadShedding(Calvin_3) <= 29.32367618310889
+ LoadShedding(Calvin_4) <= 30.16117645469618
+ LoadShedding(Camus_1) <= 54.77896613146199
+ LoadShedding(Camus_2) <= 54.62923838084676
+ LoadShedding(Camus_3) <= 56.16929522398323
+ LoadShedding(Camus_4) <= 57.77352109631944
+ LoadShedding(Carew_1) <= 50.34831445906433
+ LoadShedding(Carew_2) <= 50.21069704121943
+ LoadShedding(Carew_3) <= 51.62619046321986
+ LoadShedding(Carew_4) <= 53.10066277235241
+ LoadShedding(Carrel_1) <= 68.87649417999999
+ LoadShedding(Carrel_2) <= 68.68823355238818
+ LoadShedding(Carrel_3) <= 70.62462855368477
+ LoadShedding(Carrel_4) <= 72.6417066725781
+ LoadShedding(Carter_1) <= 70.48764024269006
+ LoadShedding(Carter_2) <= 70.29497585770721
+ LoadShedding(Carter_3) <= 72.27666664850783
+ LoadShedding(Carter_4) <= 74.34092788129338
+ LoadShedding(Caruso_1) <= 78.54337055614036
+ LoadShedding(Caruso_2) <= 78.32868738430233
+ LoadShedding(Caruso_3) <= 80.53685712262302
+ LoadShedding(Caruso_4) <= 82.83703392486979
+ LoadShedding(Cecil_1) <= 106.7384266532164
+ LoadShedding(Cecil_2) <= 106.4466777273852
+ LoadShedding(Cecil_3) <= 109.4475237820261
+ LoadShedding(Cecil_4) <= 112.5734050773871
+ LoadShedding(Chain_1) <= 78.14058404046784
+ LoadShedding(Chain_2) <= 77.92700180797257
+ LoadShedding(Chain_3) <= 80.12384759891724
+ LoadShedding(Chain_4) <= 82.41222862269095
+ LoadShedding(Chase_1) <= 127.6833254681871
+ LoadShedding(Chase_2) <= 127.3343276965325
+ LoadShedding(Chase_3) <= 130.9240190147256
+ LoadShedding(Chase_4) <= 134.6632807906857
+ LoadShedding(Chifa_1) <= 40.27865156725147
+ LoadShedding(Chifa_2) <= 40.16855763297555
+ LoadShedding(Chifa_3) <= 41.30095237057591
+ LoadShedding(Chifa_4) <= 42.48053021788193
+ LoadShedding(Clark_1) <= 134.1279097189474
+ LoadShedding(Clark_2) <= 133.7612969178086
+ LoadShedding(Clark_3) <= 137.5321713940178
+ LoadShedding(Clark_4) <= 141.4601656255469
+ LoadShedding(Clay_1) <= 72.90435933672515
+ LoadShedding(Clay_2) <= 72.70508931568575
+ LoadShedding(Clay_3) <= 74.75472379074237
+ LoadShedding(Clay_4) <= 76.8897596943663
+ LoadShedding(Clive_1) <= 51.55667400608188
+ LoadShedding(Clive_2) <= 51.41575377020872
+ LoadShedding(Clive_3) <= 52.86521903433716
+ LoadShedding(Clive_4) <= 54.37507867888888
  NondispatchablePowerUsed(101_PV_1_1) = 0
  NondispatchablePowerUsed(101_PV_1_2) = 0
  NondispatchablePowerUsed(101_PV_1_3) = 0
@@ -8806,94 +8508,94 @@ Bounds
  NondispatchablePowerUsed(119_PV_1_2) = 0
  NondispatchablePowerUsed(119_PV_1_3) = 0
  NondispatchablePowerUsed(119_PV_1_4) = 0
- NondispatchablePowerUsed(122_HYDRO_1_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_1_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_1_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_1_4) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_2_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_2_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_2_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_2_4) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_3_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_3_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_3_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_3_4) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_4_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_4_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_4_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_4_4) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_5_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_5_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_5_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_5_4) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_6_1) = 4.42916667
- NondispatchablePowerUsed(122_HYDRO_6_2) = 3.480059526428571
- NondispatchablePowerUsed(122_HYDRO_6_3) = 4.007341272857142
- NondispatchablePowerUsed(122_HYDRO_6_4) = 3.480059526428571
- NondispatchablePowerUsed(122_WIND_1_1) <= 24.5
- NondispatchablePowerUsed(122_WIND_1_2) <= 24.5
- NondispatchablePowerUsed(122_WIND_1_3) <= 24.5
- NondispatchablePowerUsed(122_WIND_1_4) <= 24.5
- NondispatchablePowerUsed(201_HYDRO_4_1) = 9.3
- NondispatchablePowerUsed(201_HYDRO_4_2) = 9.1
- NondispatchablePowerUsed(201_HYDRO_4_3) = 9.3
- NondispatchablePowerUsed(201_HYDRO_4_4) = 16.7
+ NondispatchablePowerUsed(122_HYDRO_1_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_1_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_1_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_1_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_2_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_2_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_2_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_2_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_3_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_3_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_3_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_3_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_4_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_4_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_4_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_4_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_5_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_5_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_5_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_5_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_6_1) = 3.57083333
+ NondispatchablePowerUsed(122_HYDRO_6_2) = 4.416557013421053
+ NondispatchablePowerUsed(122_HYDRO_6_3) = 11.93410086605263
+ NondispatchablePowerUsed(122_HYDRO_6_4) = 11.93410086605263
+ NondispatchablePowerUsed(122_WIND_1_1) <= 21.35
+ NondispatchablePowerUsed(122_WIND_1_2) <= 12.04968203497615
+ NondispatchablePowerUsed(122_WIND_1_3) <= 4.548330683624802
+ NondispatchablePowerUsed(122_WIND_1_4) <= 4.276788553259142
+ NondispatchablePowerUsed(201_HYDRO_4_1) = 22.3875
+ NondispatchablePowerUsed(201_HYDRO_4_2) = 23.21056985294118
+ NondispatchablePowerUsed(201_HYDRO_4_3) = 23.04595588235294
+ NondispatchablePowerUsed(201_HYDRO_4_4) = 22.55211397058823
  NondispatchablePowerUsed(213_RTPV_1_1) = 0
  NondispatchablePowerUsed(213_RTPV_1_2) = 0
  NondispatchablePowerUsed(213_RTPV_1_3) = 0
  NondispatchablePowerUsed(213_RTPV_1_4) = 0
- NondispatchablePowerUsed(215_HYDRO_1_1) = 9.3
- NondispatchablePowerUsed(215_HYDRO_1_2) = 9.1
- NondispatchablePowerUsed(215_HYDRO_1_3) = 9.3
- NondispatchablePowerUsed(215_HYDRO_1_4) = 16.7
- NondispatchablePowerUsed(215_HYDRO_2_1) = 9.3
- NondispatchablePowerUsed(215_HYDRO_2_2) = 9.1
- NondispatchablePowerUsed(215_HYDRO_2_3) = 9.3
- NondispatchablePowerUsed(215_HYDRO_2_4) = 16.7
- NondispatchablePowerUsed(215_HYDRO_3_1) = 9.3
- NondispatchablePowerUsed(215_HYDRO_3_2) = 9.1
- NondispatchablePowerUsed(215_HYDRO_3_3) = 9.3
- NondispatchablePowerUsed(215_HYDRO_3_4) = 16.7
+ NondispatchablePowerUsed(215_HYDRO_1_1) = 22.3875
+ NondispatchablePowerUsed(215_HYDRO_1_2) = 23.21056985294118
+ NondispatchablePowerUsed(215_HYDRO_1_3) = 23.04595588235294
+ NondispatchablePowerUsed(215_HYDRO_1_4) = 22.55211397058823
+ NondispatchablePowerUsed(215_HYDRO_2_1) = 22.3875
+ NondispatchablePowerUsed(215_HYDRO_2_2) = 23.21056985294118
+ NondispatchablePowerUsed(215_HYDRO_2_3) = 23.04595588235294
+ NondispatchablePowerUsed(215_HYDRO_2_4) = 22.55211397058823
+ NondispatchablePowerUsed(215_HYDRO_3_1) = 22.3875
+ NondispatchablePowerUsed(215_HYDRO_3_2) = 23.21056985294118
+ NondispatchablePowerUsed(215_HYDRO_3_3) = 23.04595588235294
+ NondispatchablePowerUsed(215_HYDRO_3_4) = 22.55211397058823
  NondispatchablePowerUsed(215_PV_1_1) = 0
  NondispatchablePowerUsed(215_PV_1_2) = 0
  NondispatchablePowerUsed(215_PV_1_3) = 0
  NondispatchablePowerUsed(215_PV_1_4) = 0
- NondispatchablePowerUsed(222_HYDRO_1_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_1_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_1_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_1_4) = 16.7
- NondispatchablePowerUsed(222_HYDRO_2_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_2_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_2_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_2_4) = 16.7
- NondispatchablePowerUsed(222_HYDRO_3_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_3_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_3_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_3_4) = 16.7
- NondispatchablePowerUsed(222_HYDRO_4_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_4_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_4_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_4_4) = 16.7
- NondispatchablePowerUsed(222_HYDRO_5_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_5_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_5_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_5_4) = 16.7
- NondispatchablePowerUsed(222_HYDRO_6_1) = 9.3
- NondispatchablePowerUsed(222_HYDRO_6_2) = 9.1
- NondispatchablePowerUsed(222_HYDRO_6_3) = 9.3
- NondispatchablePowerUsed(222_HYDRO_6_4) = 16.7
- NondispatchablePowerUsed(303_WIND_1_1) <= 771.15833333
- NondispatchablePowerUsed(303_WIND_1_2) <= 771.15833333
- NondispatchablePowerUsed(303_WIND_1_3) <= 771.15833333
- NondispatchablePowerUsed(303_WIND_1_4) <= 771.15833333
+ NondispatchablePowerUsed(222_HYDRO_1_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_1_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_1_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_1_4) = 22.55211397058823
+ NondispatchablePowerUsed(222_HYDRO_2_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_2_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_2_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_2_4) = 22.55211397058823
+ NondispatchablePowerUsed(222_HYDRO_3_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_3_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_3_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_3_4) = 22.55211397058823
+ NondispatchablePowerUsed(222_HYDRO_4_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_4_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_4_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_4_4) = 22.55211397058823
+ NondispatchablePowerUsed(222_HYDRO_5_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_5_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_5_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_5_4) = 22.55211397058823
+ NondispatchablePowerUsed(222_HYDRO_6_1) = 22.3875
+ NondispatchablePowerUsed(222_HYDRO_6_2) = 23.21056985294118
+ NondispatchablePowerUsed(222_HYDRO_6_3) = 23.04595588235294
+ NondispatchablePowerUsed(222_HYDRO_6_4) = 22.55211397058823
+ NondispatchablePowerUsed(303_WIND_1_1) <= 710.55833333
+ NondispatchablePowerUsed(303_WIND_1_2) <= 711.4293290805883
+ NondispatchablePowerUsed(303_WIND_1_3) <= 708.9034414038821
+ NondispatchablePowerUsed(303_WIND_1_4) <= 692.7900200179971
  NondispatchablePowerUsed(308_RTPV_1_1) = 0
  NondispatchablePowerUsed(308_RTPV_1_2) = 0
  NondispatchablePowerUsed(308_RTPV_1_3) = 0
  NondispatchablePowerUsed(308_RTPV_1_4) = 0
- NondispatchablePowerUsed(309_WIND_1_1) <= 30.325
- NondispatchablePowerUsed(309_WIND_1_2) <= 30.325
- NondispatchablePowerUsed(309_WIND_1_3) <= 30.325
- NondispatchablePowerUsed(309_WIND_1_4) <= 30.325
+ NondispatchablePowerUsed(309_WIND_1_1) <= 24.51666667
+ NondispatchablePowerUsed(309_WIND_1_2) <= 22.91427015562092
+ NondispatchablePowerUsed(309_WIND_1_3) <= 27.24074074444444
+ NondispatchablePowerUsed(309_WIND_1_4) <= 33.32984749908496
  NondispatchablePowerUsed(310_PV_1_1) = 0
  NondispatchablePowerUsed(310_PV_1_2) = 0
  NondispatchablePowerUsed(310_PV_1_3) = 0
@@ -8982,8 +8684,8 @@ Bounds
  NondispatchablePowerUsed(314_PV_4_2) = 0
  NondispatchablePowerUsed(314_PV_4_3) = 0
  NondispatchablePowerUsed(314_PV_4_4) = 0
- NondispatchablePowerUsed(317_WIND_1_1) <= 64.99166667
- NondispatchablePowerUsed(317_WIND_1_2) = 0
+ NondispatchablePowerUsed(317_WIND_1_1) <= 5.675
+ NondispatchablePowerUsed(317_WIND_1_2) <= 0.2511061946902655
  NondispatchablePowerUsed(317_WIND_1_3) = 0
  NondispatchablePowerUsed(317_WIND_1_4) = 0
  NondispatchablePowerUsed(319_PV_1_1) = 0
@@ -9018,22 +8720,22 @@ Bounds
  NondispatchablePowerUsed(320_RTPV_6_2) = 0
  NondispatchablePowerUsed(320_RTPV_6_3) = 0
  NondispatchablePowerUsed(320_RTPV_6_4) = 0
- NondispatchablePowerUsed(322_HYDRO_1_1) = 22.38333333
- NondispatchablePowerUsed(322_HYDRO_1_2) = 7.544943819101123
- NondispatchablePowerUsed(322_HYDRO_1_3) = 21.62883894808989
- NondispatchablePowerUsed(322_HYDRO_1_4) = 17.2276217202809
- NondispatchablePowerUsed(322_HYDRO_2_1) = 22.38333333
- NondispatchablePowerUsed(322_HYDRO_2_2) = 7.544943819101123
- NondispatchablePowerUsed(322_HYDRO_2_3) = 21.62883894808989
- NondispatchablePowerUsed(322_HYDRO_2_4) = 17.2276217202809
- NondispatchablePowerUsed(322_HYDRO_3_1) = 22.38333333
- NondispatchablePowerUsed(322_HYDRO_3_2) = 7.544943819101123
- NondispatchablePowerUsed(322_HYDRO_3_3) = 21.62883894808989
- NondispatchablePowerUsed(322_HYDRO_3_4) = 17.2276217202809
- NondispatchablePowerUsed(322_HYDRO_4_1) = 22.38333333
- NondispatchablePowerUsed(322_HYDRO_4_2) = 7.544943819101123
- NondispatchablePowerUsed(322_HYDRO_4_3) = 21.62883894808989
- NondispatchablePowerUsed(322_HYDRO_4_4) = 17.2276217202809
+ NondispatchablePowerUsed(322_HYDRO_1_1) = 13.97083333
+ NondispatchablePowerUsed(322_HYDRO_1_2) = 3.541901407605634
+ NondispatchablePowerUsed(322_HYDRO_1_3) = 7.575733566267606
+ NondispatchablePowerUsed(322_HYDRO_1_4) = 26.36748825661972
+ NondispatchablePowerUsed(322_HYDRO_2_1) = 13.97083333
+ NondispatchablePowerUsed(322_HYDRO_2_2) = 3.541901407605634
+ NondispatchablePowerUsed(322_HYDRO_2_3) = 7.575733566267606
+ NondispatchablePowerUsed(322_HYDRO_2_4) = 26.36748825661972
+ NondispatchablePowerUsed(322_HYDRO_3_1) = 13.97083333
+ NondispatchablePowerUsed(322_HYDRO_3_2) = 3.541901407605634
+ NondispatchablePowerUsed(322_HYDRO_3_3) = 7.575733566267606
+ NondispatchablePowerUsed(322_HYDRO_3_4) = 26.36748825661972
+ NondispatchablePowerUsed(322_HYDRO_4_1) = 13.97083333
+ NondispatchablePowerUsed(322_HYDRO_4_2) = 3.541901407605634
+ NondispatchablePowerUsed(322_HYDRO_4_3) = 7.575733566267606
+ NondispatchablePowerUsed(322_HYDRO_4_4) = 26.36748825661972
  NondispatchablePowerUsed(324_PV_1_1) = 0
  NondispatchablePowerUsed(324_PV_1_2) = 0
  NondispatchablePowerUsed(324_PV_1_3) = 0
@@ -9078,18 +8780,18 @@ Bounds
  OverGeneration(Attlee_2) <= 400
  OverGeneration(Attlee_3) <= 400
  OverGeneration(Attlee_4) <= 400
- OverGeneration(Aubrey_1) <= 51.07500002
- OverGeneration(Aubrey_2) <= 45.38035715857143
- OverGeneration(Aubrey_3) <= 48.54404763714285
- OverGeneration(Aubrey_4) <= 45.38035715857143
+ OverGeneration(Aubrey_1) <= 42.77499998
+ OverGeneration(Aubrey_2) <= 38.54902411550247
+ OverGeneration(Aubrey_3) <= 76.15293587994059
+ OverGeneration(Aubrey_4) <= 75.88139374957493
  OverGeneration(Austen_1) <= 670
  OverGeneration(Austen_2) <= 670
  OverGeneration(Austen_3) <= 670
  OverGeneration(Austen_4) <= 670
- OverGeneration(Bach_1) <= 125.3
- OverGeneration(Bach_2) <= 125.1
- OverGeneration(Bach_3) <= 125.3
- OverGeneration(Bach_4) <= 132.7
+ OverGeneration(Bach_1) <= 138.3875
+ OverGeneration(Bach_2) <= 139.2105698529412
+ OverGeneration(Bach_3) <= 139.0459558823529
+ OverGeneration(Bach_4) <= 138.5521139705882
  OverGeneration(Bacon_1) <= 192
  OverGeneration(Bacon_2) <= 192
  OverGeneration(Bacon_3) <= 192
@@ -9102,10 +8804,10 @@ Bounds
  OverGeneration(Barlow_2) <= 465
  OverGeneration(Barlow_3) <= 465
  OverGeneration(Barlow_4) <= 465
- OverGeneration(Barton_1) <= 137.9
- OverGeneration(Barton_2) <= 137.3
- OverGeneration(Barton_3) <= 137.9
- OverGeneration(Barton_4) <= 160.1
+ OverGeneration(Barton_1) <= 177.1625
+ OverGeneration(Barton_2) <= 179.6317095588235
+ OverGeneration(Barton_3) <= 179.1378676470588
+ OverGeneration(Barton_4) <= 177.6563419117647
  OverGeneration(Basov_1) <= 155
  OverGeneration(Basov_2) <= 155
  OverGeneration(Basov_3) <= 155
@@ -9118,10 +8820,10 @@ Bounds
  OverGeneration(Behring_2) <= 355
  OverGeneration(Behring_3) <= 355
  OverGeneration(Behring_4) <= 355
- OverGeneration(Bell_1) <= 55.8
- OverGeneration(Bell_2) <= 54.6
- OverGeneration(Bell_3) <= 55.8
- OverGeneration(Bell_4) <= 100.2
+ OverGeneration(Bell_1) <= 134.325
+ OverGeneration(Bell_2) <= 139.2634191176471
+ OverGeneration(Bell_3) <= 138.2757352941177
+ OverGeneration(Bell_4) <= 135.3126838235294
  OverGeneration(Bloch_1) <= 825
  OverGeneration(Bloch_2) <= 825
  OverGeneration(Bloch_3) <= 825
@@ -9134,18 +8836,18 @@ Bounds
  OverGeneration(Cabot_2) <= 150
  OverGeneration(Cabot_3) <= 150
  OverGeneration(Cabot_4) <= 150
- OverGeneration(Caesar_1) <= 771.15833333
- OverGeneration(Caesar_2) <= 771.15833333
- OverGeneration(Caesar_3) <= 771.15833333
- OverGeneration(Caesar_4) <= 771.15833333
+ OverGeneration(Caesar_1) <= 710.55833333
+ OverGeneration(Caesar_2) <= 711.4293290805883
+ OverGeneration(Caesar_3) <= 708.9034414038821
+ OverGeneration(Caesar_4) <= 692.7900200179971
  OverGeneration(Carew_1) <= 110
  OverGeneration(Carew_2) <= 110
  OverGeneration(Carew_3) <= 110
  OverGeneration(Carew_4) <= 110
- OverGeneration(Carter_1) <= 30.325
- OverGeneration(Carter_2) <= 30.325
- OverGeneration(Carter_3) <= 30.325
- OverGeneration(Carter_4) <= 30.325
+ OverGeneration(Carter_1) <= 24.51666667
+ OverGeneration(Carter_2) <= 22.91427015562092
+ OverGeneration(Carter_3) <= 27.24074074444444
+ OverGeneration(Carter_4) <= 33.32984749908496
  OverGeneration(Cecil_1) <= 355
  OverGeneration(Cecil_2) <= 355
  OverGeneration(Cecil_3) <= 355
@@ -9158,7 +8860,8 @@ Bounds
  OverGeneration(Chifa_2) <= 155
  OverGeneration(Chifa_3) <= 155
  OverGeneration(Chifa_4) <= 155
- OverGeneration(Chuhsi_1) <= 64.99166667
+ OverGeneration(Chuhsi_1) <= 5.675
+ OverGeneration(Chuhsi_2) <= 0.2511061946902655
  OverGeneration(Clark_1) <= 355
  OverGeneration(Clark_2) <= 355
  OverGeneration(Clark_3) <= 355
@@ -9167,10 +8870,10 @@ Bounds
  OverGeneration(Cobb_2) <= 355
  OverGeneration(Cobb_3) <= 355
  OverGeneration(Cobb_4) <= 355
- OverGeneration(Cole_1) <= 199.53333332
- OverGeneration(Cole_2) <= 140.1797752764045
- OverGeneration(Cole_3) <= 196.5153557923595
- OverGeneration(Cole_4) <= 178.9104868811236
+ OverGeneration(Cole_1) <= 165.88333332
+ OverGeneration(Cole_2) <= 124.1676056304225
+ OverGeneration(Cole_3) <= 140.3029342650704
+ OverGeneration(Cole_4) <= 215.4699530264788
  OverGeneration(Comte_1) <= 710
  OverGeneration(Comte_2) <= 710
  OverGeneration(Comte_3) <= 710
@@ -10915,10 +10618,10 @@ Bounds
  ReserveProvided(323_CC_2_2) <= 185
  ReserveProvided(323_CC_2_3) <= 185
  ReserveProvided(323_CC_2_4) <= 185
- ReserveShortfall(1) <= 168.50962474875
- ReserveShortfall(2) <= 162.4936650942241
- ReserveShortfall(3) <= 158.4384695803668
- ReserveShortfall(4) <= 156.4807024501159
+ ReserveShortfall(1) <= 156.3132663279166
+ ReserveShortfall(2) <= 159.1771126984869
+ ReserveShortfall(3) <= 166.2726382837568
+ ReserveShortfall(4) <= 171.6032016536221
  ShutdownCost(101_CT_1_1) free
  ShutdownCost(101_CT_1_2) free
  ShutdownCost(101_CT_1_3) free
@@ -11607,10 +11310,10 @@ Bounds
  UnitOn(201_CT_2_2) = 0
  UnitOn(201_CT_2_3) = 0
  UnitOn(201_CT_2_4) = 0
- UnitOn(201_STEAM_3_1) = 0
- UnitOn(201_STEAM_3_2) = 0
- UnitOn(201_STEAM_3_3) = 0
- UnitOn(201_STEAM_3_4) = 0
+ UnitOn(201_STEAM_3_1) = 1
+ UnitOn(201_STEAM_3_2) = 1
+ UnitOn(201_STEAM_3_3) = 1
+ UnitOn(201_STEAM_3_4) = 1
  UnitOn(202_CT_1_1) = 0
  UnitOn(202_CT_1_2) = 0
  UnitOn(202_CT_1_3) = 0
@@ -11663,7 +11366,7 @@ Bounds
  UnitOn(218_CC_1_2) = 0
  UnitOn(218_CC_1_3) = 0
  UnitOn(218_CC_1_4) = 0
- UnitOn(221_CC_1_1) = 1
+ UnitOn(221_CC_1_1) = 0
  UnitOn(221_CC_1_2) = 0
  UnitOn(221_CC_1_3) = 0
  UnitOn(221_CC_1_4) = 0
@@ -12088,13 +11791,9 @@ Bounds
  TransmissionBlock(4)_p_nw(Curie) free
  TransmissionBlock(4)_p_nw(Curtiss) free
  RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6) <= 350
- RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1) <= 1000
  RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6) <= 350
- RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1) <= 1000
  RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6) <= 350
- RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1) <= 1000
  RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6) <= 350
- RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1) <= 1000
  Constant = 1
 Binaries
  UnitOn(101_CT_1_1) UnitOn(101_CT_1_2) UnitOn(101_CT_1_3)

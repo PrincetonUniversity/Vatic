@@ -2363,7 +2363,6 @@ ROWS
  E  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Curie)
  E  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Curtiss)
  E  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)
- E  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)
  E  TransmissionBlock(2)_eq_p_balance
  E  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Abel)
  E  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adams)
@@ -2439,7 +2438,6 @@ ROWS
  E  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Curie)
  E  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Curtiss)
  E  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)
- E  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)
  E  TransmissionBlock(3)_eq_p_balance
  E  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Abel)
  E  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adams)
@@ -2515,7 +2513,6 @@ ROWS
  E  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Curie)
  E  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Curtiss)
  E  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)
- E  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)
  E  TransmissionBlock(4)_eq_p_balance
  E  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Abel)
  E  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adams)
@@ -2591,7 +2588,6 @@ ROWS
  E  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Curie)
  E  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Curtiss)
  E  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)
- E  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)
 COLUMNS
     LoadShedding(Abel_1)  OBJ       10000
     LoadShedding(Abel_1)  PosLoadGenerateMismatchTolerance(Abel)  1
@@ -4501,6 +4497,10 @@ COLUMNS
     OverGeneration(Chuhsi_1)  NegLoadGenerateMismatchTolerance(Chuhsi)  1
     OverGeneration(Chuhsi_1)  TransmissionBlock(1)_eq_p_balance  -1
     OverGeneration(Chuhsi_1)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chuhsi)  -1
+    OverGeneration(Chuhsi_2)  OBJ       10000
+    OverGeneration(Chuhsi_2)  NegLoadGenerateMismatchTolerance(Chuhsi)  1
+    OverGeneration(Chuhsi_2)  TransmissionBlock(2)_eq_p_balance  -1
+    OverGeneration(Chuhsi_2)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chuhsi)  -1
     OverGeneration(Clark_1)  OBJ       10000
     OverGeneration(Clark_1)  NegLoadGenerateMismatchTolerance(Clark)  1
     OverGeneration(Clark_1)  TransmissionBlock(1)_eq_p_balance  -1
@@ -10586,24 +10586,24 @@ COLUMNS
     UnitStop(102_STEAM_3_1)  Logical(102_STEAM_3_1)  1
     UnitStop(102_STEAM_3_2)  DownTime(102_STEAM_3_4)  1
     UnitStop(102_STEAM_3_2)  Logical(102_STEAM_3_2)  1
-    UnitStop(102_STEAM_3_2)  power_limit_from_start_stop(102_STEAM_3_1)  2.1742405160136542e+00
+    UnitStop(102_STEAM_3_2)  power_limit_from_start_stop(102_STEAM_3_1)  1.4299999999999997e+01
     UnitStop(102_STEAM_3_3)  DownTime(102_STEAM_3_4)  1
     UnitStop(102_STEAM_3_3)  Logical(102_STEAM_3_3)  1
-    UnitStop(102_STEAM_3_3)  power_limit_from_start_stop(102_STEAM_3_2)  2.1742405160136542e+00
+    UnitStop(102_STEAM_3_3)  power_limit_from_start_stop(102_STEAM_3_2)  1.4299999999999997e+01
     UnitStop(102_STEAM_3_4)  DownTime(102_STEAM_3_4)  1
     UnitStop(102_STEAM_3_4)  Logical(102_STEAM_3_4)  1
-    UnitStop(102_STEAM_3_4)  power_limit_from_start_stop(102_STEAM_3_3)  2.1742405160136542e+00
+    UnitStop(102_STEAM_3_4)  power_limit_from_start_stop(102_STEAM_3_3)  1.4299999999999997e+01
     UnitStop(102_STEAM_4_1)  DownTime(102_STEAM_4_4)  1
     UnitStop(102_STEAM_4_1)  Logical(102_STEAM_4_1)  1
     UnitStop(102_STEAM_4_2)  DownTime(102_STEAM_4_4)  1
     UnitStop(102_STEAM_4_2)  Logical(102_STEAM_4_2)  1
-    UnitStop(102_STEAM_4_2)  power_limit_from_start_stop(102_STEAM_4_1)  2.1742405160136542e+00
+    UnitStop(102_STEAM_4_2)  power_limit_from_start_stop(102_STEAM_4_1)  1.4299999999999997e+01
     UnitStop(102_STEAM_4_3)  DownTime(102_STEAM_4_4)  1
     UnitStop(102_STEAM_4_3)  Logical(102_STEAM_4_3)  1
-    UnitStop(102_STEAM_4_3)  power_limit_from_start_stop(102_STEAM_4_2)  2.1742405160136542e+00
+    UnitStop(102_STEAM_4_3)  power_limit_from_start_stop(102_STEAM_4_2)  1.4299999999999997e+01
     UnitStop(102_STEAM_4_4)  DownTime(102_STEAM_4_4)  1
     UnitStop(102_STEAM_4_4)  Logical(102_STEAM_4_4)  1
-    UnitStop(102_STEAM_4_4)  power_limit_from_start_stop(102_STEAM_4_3)  2.1742405160136542e+00
+    UnitStop(102_STEAM_4_4)  power_limit_from_start_stop(102_STEAM_4_3)  1.4299999999999997e+01
     UnitStop(107_CC_1_1)  DownTime(107_CC_1_4)  1
     UnitStop(107_CC_1_1)  Logical(107_CC_1_1)  1
     UnitStop(107_CC_1_2)  DownTime(107_CC_1_4)  1
@@ -10701,13 +10701,13 @@ COLUMNS
     UnitStop(115_STEAM_3_1)  Logical(115_STEAM_3_1)  1
     UnitStop(115_STEAM_3_2)  DownTime(115_STEAM_3_4)  1
     UnitStop(115_STEAM_3_2)  Logical(115_STEAM_3_2)  1
-    UnitStop(115_STEAM_3_2)  power_limit_from_start_stop(115_STEAM_3_1)  30
+    UnitStop(115_STEAM_3_2)  power_limit_from_start_stop(115_STEAM_3_1)  61
     UnitStop(115_STEAM_3_3)  DownTime(115_STEAM_3_4)  1
     UnitStop(115_STEAM_3_3)  Logical(115_STEAM_3_3)  1
-    UnitStop(115_STEAM_3_3)  power_limit_from_start_stop(115_STEAM_3_2)  30
+    UnitStop(115_STEAM_3_3)  power_limit_from_start_stop(115_STEAM_3_2)  61
     UnitStop(115_STEAM_3_4)  DownTime(115_STEAM_3_4)  1
     UnitStop(115_STEAM_3_4)  Logical(115_STEAM_3_4)  1
-    UnitStop(115_STEAM_3_4)  power_limit_from_start_stop(115_STEAM_3_3)  30
+    UnitStop(115_STEAM_3_4)  power_limit_from_start_stop(115_STEAM_3_3)  61
     UnitStop(116_STEAM_1_1)  DownTime(116_STEAM_1_4)  1
     UnitStop(116_STEAM_1_1)  Logical(116_STEAM_1_1)  1
     UnitStop(116_STEAM_1_2)  DownTime(116_STEAM_1_4)  1
@@ -10825,13 +10825,13 @@ COLUMNS
     UnitStop(201_STEAM_3_1)  Logical(201_STEAM_3_1)  1
     UnitStop(201_STEAM_3_2)  DownTime(201_STEAM_3_4)  1
     UnitStop(201_STEAM_3_2)  Logical(201_STEAM_3_2)  1
-    UnitStop(201_STEAM_3_2)  power_limit_from_start_stop(201_STEAM_3_1)  46
+    UnitStop(201_STEAM_3_2)  power_limit_from_start_stop(201_STEAM_3_1)  45
     UnitStop(201_STEAM_3_3)  DownTime(201_STEAM_3_4)  1
     UnitStop(201_STEAM_3_3)  Logical(201_STEAM_3_3)  1
-    UnitStop(201_STEAM_3_3)  power_limit_from_start_stop(201_STEAM_3_2)  46
+    UnitStop(201_STEAM_3_3)  power_limit_from_start_stop(201_STEAM_3_2)  45
     UnitStop(201_STEAM_3_4)  DownTime(201_STEAM_3_4)  1
     UnitStop(201_STEAM_3_4)  Logical(201_STEAM_3_4)  1
-    UnitStop(201_STEAM_3_4)  power_limit_from_start_stop(201_STEAM_3_3)  46
+    UnitStop(201_STEAM_3_4)  power_limit_from_start_stop(201_STEAM_3_3)  45
     UnitStop(202_CT_1_1)  DownTime(202_CT_1_1)  1
     UnitStop(202_CT_1_1)  Logical(202_CT_1_1)  1
     UnitStop(202_CT_1_2)  DownTime(202_CT_1_2)  1
@@ -10858,24 +10858,24 @@ COLUMNS
     UnitStop(202_STEAM_3_1)  Logical(202_STEAM_3_1)  1
     UnitStop(202_STEAM_3_2)  DownTime(202_STEAM_3_4)  1
     UnitStop(202_STEAM_3_2)  Logical(202_STEAM_3_2)  1
-    UnitStop(202_STEAM_3_2)  power_limit_from_start_stop(202_STEAM_3_1)  1.4299999999999997e+01
+    UnitStop(202_STEAM_3_2)  power_limit_from_start_stop(202_STEAM_3_1)  2.1614410667679408e+01
     UnitStop(202_STEAM_3_3)  DownTime(202_STEAM_3_4)  1
     UnitStop(202_STEAM_3_3)  Logical(202_STEAM_3_3)  1
-    UnitStop(202_STEAM_3_3)  power_limit_from_start_stop(202_STEAM_3_2)  1.4299999999999997e+01
+    UnitStop(202_STEAM_3_3)  power_limit_from_start_stop(202_STEAM_3_2)  2.1614410667679408e+01
     UnitStop(202_STEAM_3_4)  DownTime(202_STEAM_3_4)  1
     UnitStop(202_STEAM_3_4)  Logical(202_STEAM_3_4)  1
-    UnitStop(202_STEAM_3_4)  power_limit_from_start_stop(202_STEAM_3_3)  1.4299999999999997e+01
+    UnitStop(202_STEAM_3_4)  power_limit_from_start_stop(202_STEAM_3_3)  2.1614410667679408e+01
     UnitStop(202_STEAM_4_1)  DownTime(202_STEAM_4_4)  1
     UnitStop(202_STEAM_4_1)  Logical(202_STEAM_4_1)  1
     UnitStop(202_STEAM_4_2)  DownTime(202_STEAM_4_4)  1
     UnitStop(202_STEAM_4_2)  Logical(202_STEAM_4_2)  1
-    UnitStop(202_STEAM_4_2)  power_limit_from_start_stop(202_STEAM_4_1)  1.4299999999999997e+01
+    UnitStop(202_STEAM_4_2)  power_limit_from_start_stop(202_STEAM_4_1)  2.1614410667679408e+01
     UnitStop(202_STEAM_4_3)  DownTime(202_STEAM_4_4)  1
     UnitStop(202_STEAM_4_3)  Logical(202_STEAM_4_3)  1
-    UnitStop(202_STEAM_4_3)  power_limit_from_start_stop(202_STEAM_4_2)  1.4299999999999997e+01
+    UnitStop(202_STEAM_4_3)  power_limit_from_start_stop(202_STEAM_4_2)  2.1614410667679408e+01
     UnitStop(202_STEAM_4_4)  DownTime(202_STEAM_4_4)  1
     UnitStop(202_STEAM_4_4)  Logical(202_STEAM_4_4)  1
-    UnitStop(202_STEAM_4_4)  power_limit_from_start_stop(202_STEAM_4_3)  1.4299999999999997e+01
+    UnitStop(202_STEAM_4_4)  power_limit_from_start_stop(202_STEAM_4_3)  2.1614410667679408e+01
     UnitStop(207_CT_1_1)  DownTime(207_CT_1_3)  1
     UnitStop(207_CT_1_1)  Logical(207_CT_1_1)  1
     UnitStop(207_CT_1_2)  DownTime(207_CT_1_3)  1
@@ -10969,13 +10969,13 @@ COLUMNS
     UnitStop(216_STEAM_1_1)  Logical(216_STEAM_1_1)  1
     UnitStop(216_STEAM_1_2)  DownTime(216_STEAM_1_4)  1
     UnitStop(216_STEAM_1_2)  Logical(216_STEAM_1_2)  1
-    UnitStop(216_STEAM_1_2)  power_limit_from_start_stop(216_STEAM_1_1)  30
+    UnitStop(216_STEAM_1_2)  power_limit_from_start_stop(216_STEAM_1_1)  61
     UnitStop(216_STEAM_1_3)  DownTime(216_STEAM_1_4)  1
     UnitStop(216_STEAM_1_3)  Logical(216_STEAM_1_3)  1
-    UnitStop(216_STEAM_1_3)  power_limit_from_start_stop(216_STEAM_1_2)  30
+    UnitStop(216_STEAM_1_3)  power_limit_from_start_stop(216_STEAM_1_2)  61
     UnitStop(216_STEAM_1_4)  DownTime(216_STEAM_1_4)  1
     UnitStop(216_STEAM_1_4)  Logical(216_STEAM_1_4)  1
-    UnitStop(216_STEAM_1_4)  power_limit_from_start_stop(216_STEAM_1_3)  30
+    UnitStop(216_STEAM_1_4)  power_limit_from_start_stop(216_STEAM_1_3)  61
     UnitStop(218_CC_1_1)  DownTime(218_CC_1_4)  1
     UnitStop(218_CC_1_1)  Logical(218_CC_1_1)  1
     UnitStop(218_CC_1_2)  DownTime(218_CC_1_4)  1
@@ -10991,13 +10991,13 @@ COLUMNS
     UnitStop(221_CC_1_1)  Logical(221_CC_1_1)  1
     UnitStop(221_CC_1_2)  DownTime(221_CC_1_4)  1
     UnitStop(221_CC_1_2)  Logical(221_CC_1_2)  1
-    UnitStop(221_CC_1_2)  power_limit_from_start_stop(221_CC_1_1)  184
+    UnitStop(221_CC_1_2)  power_limit_from_start_stop(221_CC_1_1)  185
     UnitStop(221_CC_1_3)  DownTime(221_CC_1_4)  1
     UnitStop(221_CC_1_3)  Logical(221_CC_1_3)  1
-    UnitStop(221_CC_1_3)  power_limit_from_start_stop(221_CC_1_2)  184
+    UnitStop(221_CC_1_3)  power_limit_from_start_stop(221_CC_1_2)  185
     UnitStop(221_CC_1_4)  DownTime(221_CC_1_4)  1
     UnitStop(221_CC_1_4)  Logical(221_CC_1_4)  1
-    UnitStop(221_CC_1_4)  power_limit_from_start_stop(221_CC_1_3)  184
+    UnitStop(221_CC_1_4)  power_limit_from_start_stop(221_CC_1_3)  185
     UnitStop(223_CT_4_1)  DownTime(223_CT_4_3)  1
     UnitStop(223_CT_4_1)  Logical(223_CT_4_1)  1
     UnitStop(223_CT_4_2)  DownTime(223_CT_4_3)  1
@@ -11188,23 +11188,15 @@ COLUMNS
     UnitStop(307_CT_2_4)  power_limit_from_start_stop(307_CT_2_3)  33
     UnitStop(313_CC_1_1)  DownTime(313_CC_1_4)  1
     UnitStop(313_CC_1_1)  Logical(313_CC_1_1)  1
-    UnitStop(313_CC_1_1)  TransmissionBlock(1)_eq_p_balance  41.98
-    UnitStop(313_CC_1_1)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cecil)  41.98
     UnitStop(313_CC_1_2)  DownTime(313_CC_1_4)  1
     UnitStop(313_CC_1_2)  Logical(313_CC_1_2)  1
-    UnitStop(313_CC_1_2)  power_limit_from_start_stop(313_CC_1_1)  6.0699999999999989e+01
-    UnitStop(313_CC_1_2)  TransmissionBlock(2)_eq_p_balance  41.98
-    UnitStop(313_CC_1_2)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cecil)  41.98
+    UnitStop(313_CC_1_2)  power_limit_from_start_stop(313_CC_1_1)  1.2230000000000001e+02
     UnitStop(313_CC_1_3)  DownTime(313_CC_1_4)  1
     UnitStop(313_CC_1_3)  Logical(313_CC_1_3)  1
-    UnitStop(313_CC_1_3)  power_limit_from_start_stop(313_CC_1_2)  6.0699999999999989e+01
-    UnitStop(313_CC_1_3)  TransmissionBlock(3)_eq_p_balance  41.98
-    UnitStop(313_CC_1_3)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cecil)  41.98
+    UnitStop(313_CC_1_3)  power_limit_from_start_stop(313_CC_1_2)  1.2230000000000001e+02
     UnitStop(313_CC_1_4)  DownTime(313_CC_1_4)  1
     UnitStop(313_CC_1_4)  Logical(313_CC_1_4)  1
-    UnitStop(313_CC_1_4)  power_limit_from_start_stop(313_CC_1_3)  6.0699999999999989e+01
-    UnitStop(313_CC_1_4)  TransmissionBlock(4)_eq_p_balance  41.98
-    UnitStop(313_CC_1_4)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cecil)  41.98
+    UnitStop(313_CC_1_4)  power_limit_from_start_stop(313_CC_1_3)  1.2230000000000001e+02
     UnitStop(315_CT_6_1)  DownTime(315_CT_6_3)  1
     UnitStop(315_CT_6_1)  Logical(315_CT_6_1)  1
     UnitStop(315_CT_6_2)  DownTime(315_CT_6_3)  1
@@ -12396,881 +12388,589 @@ COLUMNS
     TransmissionBlock(1)_p_nw(Abel)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Abel)  1
     TransmissionBlock(1)_p_nw(Adams)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adams)  1
     TransmissionBlock(1)_p_nw(Adams)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -6.5597670943087088e-05
-    TransmissionBlock(1)_p_nw(Adams)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -0.000872376457595993
     TransmissionBlock(1)_p_nw(Adler)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adler)  1
     TransmissionBlock(1)_p_nw(Adler)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  2.0562138482374255e-03
-    TransmissionBlock(1)_p_nw(Adler)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  2.7345369541271404e-02
     TransmissionBlock(1)_p_nw(Agricola)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Agricola)  1
     TransmissionBlock(1)_p_nw(Agricola)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -2.5421055787138542e-04
-    TransmissionBlock(1)_p_nw(Agricola)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -3.3807192049811283e-03
     TransmissionBlock(1)_p_nw(Aiken)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aiken)  1
     TransmissionBlock(1)_p_nw(Aiken)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -4.3006101930881006e-04
-    TransmissionBlock(1)_p_nw(Aiken)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7193358114842026e-03
     TransmissionBlock(1)_p_nw(Alber)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alber)  1
     TransmissionBlock(1)_p_nw(Alber)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -6.8007583079290142e-04
-    TransmissionBlock(1)_p_nw(Alber)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -9.0442562309646386e-03
     TransmissionBlock(1)_p_nw(Alder)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alder)  1
     TransmissionBlock(1)_p_nw(Alder)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -4.4425338414915052e-03
-    TransmissionBlock(1)_p_nw(Alder)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.9080785638768667e-02
     TransmissionBlock(1)_p_nw(Alger)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alger)  1
     TransmissionBlock(1)_p_nw(Alger)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -2.8269686474221454e-03
-    TransmissionBlock(1)_p_nw(Alger)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -3.7595555740278216e-02
     TransmissionBlock(1)_p_nw(Ali)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Ali)  1
     TransmissionBlock(1)_p_nw(Ali)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -4.0866520543471623e-04
-    TransmissionBlock(1)_p_nw(Ali)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4347951555957265e-03
     TransmissionBlock(1)_p_nw(Allen)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Allen)  1
     TransmissionBlock(1)_p_nw(Allen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -8.7530066282851947e-04
-    TransmissionBlock(1)_p_nw(Allen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1640530533961968e-02
     TransmissionBlock(1)_p_nw(Anna)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Anna)  1
     TransmissionBlock(1)_p_nw(Anna)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -2.0959006003667957e-04
-    TransmissionBlock(1)_p_nw(Anna)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -2.7873159442003952e-03
     TransmissionBlock(1)_p_nw(Archer)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Archer)  1
     TransmissionBlock(1)_p_nw(Archer)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.2412705099394386e-03
-    TransmissionBlock(1)_p_nw(Archer)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.6507524654631008e-02
     TransmissionBlock(1)_p_nw(Arne)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arne)  1
     TransmissionBlock(1)_p_nw(Arne)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -2.1419821157769117e-03
-    TransmissionBlock(1)_p_nw(Arne)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -2.8485992620329019e-02
     TransmissionBlock(1)_p_nw(Arnold)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arnold)  1
     TransmissionBlock(1)_p_nw(Arnold)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.9136458628309617e-03
-    TransmissionBlock(1)_p_nw(Arnold)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  2.5449373047990619e-02
     TransmissionBlock(1)_p_nw(Arthur)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arthur)  1
     TransmissionBlock(1)_p_nw(Arthur)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  6.1985506296325541e-03
-    TransmissionBlock(1)_p_nw(Arthur)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  8.2433866367000661e-02
     TransmissionBlock(1)_p_nw(Asser)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Asser)  1
     TransmissionBlock(1)_p_nw(Asser)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  0.00489628680209741
-    TransmissionBlock(1)_p_nw(Asser)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  6.5115198060830382e-02
     TransmissionBlock(1)_p_nw(Aston)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aston)  1
     TransmissionBlock(1)_p_nw(Aston)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  6.9641102375071449e-03
-    TransmissionBlock(1)_p_nw(Aston)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  9.2614962268648182e-02
     TransmissionBlock(1)_p_nw(Astor)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Astor)  1
     TransmissionBlock(1)_p_nw(Astor)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  7.9272387683845258e-03
-    TransmissionBlock(1)_p_nw(Astor)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  1.0542350629005870e-01
     TransmissionBlock(1)_p_nw(Attar)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attar)  1
     TransmissionBlock(1)_p_nw(Attar)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  2.4678964575165609e-03
-    TransmissionBlock(1)_p_nw(Attar)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  3.2820292830064234e-02
     TransmissionBlock(1)_p_nw(Attila)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attila)  1
     TransmissionBlock(1)_p_nw(Attila)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  3.5625267962016997e-04
-    TransmissionBlock(1)_p_nw(Attila)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  4.7377665424414937e-03
     TransmissionBlock(1)_p_nw(Attlee)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attlee)  1
     TransmissionBlock(1)_p_nw(Attlee)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  8.8215724041992381e-03
-    TransmissionBlock(1)_p_nw(Attlee)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  1.1731715430993993e-01
     TransmissionBlock(1)_p_nw(Aubrey)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aubrey)  1
     TransmissionBlock(1)_p_nw(Aubrey)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  8.0914716681584169e-03
-    TransmissionBlock(1)_p_nw(Aubrey)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  1.0760762217810271e-01
     TransmissionBlock(1)_p_nw(Austen)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Austen)  1
     TransmissionBlock(1)_p_nw(Austen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -8.0515139822284493e-04
-    TransmissionBlock(1)_p_nw(Austen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0707622915751013e-02
     TransmissionBlock(1)_p_nw(Avery)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Avery)  1
     TransmissionBlock(1)_p_nw(Avery)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  4.6147159779226518e-03
-    TransmissionBlock(1)_p_nw(Avery)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  6.1370617580692420e-02
     TransmissionBlock(1)_p_nw(Bach)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bach)  1
     TransmissionBlock(1)_p_nw(Bach)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.0983673277191871e-02
-    TransmissionBlock(1)_p_nw(Bach)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4607070414531384e-01
     TransmissionBlock(1)_p_nw(Bacon)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bacon)  1
     TransmissionBlock(1)_p_nw(Bacon)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1056317908399456e-02
-    TransmissionBlock(1)_p_nw(Bacon)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4703679737888656e-01
     TransmissionBlock(1)_p_nw(Baffin)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baffin)  1
     TransmissionBlock(1)_p_nw(Baffin)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -8.7065665668221142e-03
-    TransmissionBlock(1)_p_nw(Baffin)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1578770389544019e-01
     TransmissionBlock(1)_p_nw(Bailey)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bailey)  1
     TransmissionBlock(1)_p_nw(Bailey)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1265192909827349e-02
-    TransmissionBlock(1)_p_nw(Bailey)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4981460383460868e-01
     TransmissionBlock(1)_p_nw(Bain)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bain)  1
     TransmissionBlock(1)_p_nw(Bain)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1459934456823553e-02
-    TransmissionBlock(1)_p_nw(Bain)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5240445098120517e-01
     TransmissionBlock(1)_p_nw(Bajer)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bajer)  1
     TransmissionBlock(1)_p_nw(Bajer)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1736807606671402e-02
-    TransmissionBlock(1)_p_nw(Bajer)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5608655758949153e-01
     TransmissionBlock(1)_p_nw(Baker)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baker)  1
     TransmissionBlock(1)_p_nw(Baker)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(1)_p_nw(Baker)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(1)_p_nw(Balch)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balch)  1
     TransmissionBlock(1)_p_nw(Balch)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(1)_p_nw(Balch)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(1)_p_nw(Balzac)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balzac)  1
     TransmissionBlock(1)_p_nw(Balzac)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1436240155091135e-02
-    TransmissionBlock(1)_p_nw(Balzac)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5208934297945198e-01
     TransmissionBlock(1)_p_nw(Banks)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Banks)  1
     TransmissionBlock(1)_p_nw(Banks)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1953004854559884e-02
-    TransmissionBlock(1)_p_nw(Banks)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5896174182306916e-01
     TransmissionBlock(1)_p_nw(Bardeen)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bardeen)  1
     TransmissionBlock(1)_p_nw(Bardeen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1774557867553607e-02
-    TransmissionBlock(1)_p_nw(Bardeen)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5658859429884847e-01
     TransmissionBlock(1)_p_nw(Barkla)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barkla)  1
     TransmissionBlock(1)_p_nw(Barkla)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.3031364296809584e-02
-    TransmissionBlock(1)_p_nw(Barkla)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7330272949412942e-01
     TransmissionBlock(1)_p_nw(Barlow)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barlow)  1
     TransmissionBlock(1)_p_nw(Barlow)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.3153136135216547e-02
-    TransmissionBlock(1)_p_nw(Barlow)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7492216023758669e-01
     TransmissionBlock(1)_p_nw(Barry)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barry)  1
     TransmissionBlock(1)_p_nw(Barry)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.0648237246076633e-02
-    TransmissionBlock(1)_p_nw(Barry)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4160977600004043e-01
     TransmissionBlock(1)_p_nw(Barton)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barton)  1
     TransmissionBlock(1)_p_nw(Barton)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -7.7211468607455841e-03
-    TransmissionBlock(1)_p_nw(Barton)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0268271190299182e-01
     TransmissionBlock(1)_p_nw(Basov)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Basov)  1
     TransmissionBlock(1)_p_nw(Basov)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -0.00906602494447803
-    TransmissionBlock(1)_p_nw(Basov)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.2056810267552438e-01
     TransmissionBlock(1)_p_nw(Bates)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bates)  1
     TransmissionBlock(1)_p_nw(Bates)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -0.00714844954756942
-    TransmissionBlock(1)_p_nw(Bates)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -9.5066471171260936e-02
     TransmissionBlock(1)_p_nw(Bayle)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bayle)  1
     TransmissionBlock(1)_p_nw(Bayle)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -7.2933741001253351e-03
-    TransmissionBlock(1)_p_nw(Bayle)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -9.6993807400730381e-02
     TransmissionBlock(1)_p_nw(Bede)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bede)  1
     TransmissionBlock(1)_p_nw(Bede)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.1965087952510903e-02
-    TransmissionBlock(1)_p_nw(Bede)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5912243365916254e-01
     TransmissionBlock(1)_p_nw(Beethoven)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Beethoven)  1
     TransmissionBlock(1)_p_nw(Beethoven)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.4486012307322094e-02
-    TransmissionBlock(1)_p_nw(Beethoven)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.9264793886232612e-01
     TransmissionBlock(1)_p_nw(Behring)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Behring)  1
     TransmissionBlock(1)_p_nw(Behring)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -7.4279468989272577e-03
-    TransmissionBlock(1)_p_nw(Behring)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -9.8783476756666322e-02
     TransmissionBlock(1)_p_nw(Bell)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bell)  1
     TransmissionBlock(1)_p_nw(Bell)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -7.3180866683357389e-03
-    TransmissionBlock(1)_p_nw(Bell)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -9.7322457220206424e-02
     TransmissionBlock(1)_p_nw(Bloch)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bloch)  1
     TransmissionBlock(1)_p_nw(Bloch)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.5872520702468255e-02
-    TransmissionBlock(1)_p_nw(Bloch)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -2.1108696672406613e-01
     TransmissionBlock(1)_p_nw(Bordet)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bordet)  1
     TransmissionBlock(1)_p_nw(Bordet)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -0.0080979249836572
-    TransmissionBlock(1)_p_nw(Bordet)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0769344413539855e-01
     TransmissionBlock(1)_p_nw(Cabell)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabell)  1
     TransmissionBlock(1)_p_nw(Cabell)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.4634137057416563e-02
-    TransmissionBlock(1)_p_nw(Cabell)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6630089584009036e-01
     TransmissionBlock(1)_p_nw(Cabot)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabot)  1
     TransmissionBlock(1)_p_nw(Cabot)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  9.3627249834803659e-04
-    TransmissionBlock(1)_p_nw(Cabot)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6689182706492414e-01
     TransmissionBlock(1)_p_nw(Caesar)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caesar)  1
     TransmissionBlock(1)_p_nw(Caesar)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -3.5253435437589170e-01
-    TransmissionBlock(1)_p_nw(Caesar)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4777766246320458e-01
     TransmissionBlock(1)_p_nw(Caine)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caine)  1
     TransmissionBlock(1)_p_nw(Caine)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.0751064622233124e-01
-    TransmissionBlock(1)_p_nw(Caine)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6859093074786837e-01
     TransmissionBlock(1)_p_nw(Calvin)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Calvin)  1
     TransmissionBlock(1)_p_nw(Calvin)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  2.6952174122795783e-02
-    TransmissionBlock(1)_p_nw(Calvin)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7017506517018557e-01
     TransmissionBlock(1)_p_nw(Camus)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Camus)  1
     TransmissionBlock(1)_p_nw(Camus)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  5.3353004803014636e-02
-    TransmissionBlock(1)_p_nw(Camus)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7242730304163458e-01
     TransmissionBlock(1)_p_nw(Carew)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carew)  1
     TransmissionBlock(1)_p_nw(Carew)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(1)_p_nw(Carew)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(1)_p_nw(Carrel)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carrel)  1
     TransmissionBlock(1)_p_nw(Carrel)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(1)_p_nw(Carrel)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(1)_p_nw(Carter)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carter)  1
     TransmissionBlock(1)_p_nw(Carter)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.9478414911441194e-01
-    TransmissionBlock(1)_p_nw(Carter)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6998232274020055e-01
     TransmissionBlock(1)_p_nw(Caruso)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caruso)  1
     TransmissionBlock(1)_p_nw(Caruso)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  7.0006237462309759e-02
-    TransmissionBlock(1)_p_nw(Caruso)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -0.574185969888402
     TransmissionBlock(1)_p_nw(Cary)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cary)  1
     TransmissionBlock(1)_p_nw(Cary)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  8.1610111421779485e-02
-    TransmissionBlock(1)_p_nw(Cary)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -0.569074794222826
     TransmissionBlock(1)_p_nw(Caxton)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caxton)  1
     TransmissionBlock(1)_p_nw(Caxton)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  9.0670094107859853e-02
-    TransmissionBlock(1)_p_nw(Caxton)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.8661752643526444e-01
     TransmissionBlock(1)_p_nw(Cecil)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cecil)  1
     TransmissionBlock(1)_p_nw(Cecil)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  7.3699110489457847e-02
-    TransmissionBlock(1)_p_nw(Cecil)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -0.586883706039605
     TransmissionBlock(1)_p_nw(Chain)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chain)  1
     TransmissionBlock(1)_p_nw(Chain)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  3.7747155370979578e-02
-    TransmissionBlock(1)_p_nw(Chain)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.5048264429166915e-01
     TransmissionBlock(1)_p_nw(Chase)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chase)  1
     TransmissionBlock(1)_p_nw(Chase)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -5.2977577652005933e-02
-    TransmissionBlock(1)_p_nw(Chase)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.1046176217724337e-01
     TransmissionBlock(1)_p_nw(Chifa)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chifa)  1
     TransmissionBlock(1)_p_nw(Chifa)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -0.0238698543194298
-    TransmissionBlock(1)_p_nw(Chifa)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2436510034075834e-01
     TransmissionBlock(1)_p_nw(Chuhsi)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chuhsi)  1
     TransmissionBlock(1)_p_nw(Chuhsi)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -3.1768928745796572e-02
-    TransmissionBlock(1)_p_nw(Chuhsi)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8824418775274719e-01
     TransmissionBlock(1)_p_nw(Clark)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clark)  1
     TransmissionBlock(1)_p_nw(Clark)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -3.5278274221859654e-02
-    TransmissionBlock(1)_p_nw(Clark)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -4.6916202135393531e-01
     TransmissionBlock(1)_p_nw(Clay)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clay)  1
     TransmissionBlock(1)_p_nw(Clay)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.5213643259830590e-03
-    TransmissionBlock(1)_p_nw(Clay)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6494719857578413e-01
     TransmissionBlock(1)_p_nw(Clive)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clive)  1
     TransmissionBlock(1)_p_nw(Clive)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1.7912105233535848e-02
-    TransmissionBlock(1)_p_nw(Clive)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -6.0023597964971964e-01
     TransmissionBlock(1)_p_nw(Cobb)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cobb)  1
     TransmissionBlock(1)_p_nw(Cobb)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -4.0962671353842156e-02
-    TransmissionBlock(1)_p_nw(Cobb)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8370224866948658e-01
     TransmissionBlock(1)_p_nw(Cole)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cole)  1
     TransmissionBlock(1)_p_nw(Cole)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -3.7348945935650836e-02
-    TransmissionBlock(1)_p_nw(Cole)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8548751952302260e-01
     TransmissionBlock(1)_p_nw(Comte)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Comte)  1
     TransmissionBlock(1)_p_nw(Comte)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  2.8600513491271250e-02
-    TransmissionBlock(1)_p_nw(Comte)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -6.1964480924038423e-01
     TransmissionBlock(1)_p_nw(Curie)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Curie)  1
     TransmissionBlock(1)_p_nw(Curie)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  -1.6751399228172692e-01
-    TransmissionBlock(1)_p_nw(Curie)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2472960640422850e-01
     TransmissionBlock(1)_p_nw(Curtiss)  TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Curtiss)  1
     TransmissionBlock(1)_p_nw(Curtiss)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  2.6921169436708529e-02
-    TransmissionBlock(1)_p_nw(Curtiss)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  -6.4197822742950761e-01
     TransmissionBlock(2)_p_nw(Abel)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Abel)  1
     TransmissionBlock(2)_p_nw(Adams)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adams)  1
     TransmissionBlock(2)_p_nw(Adams)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -6.5597670943087088e-05
-    TransmissionBlock(2)_p_nw(Adams)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -0.000872376457595993
     TransmissionBlock(2)_p_nw(Adler)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adler)  1
     TransmissionBlock(2)_p_nw(Adler)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  2.0562138482374255e-03
-    TransmissionBlock(2)_p_nw(Adler)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  2.7345369541271404e-02
     TransmissionBlock(2)_p_nw(Agricola)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Agricola)  1
     TransmissionBlock(2)_p_nw(Agricola)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -2.5421055787138542e-04
-    TransmissionBlock(2)_p_nw(Agricola)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -3.3807192049811283e-03
     TransmissionBlock(2)_p_nw(Aiken)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aiken)  1
     TransmissionBlock(2)_p_nw(Aiken)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -4.3006101930881006e-04
-    TransmissionBlock(2)_p_nw(Aiken)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7193358114842026e-03
     TransmissionBlock(2)_p_nw(Alber)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alber)  1
     TransmissionBlock(2)_p_nw(Alber)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -6.8007583079290142e-04
-    TransmissionBlock(2)_p_nw(Alber)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -9.0442562309646386e-03
     TransmissionBlock(2)_p_nw(Alder)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alder)  1
     TransmissionBlock(2)_p_nw(Alder)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -4.4425338414915052e-03
-    TransmissionBlock(2)_p_nw(Alder)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.9080785638768667e-02
     TransmissionBlock(2)_p_nw(Alger)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alger)  1
     TransmissionBlock(2)_p_nw(Alger)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -2.8269686474221454e-03
-    TransmissionBlock(2)_p_nw(Alger)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -3.7595555740278216e-02
     TransmissionBlock(2)_p_nw(Ali)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Ali)  1
     TransmissionBlock(2)_p_nw(Ali)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -4.0866520543471623e-04
-    TransmissionBlock(2)_p_nw(Ali)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4347951555957265e-03
     TransmissionBlock(2)_p_nw(Allen)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Allen)  1
     TransmissionBlock(2)_p_nw(Allen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -8.7530066282851947e-04
-    TransmissionBlock(2)_p_nw(Allen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1640530533961968e-02
     TransmissionBlock(2)_p_nw(Anna)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Anna)  1
     TransmissionBlock(2)_p_nw(Anna)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -2.0959006003667957e-04
-    TransmissionBlock(2)_p_nw(Anna)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -2.7873159442003952e-03
     TransmissionBlock(2)_p_nw(Archer)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Archer)  1
     TransmissionBlock(2)_p_nw(Archer)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.2412705099394386e-03
-    TransmissionBlock(2)_p_nw(Archer)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.6507524654631008e-02
     TransmissionBlock(2)_p_nw(Arne)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arne)  1
     TransmissionBlock(2)_p_nw(Arne)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -2.1419821157769117e-03
-    TransmissionBlock(2)_p_nw(Arne)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -2.8485992620329019e-02
     TransmissionBlock(2)_p_nw(Arnold)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arnold)  1
     TransmissionBlock(2)_p_nw(Arnold)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.9136458628309617e-03
-    TransmissionBlock(2)_p_nw(Arnold)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  2.5449373047990619e-02
     TransmissionBlock(2)_p_nw(Arthur)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arthur)  1
     TransmissionBlock(2)_p_nw(Arthur)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  6.1985506296325541e-03
-    TransmissionBlock(2)_p_nw(Arthur)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  8.2433866367000661e-02
     TransmissionBlock(2)_p_nw(Asser)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Asser)  1
     TransmissionBlock(2)_p_nw(Asser)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  0.00489628680209741
-    TransmissionBlock(2)_p_nw(Asser)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  6.5115198060830382e-02
     TransmissionBlock(2)_p_nw(Aston)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aston)  1
     TransmissionBlock(2)_p_nw(Aston)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  6.9641102375071449e-03
-    TransmissionBlock(2)_p_nw(Aston)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  9.2614962268648182e-02
     TransmissionBlock(2)_p_nw(Astor)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Astor)  1
     TransmissionBlock(2)_p_nw(Astor)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  7.9272387683845258e-03
-    TransmissionBlock(2)_p_nw(Astor)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  1.0542350629005870e-01
     TransmissionBlock(2)_p_nw(Attar)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attar)  1
     TransmissionBlock(2)_p_nw(Attar)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  2.4678964575165609e-03
-    TransmissionBlock(2)_p_nw(Attar)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  3.2820292830064234e-02
     TransmissionBlock(2)_p_nw(Attila)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attila)  1
     TransmissionBlock(2)_p_nw(Attila)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  3.5625267962016997e-04
-    TransmissionBlock(2)_p_nw(Attila)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  4.7377665424414937e-03
     TransmissionBlock(2)_p_nw(Attlee)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attlee)  1
     TransmissionBlock(2)_p_nw(Attlee)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  8.8215724041992381e-03
-    TransmissionBlock(2)_p_nw(Attlee)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  1.1731715430993993e-01
     TransmissionBlock(2)_p_nw(Aubrey)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aubrey)  1
     TransmissionBlock(2)_p_nw(Aubrey)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  8.0914716681584169e-03
-    TransmissionBlock(2)_p_nw(Aubrey)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  1.0760762217810271e-01
     TransmissionBlock(2)_p_nw(Austen)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Austen)  1
     TransmissionBlock(2)_p_nw(Austen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -8.0515139822284493e-04
-    TransmissionBlock(2)_p_nw(Austen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0707622915751013e-02
     TransmissionBlock(2)_p_nw(Avery)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Avery)  1
     TransmissionBlock(2)_p_nw(Avery)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  4.6147159779226518e-03
-    TransmissionBlock(2)_p_nw(Avery)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  6.1370617580692420e-02
     TransmissionBlock(2)_p_nw(Bach)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bach)  1
     TransmissionBlock(2)_p_nw(Bach)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.0983673277191871e-02
-    TransmissionBlock(2)_p_nw(Bach)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4607070414531384e-01
     TransmissionBlock(2)_p_nw(Bacon)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bacon)  1
     TransmissionBlock(2)_p_nw(Bacon)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1056317908399456e-02
-    TransmissionBlock(2)_p_nw(Bacon)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4703679737888656e-01
     TransmissionBlock(2)_p_nw(Baffin)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baffin)  1
     TransmissionBlock(2)_p_nw(Baffin)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -8.7065665668221142e-03
-    TransmissionBlock(2)_p_nw(Baffin)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1578770389544019e-01
     TransmissionBlock(2)_p_nw(Bailey)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bailey)  1
     TransmissionBlock(2)_p_nw(Bailey)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1265192909827349e-02
-    TransmissionBlock(2)_p_nw(Bailey)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4981460383460868e-01
     TransmissionBlock(2)_p_nw(Bain)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bain)  1
     TransmissionBlock(2)_p_nw(Bain)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1459934456823553e-02
-    TransmissionBlock(2)_p_nw(Bain)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5240445098120517e-01
     TransmissionBlock(2)_p_nw(Bajer)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bajer)  1
     TransmissionBlock(2)_p_nw(Bajer)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1736807606671402e-02
-    TransmissionBlock(2)_p_nw(Bajer)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5608655758949153e-01
     TransmissionBlock(2)_p_nw(Baker)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baker)  1
     TransmissionBlock(2)_p_nw(Baker)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(2)_p_nw(Baker)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(2)_p_nw(Balch)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balch)  1
     TransmissionBlock(2)_p_nw(Balch)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(2)_p_nw(Balch)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(2)_p_nw(Balzac)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balzac)  1
     TransmissionBlock(2)_p_nw(Balzac)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1436240155091135e-02
-    TransmissionBlock(2)_p_nw(Balzac)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5208934297945198e-01
     TransmissionBlock(2)_p_nw(Banks)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Banks)  1
     TransmissionBlock(2)_p_nw(Banks)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1953004854559884e-02
-    TransmissionBlock(2)_p_nw(Banks)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5896174182306916e-01
     TransmissionBlock(2)_p_nw(Bardeen)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bardeen)  1
     TransmissionBlock(2)_p_nw(Bardeen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1774557867553607e-02
-    TransmissionBlock(2)_p_nw(Bardeen)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5658859429884847e-01
     TransmissionBlock(2)_p_nw(Barkla)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barkla)  1
     TransmissionBlock(2)_p_nw(Barkla)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.3031364296809584e-02
-    TransmissionBlock(2)_p_nw(Barkla)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7330272949412942e-01
     TransmissionBlock(2)_p_nw(Barlow)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barlow)  1
     TransmissionBlock(2)_p_nw(Barlow)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.3153136135216547e-02
-    TransmissionBlock(2)_p_nw(Barlow)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7492216023758669e-01
     TransmissionBlock(2)_p_nw(Barry)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barry)  1
     TransmissionBlock(2)_p_nw(Barry)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.0648237246076633e-02
-    TransmissionBlock(2)_p_nw(Barry)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4160977600004043e-01
     TransmissionBlock(2)_p_nw(Barton)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barton)  1
     TransmissionBlock(2)_p_nw(Barton)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -7.7211468607455841e-03
-    TransmissionBlock(2)_p_nw(Barton)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0268271190299182e-01
     TransmissionBlock(2)_p_nw(Basov)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Basov)  1
     TransmissionBlock(2)_p_nw(Basov)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -0.00906602494447803
-    TransmissionBlock(2)_p_nw(Basov)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.2056810267552438e-01
     TransmissionBlock(2)_p_nw(Bates)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bates)  1
     TransmissionBlock(2)_p_nw(Bates)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -0.00714844954756942
-    TransmissionBlock(2)_p_nw(Bates)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -9.5066471171260936e-02
     TransmissionBlock(2)_p_nw(Bayle)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bayle)  1
     TransmissionBlock(2)_p_nw(Bayle)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -7.2933741001253351e-03
-    TransmissionBlock(2)_p_nw(Bayle)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -9.6993807400730381e-02
     TransmissionBlock(2)_p_nw(Bede)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bede)  1
     TransmissionBlock(2)_p_nw(Bede)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.1965087952510903e-02
-    TransmissionBlock(2)_p_nw(Bede)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5912243365916254e-01
     TransmissionBlock(2)_p_nw(Beethoven)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Beethoven)  1
     TransmissionBlock(2)_p_nw(Beethoven)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.4486012307322094e-02
-    TransmissionBlock(2)_p_nw(Beethoven)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.9264793886232612e-01
     TransmissionBlock(2)_p_nw(Behring)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Behring)  1
     TransmissionBlock(2)_p_nw(Behring)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -7.4279468989272577e-03
-    TransmissionBlock(2)_p_nw(Behring)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -9.8783476756666322e-02
     TransmissionBlock(2)_p_nw(Bell)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bell)  1
     TransmissionBlock(2)_p_nw(Bell)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -7.3180866683357389e-03
-    TransmissionBlock(2)_p_nw(Bell)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -9.7322457220206424e-02
     TransmissionBlock(2)_p_nw(Bloch)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bloch)  1
     TransmissionBlock(2)_p_nw(Bloch)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.5872520702468255e-02
-    TransmissionBlock(2)_p_nw(Bloch)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -2.1108696672406613e-01
     TransmissionBlock(2)_p_nw(Bordet)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bordet)  1
     TransmissionBlock(2)_p_nw(Bordet)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -0.0080979249836572
-    TransmissionBlock(2)_p_nw(Bordet)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0769344413539855e-01
     TransmissionBlock(2)_p_nw(Cabell)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabell)  1
     TransmissionBlock(2)_p_nw(Cabell)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.4634137057416563e-02
-    TransmissionBlock(2)_p_nw(Cabell)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6630089584009036e-01
     TransmissionBlock(2)_p_nw(Cabot)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabot)  1
     TransmissionBlock(2)_p_nw(Cabot)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  9.3627249834803659e-04
-    TransmissionBlock(2)_p_nw(Cabot)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6689182706492414e-01
     TransmissionBlock(2)_p_nw(Caesar)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caesar)  1
     TransmissionBlock(2)_p_nw(Caesar)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -3.5253435437589170e-01
-    TransmissionBlock(2)_p_nw(Caesar)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4777766246320458e-01
     TransmissionBlock(2)_p_nw(Caine)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caine)  1
     TransmissionBlock(2)_p_nw(Caine)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.0751064622233124e-01
-    TransmissionBlock(2)_p_nw(Caine)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6859093074786837e-01
     TransmissionBlock(2)_p_nw(Calvin)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Calvin)  1
     TransmissionBlock(2)_p_nw(Calvin)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  2.6952174122795783e-02
-    TransmissionBlock(2)_p_nw(Calvin)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7017506517018557e-01
     TransmissionBlock(2)_p_nw(Camus)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Camus)  1
     TransmissionBlock(2)_p_nw(Camus)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  5.3353004803014636e-02
-    TransmissionBlock(2)_p_nw(Camus)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7242730304163458e-01
     TransmissionBlock(2)_p_nw(Carew)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carew)  1
     TransmissionBlock(2)_p_nw(Carew)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(2)_p_nw(Carew)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(2)_p_nw(Carrel)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carrel)  1
     TransmissionBlock(2)_p_nw(Carrel)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(2)_p_nw(Carrel)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(2)_p_nw(Carter)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carter)  1
     TransmissionBlock(2)_p_nw(Carter)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.9478414911441194e-01
-    TransmissionBlock(2)_p_nw(Carter)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6998232274020055e-01
     TransmissionBlock(2)_p_nw(Caruso)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caruso)  1
     TransmissionBlock(2)_p_nw(Caruso)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  7.0006237462309759e-02
-    TransmissionBlock(2)_p_nw(Caruso)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -0.574185969888402
     TransmissionBlock(2)_p_nw(Cary)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cary)  1
     TransmissionBlock(2)_p_nw(Cary)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  8.1610111421779485e-02
-    TransmissionBlock(2)_p_nw(Cary)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -0.569074794222826
     TransmissionBlock(2)_p_nw(Caxton)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caxton)  1
     TransmissionBlock(2)_p_nw(Caxton)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  9.0670094107859853e-02
-    TransmissionBlock(2)_p_nw(Caxton)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.8661752643526444e-01
     TransmissionBlock(2)_p_nw(Cecil)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cecil)  1
     TransmissionBlock(2)_p_nw(Cecil)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  7.3699110489457847e-02
-    TransmissionBlock(2)_p_nw(Cecil)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -0.586883706039605
     TransmissionBlock(2)_p_nw(Chain)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chain)  1
     TransmissionBlock(2)_p_nw(Chain)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  3.7747155370979578e-02
-    TransmissionBlock(2)_p_nw(Chain)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.5048264429166915e-01
     TransmissionBlock(2)_p_nw(Chase)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chase)  1
     TransmissionBlock(2)_p_nw(Chase)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -5.2977577652005933e-02
-    TransmissionBlock(2)_p_nw(Chase)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.1046176217724337e-01
     TransmissionBlock(2)_p_nw(Chifa)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chifa)  1
     TransmissionBlock(2)_p_nw(Chifa)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -0.0238698543194298
-    TransmissionBlock(2)_p_nw(Chifa)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2436510034075834e-01
     TransmissionBlock(2)_p_nw(Chuhsi)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chuhsi)  1
     TransmissionBlock(2)_p_nw(Chuhsi)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -3.1768928745796572e-02
-    TransmissionBlock(2)_p_nw(Chuhsi)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8824418775274719e-01
     TransmissionBlock(2)_p_nw(Clark)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clark)  1
     TransmissionBlock(2)_p_nw(Clark)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -3.5278274221859654e-02
-    TransmissionBlock(2)_p_nw(Clark)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -4.6916202135393531e-01
     TransmissionBlock(2)_p_nw(Clay)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clay)  1
     TransmissionBlock(2)_p_nw(Clay)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.5213643259830590e-03
-    TransmissionBlock(2)_p_nw(Clay)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6494719857578413e-01
     TransmissionBlock(2)_p_nw(Clive)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clive)  1
     TransmissionBlock(2)_p_nw(Clive)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1.7912105233535848e-02
-    TransmissionBlock(2)_p_nw(Clive)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -6.0023597964971964e-01
     TransmissionBlock(2)_p_nw(Cobb)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cobb)  1
     TransmissionBlock(2)_p_nw(Cobb)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -4.0962671353842156e-02
-    TransmissionBlock(2)_p_nw(Cobb)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8370224866948658e-01
     TransmissionBlock(2)_p_nw(Cole)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cole)  1
     TransmissionBlock(2)_p_nw(Cole)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -3.7348945935650836e-02
-    TransmissionBlock(2)_p_nw(Cole)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8548751952302260e-01
     TransmissionBlock(2)_p_nw(Comte)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Comte)  1
     TransmissionBlock(2)_p_nw(Comte)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  2.8600513491271250e-02
-    TransmissionBlock(2)_p_nw(Comte)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -6.1964480924038423e-01
     TransmissionBlock(2)_p_nw(Curie)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Curie)  1
     TransmissionBlock(2)_p_nw(Curie)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  -1.6751399228172692e-01
-    TransmissionBlock(2)_p_nw(Curie)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2472960640422850e-01
     TransmissionBlock(2)_p_nw(Curtiss)  TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Curtiss)  1
     TransmissionBlock(2)_p_nw(Curtiss)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  2.6921169436708529e-02
-    TransmissionBlock(2)_p_nw(Curtiss)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  -6.4197822742950761e-01
     TransmissionBlock(3)_p_nw(Abel)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Abel)  1
     TransmissionBlock(3)_p_nw(Adams)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adams)  1
     TransmissionBlock(3)_p_nw(Adams)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -6.5597670943087088e-05
-    TransmissionBlock(3)_p_nw(Adams)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -0.000872376457595993
     TransmissionBlock(3)_p_nw(Adler)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adler)  1
     TransmissionBlock(3)_p_nw(Adler)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  2.0562138482374255e-03
-    TransmissionBlock(3)_p_nw(Adler)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  2.7345369541271404e-02
     TransmissionBlock(3)_p_nw(Agricola)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Agricola)  1
     TransmissionBlock(3)_p_nw(Agricola)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -2.5421055787138542e-04
-    TransmissionBlock(3)_p_nw(Agricola)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -3.3807192049811283e-03
     TransmissionBlock(3)_p_nw(Aiken)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aiken)  1
     TransmissionBlock(3)_p_nw(Aiken)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -4.3006101930881006e-04
-    TransmissionBlock(3)_p_nw(Aiken)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7193358114842026e-03
     TransmissionBlock(3)_p_nw(Alber)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alber)  1
     TransmissionBlock(3)_p_nw(Alber)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -6.8007583079290142e-04
-    TransmissionBlock(3)_p_nw(Alber)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -9.0442562309646386e-03
     TransmissionBlock(3)_p_nw(Alder)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alder)  1
     TransmissionBlock(3)_p_nw(Alder)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -4.4425338414915052e-03
-    TransmissionBlock(3)_p_nw(Alder)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.9080785638768667e-02
     TransmissionBlock(3)_p_nw(Alger)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alger)  1
     TransmissionBlock(3)_p_nw(Alger)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -2.8269686474221454e-03
-    TransmissionBlock(3)_p_nw(Alger)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -3.7595555740278216e-02
     TransmissionBlock(3)_p_nw(Ali)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Ali)  1
     TransmissionBlock(3)_p_nw(Ali)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -4.0866520543471623e-04
-    TransmissionBlock(3)_p_nw(Ali)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4347951555957265e-03
     TransmissionBlock(3)_p_nw(Allen)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Allen)  1
     TransmissionBlock(3)_p_nw(Allen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -8.7530066282851947e-04
-    TransmissionBlock(3)_p_nw(Allen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1640530533961968e-02
     TransmissionBlock(3)_p_nw(Anna)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Anna)  1
     TransmissionBlock(3)_p_nw(Anna)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -2.0959006003667957e-04
-    TransmissionBlock(3)_p_nw(Anna)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -2.7873159442003952e-03
     TransmissionBlock(3)_p_nw(Archer)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Archer)  1
     TransmissionBlock(3)_p_nw(Archer)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.2412705099394386e-03
-    TransmissionBlock(3)_p_nw(Archer)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.6507524654631008e-02
     TransmissionBlock(3)_p_nw(Arne)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arne)  1
     TransmissionBlock(3)_p_nw(Arne)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -2.1419821157769117e-03
-    TransmissionBlock(3)_p_nw(Arne)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -2.8485992620329019e-02
     TransmissionBlock(3)_p_nw(Arnold)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arnold)  1
     TransmissionBlock(3)_p_nw(Arnold)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.9136458628309617e-03
-    TransmissionBlock(3)_p_nw(Arnold)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  2.5449373047990619e-02
     TransmissionBlock(3)_p_nw(Arthur)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arthur)  1
     TransmissionBlock(3)_p_nw(Arthur)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  6.1985506296325541e-03
-    TransmissionBlock(3)_p_nw(Arthur)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  8.2433866367000661e-02
     TransmissionBlock(3)_p_nw(Asser)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Asser)  1
     TransmissionBlock(3)_p_nw(Asser)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  0.00489628680209741
-    TransmissionBlock(3)_p_nw(Asser)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  6.5115198060830382e-02
     TransmissionBlock(3)_p_nw(Aston)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aston)  1
     TransmissionBlock(3)_p_nw(Aston)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  6.9641102375071449e-03
-    TransmissionBlock(3)_p_nw(Aston)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  9.2614962268648182e-02
     TransmissionBlock(3)_p_nw(Astor)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Astor)  1
     TransmissionBlock(3)_p_nw(Astor)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  7.9272387683845258e-03
-    TransmissionBlock(3)_p_nw(Astor)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  1.0542350629005870e-01
     TransmissionBlock(3)_p_nw(Attar)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attar)  1
     TransmissionBlock(3)_p_nw(Attar)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  2.4678964575165609e-03
-    TransmissionBlock(3)_p_nw(Attar)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  3.2820292830064234e-02
     TransmissionBlock(3)_p_nw(Attila)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attila)  1
     TransmissionBlock(3)_p_nw(Attila)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  3.5625267962016997e-04
-    TransmissionBlock(3)_p_nw(Attila)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  4.7377665424414937e-03
     TransmissionBlock(3)_p_nw(Attlee)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attlee)  1
     TransmissionBlock(3)_p_nw(Attlee)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  8.8215724041992381e-03
-    TransmissionBlock(3)_p_nw(Attlee)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  1.1731715430993993e-01
     TransmissionBlock(3)_p_nw(Aubrey)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aubrey)  1
     TransmissionBlock(3)_p_nw(Aubrey)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  8.0914716681584169e-03
-    TransmissionBlock(3)_p_nw(Aubrey)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  1.0760762217810271e-01
     TransmissionBlock(3)_p_nw(Austen)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Austen)  1
     TransmissionBlock(3)_p_nw(Austen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -8.0515139822284493e-04
-    TransmissionBlock(3)_p_nw(Austen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0707622915751013e-02
     TransmissionBlock(3)_p_nw(Avery)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Avery)  1
     TransmissionBlock(3)_p_nw(Avery)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  4.6147159779226518e-03
-    TransmissionBlock(3)_p_nw(Avery)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  6.1370617580692420e-02
     TransmissionBlock(3)_p_nw(Bach)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bach)  1
     TransmissionBlock(3)_p_nw(Bach)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.0983673277191871e-02
-    TransmissionBlock(3)_p_nw(Bach)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4607070414531384e-01
     TransmissionBlock(3)_p_nw(Bacon)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bacon)  1
     TransmissionBlock(3)_p_nw(Bacon)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1056317908399456e-02
-    TransmissionBlock(3)_p_nw(Bacon)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4703679737888656e-01
     TransmissionBlock(3)_p_nw(Baffin)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baffin)  1
     TransmissionBlock(3)_p_nw(Baffin)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -8.7065665668221142e-03
-    TransmissionBlock(3)_p_nw(Baffin)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1578770389544019e-01
     TransmissionBlock(3)_p_nw(Bailey)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bailey)  1
     TransmissionBlock(3)_p_nw(Bailey)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1265192909827349e-02
-    TransmissionBlock(3)_p_nw(Bailey)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4981460383460868e-01
     TransmissionBlock(3)_p_nw(Bain)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bain)  1
     TransmissionBlock(3)_p_nw(Bain)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1459934456823553e-02
-    TransmissionBlock(3)_p_nw(Bain)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5240445098120517e-01
     TransmissionBlock(3)_p_nw(Bajer)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bajer)  1
     TransmissionBlock(3)_p_nw(Bajer)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1736807606671402e-02
-    TransmissionBlock(3)_p_nw(Bajer)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5608655758949153e-01
     TransmissionBlock(3)_p_nw(Baker)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baker)  1
     TransmissionBlock(3)_p_nw(Baker)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(3)_p_nw(Baker)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(3)_p_nw(Balch)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balch)  1
     TransmissionBlock(3)_p_nw(Balch)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(3)_p_nw(Balch)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(3)_p_nw(Balzac)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balzac)  1
     TransmissionBlock(3)_p_nw(Balzac)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1436240155091135e-02
-    TransmissionBlock(3)_p_nw(Balzac)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5208934297945198e-01
     TransmissionBlock(3)_p_nw(Banks)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Banks)  1
     TransmissionBlock(3)_p_nw(Banks)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1953004854559884e-02
-    TransmissionBlock(3)_p_nw(Banks)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5896174182306916e-01
     TransmissionBlock(3)_p_nw(Bardeen)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bardeen)  1
     TransmissionBlock(3)_p_nw(Bardeen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1774557867553607e-02
-    TransmissionBlock(3)_p_nw(Bardeen)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5658859429884847e-01
     TransmissionBlock(3)_p_nw(Barkla)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barkla)  1
     TransmissionBlock(3)_p_nw(Barkla)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.3031364296809584e-02
-    TransmissionBlock(3)_p_nw(Barkla)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7330272949412942e-01
     TransmissionBlock(3)_p_nw(Barlow)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barlow)  1
     TransmissionBlock(3)_p_nw(Barlow)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.3153136135216547e-02
-    TransmissionBlock(3)_p_nw(Barlow)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7492216023758669e-01
     TransmissionBlock(3)_p_nw(Barry)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barry)  1
     TransmissionBlock(3)_p_nw(Barry)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.0648237246076633e-02
-    TransmissionBlock(3)_p_nw(Barry)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4160977600004043e-01
     TransmissionBlock(3)_p_nw(Barton)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barton)  1
     TransmissionBlock(3)_p_nw(Barton)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -7.7211468607455841e-03
-    TransmissionBlock(3)_p_nw(Barton)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0268271190299182e-01
     TransmissionBlock(3)_p_nw(Basov)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Basov)  1
     TransmissionBlock(3)_p_nw(Basov)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -0.00906602494447803
-    TransmissionBlock(3)_p_nw(Basov)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.2056810267552438e-01
     TransmissionBlock(3)_p_nw(Bates)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bates)  1
     TransmissionBlock(3)_p_nw(Bates)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -0.00714844954756942
-    TransmissionBlock(3)_p_nw(Bates)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -9.5066471171260936e-02
     TransmissionBlock(3)_p_nw(Bayle)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bayle)  1
     TransmissionBlock(3)_p_nw(Bayle)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -7.2933741001253351e-03
-    TransmissionBlock(3)_p_nw(Bayle)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -9.6993807400730381e-02
     TransmissionBlock(3)_p_nw(Bede)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bede)  1
     TransmissionBlock(3)_p_nw(Bede)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.1965087952510903e-02
-    TransmissionBlock(3)_p_nw(Bede)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5912243365916254e-01
     TransmissionBlock(3)_p_nw(Beethoven)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Beethoven)  1
     TransmissionBlock(3)_p_nw(Beethoven)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.4486012307322094e-02
-    TransmissionBlock(3)_p_nw(Beethoven)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.9264793886232612e-01
     TransmissionBlock(3)_p_nw(Behring)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Behring)  1
     TransmissionBlock(3)_p_nw(Behring)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -7.4279468989272577e-03
-    TransmissionBlock(3)_p_nw(Behring)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -9.8783476756666322e-02
     TransmissionBlock(3)_p_nw(Bell)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bell)  1
     TransmissionBlock(3)_p_nw(Bell)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -7.3180866683357389e-03
-    TransmissionBlock(3)_p_nw(Bell)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -9.7322457220206424e-02
     TransmissionBlock(3)_p_nw(Bloch)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bloch)  1
     TransmissionBlock(3)_p_nw(Bloch)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.5872520702468255e-02
-    TransmissionBlock(3)_p_nw(Bloch)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -2.1108696672406613e-01
     TransmissionBlock(3)_p_nw(Bordet)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bordet)  1
     TransmissionBlock(3)_p_nw(Bordet)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -0.0080979249836572
-    TransmissionBlock(3)_p_nw(Bordet)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0769344413539855e-01
     TransmissionBlock(3)_p_nw(Cabell)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabell)  1
     TransmissionBlock(3)_p_nw(Cabell)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.4634137057416563e-02
-    TransmissionBlock(3)_p_nw(Cabell)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6630089584009036e-01
     TransmissionBlock(3)_p_nw(Cabot)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabot)  1
     TransmissionBlock(3)_p_nw(Cabot)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  9.3627249834803659e-04
-    TransmissionBlock(3)_p_nw(Cabot)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6689182706492414e-01
     TransmissionBlock(3)_p_nw(Caesar)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caesar)  1
     TransmissionBlock(3)_p_nw(Caesar)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -3.5253435437589170e-01
-    TransmissionBlock(3)_p_nw(Caesar)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4777766246320458e-01
     TransmissionBlock(3)_p_nw(Caine)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caine)  1
     TransmissionBlock(3)_p_nw(Caine)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.0751064622233124e-01
-    TransmissionBlock(3)_p_nw(Caine)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6859093074786837e-01
     TransmissionBlock(3)_p_nw(Calvin)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Calvin)  1
     TransmissionBlock(3)_p_nw(Calvin)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  2.6952174122795783e-02
-    TransmissionBlock(3)_p_nw(Calvin)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7017506517018557e-01
     TransmissionBlock(3)_p_nw(Camus)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Camus)  1
     TransmissionBlock(3)_p_nw(Camus)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  5.3353004803014636e-02
-    TransmissionBlock(3)_p_nw(Camus)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7242730304163458e-01
     TransmissionBlock(3)_p_nw(Carew)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carew)  1
     TransmissionBlock(3)_p_nw(Carew)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(3)_p_nw(Carew)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(3)_p_nw(Carrel)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carrel)  1
     TransmissionBlock(3)_p_nw(Carrel)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(3)_p_nw(Carrel)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(3)_p_nw(Carter)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carter)  1
     TransmissionBlock(3)_p_nw(Carter)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.9478414911441194e-01
-    TransmissionBlock(3)_p_nw(Carter)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6998232274020055e-01
     TransmissionBlock(3)_p_nw(Caruso)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caruso)  1
     TransmissionBlock(3)_p_nw(Caruso)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  7.0006237462309759e-02
-    TransmissionBlock(3)_p_nw(Caruso)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -0.574185969888402
     TransmissionBlock(3)_p_nw(Cary)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cary)  1
     TransmissionBlock(3)_p_nw(Cary)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  8.1610111421779485e-02
-    TransmissionBlock(3)_p_nw(Cary)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -0.569074794222826
     TransmissionBlock(3)_p_nw(Caxton)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caxton)  1
     TransmissionBlock(3)_p_nw(Caxton)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  9.0670094107859853e-02
-    TransmissionBlock(3)_p_nw(Caxton)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.8661752643526444e-01
     TransmissionBlock(3)_p_nw(Cecil)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cecil)  1
     TransmissionBlock(3)_p_nw(Cecil)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  7.3699110489457847e-02
-    TransmissionBlock(3)_p_nw(Cecil)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -0.586883706039605
     TransmissionBlock(3)_p_nw(Chain)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chain)  1
     TransmissionBlock(3)_p_nw(Chain)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  3.7747155370979578e-02
-    TransmissionBlock(3)_p_nw(Chain)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.5048264429166915e-01
     TransmissionBlock(3)_p_nw(Chase)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chase)  1
     TransmissionBlock(3)_p_nw(Chase)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -5.2977577652005933e-02
-    TransmissionBlock(3)_p_nw(Chase)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.1046176217724337e-01
     TransmissionBlock(3)_p_nw(Chifa)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chifa)  1
     TransmissionBlock(3)_p_nw(Chifa)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -0.0238698543194298
-    TransmissionBlock(3)_p_nw(Chifa)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2436510034075834e-01
     TransmissionBlock(3)_p_nw(Chuhsi)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chuhsi)  1
     TransmissionBlock(3)_p_nw(Chuhsi)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -3.1768928745796572e-02
-    TransmissionBlock(3)_p_nw(Chuhsi)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8824418775274719e-01
     TransmissionBlock(3)_p_nw(Clark)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clark)  1
     TransmissionBlock(3)_p_nw(Clark)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -3.5278274221859654e-02
-    TransmissionBlock(3)_p_nw(Clark)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -4.6916202135393531e-01
     TransmissionBlock(3)_p_nw(Clay)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clay)  1
     TransmissionBlock(3)_p_nw(Clay)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.5213643259830590e-03
-    TransmissionBlock(3)_p_nw(Clay)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6494719857578413e-01
     TransmissionBlock(3)_p_nw(Clive)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clive)  1
     TransmissionBlock(3)_p_nw(Clive)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1.7912105233535848e-02
-    TransmissionBlock(3)_p_nw(Clive)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -6.0023597964971964e-01
     TransmissionBlock(3)_p_nw(Cobb)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cobb)  1
     TransmissionBlock(3)_p_nw(Cobb)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -4.0962671353842156e-02
-    TransmissionBlock(3)_p_nw(Cobb)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8370224866948658e-01
     TransmissionBlock(3)_p_nw(Cole)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cole)  1
     TransmissionBlock(3)_p_nw(Cole)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -3.7348945935650836e-02
-    TransmissionBlock(3)_p_nw(Cole)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8548751952302260e-01
     TransmissionBlock(3)_p_nw(Comte)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Comte)  1
     TransmissionBlock(3)_p_nw(Comte)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  2.8600513491271250e-02
-    TransmissionBlock(3)_p_nw(Comte)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -6.1964480924038423e-01
     TransmissionBlock(3)_p_nw(Curie)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Curie)  1
     TransmissionBlock(3)_p_nw(Curie)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  -1.6751399228172692e-01
-    TransmissionBlock(3)_p_nw(Curie)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2472960640422850e-01
     TransmissionBlock(3)_p_nw(Curtiss)  TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Curtiss)  1
     TransmissionBlock(3)_p_nw(Curtiss)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  2.6921169436708529e-02
-    TransmissionBlock(3)_p_nw(Curtiss)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  -6.4197822742950761e-01
     TransmissionBlock(4)_p_nw(Abel)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Abel)  1
     TransmissionBlock(4)_p_nw(Adams)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adams)  1
     TransmissionBlock(4)_p_nw(Adams)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -6.5597670943087088e-05
-    TransmissionBlock(4)_p_nw(Adams)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -0.000872376457595993
     TransmissionBlock(4)_p_nw(Adler)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adler)  1
     TransmissionBlock(4)_p_nw(Adler)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  2.0562138482374255e-03
-    TransmissionBlock(4)_p_nw(Adler)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  2.7345369541271404e-02
     TransmissionBlock(4)_p_nw(Agricola)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Agricola)  1
     TransmissionBlock(4)_p_nw(Agricola)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -2.5421055787138542e-04
-    TransmissionBlock(4)_p_nw(Agricola)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -3.3807192049811283e-03
     TransmissionBlock(4)_p_nw(Aiken)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aiken)  1
     TransmissionBlock(4)_p_nw(Aiken)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -4.3006101930881006e-04
-    TransmissionBlock(4)_p_nw(Aiken)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7193358114842026e-03
     TransmissionBlock(4)_p_nw(Alber)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alber)  1
     TransmissionBlock(4)_p_nw(Alber)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -6.8007583079290142e-04
-    TransmissionBlock(4)_p_nw(Alber)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -9.0442562309646386e-03
     TransmissionBlock(4)_p_nw(Alder)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alder)  1
     TransmissionBlock(4)_p_nw(Alder)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -4.4425338414915052e-03
-    TransmissionBlock(4)_p_nw(Alder)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.9080785638768667e-02
     TransmissionBlock(4)_p_nw(Alger)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alger)  1
     TransmissionBlock(4)_p_nw(Alger)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -2.8269686474221454e-03
-    TransmissionBlock(4)_p_nw(Alger)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -3.7595555740278216e-02
     TransmissionBlock(4)_p_nw(Ali)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Ali)  1
     TransmissionBlock(4)_p_nw(Ali)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -4.0866520543471623e-04
-    TransmissionBlock(4)_p_nw(Ali)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4347951555957265e-03
     TransmissionBlock(4)_p_nw(Allen)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Allen)  1
     TransmissionBlock(4)_p_nw(Allen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -8.7530066282851947e-04
-    TransmissionBlock(4)_p_nw(Allen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1640530533961968e-02
     TransmissionBlock(4)_p_nw(Anna)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Anna)  1
     TransmissionBlock(4)_p_nw(Anna)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -2.0959006003667957e-04
-    TransmissionBlock(4)_p_nw(Anna)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -2.7873159442003952e-03
     TransmissionBlock(4)_p_nw(Archer)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Archer)  1
     TransmissionBlock(4)_p_nw(Archer)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.2412705099394386e-03
-    TransmissionBlock(4)_p_nw(Archer)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.6507524654631008e-02
     TransmissionBlock(4)_p_nw(Arne)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arne)  1
     TransmissionBlock(4)_p_nw(Arne)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -2.1419821157769117e-03
-    TransmissionBlock(4)_p_nw(Arne)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -2.8485992620329019e-02
     TransmissionBlock(4)_p_nw(Arnold)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arnold)  1
     TransmissionBlock(4)_p_nw(Arnold)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.9136458628309617e-03
-    TransmissionBlock(4)_p_nw(Arnold)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  2.5449373047990619e-02
     TransmissionBlock(4)_p_nw(Arthur)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arthur)  1
     TransmissionBlock(4)_p_nw(Arthur)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  6.1985506296325541e-03
-    TransmissionBlock(4)_p_nw(Arthur)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  8.2433866367000661e-02
     TransmissionBlock(4)_p_nw(Asser)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Asser)  1
     TransmissionBlock(4)_p_nw(Asser)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  0.00489628680209741
-    TransmissionBlock(4)_p_nw(Asser)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  6.5115198060830382e-02
     TransmissionBlock(4)_p_nw(Aston)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aston)  1
     TransmissionBlock(4)_p_nw(Aston)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  6.9641102375071449e-03
-    TransmissionBlock(4)_p_nw(Aston)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  9.2614962268648182e-02
     TransmissionBlock(4)_p_nw(Astor)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Astor)  1
     TransmissionBlock(4)_p_nw(Astor)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  7.9272387683845258e-03
-    TransmissionBlock(4)_p_nw(Astor)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  1.0542350629005870e-01
     TransmissionBlock(4)_p_nw(Attar)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attar)  1
     TransmissionBlock(4)_p_nw(Attar)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  2.4678964575165609e-03
-    TransmissionBlock(4)_p_nw(Attar)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  3.2820292830064234e-02
     TransmissionBlock(4)_p_nw(Attila)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attila)  1
     TransmissionBlock(4)_p_nw(Attila)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  3.5625267962016997e-04
-    TransmissionBlock(4)_p_nw(Attila)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  4.7377665424414937e-03
     TransmissionBlock(4)_p_nw(Attlee)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attlee)  1
     TransmissionBlock(4)_p_nw(Attlee)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  8.8215724041992381e-03
-    TransmissionBlock(4)_p_nw(Attlee)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  1.1731715430993993e-01
     TransmissionBlock(4)_p_nw(Aubrey)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aubrey)  1
     TransmissionBlock(4)_p_nw(Aubrey)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  8.0914716681584169e-03
-    TransmissionBlock(4)_p_nw(Aubrey)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  1.0760762217810271e-01
     TransmissionBlock(4)_p_nw(Austen)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Austen)  1
     TransmissionBlock(4)_p_nw(Austen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -8.0515139822284493e-04
-    TransmissionBlock(4)_p_nw(Austen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0707622915751013e-02
     TransmissionBlock(4)_p_nw(Avery)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Avery)  1
     TransmissionBlock(4)_p_nw(Avery)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  4.6147159779226518e-03
-    TransmissionBlock(4)_p_nw(Avery)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  6.1370617580692420e-02
     TransmissionBlock(4)_p_nw(Bach)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bach)  1
     TransmissionBlock(4)_p_nw(Bach)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.0983673277191871e-02
-    TransmissionBlock(4)_p_nw(Bach)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4607070414531384e-01
     TransmissionBlock(4)_p_nw(Bacon)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bacon)  1
     TransmissionBlock(4)_p_nw(Bacon)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1056317908399456e-02
-    TransmissionBlock(4)_p_nw(Bacon)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4703679737888656e-01
     TransmissionBlock(4)_p_nw(Baffin)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baffin)  1
     TransmissionBlock(4)_p_nw(Baffin)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -8.7065665668221142e-03
-    TransmissionBlock(4)_p_nw(Baffin)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.1578770389544019e-01
     TransmissionBlock(4)_p_nw(Bailey)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bailey)  1
     TransmissionBlock(4)_p_nw(Bailey)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1265192909827349e-02
-    TransmissionBlock(4)_p_nw(Bailey)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4981460383460868e-01
     TransmissionBlock(4)_p_nw(Bain)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bain)  1
     TransmissionBlock(4)_p_nw(Bain)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1459934456823553e-02
-    TransmissionBlock(4)_p_nw(Bain)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5240445098120517e-01
     TransmissionBlock(4)_p_nw(Bajer)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bajer)  1
     TransmissionBlock(4)_p_nw(Bajer)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1736807606671402e-02
-    TransmissionBlock(4)_p_nw(Bajer)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5608655758949153e-01
     TransmissionBlock(4)_p_nw(Baker)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baker)  1
     TransmissionBlock(4)_p_nw(Baker)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(4)_p_nw(Baker)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(4)_p_nw(Balch)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balch)  1
     TransmissionBlock(4)_p_nw(Balch)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1694622504825506e-02
-    TransmissionBlock(4)_p_nw(Balch)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5552554240126054e-01
     TransmissionBlock(4)_p_nw(Balzac)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balzac)  1
     TransmissionBlock(4)_p_nw(Balzac)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1436240155091135e-02
-    TransmissionBlock(4)_p_nw(Balzac)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5208934297945198e-01
     TransmissionBlock(4)_p_nw(Banks)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Banks)  1
     TransmissionBlock(4)_p_nw(Banks)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1953004854559884e-02
-    TransmissionBlock(4)_p_nw(Banks)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5896174182306916e-01
     TransmissionBlock(4)_p_nw(Bardeen)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bardeen)  1
     TransmissionBlock(4)_p_nw(Bardeen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1774557867553607e-02
-    TransmissionBlock(4)_p_nw(Bardeen)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5658859429884847e-01
     TransmissionBlock(4)_p_nw(Barkla)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barkla)  1
     TransmissionBlock(4)_p_nw(Barkla)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.3031364296809584e-02
-    TransmissionBlock(4)_p_nw(Barkla)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7330272949412942e-01
     TransmissionBlock(4)_p_nw(Barlow)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barlow)  1
     TransmissionBlock(4)_p_nw(Barlow)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.3153136135216547e-02
-    TransmissionBlock(4)_p_nw(Barlow)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.7492216023758669e-01
     TransmissionBlock(4)_p_nw(Barry)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barry)  1
     TransmissionBlock(4)_p_nw(Barry)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.0648237246076633e-02
-    TransmissionBlock(4)_p_nw(Barry)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.4160977600004043e-01
     TransmissionBlock(4)_p_nw(Barton)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barton)  1
     TransmissionBlock(4)_p_nw(Barton)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -7.7211468607455841e-03
-    TransmissionBlock(4)_p_nw(Barton)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0268271190299182e-01
     TransmissionBlock(4)_p_nw(Basov)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Basov)  1
     TransmissionBlock(4)_p_nw(Basov)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -0.00906602494447803
-    TransmissionBlock(4)_p_nw(Basov)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.2056810267552438e-01
     TransmissionBlock(4)_p_nw(Bates)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bates)  1
     TransmissionBlock(4)_p_nw(Bates)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -0.00714844954756942
-    TransmissionBlock(4)_p_nw(Bates)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -9.5066471171260936e-02
     TransmissionBlock(4)_p_nw(Bayle)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bayle)  1
     TransmissionBlock(4)_p_nw(Bayle)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -7.2933741001253351e-03
-    TransmissionBlock(4)_p_nw(Bayle)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -9.6993807400730381e-02
     TransmissionBlock(4)_p_nw(Bede)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bede)  1
     TransmissionBlock(4)_p_nw(Bede)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.1965087952510903e-02
-    TransmissionBlock(4)_p_nw(Bede)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.5912243365916254e-01
     TransmissionBlock(4)_p_nw(Beethoven)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Beethoven)  1
     TransmissionBlock(4)_p_nw(Beethoven)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.4486012307322094e-02
-    TransmissionBlock(4)_p_nw(Beethoven)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.9264793886232612e-01
     TransmissionBlock(4)_p_nw(Behring)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Behring)  1
     TransmissionBlock(4)_p_nw(Behring)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -7.4279468989272577e-03
-    TransmissionBlock(4)_p_nw(Behring)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -9.8783476756666322e-02
     TransmissionBlock(4)_p_nw(Bell)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bell)  1
     TransmissionBlock(4)_p_nw(Bell)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -7.3180866683357389e-03
-    TransmissionBlock(4)_p_nw(Bell)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -9.7322457220206424e-02
     TransmissionBlock(4)_p_nw(Bloch)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bloch)  1
     TransmissionBlock(4)_p_nw(Bloch)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.5872520702468255e-02
-    TransmissionBlock(4)_p_nw(Bloch)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -2.1108696672406613e-01
     TransmissionBlock(4)_p_nw(Bordet)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bordet)  1
     TransmissionBlock(4)_p_nw(Bordet)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -0.0080979249836572
-    TransmissionBlock(4)_p_nw(Bordet)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -1.0769344413539855e-01
     TransmissionBlock(4)_p_nw(Cabell)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabell)  1
     TransmissionBlock(4)_p_nw(Cabell)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.4634137057416563e-02
-    TransmissionBlock(4)_p_nw(Cabell)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6630089584009036e-01
     TransmissionBlock(4)_p_nw(Cabot)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabot)  1
     TransmissionBlock(4)_p_nw(Cabot)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  9.3627249834803659e-04
-    TransmissionBlock(4)_p_nw(Cabot)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6689182706492414e-01
     TransmissionBlock(4)_p_nw(Caesar)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caesar)  1
     TransmissionBlock(4)_p_nw(Caesar)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -3.5253435437589170e-01
-    TransmissionBlock(4)_p_nw(Caesar)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.4777766246320458e-01
     TransmissionBlock(4)_p_nw(Caine)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caine)  1
     TransmissionBlock(4)_p_nw(Caine)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.0751064622233124e-01
-    TransmissionBlock(4)_p_nw(Caine)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6859093074786837e-01
     TransmissionBlock(4)_p_nw(Calvin)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Calvin)  1
     TransmissionBlock(4)_p_nw(Calvin)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  2.6952174122795783e-02
-    TransmissionBlock(4)_p_nw(Calvin)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7017506517018557e-01
     TransmissionBlock(4)_p_nw(Camus)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Camus)  1
     TransmissionBlock(4)_p_nw(Camus)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  5.3353004803014636e-02
-    TransmissionBlock(4)_p_nw(Camus)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7242730304163458e-01
     TransmissionBlock(4)_p_nw(Carew)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carew)  1
     TransmissionBlock(4)_p_nw(Carew)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(4)_p_nw(Carew)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(4)_p_nw(Carrel)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carrel)  1
     TransmissionBlock(4)_p_nw(Carrel)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.3239519328836080e-01
-    TransmissionBlock(4)_p_nw(Carrel)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.7208414631430116e-01
     TransmissionBlock(4)_p_nw(Carter)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carter)  1
     TransmissionBlock(4)_p_nw(Carter)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.9478414911441194e-01
-    TransmissionBlock(4)_p_nw(Carter)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6998232274020055e-01
     TransmissionBlock(4)_p_nw(Caruso)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caruso)  1
     TransmissionBlock(4)_p_nw(Caruso)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  7.0006237462309759e-02
-    TransmissionBlock(4)_p_nw(Caruso)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -0.574185969888402
     TransmissionBlock(4)_p_nw(Cary)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cary)  1
     TransmissionBlock(4)_p_nw(Cary)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  8.1610111421779485e-02
-    TransmissionBlock(4)_p_nw(Cary)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -0.569074794222826
     TransmissionBlock(4)_p_nw(Caxton)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caxton)  1
     TransmissionBlock(4)_p_nw(Caxton)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  9.0670094107859853e-02
-    TransmissionBlock(4)_p_nw(Caxton)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.8661752643526444e-01
     TransmissionBlock(4)_p_nw(Cecil)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cecil)  1
     TransmissionBlock(4)_p_nw(Cecil)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  7.3699110489457847e-02
-    TransmissionBlock(4)_p_nw(Cecil)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -0.586883706039605
     TransmissionBlock(4)_p_nw(Chain)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chain)  1
     TransmissionBlock(4)_p_nw(Chain)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  3.7747155370979578e-02
-    TransmissionBlock(4)_p_nw(Chain)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.5048264429166915e-01
     TransmissionBlock(4)_p_nw(Chase)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chase)  1
     TransmissionBlock(4)_p_nw(Chase)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -5.2977577652005933e-02
-    TransmissionBlock(4)_p_nw(Chase)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.1046176217724337e-01
     TransmissionBlock(4)_p_nw(Chifa)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chifa)  1
     TransmissionBlock(4)_p_nw(Chifa)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -0.0238698543194298
-    TransmissionBlock(4)_p_nw(Chifa)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2436510034075834e-01
     TransmissionBlock(4)_p_nw(Chuhsi)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chuhsi)  1
     TransmissionBlock(4)_p_nw(Chuhsi)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -3.1768928745796572e-02
-    TransmissionBlock(4)_p_nw(Chuhsi)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8824418775274719e-01
     TransmissionBlock(4)_p_nw(Clark)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clark)  1
     TransmissionBlock(4)_p_nw(Clark)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -3.5278274221859654e-02
-    TransmissionBlock(4)_p_nw(Clark)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -4.6916202135393531e-01
     TransmissionBlock(4)_p_nw(Clay)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clay)  1
     TransmissionBlock(4)_p_nw(Clay)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.5213643259830590e-03
-    TransmissionBlock(4)_p_nw(Clay)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.6494719857578413e-01
     TransmissionBlock(4)_p_nw(Clive)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clive)  1
     TransmissionBlock(4)_p_nw(Clive)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1.7912105233535848e-02
-    TransmissionBlock(4)_p_nw(Clive)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -6.0023597964971964e-01
     TransmissionBlock(4)_p_nw(Cobb)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cobb)  1
     TransmissionBlock(4)_p_nw(Cobb)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -4.0962671353842156e-02
-    TransmissionBlock(4)_p_nw(Cobb)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8370224866948658e-01
     TransmissionBlock(4)_p_nw(Cole)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cole)  1
     TransmissionBlock(4)_p_nw(Cole)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -3.7348945935650836e-02
-    TransmissionBlock(4)_p_nw(Cole)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -4.8548751952302260e-01
     TransmissionBlock(4)_p_nw(Comte)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Comte)  1
     TransmissionBlock(4)_p_nw(Comte)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  2.8600513491271250e-02
-    TransmissionBlock(4)_p_nw(Comte)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -6.1964480924038423e-01
     TransmissionBlock(4)_p_nw(Curie)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Curie)  1
     TransmissionBlock(4)_p_nw(Curie)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  -1.6751399228172692e-01
-    TransmissionBlock(4)_p_nw(Curie)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -5.2472960640422850e-01
     TransmissionBlock(4)_p_nw(Curtiss)  TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Curtiss)  1
     TransmissionBlock(4)_p_nw(Curtiss)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  2.6921169436708529e-02
-    TransmissionBlock(4)_p_nw(Curtiss)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  -6.4197822742950761e-01
     RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  1
-    RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  1
     RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  1
-    RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  1
     RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  1
-    RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  1
     RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  1
-    RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  1
 RHS
-    RHS1      OBJ       -1.2659724000000005e+05
+    RHS1      OBJ       -1.2534116000000003e+05
     RHS1      DownTime(101_CT_1_1)  1
     RHS1      DownTime(101_CT_1_2)  1
     RHS1      DownTime(101_CT_1_3)  1
@@ -13317,7 +13017,6 @@ RHS
     RHS1      DownTime(201_CT_2_2)  1
     RHS1      DownTime(201_CT_2_3)  1
     RHS1      DownTime(201_CT_2_4)  1
-    RHS1      DownTime(201_STEAM_3_4)  1
     RHS1      DownTime(202_CT_1_1)  1
     RHS1      DownTime(202_CT_1_2)  1
     RHS1      DownTime(202_CT_1_3)  1
@@ -13404,11 +13103,10 @@ RHS
     RHS1      DownTime(322_CT_6_4)  1
     RHS1      DownTime(323_CC_1_4)  1
     RHS1      DownTime(323_CC_2_4)  1
-    RHS1      EnforceReserveRequirements(1)  1.6850962474875004e+02
-    RHS1      EnforceReserveRequirements(2)  1.6249366509422413e+02
-    RHS1      EnforceReserveRequirements(3)  1.5843846958036681e+02
-    RHS1      EnforceReserveRequirements(4)  1.5648070245011593e+02
-    RHS1      Logical(221_CC_1_2)  1
+    RHS1      EnforceReserveRequirements(1)  1.5631326632791664e+02
+    RHS1      EnforceReserveRequirements(2)  1.5917711269848689e+02
+    RHS1      EnforceReserveRequirements(3)  1.6627263828375683e+02
+    RHS1      EnforceReserveRequirements(4)  1.7160320165362208e+02
     RHS1      UpTime(101_STEAM_3_4)  1
     RHS1      UpTime(101_STEAM_4_4)  1
     RHS1      UpTime(102_STEAM_3_4)  1
@@ -13418,6 +13116,7 @@ RHS
     RHS1      UpTime(121_NUCLEAR_1_4)  1
     RHS1      UpTime(123_STEAM_2_4)  1
     RHS1      UpTime(123_STEAM_3_4)  1
+    RHS1      UpTime(201_STEAM_3_4)  1
     RHS1      UpTime(202_STEAM_3_4)  1
     RHS1      UpTime(202_STEAM_4_4)  1
     RHS1      UpTime(216_STEAM_1_4)  1
@@ -13462,6 +13161,10 @@ RHS
     RHS1      power_limit_from_start_stop(123_STEAM_3_2)  210
     RHS1      power_limit_from_start_stop(123_STEAM_3_3)  210
     RHS1      power_limit_from_start_stop(123_STEAM_3_4)  210
+    RHS1      power_limit_from_start_stop(201_STEAM_3_1)  46
+    RHS1      power_limit_from_start_stop(201_STEAM_3_2)  46
+    RHS1      power_limit_from_start_stop(201_STEAM_3_3)  46
+    RHS1      power_limit_from_start_stop(201_STEAM_3_4)  46
     RHS1      power_limit_from_start_stop(202_STEAM_3_1)  46
     RHS1      power_limit_from_start_stop(202_STEAM_3_2)  46
     RHS1      power_limit_from_start_stop(202_STEAM_3_3)  46
@@ -13474,7 +13177,6 @@ RHS
     RHS1      power_limit_from_start_stop(216_STEAM_1_2)  93
     RHS1      power_limit_from_start_stop(216_STEAM_1_3)  93
     RHS1      power_limit_from_start_stop(216_STEAM_1_4)  93
-    RHS1      power_limit_from_start_stop(221_CC_1_1)  185
     RHS1      power_limit_from_start_stop(223_STEAM_1_1)  93
     RHS1      power_limit_from_start_stop(223_STEAM_1_2)  93
     RHS1      power_limit_from_start_stop(223_STEAM_1_3)  93
@@ -13495,440 +13197,435 @@ RHS
     RHS1      power_limit_from_start_stop(316_STEAM_1_2)  93
     RHS1      power_limit_from_start_stop(316_STEAM_1_3)  93
     RHS1      power_limit_from_start_stop(316_STEAM_1_4)  93
-    RHS1      TransmissionBlock(1)_eq_p_balance  1.7401924949750005e+03
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Abel)  -2.5222664694631575e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adams)  -2.8764800697956137e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adler)  5.7962225508947370e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Agricola)  2.3828914931456143e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aiken)  2.2862877839640355e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alber)  4.3793681495649132e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alder)  4.0251545492324567e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alger)  55.0641142335
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Ali)  5.6352163689254390e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Allen)  6.2792410968026331e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arne)  8.5333276443728082e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arnold)  6.2470398604087727e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arthur)  4.0077919368535106e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Asser)  -2.9798763606140348e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Astor)  1.0723011719155264e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attar)  5.8284237872885974e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attila)  4.1217582584140352e+01
+    RHS1      TransmissionBlock(1)_eq_p_balance  1.6362653265583326e+03
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Abel)  -2.3874047104105266e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adams)  -2.7553542306464912e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Adler)  60.2099214931579
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Agricola)  2.4752967724964915e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Aiken)  2.3749469033412282e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alber)  45.4919406837193
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alder)  4.1812445481359653e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Alger)  5.7199425418500006e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Ali)  5.8537423673903511e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Allen)  6.5227414950921059e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arne)  8.8642384420482458e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arnold)  6.4892915387070175e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Arthur)  4.4036361740728083e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Asser)  -2.8550043614912283e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Astor)  1.1138835476234210e+02
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attar)  6.0544421057008776e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attila)  4.2815944172912282e+01
     RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Attlee)  -396
     RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Austen)  -202
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bach)  4.2979418690526316e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bacon)  -2.1398114694619885e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baffin)  7.1632364484210527e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bailey)  2.9448860954619882e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bain)  2.8254988213216375e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bajer)  5.4122230943625723e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baker)  4.9744697558479530e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balch)  68.05074626
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balzac)  6.9642576581871339e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Banks)  7.7601728191228062e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barlow)  1.0545875882397661e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barry)  7.7203770610760230e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barton)  1.2615255300830408e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Basov)  -2.2204241953216375e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bayle)  1.3251987429578946e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bede)  7.2030322064678359e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Beethoven)  5.0938570299883040e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Behring)  -170
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bach)  8.8421052599999967e+00
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bacon)  -2.5114035090555561e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baffin)  64.7368421
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bailey)  2.6614035085555557e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bain)  2.5535087717222222e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bajer)  4.8912280697777781e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Baker)  4.4956140347222224e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balch)  61.499999995
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Balzac)  6.2938596486111109e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Banks)  7.0131578941666660e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barlow)  95.3070175361111
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barry)  6.9771929818888879e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Barton)  1.1400877192055556e+02
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Basov)  -2.6035087722222222e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bayle)  1.1976315788499998e+02
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bede)  6.5096491222777772e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Beethoven)  4.6035087715555555e+01
     RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Bloch)  -264
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabell)  4.9955803708421051e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabot)  4.4867712589970765e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caesar)  8.3259672847368421e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caine)  3.4228976615029246e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Calvin)  3.2841315400906439e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Camus)  6.2907308373567261e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carew)  5.7819217255116961e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carrel)  79.096689205
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carter)  8.0946904157163743e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caruso)  9.0197978917982468e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cecil)  -4.7423259419152032e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chain)  8.9735425179941529e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chase)  1.4662953495897662e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chifa)  -1.5744626195906427e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clark)  1.5403039476763158e+02
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clay)  8.3722226585409359e+01
-    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clive)  5.9206878469239768e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabell)  4.3500943692631580e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cabot)  3.9070292020233921e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caesar)  7.2501572821052648e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caine)  2.9806202159766084e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Calvin)  2.8597842612748540e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Camus)  5.4778966131461992e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carew)  5.0348314459064326e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carrel)  68.87649418
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Carter)  7.0487640242690063e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Caruso)  7.8543370556140360e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Cecil)  -6.3261573346783607e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chain)  7.8140584040467843e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chase)  1.2768332546818714e+02
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Chifa)  -2.1721348432748535e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clark)  1.3412790971894739e+02
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clay)  7.2904359336725150e+01
+    RHS1      TransmissionBlock(1)_eq_p_net_withdraw_at_bus(Clive)  5.1556674006081877e+01
     RHS1      TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  175
-    RHS1      TransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  500
-    RHS1      TransmissionBlock(2)_eq_p_balance  1.7859103285656033e+03
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Abel)  -2.4669668191762270e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adams)  -2.8268127912971664e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adler)  5.8883886347062870e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Agricola)  2.4207819942681407e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aiken)  2.3226421836897028e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alber)  4.4490047462225291e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alder)  40.8915877410159
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alger)  5.5939692029709740e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Ali)  5.7248222837422247e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Allen)  63.7908768759848
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arne)  8.6690166010953689e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arnold)  6.3463744174056671e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arthur)  4.1701066511216325e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Asser)  -2.9286729807187285e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Astor)  1.0893518974206634e+02
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attar)  5.9211019048991020e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attila)  4.1872985846800269e+01
+    RHS1      TransmissionBlock(2)_eq_p_balance  1.6909232191135966e+03
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Abel)  -2.2006310764525807e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adams)  -2.5876038371842618e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Adler)  6.3322815392456995e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Agricola)  2.6032712994676768e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Aiken)  2.4977332738135818e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alber)  4.7843904963189729e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alder)  4.3974177355872911e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Alger)  6.0156674622834153e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Ali)  6.1563848298222076e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Allen)  6.8599716675161758e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arne)  9.3225255994450578e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arnold)  6.8247923256314763e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Arthur)  4.9518513774493712e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Asser)  -2.6820658115301669e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Astor)  1.1714720847604544e+02
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attar)  6.3674608811303983e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attila)  4.5029557612413861e+01
     RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Attlee)  -396
     RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Austen)  -202
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bach)  4.0162765113708879e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bacon)  -2.3927886888613315e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baffin)  6.6937941856181467e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bailey)  2.7518931651985710e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bain)  2.6403299287716028e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bajer)  5.0575333846892654e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baker)  4.6484681844570460e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balch)  6.3591044763372381e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balzac)  6.5078554582398638e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Banks)  7.2516103677529912e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barlow)  9.8547525510489365e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barry)  7.2144226222773369e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barton)  1.1788515315783067e+02
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Basov)  -2.4812254524343629e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bayle)  1.2383519243393572e+02
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bede)  6.7309819310938039e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Beethoven)  4.7600314208840146e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bach)  9.1645168241643020e+00
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bacon)  -2.4824461741259839e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baffin)  65.2741947069405
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bailey)  2.6834946712853323e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bain)  2.5747043467737647e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bajer)  4.9318280445243943e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Baker)  4.5329301879819795e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balch)  6.2010484971593492e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Balzac)  63.4610226317477
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Banks)  7.0713710932518865e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barlow)  9.6098119985217949e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barry)  7.0351076517480323e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Barton)  1.1495510956722299e+02
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Basov)  -2.5736558496144163e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bayle)  1.2075726020783992e+02
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bede)  6.5636829121979062e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Beethoven)  4.6417205124935471e+01
     RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Bloch)  -264
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabell)  4.7509820792118376e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabot)  4.2670857563291513e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caesar)  7.9183034653530640e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caine)  32.5530253575626
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Calvin)  3.1233308113337088e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Camus)  5.9827181738223153e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carew)  5.4988218509396276e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carrel)  7.5223882920854109e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carter)  7.6983505913154772e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caruso)  85.7816208746582
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cecil)  -5.3424976760079872e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chain)  8.5341715126583026e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chase)  1.3945012213982895e+02
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chifa)  -1.8009425192482972e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clark)  1.4648861410903166e+02
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clay)  7.9622940401605817e+01
-    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clive)  5.6307935753621784e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabell)  43.3820422436136
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cabot)  3.8963500903986287e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caesar)  72.303403739356
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caine)  2.9724732648401908e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Calvin)  2.8519675919412649e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Camus)  5.4629238380846758e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carew)  5.0210697041219433e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carrel)  6.8688233552388184e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Carter)  7.0294975857707215e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Caruso)  7.8328687384302327e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Cecil)  -6.3553322272614778e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chain)  7.7927001807972573e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chase)  1.2733432769653247e+02
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Chifa)  -2.1831442367024451e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clark)  1.3376129691780864e+02
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clay)  7.2705089315685754e+01
+    RHS1      TransmissionBlock(2)_eq_p_net_withdraw_at_bus(Clive)  5.1415753770208717e+01
     RHS1      TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  175
-    RHS1      TransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  500
-    RHS1      TransmissionBlock(3)_eq_p_balance  1.7034012540515164e+03
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Abel)  -2.4841711567265712e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adams)  -2.8422648352081239e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adler)  5.8597147387890473e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Agricola)  2.4089938370577194e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aiken)  2.3113319247445688e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alber)  4.4273400248628363e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alder)  4.0692463463812835e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alger)  5.5667290018495947e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Ali)  5.6969448849337972e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Allen)  6.3480243003548019e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arne)  8.6268022543283209e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arnold)  6.3154703295837521e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arthur)  4.1196087344229355e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Asser)  -2.9446029228949740e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Astor)  1.0840472266759738e+02
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attar)  5.8922687095600985e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attila)  4.1669082586944334e+01
+    RHS1      TransmissionBlock(3)_eq_p_balance  1.8300482208650760e+03
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Abel)  -1.9094116627547827e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adams)  -2.3260456600667951e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Adler)  68.1764722874203
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Agricola)  2.8028105273717234e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Aiken)  2.6891830735593565e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alber)  5.1511112394939779e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alder)  4.7344772421819648e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Alger)  6.4767648673049280e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Ali)  6.6282681390547509e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Allen)  7.3857844978038656e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arne)  1.0037091753425766e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arnold)  73.4790867986641
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Arthur)  5.8066342861734640e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Asser)  -2.4124182062544286e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Astor)  1.2612647373172756e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attar)  6.8555230466794853e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attila)  4.8481046959943320e+01
     RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Attlee)  -396
     RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Austen)  -202
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bach)  3.9280439889583270e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bacon)  -2.4720345654726145e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baffin)  65.4673998159721
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bailey)  2.6914375479899643e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bain)  2.5823252149633451e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bajer)  4.9464257638734480e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baker)  4.5463472094425072e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balch)  6.2194029825173494e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balzac)  6.3648860932195092e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Banks)  7.0923016467303114e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barlow)  9.6382560840181171e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barry)  7.0559308690547709e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barton)  1.1529536523146199e+02
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Basov)  -2.5629222324459931e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bayle)  1.2111468965954843e+02
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bede)  65.8311075927275
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Beethoven)  4.6554595424691279e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bach)  1.0301441700107667e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bacon)  -2.3803334769347742e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baffin)  6.7169069500179447e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bailey)  2.7613950794518225e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bain)  2.6494466302848569e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bajer)  5.0749963622357811e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Baker)  4.6645187152902395e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balch)  6.3810616025170482e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Balzac)  6.5303262014063350e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Banks)  7.2766491958527723e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barlow)  9.8887796764153066e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barry)  7.2393330461304515e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Barton)  1.1829219461976047e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Basov)  -2.4683850277678076e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bayle)  1.2426277857533198e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bede)  6.7542230997402669e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Beethoven)  4.7764671644572061e+01
     RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Bloch)  -264
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabell)  4.5437529725950455e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabot)  4.0809633179788840e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caesar)  7.5729216209917425e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caine)  3.1133122219632732e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Calvin)  29.8709686161341
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Camus)  5.7217630025270957e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carew)  5.2589733479109320e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carrel)  7.1942755399421571e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carter)  7.3625626870753038e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caruso)  8.2039984227410571e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cecil)  -5.8509765024288214e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chain)  8.1619266359577679e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chase)  1.3336756410302124e+02
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chifa)  -1.9928213216712528e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clark)  1.4009904998834725e+02
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clay)  7.6149934077750316e+01
-    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clive)  5.3851887082607952e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabell)  4.4605028560221974e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cabot)  4.0061923799458619e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caesar)  7.4341714267036608e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caine)  3.0562704754226168e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Calvin)  2.9323676183108887e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Camus)  5.6169295223983234e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carew)  5.1626190463219864e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carrel)  7.0624628553684772e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Carter)  7.2276666648507828e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Caruso)  8.0536857122623019e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Cecil)  -6.0552476217973862e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chain)  8.0123847598917237e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chase)  1.3092401901472559e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Chifa)  -2.0699047629424093e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clark)  1.3753217139401778e+02
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clay)  7.4754723790742375e+01
+    RHS1      TransmissionBlock(3)_eq_p_net_withdraw_at_bus(Clive)  5.2865219034337159e+01
     RHS1      TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  175
-    RHS1      TransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  500
-    RHS1      TransmissionBlock(4)_eq_p_balance  1.6630032726712825e+03
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Abel)  -2.4657379389185479e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adams)  -2.8257090747694367e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adler)  5.8904367684690847e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Agricola)  2.4216240048150688e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aiken)  2.3234500586739177e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alber)  4.4505522250655318e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alder)  4.0905810892146441e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alger)  5.5959149300456325e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Ali)  5.7268135249005013e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Allen)  6.3813064991748440e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arne)  8.6720319091350461e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arnold)  6.3485818504611267e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arthur)  4.1737136422483374e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Asser)  -2.9275351286282849e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Astor)  1.0897308021667810e+02
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attar)  5.9231614171828049e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attila)  4.1887550353557948e+01
+    RHS1      TransmissionBlock(4)_eq_p_balance  1.9340615477606311e+03
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Abel)  -1.6698007489119064e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adams)  -2.1108395615227295e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Adler)  7.2169987518134917e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Agricola)  2.9669883757455466e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Aiken)  2.8467050632153217e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alber)  5.4528435013701930e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alder)  5.0118046887593692e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Alger)  6.8561488142228171e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Ali)  7.0165265642631169e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Allen)  7.8184153144646146e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arne)  1.0625025940169861e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arnold)  7.7783208769545411e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Arthur)  65.0993669069376
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Asser)  -2.1905562489925060e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Astor)  1.3351447690854957e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attar)  7.2570931893235652e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attila)  5.1320880012895934e+01
     RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Attlee)  -396
     RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Austen)  -202
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bach)  38.9241162486524
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bacon)  -2.5040377072969605e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baffin)  6.4873527081087332e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bailey)  2.6670227800002571e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bain)  2.5589002348651121e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bajer)  4.9015553794599320e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baker)  4.5051060472977312e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balch)  6.1629850727032967e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balzac)  6.3071484662168224e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Banks)  70.2796543378446
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barlow)  9.5508248202711911e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barry)  6.9919245854060790e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barton)  1.1424948935947047e+02
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Basov)  -2.5959151621618147e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bayle)  1.2001602510001157e+02
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bede)  6.5233935564871160e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Beethoven)  4.6132285924328777e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bach)  1.0572946137367353e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bacon)  -2.3559483561808960e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baffin)  6.7621576895612236e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bailey)  2.7799981612640597e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bain)  2.6672955331047056e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bajer)  5.1091858098907032e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Baker)  4.6959428399730733e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balch)  6.4240498050831647e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Balzac)  6.5743199759623010e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Banks)  7.3256708303579927e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barlow)  9.9553988207429128e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barry)  7.2881032876382079e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Barton)  1.1908911042171712e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Basov)  -2.4432457280215417e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bayle)  1.2509991725688265e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bede)  6.7997252322810084e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Beethoven)  4.8086454681324270e+01
     RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Bloch)  -264
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabell)  4.4078650315444825e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabot)  3.9589158153686562e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caesar)  7.3464417192408050e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caine)  3.0202038179101091e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Calvin)  2.8977631225894289e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Camus)  5.5506448545374980e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carew)  5.1016956383616687e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carrel)  6.9791196332787649e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carter)  7.1423738937063376e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caruso)  7.9586451958442069e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cecil)  -6.1844052466732592e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chain)  7.9178316307373123e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chase)  1.2937900138885195e+02
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chifa)  -2.1186434893106636e+01
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clark)  1.3590917180595486e+02
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clay)  73.872552843477
-    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clive)  5.2241363336823504e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabell)  4.5878972635312493e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cabot)  4.1206114311345473e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caesar)  7.6464954392187479e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caine)  3.1435592361232629e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Calvin)  3.0161176454696175e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Camus)  5.7773521096319442e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carew)  5.3100662772352415e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carrel)  72.6417066725781
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Carter)  7.4340927881293382e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Caruso)  8.2837033924869786e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Cecil)  -5.7426594922612878e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chain)  8.2412228622690947e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chase)  1.3466328079068569e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Chifa)  -1.9519469782118065e+01
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clark)  1.4146016562554686e+02
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clay)  76.8897596943663
+    RHS1      TransmissionBlock(4)_eq_p_net_withdraw_at_bus(Clive)  5.4375078678888883e+01
     RHS1      TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  175
-    RHS1      TransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  500
 BOUNDS
- UP BND1      LoadShedding(Abel_1)  3.4777335305368425e+01
- UP BND1      LoadShedding(Abel_2)  3.5330331808237730e+01
- UP BND1      LoadShedding(Abel_3)  3.5158288432734288e+01
- UP BND1      LoadShedding(Abel_4)  3.5342620610814521e+01
- UP BND1      LoadShedding(Adams_1)  3.1235199302043863e+01
- UP BND1      LoadShedding(Adams_2)  3.1731872087028336e+01
- UP BND1      LoadShedding(Adams_3)  3.1577351647918761e+01
- UP BND1      LoadShedding(Adams_4)  3.1742909252305633e+01
- UP BND1      LoadShedding(Adler_1)  5.7962225508947370e+01
- UP BND1      LoadShedding(Adler_2)  5.8883886347062870e+01
- UP BND1      LoadShedding(Adler_3)  5.8597147387890473e+01
- UP BND1      LoadShedding(Adler_4)  5.8904367684690847e+01
- UP BND1      LoadShedding(Agricola_1)  2.3828914931456143e+01
- UP BND1      LoadShedding(Agricola_2)  2.4207819942681407e+01
- UP BND1      LoadShedding(Agricola_3)  2.4089938370577194e+01
- UP BND1      LoadShedding(Agricola_4)  2.4216240048150688e+01
- UP BND1      LoadShedding(Aiken_1)  2.2862877839640355e+01
- UP BND1      LoadShedding(Aiken_2)  2.3226421836897028e+01
- UP BND1      LoadShedding(Aiken_3)  2.3113319247445688e+01
- UP BND1      LoadShedding(Aiken_4)  2.3234500586739177e+01
- UP BND1      LoadShedding(Alber_1)  4.3793681495649132e+01
- UP BND1      LoadShedding(Alber_2)  4.4490047462225291e+01
- UP BND1      LoadShedding(Alber_3)  4.4273400248628363e+01
- UP BND1      LoadShedding(Alber_4)  4.4505522250655318e+01
- UP BND1      LoadShedding(Alder_1)  4.0251545492324567e+01
- UP BND1      LoadShedding(Alder_2)  40.8915877410159
- UP BND1      LoadShedding(Alder_3)  4.0692463463812835e+01
- UP BND1      LoadShedding(Alder_4)  4.0905810892146441e+01
- UP BND1      LoadShedding(Alger_1)  55.0641142335
- UP BND1      LoadShedding(Alger_2)  5.5939692029709740e+01
- UP BND1      LoadShedding(Alger_3)  5.5667290018495947e+01
- UP BND1      LoadShedding(Alger_4)  5.5959149300456325e+01
- UP BND1      LoadShedding(Ali_1)  5.6352163689254390e+01
- UP BND1      LoadShedding(Ali_2)  5.7248222837422247e+01
- UP BND1      LoadShedding(Ali_3)  5.6969448849337972e+01
- UP BND1      LoadShedding(Ali_4)  5.7268135249005013e+01
- UP BND1      LoadShedding(Allen_1)  6.2792410968026331e+01
- UP BND1      LoadShedding(Allen_2)  63.7908768759848
- UP BND1      LoadShedding(Allen_3)  6.3480243003548019e+01
- UP BND1      LoadShedding(Allen_4)  6.3813064991748440e+01
- UP BND1      LoadShedding(Arne_1)  8.5333276443728082e+01
- UP BND1      LoadShedding(Arne_2)  8.6690166010953689e+01
- UP BND1      LoadShedding(Arne_3)  8.6268022543283209e+01
- UP BND1      LoadShedding(Arne_4)  8.6720319091350461e+01
- UP BND1      LoadShedding(Arnold_1)  6.2470398604087727e+01
- UP BND1      LoadShedding(Arnold_2)  6.3463744174056671e+01
- UP BND1      LoadShedding(Arnold_3)  6.3154703295837521e+01
- UP BND1      LoadShedding(Arnold_4)  6.3485818504611267e+01
- UP BND1      LoadShedding(Arthur_1)  1.0207791936853511e+02
- UP BND1      LoadShedding(Arthur_2)  1.0370106651121633e+02
- UP BND1      LoadShedding(Arthur_3)  1.0319608734422935e+02
- UP BND1      LoadShedding(Arthur_4)  1.0373713642248337e+02
- UP BND1      LoadShedding(Asser_1)  3.2201236393859652e+01
- UP BND1      LoadShedding(Asser_2)  3.2713270192812715e+01
- UP BND1      LoadShedding(Asser_3)  3.2553970771050260e+01
- UP BND1      LoadShedding(Asser_4)  3.2724648713717151e+01
- UP BND1      LoadShedding(Astor_1)  1.0723011719155264e+02
- UP BND1      LoadShedding(Astor_2)  1.0893518974206634e+02
- UP BND1      LoadShedding(Astor_3)  1.0840472266759738e+02
- UP BND1      LoadShedding(Astor_4)  1.0897308021667810e+02
- UP BND1      LoadShedding(Attar_1)  5.8284237872885974e+01
- UP BND1      LoadShedding(Attar_2)  5.9211019048991020e+01
- UP BND1      LoadShedding(Attar_3)  5.8922687095600985e+01
- UP BND1      LoadShedding(Attar_4)  5.9231614171828049e+01
- UP BND1      LoadShedding(Attila_1)  4.1217582584140352e+01
- UP BND1      LoadShedding(Attila_2)  4.1872985846800269e+01
- UP BND1      LoadShedding(Attila_3)  4.1669082586944334e+01
- UP BND1      LoadShedding(Attila_4)  4.1887550353557948e+01
- UP BND1      LoadShedding(Bach_1)  4.2979418690526316e+01
- UP BND1      LoadShedding(Bach_2)  4.0162765113708879e+01
- UP BND1      LoadShedding(Bach_3)  3.9280439889583270e+01
- UP BND1      LoadShedding(Bach_4)  38.9241162486524
- UP BND1      LoadShedding(Bacon_1)  3.8601885305380115e+01
- UP BND1      LoadShedding(Bacon_2)  3.6072113111386685e+01
- UP BND1      LoadShedding(Bacon_3)  3.5279654345273855e+01
- UP BND1      LoadShedding(Bacon_4)  3.4959622927030395e+01
- UP BND1      LoadShedding(Baffin_1)  7.1632364484210527e+01
- UP BND1      LoadShedding(Baffin_2)  6.6937941856181467e+01
- UP BND1      LoadShedding(Baffin_3)  65.4673998159721
- UP BND1      LoadShedding(Baffin_4)  6.4873527081087332e+01
- UP BND1      LoadShedding(Bailey_1)  2.9448860954619882e+01
- UP BND1      LoadShedding(Bailey_2)  2.7518931651985710e+01
- UP BND1      LoadShedding(Bailey_3)  2.6914375479899643e+01
- UP BND1      LoadShedding(Bailey_4)  2.6670227800002571e+01
- UP BND1      LoadShedding(Bain_1)  2.8254988213216375e+01
- UP BND1      LoadShedding(Bain_2)  2.6403299287716028e+01
- UP BND1      LoadShedding(Bain_3)  2.5823252149633451e+01
- UP BND1      LoadShedding(Bain_4)  2.5589002348651121e+01
- UP BND1      LoadShedding(Bajer_1)  5.4122230943625723e+01
- UP BND1      LoadShedding(Bajer_2)  5.0575333846892654e+01
- UP BND1      LoadShedding(Bajer_3)  4.9464257638734480e+01
- UP BND1      LoadShedding(Bajer_4)  4.9015553794599320e+01
- UP BND1      LoadShedding(Baker_1)  4.9744697558479530e+01
- UP BND1      LoadShedding(Baker_2)  4.6484681844570460e+01
- UP BND1      LoadShedding(Baker_3)  4.5463472094425072e+01
- UP BND1      LoadShedding(Baker_4)  4.5051060472977312e+01
- UP BND1      LoadShedding(Balch_1)  68.05074626
- UP BND1      LoadShedding(Balch_2)  6.3591044763372381e+01
- UP BND1      LoadShedding(Balch_3)  6.2194029825173494e+01
- UP BND1      LoadShedding(Balch_4)  6.1629850727032967e+01
- UP BND1      LoadShedding(Balzac_1)  6.9642576581871339e+01
- UP BND1      LoadShedding(Balzac_2)  6.5078554582398638e+01
- UP BND1      LoadShedding(Balzac_3)  6.3648860932195092e+01
- UP BND1      LoadShedding(Balzac_4)  6.3071484662168224e+01
- UP BND1      LoadShedding(Banks_1)  7.7601728191228062e+01
- UP BND1      LoadShedding(Banks_2)  7.2516103677529912e+01
- UP BND1      LoadShedding(Banks_3)  7.0923016467303114e+01
- UP BND1      LoadShedding(Banks_4)  70.2796543378446
- UP BND1      LoadShedding(Barlow_1)  1.0545875882397661e+02
- UP BND1      LoadShedding(Barlow_2)  9.8547525510489365e+01
- UP BND1      LoadShedding(Barlow_3)  9.6382560840181171e+01
- UP BND1      LoadShedding(Barlow_4)  9.5508248202711911e+01
- UP BND1      LoadShedding(Barry_1)  7.7203770610760230e+01
- UP BND1      LoadShedding(Barry_2)  7.2144226222773369e+01
- UP BND1      LoadShedding(Barry_3)  7.0559308690547709e+01
- UP BND1      LoadShedding(Barry_4)  6.9919245854060790e+01
- UP BND1      LoadShedding(Barton_1)  1.2615255300830408e+02
- UP BND1      LoadShedding(Barton_2)  1.1788515315783067e+02
- UP BND1      LoadShedding(Barton_3)  1.1529536523146199e+02
- UP BND1      LoadShedding(Barton_4)  1.1424948935947047e+02
- UP BND1      LoadShedding(Basov_1)  3.9795758046783625e+01
- UP BND1      LoadShedding(Basov_2)  3.7187745475656371e+01
- UP BND1      LoadShedding(Basov_3)  3.6370777675540069e+01
- UP BND1      LoadShedding(Basov_4)  3.6040848378381853e+01
- UP BND1      LoadShedding(Bayle_1)  1.3251987429578946e+02
- UP BND1      LoadShedding(Bayle_2)  1.2383519243393572e+02
- UP BND1      LoadShedding(Bayle_3)  1.2111468965954843e+02
- UP BND1      LoadShedding(Bayle_4)  1.2001602510001157e+02
- UP BND1      LoadShedding(Bede_1)  7.2030322064678359e+01
- UP BND1      LoadShedding(Bede_2)  6.7309819310938039e+01
- UP BND1      LoadShedding(Bede_3)  65.8311075927275
- UP BND1      LoadShedding(Bede_4)  6.5233935564871160e+01
- UP BND1      LoadShedding(Beethoven_1)  5.0938570299883040e+01
- UP BND1      LoadShedding(Beethoven_2)  4.7600314208840146e+01
- UP BND1      LoadShedding(Beethoven_3)  4.6554595424691279e+01
- UP BND1      LoadShedding(Beethoven_4)  4.6132285924328777e+01
- UP BND1      LoadShedding(Cabell_1)  4.9955803708421051e+01
- UP BND1      LoadShedding(Cabell_2)  4.7509820792118376e+01
- UP BND1      LoadShedding(Cabell_3)  4.5437529725950455e+01
- UP BND1      LoadShedding(Cabell_4)  4.4078650315444825e+01
- UP BND1      LoadShedding(Cabot_1)  4.4867712589970765e+01
- UP BND1      LoadShedding(Cabot_2)  4.2670857563291513e+01
- UP BND1      LoadShedding(Cabot_3)  4.0809633179788840e+01
- UP BND1      LoadShedding(Cabot_4)  3.9589158153686562e+01
- UP BND1      LoadShedding(Caesar_1)  8.3259672847368421e+01
- UP BND1      LoadShedding(Caesar_2)  7.9183034653530640e+01
- UP BND1      LoadShedding(Caesar_3)  7.5729216209917425e+01
- UP BND1      LoadShedding(Caesar_4)  7.3464417192408050e+01
- UP BND1      LoadShedding(Caine_1)  3.4228976615029246e+01
- UP BND1      LoadShedding(Caine_2)  32.5530253575626
- UP BND1      LoadShedding(Caine_3)  3.1133122219632732e+01
- UP BND1      LoadShedding(Caine_4)  3.0202038179101091e+01
- UP BND1      LoadShedding(Calvin_1)  3.2841315400906439e+01
- UP BND1      LoadShedding(Calvin_2)  3.1233308113337088e+01
- UP BND1      LoadShedding(Calvin_3)  29.8709686161341
- UP BND1      LoadShedding(Calvin_4)  2.8977631225894289e+01
- UP BND1      LoadShedding(Camus_1)  6.2907308373567261e+01
- UP BND1      LoadShedding(Camus_2)  5.9827181738223153e+01
- UP BND1      LoadShedding(Camus_3)  5.7217630025270957e+01
- UP BND1      LoadShedding(Camus_4)  5.5506448545374980e+01
- UP BND1      LoadShedding(Carew_1)  5.7819217255116961e+01
- UP BND1      LoadShedding(Carew_2)  5.4988218509396276e+01
- UP BND1      LoadShedding(Carew_3)  5.2589733479109320e+01
- UP BND1      LoadShedding(Carew_4)  5.1016956383616687e+01
- UP BND1      LoadShedding(Carrel_1)  79.096689205
- UP BND1      LoadShedding(Carrel_2)  7.5223882920854109e+01
- UP BND1      LoadShedding(Carrel_3)  7.1942755399421571e+01
- UP BND1      LoadShedding(Carrel_4)  6.9791196332787649e+01
- UP BND1      LoadShedding(Carter_1)  8.0946904157163743e+01
- UP BND1      LoadShedding(Carter_2)  7.6983505913154772e+01
- UP BND1      LoadShedding(Carter_3)  7.3625626870753038e+01
- UP BND1      LoadShedding(Carter_4)  7.1423738937063376e+01
- UP BND1      LoadShedding(Caruso_1)  9.0197978917982468e+01
- UP BND1      LoadShedding(Caruso_2)  85.7816208746582
- UP BND1      LoadShedding(Caruso_3)  8.2039984227410571e+01
- UP BND1      LoadShedding(Caruso_4)  7.9586451958442069e+01
- UP BND1      LoadShedding(Cecil_1)  1.2257674058084797e+02
- UP BND1      LoadShedding(Cecil_2)  1.1657502323992013e+02
- UP BND1      LoadShedding(Cecil_3)  1.1149023497571179e+02
- UP BND1      LoadShedding(Cecil_4)  1.0815594753326741e+02
- UP BND1      LoadShedding(Chain_1)  8.9735425179941529e+01
- UP BND1      LoadShedding(Chain_2)  8.5341715126583026e+01
- UP BND1      LoadShedding(Chain_3)  8.1619266359577679e+01
- UP BND1      LoadShedding(Chain_4)  7.9178316307373123e+01
- UP BND1      LoadShedding(Chase_1)  1.4662953495897662e+02
- UP BND1      LoadShedding(Chase_2)  1.3945012213982895e+02
- UP BND1      LoadShedding(Chase_3)  1.3336756410302124e+02
- UP BND1      LoadShedding(Chase_4)  1.2937900138885195e+02
- UP BND1      LoadShedding(Chifa_1)  4.6255373804093573e+01
- UP BND1      LoadShedding(Chifa_2)  4.3990574807517028e+01
- UP BND1      LoadShedding(Chifa_3)  4.2071786783287472e+01
- UP BND1      LoadShedding(Chifa_4)  4.0813565106893364e+01
- UP BND1      LoadShedding(Clark_1)  1.5403039476763158e+02
- UP BND1      LoadShedding(Clark_2)  1.4648861410903166e+02
- UP BND1      LoadShedding(Clark_3)  1.4009904998834725e+02
- UP BND1      LoadShedding(Clark_4)  1.3590917180595486e+02
- UP BND1      LoadShedding(Clay_1)  8.3722226585409359e+01
- UP BND1      LoadShedding(Clay_2)  7.9622940401605817e+01
- UP BND1      LoadShedding(Clay_3)  7.6149934077750316e+01
- UP BND1      LoadShedding(Clay_4)  73.872552843477
- UP BND1      LoadShedding(Clive_1)  5.9206878469239768e+01
- UP BND1      LoadShedding(Clive_2)  5.6307935753621784e+01
- UP BND1      LoadShedding(Clive_3)  5.3851887082607952e+01
- UP BND1      LoadShedding(Clive_4)  5.2241363336823504e+01
+ UP BND1      LoadShedding(Abel_1)  3.6125952895894734e+01
+ UP BND1      LoadShedding(Abel_2)  3.7993689235474193e+01
+ UP BND1      LoadShedding(Abel_3)  4.0905883372452173e+01
+ UP BND1      LoadShedding(Abel_4)  4.3301992510880936e+01
+ UP BND1      LoadShedding(Adams_1)  3.2446457693535088e+01
+ UP BND1      LoadShedding(Adams_2)  3.4123961628157382e+01
+ UP BND1      LoadShedding(Adams_3)  3.6739543399332049e+01
+ UP BND1      LoadShedding(Adams_4)  3.8891604384772705e+01
+ UP BND1      LoadShedding(Adler_1)  60.2099214931579
+ UP BND1      LoadShedding(Adler_2)  6.3322815392456995e+01
+ UP BND1      LoadShedding(Adler_3)  68.1764722874203
+ UP BND1      LoadShedding(Adler_4)  7.2169987518134917e+01
+ UP BND1      LoadShedding(Agricola_1)  2.4752967724964915e+01
+ UP BND1      LoadShedding(Agricola_2)  2.6032712994676768e+01
+ UP BND1      LoadShedding(Agricola_3)  2.8028105273717234e+01
+ UP BND1      LoadShedding(Agricola_4)  2.9669883757455466e+01
+ UP BND1      LoadShedding(Aiken_1)  2.3749469033412282e+01
+ UP BND1      LoadShedding(Aiken_2)  2.4977332738135818e+01
+ UP BND1      LoadShedding(Aiken_3)  2.6891830735593565e+01
+ UP BND1      LoadShedding(Aiken_4)  2.8467050632153217e+01
+ UP BND1      LoadShedding(Alber_1)  45.4919406837193
+ UP BND1      LoadShedding(Alber_2)  4.7843904963189729e+01
+ UP BND1      LoadShedding(Alber_3)  5.1511112394939779e+01
+ UP BND1      LoadShedding(Alber_4)  5.4528435013701930e+01
+ UP BND1      LoadShedding(Alder_1)  4.1812445481359653e+01
+ UP BND1      LoadShedding(Alder_2)  4.3974177355872911e+01
+ UP BND1      LoadShedding(Alder_3)  4.7344772421819648e+01
+ UP BND1      LoadShedding(Alder_4)  5.0118046887593692e+01
+ UP BND1      LoadShedding(Alger_1)  5.7199425418500006e+01
+ UP BND1      LoadShedding(Alger_2)  6.0156674622834153e+01
+ UP BND1      LoadShedding(Alger_3)  6.4767648673049280e+01
+ UP BND1      LoadShedding(Alger_4)  6.8561488142228171e+01
+ UP BND1      LoadShedding(Ali_1)  5.8537423673903511e+01
+ UP BND1      LoadShedding(Ali_2)  6.1563848298222076e+01
+ UP BND1      LoadShedding(Ali_3)  6.6282681390547509e+01
+ UP BND1      LoadShedding(Ali_4)  7.0165265642631169e+01
+ UP BND1      LoadShedding(Allen_1)  6.5227414950921059e+01
+ UP BND1      LoadShedding(Allen_2)  6.8599716675161758e+01
+ UP BND1      LoadShedding(Allen_3)  7.3857844978038656e+01
+ UP BND1      LoadShedding(Allen_4)  7.8184153144646146e+01
+ UP BND1      LoadShedding(Arne_1)  8.8642384420482458e+01
+ UP BND1      LoadShedding(Arne_2)  9.3225255994450578e+01
+ UP BND1      LoadShedding(Arne_3)  1.0037091753425766e+02
+ UP BND1      LoadShedding(Arne_4)  1.0625025940169861e+02
+ UP BND1      LoadShedding(Arnold_1)  6.4892915387070175e+01
+ UP BND1      LoadShedding(Arnold_2)  6.8247923256314763e+01
+ UP BND1      LoadShedding(Arnold_3)  73.4790867986641
+ UP BND1      LoadShedding(Arnold_4)  7.7783208769545411e+01
+ UP BND1      LoadShedding(Arthur_1)  1.0603636174072808e+02
+ UP BND1      LoadShedding(Arthur_2)  1.1151851377449371e+02
+ UP BND1      LoadShedding(Arthur_3)  1.2006634286173464e+02
+ UP BND1      LoadShedding(Arthur_4)  1.2709936690693760e+02
+ UP BND1      LoadShedding(Asser_1)  3.3449956385087717e+01
+ UP BND1      LoadShedding(Asser_2)  3.5179341884698331e+01
+ UP BND1      LoadShedding(Asser_3)  3.7875817937455714e+01
+ UP BND1      LoadShedding(Asser_4)  4.0094437510074940e+01
+ UP BND1      LoadShedding(Astor_1)  1.1138835476234210e+02
+ UP BND1      LoadShedding(Astor_2)  1.1714720847604544e+02
+ UP BND1      LoadShedding(Astor_3)  1.2612647373172756e+02
+ UP BND1      LoadShedding(Astor_4)  1.3351447690854957e+02
+ UP BND1      LoadShedding(Attar_1)  6.0544421057008776e+01
+ UP BND1      LoadShedding(Attar_2)  6.3674608811303983e+01
+ UP BND1      LoadShedding(Attar_3)  6.8555230466794853e+01
+ UP BND1      LoadShedding(Attar_4)  7.2570931893235652e+01
+ UP BND1      LoadShedding(Attila_1)  4.2815944172912282e+01
+ UP BND1      LoadShedding(Attila_2)  4.5029557612413861e+01
+ UP BND1      LoadShedding(Attila_3)  4.8481046959943320e+01
+ UP BND1      LoadShedding(Attila_4)  5.1320880012895934e+01
+ UP BND1      LoadShedding(Bach_1)  38.84210526
+ UP BND1      LoadShedding(Bach_2)  39.1645168241643
+ UP BND1      LoadShedding(Bach_3)  4.0301441700107667e+01
+ UP BND1      LoadShedding(Bach_4)  4.0572946137367353e+01
+ UP BND1      LoadShedding(Bacon_1)  3.4885964909444439e+01
+ UP BND1      LoadShedding(Bacon_2)  3.5175538258740161e+01
+ UP BND1      LoadShedding(Bacon_3)  3.6196665230652258e+01
+ UP BND1      LoadShedding(Bacon_4)  3.6440516438191040e+01
+ UP BND1      LoadShedding(Baffin_1)  64.7368421
+ UP BND1      LoadShedding(Baffin_2)  65.2741947069405
+ UP BND1      LoadShedding(Baffin_3)  6.7169069500179447e+01
+ UP BND1      LoadShedding(Baffin_4)  6.7621576895612236e+01
+ UP BND1      LoadShedding(Bailey_1)  2.6614035085555557e+01
+ UP BND1      LoadShedding(Bailey_2)  2.6834946712853323e+01
+ UP BND1      LoadShedding(Bailey_3)  2.7613950794518225e+01
+ UP BND1      LoadShedding(Bailey_4)  2.7799981612640597e+01
+ UP BND1      LoadShedding(Bain_1)  2.5535087717222222e+01
+ UP BND1      LoadShedding(Bain_2)  2.5747043467737647e+01
+ UP BND1      LoadShedding(Bain_3)  2.6494466302848569e+01
+ UP BND1      LoadShedding(Bain_4)  2.6672955331047056e+01
+ UP BND1      LoadShedding(Bajer_1)  4.8912280697777781e+01
+ UP BND1      LoadShedding(Bajer_2)  4.9318280445243943e+01
+ UP BND1      LoadShedding(Bajer_3)  5.0749963622357811e+01
+ UP BND1      LoadShedding(Bajer_4)  5.1091858098907032e+01
+ UP BND1      LoadShedding(Baker_1)  4.4956140347222224e+01
+ UP BND1      LoadShedding(Baker_2)  4.5329301879819795e+01
+ UP BND1      LoadShedding(Baker_3)  4.6645187152902395e+01
+ UP BND1      LoadShedding(Baker_4)  4.6959428399730733e+01
+ UP BND1      LoadShedding(Balch_1)  61.499999995
+ UP BND1      LoadShedding(Balch_2)  6.2010484971593492e+01
+ UP BND1      LoadShedding(Balch_3)  6.3810616025170482e+01
+ UP BND1      LoadShedding(Balch_4)  6.4240498050831647e+01
+ UP BND1      LoadShedding(Balzac_1)  6.2938596486111109e+01
+ UP BND1      LoadShedding(Balzac_2)  63.4610226317477
+ UP BND1      LoadShedding(Balzac_3)  6.5303262014063350e+01
+ UP BND1      LoadShedding(Balzac_4)  6.5743199759623010e+01
+ UP BND1      LoadShedding(Banks_1)  7.0131578941666660e+01
+ UP BND1      LoadShedding(Banks_2)  7.0713710932518865e+01
+ UP BND1      LoadShedding(Banks_3)  7.2766491958527723e+01
+ UP BND1      LoadShedding(Banks_4)  7.3256708303579927e+01
+ UP BND1      LoadShedding(Barlow_1)  95.3070175361111
+ UP BND1      LoadShedding(Barlow_2)  9.6098119985217949e+01
+ UP BND1      LoadShedding(Barlow_3)  9.8887796764153066e+01
+ UP BND1      LoadShedding(Barlow_4)  9.9553988207429128e+01
+ UP BND1      LoadShedding(Barry_1)  6.9771929818888879e+01
+ UP BND1      LoadShedding(Barry_2)  7.0351076517480323e+01
+ UP BND1      LoadShedding(Barry_3)  7.2393330461304515e+01
+ UP BND1      LoadShedding(Barry_4)  7.2881032876382079e+01
+ UP BND1      LoadShedding(Barton_1)  1.1400877192055556e+02
+ UP BND1      LoadShedding(Barton_2)  1.1495510956722299e+02
+ UP BND1      LoadShedding(Barton_3)  1.1829219461976047e+02
+ UP BND1      LoadShedding(Barton_4)  1.1908911042171712e+02
+ UP BND1      LoadShedding(Basov_1)  3.5964912277777778e+01
+ UP BND1      LoadShedding(Basov_2)  3.6263441503855837e+01
+ UP BND1      LoadShedding(Basov_3)  3.7316149722321924e+01
+ UP BND1      LoadShedding(Basov_4)  3.7567542719784583e+01
+ UP BND1      LoadShedding(Bayle_1)  1.1976315788499998e+02
+ UP BND1      LoadShedding(Bayle_2)  1.2075726020783992e+02
+ UP BND1      LoadShedding(Bayle_3)  1.2426277857533198e+02
+ UP BND1      LoadShedding(Bayle_4)  1.2509991725688265e+02
+ UP BND1      LoadShedding(Bede_1)  6.5096491222777772e+01
+ UP BND1      LoadShedding(Bede_2)  6.5636829121979062e+01
+ UP BND1      LoadShedding(Bede_3)  6.7542230997402669e+01
+ UP BND1      LoadShedding(Bede_4)  6.7997252322810084e+01
+ UP BND1      LoadShedding(Beethoven_1)  4.6035087715555555e+01
+ UP BND1      LoadShedding(Beethoven_2)  4.6417205124935471e+01
+ UP BND1      LoadShedding(Beethoven_3)  4.7764671644572061e+01
+ UP BND1      LoadShedding(Beethoven_4)  4.8086454681324270e+01
+ UP BND1      LoadShedding(Cabell_1)  4.3500943692631580e+01
+ UP BND1      LoadShedding(Cabell_2)  43.3820422436136
+ UP BND1      LoadShedding(Cabell_3)  4.4605028560221974e+01
+ UP BND1      LoadShedding(Cabell_4)  4.5878972635312493e+01
+ UP BND1      LoadShedding(Cabot_1)  3.9070292020233921e+01
+ UP BND1      LoadShedding(Cabot_2)  3.8963500903986287e+01
+ UP BND1      LoadShedding(Cabot_3)  4.0061923799458619e+01
+ UP BND1      LoadShedding(Cabot_4)  4.1206114311345473e+01
+ UP BND1      LoadShedding(Caesar_1)  7.2501572821052648e+01
+ UP BND1      LoadShedding(Caesar_2)  72.303403739356
+ UP BND1      LoadShedding(Caesar_3)  7.4341714267036608e+01
+ UP BND1      LoadShedding(Caesar_4)  7.6464954392187479e+01
+ UP BND1      LoadShedding(Caine_1)  2.9806202159766084e+01
+ UP BND1      LoadShedding(Caine_2)  2.9724732648401908e+01
+ UP BND1      LoadShedding(Caine_3)  3.0562704754226168e+01
+ UP BND1      LoadShedding(Caine_4)  3.1435592361232629e+01
+ UP BND1      LoadShedding(Calvin_1)  2.8597842612748540e+01
+ UP BND1      LoadShedding(Calvin_2)  2.8519675919412649e+01
+ UP BND1      LoadShedding(Calvin_3)  2.9323676183108887e+01
+ UP BND1      LoadShedding(Calvin_4)  3.0161176454696175e+01
+ UP BND1      LoadShedding(Camus_1)  5.4778966131461992e+01
+ UP BND1      LoadShedding(Camus_2)  5.4629238380846758e+01
+ UP BND1      LoadShedding(Camus_3)  5.6169295223983234e+01
+ UP BND1      LoadShedding(Camus_4)  5.7773521096319442e+01
+ UP BND1      LoadShedding(Carew_1)  5.0348314459064326e+01
+ UP BND1      LoadShedding(Carew_2)  5.0210697041219433e+01
+ UP BND1      LoadShedding(Carew_3)  5.1626190463219864e+01
+ UP BND1      LoadShedding(Carew_4)  5.3100662772352415e+01
+ UP BND1      LoadShedding(Carrel_1)  68.87649418
+ UP BND1      LoadShedding(Carrel_2)  6.8688233552388184e+01
+ UP BND1      LoadShedding(Carrel_3)  7.0624628553684772e+01
+ UP BND1      LoadShedding(Carrel_4)  72.6417066725781
+ UP BND1      LoadShedding(Carter_1)  7.0487640242690063e+01
+ UP BND1      LoadShedding(Carter_2)  7.0294975857707215e+01
+ UP BND1      LoadShedding(Carter_3)  7.2276666648507828e+01
+ UP BND1      LoadShedding(Carter_4)  7.4340927881293382e+01
+ UP BND1      LoadShedding(Caruso_1)  7.8543370556140360e+01
+ UP BND1      LoadShedding(Caruso_2)  7.8328687384302327e+01
+ UP BND1      LoadShedding(Caruso_3)  8.0536857122623019e+01
+ UP BND1      LoadShedding(Caruso_4)  8.2837033924869786e+01
+ UP BND1      LoadShedding(Cecil_1)  1.0673842665321639e+02
+ UP BND1      LoadShedding(Cecil_2)  1.0644667772738522e+02
+ UP BND1      LoadShedding(Cecil_3)  1.0944752378202614e+02
+ UP BND1      LoadShedding(Cecil_4)  1.1257340507738712e+02
+ UP BND1      LoadShedding(Chain_1)  7.8140584040467843e+01
+ UP BND1      LoadShedding(Chain_2)  7.7927001807972573e+01
+ UP BND1      LoadShedding(Chain_3)  8.0123847598917237e+01
+ UP BND1      LoadShedding(Chain_4)  8.2412228622690947e+01
+ UP BND1      LoadShedding(Chase_1)  1.2768332546818714e+02
+ UP BND1      LoadShedding(Chase_2)  1.2733432769653247e+02
+ UP BND1      LoadShedding(Chase_3)  1.3092401901472559e+02
+ UP BND1      LoadShedding(Chase_4)  1.3466328079068569e+02
+ UP BND1      LoadShedding(Chifa_1)  4.0278651567251465e+01
+ UP BND1      LoadShedding(Chifa_2)  4.0168557632975549e+01
+ UP BND1      LoadShedding(Chifa_3)  4.1300952370575907e+01
+ UP BND1      LoadShedding(Chifa_4)  4.2480530217881935e+01
+ UP BND1      LoadShedding(Clark_1)  1.3412790971894739e+02
+ UP BND1      LoadShedding(Clark_2)  1.3376129691780864e+02
+ UP BND1      LoadShedding(Clark_3)  1.3753217139401778e+02
+ UP BND1      LoadShedding(Clark_4)  1.4146016562554686e+02
+ UP BND1      LoadShedding(Clay_1)  7.2904359336725150e+01
+ UP BND1      LoadShedding(Clay_2)  7.2705089315685754e+01
+ UP BND1      LoadShedding(Clay_3)  7.4754723790742375e+01
+ UP BND1      LoadShedding(Clay_4)  76.8897596943663
+ UP BND1      LoadShedding(Clive_1)  5.1556674006081877e+01
+ UP BND1      LoadShedding(Clive_2)  5.1415753770208717e+01
+ UP BND1      LoadShedding(Clive_3)  5.2865219034337159e+01
+ UP BND1      LoadShedding(Clive_4)  5.4375078678888883e+01
  FX BND1      NondispatchablePowerUsed(101_PV_1_1)  0
  FX BND1      NondispatchablePowerUsed(101_PV_1_2)  0
  FX BND1      NondispatchablePowerUsed(101_PV_1_3)  0
@@ -14009,94 +13706,94 @@ BOUNDS
  FX BND1      NondispatchablePowerUsed(119_PV_1_2)  0
  FX BND1      NondispatchablePowerUsed(119_PV_1_3)  0
  FX BND1      NondispatchablePowerUsed(119_PV_1_4)  0
- FX BND1      NondispatchablePowerUsed(122_HYDRO_1_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_1_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_1_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_1_4)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_2_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_2_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_2_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_2_4)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_3_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_3_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_3_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_3_4)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_4_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_4_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_4_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_4_4)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_5_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_5_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_5_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_5_4)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_6_1)  4.42916667
- FX BND1      NondispatchablePowerUsed(122_HYDRO_6_2)  3.4800595264285712e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_6_3)  4.0073412728571425e+00
- FX BND1      NondispatchablePowerUsed(122_HYDRO_6_4)  3.4800595264285712e+00
- UP BND1      NondispatchablePowerUsed(122_WIND_1_1)  24.5
- UP BND1      NondispatchablePowerUsed(122_WIND_1_2)  24.5
- UP BND1      NondispatchablePowerUsed(122_WIND_1_3)  24.5
- UP BND1      NondispatchablePowerUsed(122_WIND_1_4)  24.5
- FX BND1      NondispatchablePowerUsed(201_HYDRO_4_1)  9.3
- FX BND1      NondispatchablePowerUsed(201_HYDRO_4_2)  9.1
- FX BND1      NondispatchablePowerUsed(201_HYDRO_4_3)  9.3
- FX BND1      NondispatchablePowerUsed(201_HYDRO_4_4)  16.7
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_1_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_1_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_1_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_1_4)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_2_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_2_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_2_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_2_4)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_3_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_3_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_3_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_3_4)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_4_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_4_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_4_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_4_4)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_5_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_5_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_5_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_5_4)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_6_1)  3.57083333
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_6_2)  4.4165570134210528e+00
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_6_3)  1.1934100866052631e+01
+ FX BND1      NondispatchablePowerUsed(122_HYDRO_6_4)  1.1934100866052631e+01
+ UP BND1      NondispatchablePowerUsed(122_WIND_1_1)  21.35
+ UP BND1      NondispatchablePowerUsed(122_WIND_1_2)  1.2049682034976154e+01
+ UP BND1      NondispatchablePowerUsed(122_WIND_1_3)  4.5483306836248021e+00
+ UP BND1      NondispatchablePowerUsed(122_WIND_1_4)  4.2767885532591423e+00
+ FX BND1      NondispatchablePowerUsed(201_HYDRO_4_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(201_HYDRO_4_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(201_HYDRO_4_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(201_HYDRO_4_4)  2.2552113970588234e+01
  FX BND1      NondispatchablePowerUsed(213_RTPV_1_1)  0
  FX BND1      NondispatchablePowerUsed(213_RTPV_1_2)  0
  FX BND1      NondispatchablePowerUsed(213_RTPV_1_3)  0
  FX BND1      NondispatchablePowerUsed(213_RTPV_1_4)  0
- FX BND1      NondispatchablePowerUsed(215_HYDRO_1_1)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_1_2)  9.1
- FX BND1      NondispatchablePowerUsed(215_HYDRO_1_3)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_1_4)  16.7
- FX BND1      NondispatchablePowerUsed(215_HYDRO_2_1)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_2_2)  9.1
- FX BND1      NondispatchablePowerUsed(215_HYDRO_2_3)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_2_4)  16.7
- FX BND1      NondispatchablePowerUsed(215_HYDRO_3_1)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_3_2)  9.1
- FX BND1      NondispatchablePowerUsed(215_HYDRO_3_3)  9.3
- FX BND1      NondispatchablePowerUsed(215_HYDRO_3_4)  16.7
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_1_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_1_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_1_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_1_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_2_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_2_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_2_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_2_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_3_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_3_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_3_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(215_HYDRO_3_4)  2.2552113970588234e+01
  FX BND1      NondispatchablePowerUsed(215_PV_1_1)  0
  FX BND1      NondispatchablePowerUsed(215_PV_1_2)  0
  FX BND1      NondispatchablePowerUsed(215_PV_1_3)  0
  FX BND1      NondispatchablePowerUsed(215_PV_1_4)  0
- FX BND1      NondispatchablePowerUsed(222_HYDRO_1_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_1_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_1_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_1_4)  16.7
- FX BND1      NondispatchablePowerUsed(222_HYDRO_2_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_2_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_2_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_2_4)  16.7
- FX BND1      NondispatchablePowerUsed(222_HYDRO_3_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_3_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_3_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_3_4)  16.7
- FX BND1      NondispatchablePowerUsed(222_HYDRO_4_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_4_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_4_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_4_4)  16.7
- FX BND1      NondispatchablePowerUsed(222_HYDRO_5_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_5_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_5_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_5_4)  16.7
- FX BND1      NondispatchablePowerUsed(222_HYDRO_6_1)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_6_2)  9.1
- FX BND1      NondispatchablePowerUsed(222_HYDRO_6_3)  9.3
- FX BND1      NondispatchablePowerUsed(222_HYDRO_6_4)  16.7
- UP BND1      NondispatchablePowerUsed(303_WIND_1_1)  771.15833333
- UP BND1      NondispatchablePowerUsed(303_WIND_1_2)  771.15833333
- UP BND1      NondispatchablePowerUsed(303_WIND_1_3)  771.15833333
- UP BND1      NondispatchablePowerUsed(303_WIND_1_4)  771.15833333
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_1_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_1_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_1_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_1_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_2_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_2_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_2_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_2_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_3_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_3_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_3_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_3_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_4_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_4_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_4_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_4_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_5_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_5_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_5_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_5_4)  2.2552113970588234e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_6_1)  22.3875
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_6_2)  2.3210569852941177e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_6_3)  2.3045955882352942e+01
+ FX BND1      NondispatchablePowerUsed(222_HYDRO_6_4)  2.2552113970588234e+01
+ UP BND1      NondispatchablePowerUsed(303_WIND_1_1)  710.55833333
+ UP BND1      NondispatchablePowerUsed(303_WIND_1_2)  7.1142932908058833e+02
+ UP BND1      NondispatchablePowerUsed(303_WIND_1_3)  7.0890344140388208e+02
+ UP BND1      NondispatchablePowerUsed(303_WIND_1_4)  6.9279002001799711e+02
  FX BND1      NondispatchablePowerUsed(308_RTPV_1_1)  0
  FX BND1      NondispatchablePowerUsed(308_RTPV_1_2)  0
  FX BND1      NondispatchablePowerUsed(308_RTPV_1_3)  0
  FX BND1      NondispatchablePowerUsed(308_RTPV_1_4)  0
- UP BND1      NondispatchablePowerUsed(309_WIND_1_1)  30.325
- UP BND1      NondispatchablePowerUsed(309_WIND_1_2)  30.325
- UP BND1      NondispatchablePowerUsed(309_WIND_1_3)  30.325
- UP BND1      NondispatchablePowerUsed(309_WIND_1_4)  30.325
+ UP BND1      NondispatchablePowerUsed(309_WIND_1_1)  24.51666667
+ UP BND1      NondispatchablePowerUsed(309_WIND_1_2)  2.2914270155620915e+01
+ UP BND1      NondispatchablePowerUsed(309_WIND_1_3)  2.7240740744444441e+01
+ UP BND1      NondispatchablePowerUsed(309_WIND_1_4)  3.3329847499084963e+01
  FX BND1      NondispatchablePowerUsed(310_PV_1_1)  0
  FX BND1      NondispatchablePowerUsed(310_PV_1_2)  0
  FX BND1      NondispatchablePowerUsed(310_PV_1_3)  0
@@ -14185,8 +13882,8 @@ BOUNDS
  FX BND1      NondispatchablePowerUsed(314_PV_4_2)  0
  FX BND1      NondispatchablePowerUsed(314_PV_4_3)  0
  FX BND1      NondispatchablePowerUsed(314_PV_4_4)  0
- UP BND1      NondispatchablePowerUsed(317_WIND_1_1)  64.99166667
- FX BND1      NondispatchablePowerUsed(317_WIND_1_2)  0
+ UP BND1      NondispatchablePowerUsed(317_WIND_1_1)  5.675
+ UP BND1      NondispatchablePowerUsed(317_WIND_1_2)  2.5110619469026546e-01
  FX BND1      NondispatchablePowerUsed(317_WIND_1_3)  0
  FX BND1      NondispatchablePowerUsed(317_WIND_1_4)  0
  FX BND1      NondispatchablePowerUsed(319_PV_1_1)  0
@@ -14221,22 +13918,22 @@ BOUNDS
  FX BND1      NondispatchablePowerUsed(320_RTPV_6_2)  0
  FX BND1      NondispatchablePowerUsed(320_RTPV_6_3)  0
  FX BND1      NondispatchablePowerUsed(320_RTPV_6_4)  0
- FX BND1      NondispatchablePowerUsed(322_HYDRO_1_1)  22.38333333
- FX BND1      NondispatchablePowerUsed(322_HYDRO_1_2)  7.5449438191011229e+00
- FX BND1      NondispatchablePowerUsed(322_HYDRO_1_3)  2.1628838948089886e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_1_4)  1.7227621720280897e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_2_1)  22.38333333
- FX BND1      NondispatchablePowerUsed(322_HYDRO_2_2)  7.5449438191011229e+00
- FX BND1      NondispatchablePowerUsed(322_HYDRO_2_3)  2.1628838948089886e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_2_4)  1.7227621720280897e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_3_1)  22.38333333
- FX BND1      NondispatchablePowerUsed(322_HYDRO_3_2)  7.5449438191011229e+00
- FX BND1      NondispatchablePowerUsed(322_HYDRO_3_3)  2.1628838948089886e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_3_4)  1.7227621720280897e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_4_1)  22.38333333
- FX BND1      NondispatchablePowerUsed(322_HYDRO_4_2)  7.5449438191011229e+00
- FX BND1      NondispatchablePowerUsed(322_HYDRO_4_3)  2.1628838948089886e+01
- FX BND1      NondispatchablePowerUsed(322_HYDRO_4_4)  1.7227621720280897e+01
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_1_1)  13.97083333
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_1_2)  3.5419014076056339e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_1_3)  7.5757335662676057e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_1_4)  2.6367488256619719e+01
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_2_1)  13.97083333
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_2_2)  3.5419014076056339e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_2_3)  7.5757335662676057e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_2_4)  2.6367488256619719e+01
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_3_1)  13.97083333
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_3_2)  3.5419014076056339e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_3_3)  7.5757335662676057e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_3_4)  2.6367488256619719e+01
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_4_1)  13.97083333
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_4_2)  3.5419014076056339e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_4_3)  7.5757335662676057e+00
+ FX BND1      NondispatchablePowerUsed(322_HYDRO_4_4)  2.6367488256619719e+01
  FX BND1      NondispatchablePowerUsed(324_PV_1_1)  0
  FX BND1      NondispatchablePowerUsed(324_PV_1_2)  0
  FX BND1      NondispatchablePowerUsed(324_PV_1_3)  0
@@ -14281,18 +13978,18 @@ BOUNDS
  UP BND1      OverGeneration(Attlee_2)  400
  UP BND1      OverGeneration(Attlee_3)  400
  UP BND1      OverGeneration(Attlee_4)  400
- UP BND1      OverGeneration(Aubrey_1)  5.1075000020000004e+01
- UP BND1      OverGeneration(Aubrey_2)  4.5380357158571428e+01
- UP BND1      OverGeneration(Aubrey_3)  4.8544047637142853e+01
- UP BND1      OverGeneration(Aubrey_4)  4.5380357158571428e+01
+ UP BND1      OverGeneration(Aubrey_1)  4.2774999980000004e+01
+ UP BND1      OverGeneration(Aubrey_2)  3.8549024115502469e+01
+ UP BND1      OverGeneration(Aubrey_3)  7.6152935879940586e+01
+ UP BND1      OverGeneration(Aubrey_4)  7.5881393749574926e+01
  UP BND1      OverGeneration(Austen_1)  670
  UP BND1      OverGeneration(Austen_2)  670
  UP BND1      OverGeneration(Austen_3)  670
  UP BND1      OverGeneration(Austen_4)  670
- UP BND1      OverGeneration(Bach_1)  125.3
- UP BND1      OverGeneration(Bach_2)  125.1
- UP BND1      OverGeneration(Bach_3)  125.3
- UP BND1      OverGeneration(Bach_4)  132.7
+ UP BND1      OverGeneration(Bach_1)  138.3875
+ UP BND1      OverGeneration(Bach_2)  1.3921056985294118e+02
+ UP BND1      OverGeneration(Bach_3)  1.3904595588235293e+02
+ UP BND1      OverGeneration(Bach_4)  1.3855211397058824e+02
  UP BND1      OverGeneration(Bacon_1)  192
  UP BND1      OverGeneration(Bacon_2)  192
  UP BND1      OverGeneration(Bacon_3)  192
@@ -14305,10 +14002,10 @@ BOUNDS
  UP BND1      OverGeneration(Barlow_2)  465
  UP BND1      OverGeneration(Barlow_3)  465
  UP BND1      OverGeneration(Barlow_4)  465
- UP BND1      OverGeneration(Barton_1)  137.9
- UP BND1      OverGeneration(Barton_2)  1.3729999999999998e+02
- UP BND1      OverGeneration(Barton_3)  137.9
- UP BND1      OverGeneration(Barton_4)  160.1
+ UP BND1      OverGeneration(Barton_1)  1.7716249999999997e+02
+ UP BND1      OverGeneration(Barton_2)  1.7963170955882353e+02
+ UP BND1      OverGeneration(Barton_3)  1.7913786764705878e+02
+ UP BND1      OverGeneration(Barton_4)  1.7765634191176471e+02
  UP BND1      OverGeneration(Basov_1)  155
  UP BND1      OverGeneration(Basov_2)  155
  UP BND1      OverGeneration(Basov_3)  155
@@ -14321,10 +14018,10 @@ BOUNDS
  UP BND1      OverGeneration(Behring_2)  355
  UP BND1      OverGeneration(Behring_3)  355
  UP BND1      OverGeneration(Behring_4)  355
- UP BND1      OverGeneration(Bell_1)  55.8
- UP BND1      OverGeneration(Bell_2)  54.6
- UP BND1      OverGeneration(Bell_3)  55.8
- UP BND1      OverGeneration(Bell_4)  100.2
+ UP BND1      OverGeneration(Bell_1)  134.325
+ UP BND1      OverGeneration(Bell_2)  1.3926341911764706e+02
+ UP BND1      OverGeneration(Bell_3)  1.3827573529411765e+02
+ UP BND1      OverGeneration(Bell_4)  1.3531268382352940e+02
  UP BND1      OverGeneration(Bloch_1)  825
  UP BND1      OverGeneration(Bloch_2)  825
  UP BND1      OverGeneration(Bloch_3)  825
@@ -14337,18 +14034,18 @@ BOUNDS
  UP BND1      OverGeneration(Cabot_2)  150
  UP BND1      OverGeneration(Cabot_3)  150
  UP BND1      OverGeneration(Cabot_4)  150
- UP BND1      OverGeneration(Caesar_1)  771.15833333
- UP BND1      OverGeneration(Caesar_2)  771.15833333
- UP BND1      OverGeneration(Caesar_3)  771.15833333
- UP BND1      OverGeneration(Caesar_4)  771.15833333
+ UP BND1      OverGeneration(Caesar_1)  710.55833333
+ UP BND1      OverGeneration(Caesar_2)  7.1142932908058833e+02
+ UP BND1      OverGeneration(Caesar_3)  7.0890344140388208e+02
+ UP BND1      OverGeneration(Caesar_4)  6.9279002001799711e+02
  UP BND1      OverGeneration(Carew_1)  110
  UP BND1      OverGeneration(Carew_2)  110
  UP BND1      OverGeneration(Carew_3)  110
  UP BND1      OverGeneration(Carew_4)  110
- UP BND1      OverGeneration(Carter_1)  30.325
- UP BND1      OverGeneration(Carter_2)  30.325
- UP BND1      OverGeneration(Carter_3)  30.325
- UP BND1      OverGeneration(Carter_4)  30.325
+ UP BND1      OverGeneration(Carter_1)  24.51666667
+ UP BND1      OverGeneration(Carter_2)  2.2914270155620915e+01
+ UP BND1      OverGeneration(Carter_3)  2.7240740744444441e+01
+ UP BND1      OverGeneration(Carter_4)  3.3329847499084963e+01
  UP BND1      OverGeneration(Cecil_1)  355
  UP BND1      OverGeneration(Cecil_2)  355
  UP BND1      OverGeneration(Cecil_3)  355
@@ -14361,7 +14058,8 @@ BOUNDS
  UP BND1      OverGeneration(Chifa_2)  155
  UP BND1      OverGeneration(Chifa_3)  155
  UP BND1      OverGeneration(Chifa_4)  155
- UP BND1      OverGeneration(Chuhsi_1)  64.99166667
+ UP BND1      OverGeneration(Chuhsi_1)  5.675
+ UP BND1      OverGeneration(Chuhsi_2)  2.5110619469026546e-01
  UP BND1      OverGeneration(Clark_1)  355
  UP BND1      OverGeneration(Clark_2)  355
  UP BND1      OverGeneration(Clark_3)  355
@@ -14370,10 +14068,10 @@ BOUNDS
  UP BND1      OverGeneration(Cobb_2)  355
  UP BND1      OverGeneration(Cobb_3)  355
  UP BND1      OverGeneration(Cobb_4)  355
- UP BND1      OverGeneration(Cole_1)  199.53333332
- UP BND1      OverGeneration(Cole_2)  1.4017977527640448e+02
- UP BND1      OverGeneration(Cole_3)  1.9651535579235951e+02
- UP BND1      OverGeneration(Cole_4)  1.7891048688112357e+02
+ UP BND1      OverGeneration(Cole_1)  1.6588333332000002e+02
+ UP BND1      OverGeneration(Cole_2)  1.2416760563042254e+02
+ UP BND1      OverGeneration(Cole_3)  1.4030293426507043e+02
+ UP BND1      OverGeneration(Cole_4)  2.1546995302647883e+02
  UP BND1      OverGeneration(Comte_1)  710
  UP BND1      OverGeneration(Comte_2)  710
  UP BND1      OverGeneration(Comte_3)  710
@@ -16118,10 +15816,10 @@ BOUNDS
  UP BND1      ReserveProvided(323_CC_2_2)  185
  UP BND1      ReserveProvided(323_CC_2_3)  185
  UP BND1      ReserveProvided(323_CC_2_4)  185
- UP BND1      ReserveShortfall(1)  1.6850962474875004e+02
- UP BND1      ReserveShortfall(2)  1.6249366509422413e+02
- UP BND1      ReserveShortfall(3)  1.5843846958036681e+02
- UP BND1      ReserveShortfall(4)  1.5648070245011593e+02
+ UP BND1      ReserveShortfall(1)  1.5631326632791664e+02
+ UP BND1      ReserveShortfall(2)  1.5917711269848689e+02
+ UP BND1      ReserveShortfall(3)  1.6627263828375683e+02
+ UP BND1      ReserveShortfall(4)  1.7160320165362208e+02
  FR BND1      ShutdownCost(101_CT_1_1)
  FR BND1      ShutdownCost(101_CT_1_2)
  FR BND1      ShutdownCost(101_CT_1_3)
@@ -16914,13 +16612,13 @@ BOUNDS
  BV BND1      UnitOn(201_CT_2_3)
  FX BND1      UnitOn(201_CT_2_4)  0
  BV BND1      UnitOn(201_CT_2_4)
- FX BND1      UnitOn(201_STEAM_3_1)  0
+ FX BND1      UnitOn(201_STEAM_3_1)  1
  BV BND1      UnitOn(201_STEAM_3_1)
- FX BND1      UnitOn(201_STEAM_3_2)  0
+ FX BND1      UnitOn(201_STEAM_3_2)  1
  BV BND1      UnitOn(201_STEAM_3_2)
- FX BND1      UnitOn(201_STEAM_3_3)  0
+ FX BND1      UnitOn(201_STEAM_3_3)  1
  BV BND1      UnitOn(201_STEAM_3_3)
- FX BND1      UnitOn(201_STEAM_3_4)  0
+ FX BND1      UnitOn(201_STEAM_3_4)  1
  BV BND1      UnitOn(201_STEAM_3_4)
  FX BND1      UnitOn(202_CT_1_1)  0
  BV BND1      UnitOn(202_CT_1_1)
@@ -17026,7 +16724,7 @@ BOUNDS
  BV BND1      UnitOn(218_CC_1_3)
  FX BND1      UnitOn(218_CC_1_4)  0
  BV BND1      UnitOn(218_CC_1_4)
- FX BND1      UnitOn(221_CC_1_1)  1
+ FX BND1      UnitOn(221_CC_1_1)  0
  BV BND1      UnitOn(221_CC_1_1)
  FX BND1      UnitOn(221_CC_1_2)  0
  BV BND1      UnitOn(221_CC_1_2)
@@ -18635,11 +18333,7 @@ BOUNDS
  FR BND1      TransmissionBlock(4)_p_nw(Curie)
  FR BND1      TransmissionBlock(4)_p_nw(Curtiss)
  UP BND1      RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(C6)  350
- UP BND1      RgTransmissionBlock(1)_ineq_pf_branch_thermal_bounds(CA_1)  1000
  UP BND1      RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(C6)  350
- UP BND1      RgTransmissionBlock(2)_ineq_pf_branch_thermal_bounds(CA_1)  1000
  UP BND1      RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(C6)  350
- UP BND1      RgTransmissionBlock(3)_ineq_pf_branch_thermal_bounds(CA_1)  1000
  UP BND1      RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(C6)  350
- UP BND1      RgTransmissionBlock(4)_ineq_pf_branch_thermal_bounds(CA_1)  1000
 ENDATA
