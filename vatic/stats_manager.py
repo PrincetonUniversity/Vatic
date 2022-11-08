@@ -70,6 +70,7 @@ class StatsManager:
                   for k, vals in entry.items()}
             )
 
+        os.makedirs(self.write_dir, exist_ok=True)
         self.create_plots = create_plots
         if create_plots:
             os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)

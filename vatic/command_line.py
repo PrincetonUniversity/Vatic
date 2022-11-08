@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from ast import literal_eval
 
-from .input import load_input
+from .data import load_input
 from .engines import Simulator
 
 
@@ -17,20 +17,20 @@ def run_deterministic():
     parser = argparse.ArgumentParser(
         'vatic-det', description="Simulate a deterministic scenario.")
 
-    # ...starting with where input and output files are stored
+    # ...starting with which power grid dataset should be used
     parser.add_argument('input_grid', type=str,
                         help="the name of or the directory containing the "
                              "input datasets of a power grid")
-    parser.add_argument('--out-dir', '-o', type=Path, dest='out_dir',
-                        help="directory where output will be stored")
 
     # instead of using all the days in the input files we can choose a subset
-    parser.add_argument('--start-date', '-s',
+    parser.add_argument('start_date',
                         type=lambda s: datetime.strptime(s, '%Y-%m-%d').date(),
-                        dest='start_date',
                         help="starting date for the scenario")
-    parser.add_argument('--num-days', '-d', type=int, dest='num_days',
+    parser.add_argument('num_days', type=int,
                         help="how many days to run the simulation for")
+
+    parser.add_argument('--out-dir', '-o', type=Path, dest='out_dir',
+                        help="directory where output will be stored")
 
     # which solver is used for optimizations within the simulation, and which
     # solver hyper-parameters will be used
