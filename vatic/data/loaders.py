@@ -19,10 +19,9 @@ rtsgmlc_to_dat.py and process_RTS_GMLC_data.py in
 Prescient/prescient/downloaders/rts_gmlc_prescient.
 """
 
-import os
-from pathlib import Path
 import bz2
 import dill as pickle
+from pathlib import Path
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
@@ -33,77 +32,22 @@ import pandas as pd
 from datetime import datetime
 
 
-def load_input(input_grid: str, start_date: Optional[datetime] = None,
-               num_days: Optional[int] = None) -> Tuple[dict, pd.DataFrame,
-                                                        pd.DataFrame]:
-    """Gets grid data from a grid label or an input grid dataset directory."""
+def load_input(grid, start_date, num_days) -> Tuple[dict, pd.DataFrame,
+                                                          pd.DataFrame]:
+    if grid == 'Texas-7k':
+        use_loader = T7kLoader()
 
-    # if we have defined an environment variable specifying where grid datasets
-    # are stored, find the given grid there
-    if 'VATIC_GRIDS' in os.environ:
-        input_path = os.environ['VATIC_GRIDS']
-
-        if not Path(input_path).exists():
-            raise ValueError(
-                "Environment variable <VATIC_GRIDS> has been specified but "
-                "points to a directory `{}` that does "
-                "not exist!".format(input_grid)
-                )
-
-        if not Path(input_path, input_grid).exists():
-            avail_grids = [p.stem for p in Path(input_path).glob('*')
-                           if p.is_dir()]
-
-            raise ValueError(
-                "The given grid `{}` is not available in the global grid "
-                "repository `{}`! The available grids in this repo "
-                "are:\n{}".format(input_grid, input_path,
-                                  '\n'.join(avail_grids))
-                )
-
-        input_grid = Path(input_path, input_grid)
-
-    if Path(input_grid).exists():
-        template_file = Path(input_grid, "grid-template.p")
-        gen_file = Path(input_grid, "gen-data.p")
-        load_file = Path(input_grid, "load-data.p")
-
-        # load input datasets, starting with static grid data (e.g. network
-        # topology, thermal generator outputs)
-        if template_file.exists() and gen_file.exists() and load_file.exists():
-            with open(template_file, 'rb') as f:
-                template: dict = pickle.load(f)
-
-            # read in renewable generator forecasted and actual outputs
-            with open(gen_file, 'rb') as f:
-                gen_data: pd.DataFrame = pickle.load(f)
-
-            # read in load bus forecasted and actual outputs
-            with open(load_file, 'rb') as f:
-                load_data: pd.DataFrame = pickle.load(f)
-
-        # if the input datasets have not yet been saved to file, generate
-        # them from scratch
-        else:
-            if start_date is None or num_days is None:
-                raise ValueError("If not using pre-generated input datasets, "
-                                 "both the starting date and the number of "
-                                 "days the simulation will run "
-                                 "must be specified!")
-
-            start_date = pd.Timestamp(start_date, tz='utc')
-            end_date = start_date + pd.Timedelta(days=num_days)
-
-            loader: GridLoader = LOADERS[Path(input_grid).stem](input_grid)
-            gen_data, load_data = loader.create_timeseries(
-                start_date, end_date)
-            template = loader.template
+    elif grid == 'Texas-7k_2030':
+        use_loader = T7k2030Loader()
 
     else:
-        raise ValueError(
-            "Input directory `{}` does not exist!".format(input_grid))
+        raise ValueError(f"Unsupported grid `{grid}`!")
 
-    return template, gen_data, load_data
+    start_date = pd.Timestamp(start_date, tz='utc')
+    end_date = start_date + pd.Timedelta(days=num_days)
+    gen_data, load_data = use_loader.create_timeseries(start_date, end_date)
+
+    return use_loader.template, gen_data, load_data
 
 
 class GridLoader(ABC):
@@ -117,6 +61,8 @@ class GridLoader(ABC):
     in this root class that are overridden in classes whose grids exhibit
     unusual characteristics.
     """
+
+    data_lbl = None
 
     # the three static elements of a power grid, with the properties of each
     # thermal generators produce power based on a partly pre-planned schedule
@@ -186,9 +132,7 @@ class GridLoader(ABC):
     thermal_gen_types = {'Nuclear': "N", 'NG': "G", 'Oil': "O", 'Coal': "C"}
     renew_gen_types = {'Wind': "W", 'Solar': "S", 'Hydro': "H"}
 
-    def __init__(self,
-                 in_dir: Union[str, Path],
-                 mins_per_time_period: int = 60) -> None:
+    def __init__(self, mins_per_time_period: int = 60) -> None:
         """Create the static characteristics of the grid.
 
         Initializing a grid loader entails parsing the grid metadata to get the
@@ -248,23 +192,22 @@ class GridLoader(ABC):
 
         Args
         ----
-            in_dir                  The folder containing grid metadata.
             mins_per_time_period    How many minutes each time step in the
                                     simulation will take; used to normalize
                                     ramping rates.
 
         """
-        self.in_dir = in_dir
         self.mins_per_time_period = mins_per_time_period
+        self.in_dir = Path(Path(__file__).parent, 'grids', self.data_lbl)
 
         # read in metadata about static grid elements from file, clean data
         # where necessary, and parse grid elements to get key properties
-        self.gen_df = pd.read_csv(Path(in_dir, self.grid_dir,
+        self.gen_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                        "SourceData", "gen.csv"))
-        self.branch_df = pd.read_csv(Path(in_dir, self.grid_dir,
+        self.branch_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                           "SourceData", "branch.csv"))
 
-        self.bus_df = pd.read_csv(Path(in_dir, self.grid_dir,
+        self.bus_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
                                        "SourceData", "bus.csv"))
         self.bus_df.loc[pd.isnull(self.bus_df['MW Load']), 'MW Load'] = 0.
 
@@ -760,6 +703,8 @@ class RtsLoader(GridLoader):
     See github.com/GridMod/RTS-GMLC for the raw data files used for this grid.
     """
 
+    data_lbl = 'RTS-GMLC'
+
     @property
     def grid_label(self) -> str:
         return "RTS-GMLC"
@@ -920,6 +865,8 @@ class RtsLoader(GridLoader):
 
 class T7kLoader(GridLoader):
     """The Texas-7k grid modeling the ERCOT system, developed by Texas A&M."""
+
+    data_lbl = 'Texas-7k'
 
     thermal_gen_types = {
         'NUC (Nuclear)': 'N', 'NG (Natural Gas)': 'G',
@@ -1107,6 +1054,8 @@ class T7kLoader(GridLoader):
 class T7k2030Loader(T7kLoader):
     """The Texas-7k grid projected into a future with more renewables."""
 
+    data_lbl = 'Texas-7k_2030'
+
     @property
     def grid_label(self):
         return "Texas-7k(2030)"
@@ -1203,7 +1152,3 @@ class T7k2030Loader(T7kLoader):
                     )
 
         return pd.concat(mapped_vals, axis=1)
-
-
-LOADERS = {'RTS-GMLC': RtsLoader,
-           'Texas-7k': T7kLoader, 'Texas-7k_2030': T7k2030Loader}
