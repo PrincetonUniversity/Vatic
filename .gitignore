@@ -1,3 +1,6 @@
 .idea
 .DS_Store
-vatic/data/grids/RTS-GMLC
+*.egg-info/
+build/
+dist/
+

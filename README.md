@@ -21,13 +21,8 @@ Then, from inside the cloned directory, install Vatic:
 cd Vatic
 pip install .
 ```
-The Vatic installation includes the Texas-7k grid dataset produced by Adam Birchfield et al. at Texas A&M. You may also
-download the RTS-GMLC grid dataset by cloning the repository into the `vatic/data/grids/` folder:
-
-```
-cd Vatic/vatic/data/grids
-git clone git@github.com:GridMod/RTS-GMLC.git
-```
+The Vatic installation includes the Texas-7k grid dataset produced by Adam Birchfield et al. at Texas A&M, as well as
+the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid.
 
 
 ## Running Vatic ##
@@ -36,6 +31,8 @@ Installing Vatic adds the command `vatic-det` to your command line namespace. Th
 is:
 
 ```vatic-det $input_grid $start_date $num_days ```
+
+`input_grid` can be either of the currently supported grids: "RTS-GMLC" or "Texas-7k".
 
 `start_date` is the first day that will be simulated by Vatic, given in YYYY-MM-DD format. For RTS-GMLC, only dates in
 2020 are supported, while the Texas grids only support dates in 2018.
