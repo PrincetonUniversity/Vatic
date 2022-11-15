@@ -21,8 +21,10 @@ Then, from inside the cloned directory, install Vatic:
 cd Vatic
 pip install .
 ```
-The Vatic installation includes the Texas-7k grid dataset produced by Adam Birchfield et al. at Texas A&M, as well as
-the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid.
+
+The Vatic installation includes the [May 2021 version of the Texas-7k grid dataset](
+https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)
+produced by Adam Birchfield et al. at Texas A&M, as well as the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid.
 
 
 ## Running Vatic ##

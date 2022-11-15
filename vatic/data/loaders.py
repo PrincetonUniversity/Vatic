@@ -31,6 +31,9 @@ import math
 import pandas as pd
 from datetime import datetime
 
+import os
+_ROOT = os.path.abspath(os.path.dirname(__file__))
+
 
 def load_input(grid, start_date, num_days) -> Tuple[dict, pd.DataFrame,
                                                           pd.DataFrame]:
@@ -201,7 +204,7 @@ class GridLoader(ABC):
 
         """
         self.mins_per_time_period = mins_per_time_period
-        self.in_dir = Path(Path(__file__).parent, 'grids', self.data_lbl)
+        self.in_dir = Path(_ROOT, 'grids', self.data_lbl)
 
         # read in metadata about static grid elements from file, clean data
         # where necessary, and parse grid elements to get key properties
