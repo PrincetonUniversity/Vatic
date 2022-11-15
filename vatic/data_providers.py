@@ -22,19 +22,30 @@ class ProviderError(Exception):
 class PickleProvider:
     """Loading data from input datasets and generating UC and ED models.
 
+    This class' purpose is to store the parsed grid data created by
+    vatic.data.loaders while a simulation is running, and to provide parsed
+    slices of the grid data as required by various subroutines of the
+    simulation. Most importantly, the methods `create_deterministic_ruc` and
+    `create_sced_instance` are used to construct the input data structures used
+    by a simulation's unit commitment and economic dispatch optimizations
+    respectively. See vatic.model_data.VaticModelData for how these data
+    structures are implemented.
+
     The core data retrieval functionality implemented here was based upon
     prescient.data.providers.dat_data_provider and adapted to use pickled input
     dataframes as opposed to .dat files. This class also includes model data
     creation methods originally included in prescient.egret.engine.egret_plugin
 
-    Args
-    ----
-        data_dir    The path to where the input datasets are stored.
+    Attributes
+    ----------
+        template_data   The static characteristics of the grid, including
+                        network topology, thermal generator operating
+                        properties, and transmission line capacities.
 
-        start_date  The first day to use for the simulation. If not given, the
-                    first day available in the input data will be used.
-        num_days    How many days to run the simulation for. If not given, all
-                    of the days available in the input data will be used.
+        gen_data        The forecasted and actual output values for the
+                        renewable generators in the grid.
+        load_data       The forecasted and actual output values for the
+                        load demand buses in the grid.
     """
 
     def __init__(self,
@@ -75,6 +86,7 @@ class PickleProvider:
         self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
         self._no_startup_shutdown_curves = no_startup_shutdown_curves
 
+        # parse cost curves given for renewable generators
         if isinstance(renew_costs, (str, Path)):
             with open(renew_costs, 'rb') as f:
                 self.renew_costs = pickle.load(f)
@@ -314,10 +326,6 @@ class PickleProvider:
             # copy over timeseries data for the current timestep
             new_model.copy_forecastables(day_model, step_index, src_step_index)
 
-            # set aside a proportion of the total demand as the model's reserve
-            # requirement (if any) at each time point
-            new_model.honor_reserve_factor(self._reserve_factor, step_index)
-
         return new_model
 
     def create_deterministic_ruc(
@@ -361,8 +369,13 @@ class PickleProvider:
                     actuals_portion = 1 - forecast_portion
                     actl_val = current_state.get_future_actuals(fcst_key)[t]
 
-                    fcst_vals[t] = forecast_portion * fcst_vals[t]
+                    fcst_vals[t] *= forecast_portion
                     fcst_vals[t] += actuals_portion * actl_val
+
+        # set aside a proportion of the total demand as the model's reserve
+        # requirement (if any) at each time point
+        for t in range(self.ruc_horizon):
+            ruc_model.honor_reserve_factor(self._reserve_factor, t)
 
         # copy from the first 24 hours to the second 24 hours if necessary
         if copy_first_day:
