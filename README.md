@@ -1,3 +1,6 @@
+[![CI-test](https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml/badge.svg)](
+https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
+
 # Vatic #
 
 Vatic is a Python package for running simulations of a power grid using the

@@ -11,8 +11,6 @@ setuptools.setup(
     author_email='mg2332@princeton.edu',
 
     packages=setuptools.find_packages(exclude=["vatic.tests"]),
-    package_data={'vatic': ['data/grids/**/*']},
-
     entry_points = {
         'console_scripts': [
             'vatic-det=vatic.command_line:run_deterministic',
