@@ -28,9 +28,9 @@ jobs:
         shell: bash -l {0}
         run: |
           cd $GITHUB_WORKSPACE
+          git submodule update --init
           pip install .
           conda install -c conda-forge coincbc
-          tree /usr/share/miniconda/envs/test/lib/python3.8/site-packages/vatic
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 
