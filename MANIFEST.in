@@ -1,1 +1,1 @@
-recursive-include vatic/data/grids
+graft vatic/data/grids

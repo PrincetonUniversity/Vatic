@@ -29,8 +29,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           pip install .
-          tree /usr/share/miniconda/envs/test/lib/python3.8/site-packages
           conda install -c conda-forge coincbc
+          tree /usr/share/miniconda/envs/test/lib/python3.8/site-packages/vatic
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 
