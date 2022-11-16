@@ -25,8 +25,12 @@ def main():
     for k in outputs[0]:
         for out1, out2 in combns(outputs, 2):
             if k != 'runtimes' and isinstance(out1[k], pd.DataFrame):
-                assert out1[k].compare(out2[k]).shape == (0, 0), (
-                    f"These outputs have differing values for field `{k}`!")
+                out_cmp = out1[k].compare(out2[k])
+
+                assert out_cmp.shape == (0, 0), (
+                    f"These outputs have {out_cmp} "
+                    f"differing values for field `{k}`!"
+                    )
 
 
 if __name__ == '__main__':
