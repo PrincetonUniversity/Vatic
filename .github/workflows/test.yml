@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-11]
+        os: [ubuntu-20.04]
 
     steps:
       - uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           git submodule update --init
 
-          conda create --name vatic --file vatic/tests/spec-file_mac-os.txt
+          conda create --name vatic --file vatic/tests/spec-file_linux.txt
           conda activate vatic
           pip install .
 
