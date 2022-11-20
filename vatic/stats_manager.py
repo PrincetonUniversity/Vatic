@@ -37,7 +37,7 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir: Union[Path, str], output_detail: int,
+                 write_dir: Union[Path, str, None], output_detail: int,
                  verbosity: int, init_model: VaticModelData,
                  output_max_decimals: int, create_plots: bool,
                  save_to_csv: bool) -> None:
@@ -51,9 +51,10 @@ class StatsManager:
         self._sced_stats = dict()
         self._ruc_stats = dict()
 
+        self.write_dir = write_dir
         self.output_detail = output_detail
         self.verbosity = verbosity
-        self.write_dir = write_dir
+        self.create_plots = create_plots
         self.save_to_csv = save_to_csv
 
         self._round = lambda entry: (
@@ -70,10 +71,15 @@ class StatsManager:
                   for k, vals in entry.items()}
             )
 
-        os.makedirs(self.write_dir, exist_ok=True)
-        self.create_plots = create_plots
-        if create_plots:
-            os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
+        if self.write_dir is None and create_plots:
+            raise ValueError("Cannot create plots without providing an "
+                             "output directory for saving them!")
+
+        if self.write_dir is not None:
+            os.makedirs(self.write_dir, exist_ok=True)
+
+            if self.create_plots:
+                os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
 
         # static information regarding the characteristics of the power grid
         self._grid_data = {
@@ -343,7 +349,7 @@ class StatsManager:
 
         return report_dfs
 
-    def save_output(self, sim_runtime=None) -> None:
+    def save_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
         """Consolidate collected model stats into tables written to file.
 
         This function collects the data pulled from UC and ED models that were
@@ -361,21 +367,25 @@ class StatsManager:
         """
         report_dfs = self.consolidate_output(sim_runtime)
 
-        if self.save_to_csv:
-            for report_lbl, report_df in report_dfs.items():
-                if report_lbl != 'total_runtime':
-                    report_df.to_csv(
-                        Path(self.write_dir, "{}.csv".format(report_lbl)))
+        if self.write_dir:
+            if self.save_to_csv:
+                for report_lbl, report_df in report_dfs.items():
+                    if report_lbl != 'total_runtime':
+                        report_df.to_csv(
+                            Path(self.write_dir, "{}.csv".format(report_lbl)))
 
-        else:
-            with bz2.BZ2File(Path(self.write_dir, "output.p.gz"), 'w') as f:
-                pickle.dump(report_dfs, f, protocol=-1)
+            else:
+                with bz2.BZ2File(Path(self.write_dir, "output.p.gz"),
+                                 'w') as f:
+                    pickle.dump(report_dfs, f, protocol=-1)
 
-        if self.create_plots:
-            self.generate_stack_graph()
-            self.generate_cost_graph()
-            self.generate_commitment_heatmaps()
-            self.plot_thermal_detail()
+            if self.create_plots:
+                self.generate_stack_graph()
+                self.generate_cost_graph()
+                self.generate_commitment_heatmaps()
+                self.plot_thermal_detail()
+
+        return report_dfs
 
     def generate_stack_graph(self) -> None:
         """Stacked bar plots of power output by time and generator type."""
