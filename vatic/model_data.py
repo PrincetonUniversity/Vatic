@@ -612,6 +612,21 @@ class VaticModelData(object):
                 for bus, bus_data in self._data['elements']['bus'].items()}
 
     @property
+    def bus_LMPEs(self):
+        return {bus: bus_data['lmpe']['values'][0]
+                for bus, bus_data in self._data['elements']['bus'].items()}
+
+    @property
+    def bus_LMPCs(self):
+        return {bus: bus_data['lmpc']['values'][0]
+                for bus, bus_data in self._data['elements']['bus'].items()}
+
+    @property
+    def bus_LMPIs(self):
+        return {bus: bus_data['lmpi']['values'][0]
+                for bus, bus_data in self._data['elements']['bus'].items()}
+
+    @property
     def storage_inputs(self):
         return {
             store: store_data['p_charge']['values'][0]

@@ -215,6 +215,9 @@ class StatsManager:
 
         if lmp_sced:
             new_sced_data['observed_bus_LMPs'] = self._round(lmp_sced.bus_LMPs)
+            new_sced_data['observed_bus_LMPEs'] = self._round(lmp_sced.bus_LMPEs)
+            new_sced_data['observed_bus_LMPCs'] = self._round(lmp_sced.bus_LMPCs)
+            new_sced_data['observed_bus_LMPIs'] = self._round(lmp_sced.bus_LMPIs)
             new_sced_data['reserve_RT_price'] = self._round(
                 lmp_sced.reserve_RT_price)
 
@@ -347,7 +350,11 @@ class StatsManager:
                 {**time_step.labels(),
                  **{'Bus': bus, 'Demand': bus_demand,
                     'Mismatch': stats['observed_bus_mismatches'][bus],
-                    'LMP': stats['observed_bus_LMPs'][bus]}}
+                    'LMP': stats['observed_bus_LMPs'][bus],
+                    'LMPE': stats['observed_bus_LMPEs'][bus],
+                    'LMPC': stats['observed_bus_LMPCs'][bus],
+                    'LMPI': stats['observed_bus_LMPIs'][bus]
+                    }}
                 for time_step, stats in self._sced_stats.items()
                 for bus, bus_demand in stats['bus_demands'].items()
                 ]).drop('Minute', axis=1).set_index(

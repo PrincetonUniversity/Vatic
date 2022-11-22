@@ -3,7 +3,64 @@ from math import degrees
 from pyomo.environ import value as pe_value
 from egret.models.unit_commitment import _time_series_dict, _preallocated_list
 from egret.common.log import logger
+import numpy as np
 
+
+
+#Customize LMP Calculation Fctn
+def calculate_LMP(PTDF, mb, dual, bus_balance_constr):
+    '''
+    Calculate a vector of locational marginal prices
+    indexed by buses_keys.
+
+    Parameters
+    ----------
+    mb : Pyomo ConcreteModel or Block with
+         ineq_pf_branch_thermal_bounds constraint and
+         ineq_pf_interface_bounds constraint (if there are
+         interfaces).
+    dual : Dual mapping return by a pyomo solver (usually
+           ConcreteModel.dual
+    bus_balance_constr : the bus-balance constraint for reading
+                         the energy component of LMP
+
+    Returns
+    -------
+    LMP : np.array of LMPs indexed by buses_keys
+    '''
+    ## NOTE: unmonitored lines cannot contribute to LMPC
+    PFD = np.fromiter((pe_value(dual[mb.ineq_pf_branch_thermal_bounds[bn]])
+                       if bn in mb.ineq_pf_branch_thermal_bounds else
+                       0. for i, bn in enumerate(PTDF.branches_keys_masked)),
+                      float, count=len(PTDF.branches_keys_masked))
+
+    ## interface constributes to LMP
+    PFID = np.fromiter((pe_value(dual[mb.ineq_pf_interface_bounds[i_n]])
+                        if i_n in mb.ineq_pf_interface_bounds else
+                        0. for i, i_n in enumerate(PTDF.interface_keys)),
+                       float, count=len(PTDF.interface_keys))
+
+    B_PFD = -PTDF.B_dA_masked.T @ PFD
+    I_PFD = -PTDF.B_dA_I.T @ PFID
+
+    LMPC = PTDF.MLU.solve(B_PFD, trans='T')
+    LMPI = PTDF.MLU.solve(I_PFD, trans='T')
+
+    LMPE = pe_value(dual[bus_balance_constr])
+
+    if PTDF.contingencies:
+        LMPCC = np.zeros_like(LMPC)
+        for (cn, bn), constr in mb.ineq_pf_contingency_branch_thermal_bounds.items():
+            dual_value = pe_value(dual[constr])
+            if dual_value != 0.:
+                LMPCC += (-dual_value) * PTDF._contingency_rows[cn, bn]
+
+        LMP = LMPE + LMPC + LMPI + LMPCC
+    else:
+        LMP = LMPE + LMPC + LMPI
+
+    return [PTDF._insert_reference_bus(LMP, LMPE), np.zeros(LMPC.shape[0] + 1) + LMPE,
+            PTDF._insert_reference_bus(LMPC, 0), PTDF._insert_reference_bus(LMPI, 0)]
 
 class ModelError(Exception):
     pass
@@ -309,6 +366,9 @@ def _save_uc_results(m, relaxed):
         voltage_angle_dict = dict()
         if relaxed:
             lmps_dict = dict()
+            lmpes_dict = dict()
+            lmpcs_dict = dict()
+            lmpis_dict = dict()
         for mt in m.TimePeriods:
             b = m.TransmissionBlock[mt]
             PTDF = b._PTDF
@@ -331,10 +391,18 @@ def _save_uc_results(m, relaxed):
                 voltage_angle_dict[mt][bn] = VA[i]
 
             if relaxed:
-                LMP = PTDF.calculate_LMP(b, dual, b.eq_p_balance)
+                # LMP = PTDF.calculate_LMP(b, dual, b.eq_p_balance)
+                ## Use customize calculate LMP function defined in the bgn of files to do LMP components analysis
+                LMP, LMPE, LMPC, LMPI = calculate_LMP(PTDF, b, dual, b.eq_p_balance)
                 lmps_dict[mt] = dict()
+                lmpes_dict[mt] = dict()
+                lmpcs_dict[mt] = dict()
+                lmpis_dict[mt] = dict()
                 for i, bn in enumerate(buses_idx):
                     lmps_dict[mt][bn] = LMP[i]
+                    lmpes_dict[mt][bn] = LMPE[i]
+                    lmpcs_dict[mt][bn] = LMPC[i]
+                    lmpis_dict[mt][bn] = LMPI[i]
 
         for i, i_dict in interfaces.items():
             pf_dict = _preallocated_list(data_time_periods)
@@ -398,9 +466,19 @@ def _save_uc_results(m, relaxed):
             b_dict['va'] = _time_series_dict([degrees(v) for v in va_dict])
             if relaxed:
                 lmp_dict = _preallocated_list(data_time_periods)
+                lmpe_dict = _preallocated_list(data_time_periods)
+                lmpc_dict = _preallocated_list(data_time_periods)
+                lmpi_dict = _preallocated_list(data_time_periods)
                 for dt, mt in enumerate(m.TimePeriods):
                     lmp_dict[dt] = lmps_dict[mt][b] / time_period_length_hours
+                    lmpe_dict[dt] = lmpes_dict[mt][b] / time_period_length_hours
+                    lmpc_dict[dt] = lmpcs_dict[mt][b] / time_period_length_hours
+                    lmpi_dict[dt] = lmpis_dict[mt][b] / time_period_length_hours
+
                 b_dict['lmp'] = _time_series_dict(lmp_dict)
+                b_dict['lmpe'] = _time_series_dict(lmpe_dict)
+                b_dict['lmpc'] = _time_series_dict(lmpc_dict)
+                b_dict['lmpi'] = _time_series_dict(lmpi_dict)
 
         for k, k_dict in dc_branches.items():
             pf_dict = _preallocated_list(data_time_periods)

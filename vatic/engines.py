@@ -115,6 +115,9 @@ class Simulator:
         network_forml='ptdf_power_flow'
         )
 
+    # #make sced formulations consistent with ruc formulations -- Alice
+    # sced_formulations = ruc_formulations
+
     supported_solvers = ['xpress', 'xpress_direct', 'xpress_persistent',
                          'gurobi', 'gurobi_direct', 'gurobi_persistent',
                          'cplex', 'cplex_direct', 'cplex_persistent',
