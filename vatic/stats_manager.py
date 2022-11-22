@@ -37,10 +37,11 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir: Union[Path, str, None], output_detail: int,
-                 verbosity: int, init_model: VaticModelData,
-                 output_max_decimals: int, create_plots: bool,
-                 save_to_csv: bool) -> None:
+                 write_dir: Union[Path, str, None],
+                 output_detail: int, verbosity: int,
+                 init_model: VaticModelData, output_max_decimals: int,
+                 create_plots: bool, save_to_csv: bool,
+                 last_conditions_file: Union[str, Path]) -> None:
         """
         write_dir       Path to where output statistics will be saved.
         output_detail   How much information to include in the output saved to
@@ -56,6 +57,11 @@ class StatsManager:
         self.verbosity = verbosity
         self.create_plots = create_plots
         self.save_to_csv = save_to_csv
+
+        if last_conditions_file:
+            self.last_conditions_file = Path(last_conditions_file)
+        else:
+            self.last_conditions_file = None
 
         self._round = lambda entry: (
             round(entry, output_max_decimals)
@@ -89,7 +95,9 @@ class StatsManager:
             'thermal_fleet_capacity': self._round(
                 init_model.thermal_fleet_capacity),
             'thermal_capacities': init_model.thermal_capacities,
-            'thermal_min_outputs': init_model.thermal_minimum_outputs
+            'thermal_min_outputs': init_model.thermal_minimum_outputs,
+
+            'initial_states': init_model.initial_states,
             }
 
     def collect_ruc_solution(self,
@@ -366,6 +374,28 @@ class StatsManager:
 
         """
         report_dfs = self.consolidate_output(sim_runtime)
+
+        if self.last_conditions_file:
+            tgen_gby = report_dfs['thermal_detail'].groupby('Generator')
+
+            final_bool = tgen_gby.apply(
+                lambda x: (x['Unit State'][-1] * 2 - 1))
+
+            last_conds = tgen_gby.apply(
+                lambda x: (x['Unit State']
+                           != x['Unit State'][-1])[::-1].argmax()
+                ) * final_bool
+
+            last_conds[last_conds == 0] = len(self._sced_stats)
+            last_conds[last_conds == 0] *= final_bool[
+                last_conds[last_conds == 0].index]
+
+            pd.DataFrame(pd.Series({
+                gen: (last_conds[gen]
+                      if (init_cond > 0) ^ (last_conds[gen] > 0)
+                      else init_cond + last_conds[gen])
+                for gen, init_cond in self._grid_data['initial_states'].items()
+                })).T.to_csv(self.last_conditions_file, index=False)
 
         if self.write_dir:
             if self.save_to_csv:

@@ -60,9 +60,17 @@ def run_deterministic():
 
     parser.add_argument('--init-ruc-file', type=Path, dest='init_ruc_file',
                         help='where to save/load the initial RUC from')
-
     parser.add_argument('--renew-costs', '-c', nargs='*', dest='renew_costs',
                         help="use costs for renewables from input directory")
+
+    parser.add_argument(
+        '--init-conditions-file', type=Path, dest='init_conds_file',
+        help='where to save/load the initial thermal generator conditions from'
+        )
+    parser.add_argument(
+        '--last-conditions-file', type=Path, dest='last_conds_file',
+        help='where to save the final thermal generator states'
+        )
 
     # determines what kinds of output files we create
     parser.add_argument('--output-detail',
@@ -136,7 +144,7 @@ def run_deterministic():
 
     args = parser.parse_args()
     template_data, gen_data, load_data = load_input(
-        args.input_grid, args.start_date, args.num_days)
+        args.input_grid, args.start_date, args.num_days, args.init_conds_file)
 
     # output is placed in this code repo directory if output path is not given
     if args.out_dir:
@@ -171,5 +179,5 @@ def run_deterministic():
         output_detail=args.output_detail, init_ruc_file=args.init_ruc_file,
         verbosity=args.verbose, output_max_decimals=args.output_max_decimals,
         create_plots=args.create_plots, renew_costs=renew_costs,
-        save_to_csv=args.csv
+        save_to_csv=args.csv, last_conditions_file=args.last_conds_file
         ).simulate()

@@ -25,9 +25,13 @@ cd Vatic
 pip install .
 ```
 
-The Vatic installation includes the [May 2021 version of the Texas-7k grid dataset](
+The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
 https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)
-produced by Adam Birchfield et al. at Texas A&M, as well as the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid.
+produced by Adam Birchfield et al. at Texas A&M. You can add this dataset to your installation of Vatic (size ~200MB)
+by installing git-lfs, and then running ```cd Vatic; git lfs install; git lfs fetch; git lfs pull```.
+
+You can also download the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid for use with Vatic by running
+```cd Vatic; git submodule init; git submodule update; pip install .```.
 
 
 ## Running Vatic ##

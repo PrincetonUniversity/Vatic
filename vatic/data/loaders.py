@@ -35,16 +35,17 @@ import os
 _ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
-def load_input(grid, start_date, num_days) -> Tuple[dict, pd.DataFrame,
-                                                          pd.DataFrame]:
+def load_input(grid, start_date, num_days,
+               init_state_file=None) -> Tuple[dict,
+                                              pd.DataFrame, pd.DataFrame]:
     if grid == 'RTS-GMLC':
-        use_loader = RtsLoader()
+        use_loader = RtsLoader(init_state_file)
 
     elif grid == 'Texas-7k':
-        use_loader = T7kLoader()
+        use_loader = T7kLoader(init_state_file)
 
     elif grid == 'Texas-7k_2030':
-        use_loader = T7k2030Loader()
+        use_loader = T7k2030Loader(init_state_file)
 
     else:
         raise ValueError(f"Unsupported grid `{grid}`!")
@@ -138,7 +139,9 @@ class GridLoader(ABC):
     thermal_gen_types = {'Nuclear': "N", 'NG': "G", 'Oil': "O", 'Coal': "C"}
     renew_gen_types = {'Wind': "W", 'Solar': "S", 'Hydro': "H"}
 
-    def __init__(self, mins_per_time_period: int = 60) -> None:
+    def __init__(self,
+                 init_state_file: Optional[Union[str, Path]] = None,
+                 mins_per_time_period: int = 60) -> None:
         """Create the static characteristics of the grid.
 
         Initializing a grid loader entails parsing the grid metadata to get the
@@ -265,18 +268,20 @@ class GridLoader(ABC):
         rgen_bus_map = {bus.Name: list() for bus in self.buses}
         tgens = list()
         rgens = list()
-        init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
 
-        # only generators for which we have initial states get used in the grid
+        if init_state_file:
+            init_states = pd.read_csv(init_state_file).iloc[0].to_dict()
+        else:
+            init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
+
         for gen in self.generators:
-            if gen.ID in init_states:
-                if gen.Fuel in self.thermal_gen_types:
-                    tgens += [gen]
-                    tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+            if gen.Fuel in self.thermal_gen_types and gen.ID in init_states:
+                tgens += [gen]
+                tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
 
-                if gen.Fuel in self.renew_gen_types:
-                    rgens += [gen]
-                    rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+            if gen.Fuel in self.renew_gen_types:
+                rgens += [gen]
+                rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
 
         template.update({
             'ThermalGenerators': [gen.ID for gen in tgens],
@@ -919,8 +924,10 @@ class T7kLoader(GridLoader):
                                    if gen_type != 'H'}
             }
 
-    def __init__(self, mins_per_time_period: int = 60) -> None:
-        super().__init__(mins_per_time_period)
+    def __init__(self,
+                 init_state_file: Optional[Union[str, Path]] = None,
+                 mins_per_time_period: int = 60) -> None:
+        super().__init__(init_state_file, mins_per_time_period)
 
         max_min_downtime = max(self.template['MinimumDownTime'].values())
         for gen, power in self.template['PowerGeneratedT0'].items():

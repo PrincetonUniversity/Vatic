@@ -470,6 +470,12 @@ class VaticModelData(object):
     def was_generator_on(self, gen: str) -> bool:
         return self._data['elements']['generator'][gen]['initial_status'] > 0
 
+    @property
+    def initial_states(self):
+        return {gen: gen_data['initial_status']
+                for gen, gen_data in self.elements(element_type='generator',
+                                                   generator_type='thermal')}
+
     #TODO: put this in a sibling RUCModelData class?
     @property
     def commitments(self):
