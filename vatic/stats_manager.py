@@ -255,6 +255,8 @@ class StatsManager:
         self._sced_stats[time_step] = new_sced_data
 
     def consolidate_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
+        """Creates tables storing outputs of all models this simulation ran."""
+
         report_dfs = {
             'hourly_summary': pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -276,6 +278,7 @@ class StatsManager:
                 ['Date', 'Hour'], verify_integrity=True)
             }
 
+        # somewhat bulky output files
         if self.output_detail > 0:
             report_dfs['runtimes'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -318,6 +321,7 @@ class StatsManager:
                 ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
 
+        # very bulky output files
         if self.output_detail > 1:
             report_dfs['daily_commits'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
@@ -358,7 +362,7 @@ class StatsManager:
         return report_dfs
 
     def save_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
-        """Consolidate collected model stats into tables written to file.
+        """Writes simulation summary statistics and other output to file.
 
         This function collects the data pulled from UC and ED models that were
         solved during the course of the simulation and organizes them into
@@ -375,21 +379,29 @@ class StatsManager:
         """
         report_dfs = self.consolidate_output(sim_runtime)
 
+        # if desired, save the final on/off states of the thermal generators
+        # to use as initial states for a future simulation
         if self.last_conditions_file:
             tgen_gby = report_dfs['thermal_detail'].groupby('Generator')
 
+            # get the final on/off state for each generator
             final_bool = tgen_gby.apply(
                 lambda x: (x['Unit State'][-1] * 2 - 1))
 
+            # find how long it has been since each generator was in a state not
+            # matching its final state, combine this info with final on/off
             last_conds = tgen_gby.apply(
                 lambda x: (x['Unit State']
                            != x['Unit State'][-1])[::-1].argmax()
                 ) * final_bool
 
+            # for generators which were on or off for the entire simulation
             last_conds[last_conds == 0] = len(self._sced_stats)
             last_conds[last_conds == 0] *= final_bool[
                 last_conds[last_conds == 0].index]
 
+            # save the final states to file, merging with initial states for
+            # this sim for generators that were on/off the entire time
             pd.DataFrame(pd.Series({
                 gen: (last_conds[gen]
                       if (init_cond > 0) ^ (last_conds[gen] > 0)

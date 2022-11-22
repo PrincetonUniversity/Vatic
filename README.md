@@ -48,22 +48,52 @@ is:
 
 `num_days` is the number of days to simulate from the starting date and must therefore be given as a positive integer.
 
+Unless using the `--csv` option, the output returned by Vatic is stored in a compressed pickle object named
+`output.p.gz` saved in the given `out_dir` (see below). This object can be opened in a Python session:
+```
+import dill as pickle
+import bz2
+
+with bz2.BZ2File("output.p.gz", 'r') as f:
+    output = pickle.load(f)
+```
+
 `vatic-det` also supports the following optional arguments further controlling its behaviour:
 
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
-                    was invoked from.
+                    was invoked from. Vatic will create this directory if it does not already exist.
 
- - `--solver` The solver to use for RUC and SCED instances, such as `cbc` or `gurobi`. The default is
-              [cbc](https://github.com/coin-or/Cbc); note that you may have to install your preferred solver separately.
+ - `--solver` The solver to use for RUC and SCED optimization model instances, such as `cbc` or `gurobi`. The default is
+              [cbc](https://github.com/coin-or/Cbc), which is available for free through services such as `conda`.
+              Note that you may have to install your preferred solver separately.
+
+ - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
+                   given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using
+                   Gurobi, you might specify ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
+
+ - `--threads (-t)` The number of compute cores to be used for parallelization within the optimization solver. If you
+                    are running `vatic-det` on a remote compute cluster, do not use more cores than what has been
+                    allocated to you for a particular job. The default value is 1, which will not parallelize any
+                    computation. Must be a non-negative integer; a value of 0 will instruct the solvers to use all
+                    possible nodes, which is not recommended when running on remote clusters.
+
+ - `--output-detail` A non-negative integer used to specify the amount of information stored in the output object.
+                     With `0`, only the hourly system-wide summaries are returned; with `1` (the default) we add
+                     generator-level data such as hourly dispatches and headroom values; with `2` we also add load bus
+                     and transmission line details including load mismatches and transmission congestion for each
+                     simulated time point.
+                     Note that more detail results in larger output files, which may be a concern if you are running
+                     Vatic as part of a large-scale experiment involving many iterated simulations.
 
  - `--lmps` If this flag is given, Vatic will calculate bus-specific locational marginal prices at each real-time SCED.
             Note that this tends to increase SCED runtime by roughly 25%.
 
- - `--threads (-t)` The number of compute cores to be used for parallelization. If you are running `vatic-det` on a
-                    remote compute cluster, do not use more cores than what has been allocated to you for a particular
-                    job. The default value is 1, which will not parallelize any computation. Must be a non-negative
-                    integer; a value of 0 will instruct the solvers to use all possible nodes, which is not recommended
-                    when running on remote clusters.
+ - `--create-plots (-p)` If given, Vatic will also save summary statistic plots such as daily stackgraphs to the
+                         output directory.
+
+ - `--csv` Save output to a collection of .csv files instead of a serialized Python pickle.
+
+ - `--verbose (-v)` Print log messages to screen during simulation. Add more flags for more messages (e.g. `-vvv`).
 
  - `--sced-horizon` How far ahead in hours each security-constrained economic dispatch instance will look ahead.
                     Must be a positive integer; the default value is 4.
@@ -79,19 +109,17 @@ is:
  - `--reserve-factor (-r)` How much headroom or spare capacity must the system plan for at each operating time step
                            given as a proportion of the total load demand at a time step; the default value is 0.05.
 
- - `--csv` Save output to a collection of .csv files instead of a serialized Python pickle.
-
  - `--init-ruc-file` If this file exists, it will be treated as a saved reliability unit commitment from a previous
                      iteration of Vatic that used the same grid and starting date. If it doesn't exist, Vatic will save
                      the RUC from this run to the file for future use. The cached RUC file takes the form of a `.p`
                      pickled Python object that is in the ballpark of `600K` and `30M` in size for the RTS-GMLC and the
                      Texas grids respectively.
 
- - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
-                   given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using
-                   Gurobi, you might specify ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
+ - `--init-conditions-file` Alternative initial conditions to use for the thermal generator states. Although both
+                            RTS-GMLC and Texas-7k come with a "default" set of initial conditions (see for e.g.
+                            `vatic/data/grids/Texas-7k/TX_Data/FormattedData/.../noTX/on_time_7.10.csv`), for specific
+                            simulation days these may not be appropriate as the grid will struggle to reconcile the
+                            states to the actual state of the grid in the first simulation hour.
 
- - `--light-output (-l)` If this flag is used, Vatic will avoid saving data for individual transmission line and load
-                         demand bus behaviour at each time step. This is useful when running Vatic as part of
-                         large-scale experiments where storing this level of detail would result in a cumbersome amount
-                         of saved data.
+ - `--last-conditions-file` If given, the final states of the thermal generators will be saved to use as initial states
+                            for another simulation run (see `init-conditions-file` above).

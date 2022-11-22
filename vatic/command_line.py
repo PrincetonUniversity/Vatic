@@ -48,6 +48,7 @@ def run_deterministic():
         help="solve for locational marginal prices after each SCED"
         )
 
+    #TODO: separate mipgaps for RUCs and SCEDs
     parser.add_argument(
         '--ruc-mipgap', '-g', type=float, default=0.01, dest='ruc_mipgap',
         help="Specifies the mipgap for all deterministic RUC solves."
