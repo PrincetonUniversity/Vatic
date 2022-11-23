@@ -269,19 +269,21 @@ class GridLoader(ABC):
         tgens = list()
         rgens = list()
 
+        first_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
         if init_state_file:
             init_states = pd.read_csv(init_state_file).iloc[0].to_dict()
         else:
-            init_states = pd.read_csv(self.init_state_file).iloc[0].to_dict()
+            init_states = first_states
 
         for gen in self.generators:
-            if gen.Fuel in self.thermal_gen_types and gen.ID in init_states:
-                tgens += [gen]
-                tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+            if gen.ID in first_states:
+                if gen.Fuel in self.thermal_gen_types:
+                    tgens += [gen]
+                    tgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
 
-            if gen.Fuel in self.renew_gen_types:
-                rgens += [gen]
-                rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
+                if gen.Fuel in self.renew_gen_types and gen:
+                    rgens += [gen]
+                    rgen_bus_map[bus_name_mapping[gen.Bus]] += [gen.ID]
 
         template.update({
             'ThermalGenerators': [gen.ID for gen in tgens],
