@@ -105,10 +105,11 @@ class UCModel:
             raise ValueError(
                 "Cannot find formulation labelled `{}` for model component "
                 "`{}`!".format(self.model_parts[model_part], model_part)
-                )
+            )
 
         return part_fx
 
+    @profile
     def generate_model(self,
                        model_data: VaticModelData,
                        relax_binaries: bool,
@@ -207,6 +208,7 @@ class UCModel:
 
         self.pyo_instance = model
 
+    @profile
     def solve_model(self,
                     solver=None, solver_options=None,
                     relaxed=False, set_instance=True) -> VaticModelData:

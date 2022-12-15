@@ -174,10 +174,12 @@ class Simulator:
 
         self._hours_in_objective = None
         self._current_timestep = None
+        #time dictionary for profiling
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
         # if cost curves for renewable generators are given, use alternate
         # model formulations that do not assume no costs for renewables
+        # only change it at unit commitment phase
         if renew_costs is not None:
             self.ruc_formulations['params_forml'] = 'renewable_cost_params'
             self.ruc_formulations[
@@ -221,6 +223,7 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
+    @profile
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 
@@ -266,6 +269,7 @@ class Simulator:
 
         return self._stats_manager.save_output(sim_time)
 
+    @profile
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
 
@@ -314,6 +318,7 @@ class Simulator:
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
+    @profile
     def call_oracle(self) -> None:
         """Solves the real-time economic dispatch for the current time step.
 
@@ -392,6 +397,7 @@ class Simulator:
 
         return self._stats_manager._sced_stats[self._current_timestep]
 
+    @profile
     def solve_ruc(
             self,
             time_step: VaticTime,
@@ -443,6 +449,7 @@ class Simulator:
 
         return self.create_simulation_actuals(time_step), ruc_plan
 
+    @profile
     def solve_sced(self,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:
