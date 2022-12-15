@@ -269,7 +269,7 @@ class Simulator:
 
         return self._stats_manager.save_output(sim_time)
 
-    @profile
+    #@profile
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
 
@@ -318,7 +318,7 @@ class Simulator:
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
-    @profile
+    #@profile
     def call_oracle(self) -> None:
         """Solves the real-time economic dispatch for the current time step.
 
@@ -397,7 +397,7 @@ class Simulator:
 
         return self._stats_manager._sced_stats[self._current_timestep]
 
-    @profile
+    #@profile
     def solve_ruc(
             self,
             time_step: VaticTime,
@@ -449,7 +449,7 @@ class Simulator:
 
         return self.create_simulation_actuals(time_step), ruc_plan
 
-    @profile
+    #@profile
     def solve_sced(self,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:

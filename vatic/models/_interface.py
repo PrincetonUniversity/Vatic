@@ -61,6 +61,7 @@ class UCModel:
                           else 'basic_objective')
             }
 
+    #@profile
     def _load_params(self, model: pe.ConcreteModel) -> None:
         """Populates model parameters using the specified formulation."""
 
@@ -74,6 +75,7 @@ class UCModel:
             raise ModelError(
                 "Unrecognized model formulation `{}`!".format(self.params))
 
+    #@profile
     def _get_formulation(
             self, model_part: str) -> Callable[[pe.ConcreteModel], None]:
         """Finds the specified model formulation and make it callable."""
@@ -109,13 +111,14 @@ class UCModel:
 
         return part_fx
 
-    @profile
+    #@profile
     def generate_model(self,
                        model_data: VaticModelData,
                        relax_binaries: bool,
                        ptdf_options, ptdf_matrix_dict, objective_hours=None):
 
         #TODO: do we need to add scaling back in if baseMVA is always 1?
+        #copy the model data
         use_model = model_data.clone_in_service()
         model = pe.ConcreteModel()
         model.model_data = use_model.to_egret()
@@ -207,8 +210,10 @@ class UCModel:
                         model.SupplementalReserveCostGeneration[g, t].expr = 0.
 
         self.pyo_instance = model
+        #print model
 
-    @profile
+
+    #@profile
     def solve_model(self,
                     solver=None, solver_options=None,
                     relaxed=False, set_instance=True) -> VaticModelData:
