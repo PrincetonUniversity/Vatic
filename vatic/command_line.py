@@ -43,8 +43,8 @@ def run_deterministic():
                         help="How many compute cores to use for parallelizing "
                              "solver operations.")
 
-    parser.add_argument(
-        "--lmps", action='store_true',
+    parser.add_argument(=
+        '--lmps', action='store_true',
         help="solve for locational marginal prices after each SCED?"
         )
 
