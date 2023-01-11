@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.3.0-a2',
+    version='0.4.0-a0',
     description='lightweight PJM power grid interface for Egret + Pyomo',
 
     author='Michal Radoslaw Grzadkowski',

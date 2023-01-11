@@ -45,7 +45,7 @@ def run_deterministic():
 
     parser.add_argument(
         '--lmps', action='store_true',
-        help="solve for locational marginal prices after each SCED"
+        help="solve for locational marginal prices after each SCED?"
         )
 
     #TODO: separate mipgaps for RUCs and SCEDs

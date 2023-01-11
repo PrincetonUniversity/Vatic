@@ -916,28 +916,14 @@ class T7kLoader(GridLoader):
     @staticmethod
     def get_dispatch_types(renew_types):
         return {
-            'DispatchRenewables': set(),
+            'DispatchRenewables': {gen for gen, gen_type in renew_types.items()
+                                   if gen_type != 'H'},
 
-            'NondispatchRenewables': {gen
-                                      for gen, gen_type in renew_types.items()
-                                      if gen_type != 'H'},
+            'NondispatchRenewables': set(),
 
             'ForecastRenewables': {gen for gen, gen_type in renew_types.items()
                                    if gen_type != 'H'}
             }
-
-    def __init__(self,
-                 init_state_file: Optional[Union[str, Path]] = None,
-                 mins_per_time_period: int = 60) -> None:
-        super().__init__(init_state_file, mins_per_time_period)
-
-        max_min_downtime = max(self.template['MinimumDownTime'].values())
-        for gen, power in self.template['PowerGeneratedT0'].items():
-            if power == 0:
-                self.template['UnitOnT0State'][gen] = -max_min_downtime
-
-        for line in ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']:
-            self.template['ThermalLimit'][line] = 1e4
 
     def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
