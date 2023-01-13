@@ -1,3 +1,0 @@
-[console_scripts]
-vatic-det = vatic.command_line:run_deterministic
-
