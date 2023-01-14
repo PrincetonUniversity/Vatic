@@ -13,7 +13,8 @@ optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid form
 
 ## Installing Vatic ##
 
-After making sure you have Python 3.8 installed, clone the repository using one of the following from command line:
+After making sure you have Python 3.8, 3.9, or 3.10 installed, clone the repository using one of the following
+from command line:
 
 ```git clone https://github.com/PrincetonUniversity/Vatic.git```
 

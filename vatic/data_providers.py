@@ -1,14 +1,13 @@
 """Retrieving optimization model inputs from power grid datasets."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from copy import deepcopy
 import dill as pickle
 import pandas as pd
 import math
-
-from typing import Optional, Union, Sequence
-import collections
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
@@ -56,10 +55,9 @@ class PickleProvider:
                  ruc_every_hours: int, ruc_horizon: int,
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool, verbosity: int,
-                 start_date: Optional[date] = None,
-                 num_days: Optional[int] = None,
-                 renew_costs: Optional[Union[str, Path,
-                                             Sequence[float]]] = None) -> None:
+                 start_date: date | None = None,
+                 num_days: int | None = None,
+                 renew_costs: str | Path | list[float] | None = None) -> None:
 
         if not (gen_data.index == load_data.index).all():
             raise ProviderError("The generator and the bus demand datasets "
@@ -91,7 +89,7 @@ class PickleProvider:
             with open(renew_costs, 'rb') as f:
                 self.renew_costs = pickle.load(f)
 
-        elif isinstance(renew_costs, collections.Sequence):
+        elif isinstance(renew_costs, list):
             ncosts = len(renew_costs) - 1
 
             if ncosts == 0:
@@ -262,7 +260,7 @@ class PickleProvider:
     def get_populated_model(
             self,
             use_actuals: bool, start_time: datetime, num_time_periods: int,
-            use_state: Optional[VaticSimulationState] = None
+            use_state: VaticSimulationState | None = None
             ) -> VaticModelData:
         """Creates a model with all grid asset data for a given time period.
 
@@ -331,8 +329,8 @@ class PickleProvider:
     def create_deterministic_ruc(
             self,
             time_step: VaticTime,
-            current_state: Optional[VaticSimulationState] = None,
-            copy_first_day: Optional[bool] = False
+            current_state: VaticSimulationState | None = None,
+            copy_first_day: bool = False
             ) -> VaticModelData:
         """Generates a Reliability Unit Commitment model.
 
@@ -876,7 +874,7 @@ class PickleProvider:
                 gen_dict[gen]['p_cost'] = {'data_type': 'time_series',
                                            'values': use_cost}
 
-        elif isinstance(self.renew_costs, Sequence):
+        elif isinstance(self.renew_costs, list):
             for gen in self.template['ForecastRenewables']:
                 gen_dict[gen]['p_cost'] = {
                     'data_type': 'time_series',

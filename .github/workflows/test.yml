@@ -9,11 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
+  ref:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +20,7 @@ jobs:
           auto-update-conda: true
           python-version: 3.8
 
-      - name: test-run
+      - name: ref-run
         shell: bash -l {0}
         run: |
           cd $GITHUB_WORKSPACE
@@ -36,3 +33,31 @@ jobs:
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+
+      - name: test-run
+        shell: bash -l {0}
+        run: |
+          cd $GITHUB_WORKSPACE
+          git submodule update --init
+
+          conda create --name vatic numpy pandas scipy dill matplotlib pyomo
+          conda activate vatic
+          pip install .
+
+          vatic-det RTS-GMLC 2020-07-20 2 --solver cbc --threads 2 \
+            --ruc-mipgap=0.01 --reserve-factor=0.10 --output-detail 2 --sced-horizon=2
+
+          echo tests finished successfully!

@@ -1,5 +1,7 @@
 """Running a simulation of alternating UC and ED grid optimization steps."""
 
+from __future__ import annotations
+
 import os
 import dill as pickle
 from pathlib import Path
@@ -407,7 +409,6 @@ class Simulator:
 
         return sced_results
 
-    #TODO: figure out how to produce bus-level LMPs
     def solve_lmp(self, sced_instance: VaticModelData) -> VaticModelData:
         lmp_sced_instance = deepcopy(sced_instance)
 
