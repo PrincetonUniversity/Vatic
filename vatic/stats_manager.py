@@ -1,10 +1,11 @@
 """Collecting and reporting statistics on the states of the simulation."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import bz2
 import dill as pickle
-from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -37,11 +38,11 @@ class StatsManager:
     """
 
     def __init__(self,
-                 write_dir: Union[Path, str, None],
+                 write_dir: Path | str | None,
                  output_detail: int, verbosity: int,
                  init_model: VaticModelData, output_max_decimals: int,
                  create_plots: bool, save_to_csv: bool,
-                 last_conditions_file: Union[str, Path]) -> None:
+                 last_conditions_file: str | Path) -> None:
         """
         write_dir       Path to where output statistics will be saved.
         output_detail   How much information to include in the output saved to
@@ -130,8 +131,8 @@ class StatsManager:
 
     def collect_sced_solution(self,
                               time_step: VaticTime, sced: VaticModelData,
-                              lmp_sced: Optional[VaticModelData] = None,
-                              pre_quickstart_cache = None) -> None:
+                              lmp_sced: VaticModelData | None = None,
+                              pre_quickstart_cache=None) -> None:
         """Gets the key statistics from a solved economic dispatch.
 
         Args
@@ -254,7 +255,7 @@ class StatsManager:
 
         self._sced_stats[time_step] = new_sced_data
 
-    def consolidate_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
+    def consolidate_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
         """Creates tables storing outputs of all models this simulation ran."""
 
         report_dfs = {
@@ -361,7 +362,7 @@ class StatsManager:
 
         return report_dfs
 
-    def save_output(self, sim_runtime=None) -> Dict[str, pd.DataFrame]:
+    def save_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
         """Writes simulation summary statistics and other output to file.
 
         This function collects the data pulled from UC and ED models that were

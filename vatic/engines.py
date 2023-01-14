@@ -11,7 +11,6 @@ import datetime
 import math
 import pandas as pd
 from copy import deepcopy
-from typing import Dict, Tuple, Optional, Union
 
 from .data_providers import PickleProvider
 from .model_data import VaticModelData
@@ -92,7 +91,7 @@ class Simulator:
 
     def __init__(self,
                  template_data: dict, gen_data: pd.DataFrame,
-                 load_data: pd.DataFrame, out_dir: Union[Path, str, None],
+                 load_data: pd.DataFrame, out_dir: Path | str | None,
                  start_date: datetime.date, num_days: int, solver: str,
                  solver_options: dict, run_lmps: bool, mipgap: float,
                  reserve_factor: float, output_detail: int,
@@ -101,7 +100,7 @@ class Simulator:
                  ruc_horizon: int, sced_horizon: int,
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool,
-                 init_ruc_file: Optional[Path], verbosity: int,
+                 init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
                  renew_costs, save_to_csv, last_conditions_file) -> None:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
@@ -159,7 +158,7 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
-    def simulate(self) -> Dict[str, pd.DataFrame]:
+    def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 
         See prescient.simulator.Simulator.simulate() for the original
@@ -281,8 +280,8 @@ class Simulator:
 
     def perturb_oracle(
             self,
-            perturb_dict: Dict[str, float], run_lmps: bool = False,
-            ) -> Dict[str, Union[float, dict]]:
+            perturb_dict: dict[str, float], run_lmps: bool = False,
+            ) -> dict[str, float | dict]:
         """Simulates a perturbed economic dispatch for current time step."""
 
         sced_model_data = self._data_provider.create_sced_instance(
@@ -332,8 +331,8 @@ class Simulator:
     def solve_ruc(
             self,
             time_step: VaticTime,
-            sim_state_for_ruc: Optional[VaticSimulationState] = None
-            ) -> Tuple[VaticModelData, VaticModelData]:
+            sim_state_for_ruc: VaticSimulationState | None = None
+            ) -> tuple[VaticModelData, VaticModelData]:
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(
             time_step, sim_state_for_ruc)
@@ -418,10 +417,11 @@ class Simulator:
                 ['load_mismatch_cost', 'reserve_shortfall_cost'],
                 [10000., 1000.]
                 ):
-            shortfall_cost = sced_instance.get_system_attr(cost_lbl, max_price)
+            shortfall_cost = lmp_sced_instance.get_system_attr(
+                cost_lbl, max_price)
 
             if shortfall_cost >= max_price:
-                sced_instance.set_system_attr(cost_lbl, max_price)
+                lmp_sced_instance.set_system_attr(cost_lbl, max_price)
 
         if self.sced_model.pyo_instance is None:
             self._ptdf_manager.mark_active(lmp_sced_instance)

@@ -7,9 +7,10 @@
 #  This software is distributed under the Revised BSD License.
 #  ___________________________________________________________________________
 
+from __future__ import annotations
+
 from collections import namedtuple
 from .model_data import VaticModelData
-from typing import List
 
 
 PTDFOptions = namedtuple('PTDFOptions',
@@ -62,7 +63,7 @@ class VaticPTDFManager:
         self._calls_since_last_miss = 0
         self.limit_eps = limit_eps
 
-    def _at_limit(self, power_flow_list: List[float], limit: float) -> bool:
+    def _at_limit(self, power_flow_list: list[float], limit: float) -> bool:
         use_limit = limit - self.limit_eps
 
         for flow in power_flow_list:
@@ -72,7 +73,7 @@ class VaticPTDFManager:
         return False
 
     def _at_two_sided_limit(self,
-                            power_flow_list: List[float],
+                            power_flow_list: list[float],
                             lower_bound: float, upper_bound: float) -> bool:
         use_lb = lower_bound + self.limit_eps
         use_ub = upper_bound - self.limit_eps

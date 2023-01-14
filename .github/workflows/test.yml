@@ -53,11 +53,13 @@ jobs:
           cd $GITHUB_WORKSPACE
           git submodule update --init
 
-          conda create --name vatic numpy pandas scipy dill matplotlib pyomo
+          conda create --name vatic -c conda-forge \
+                        numpy pandas scipy dill matplotlib pyomo
           conda activate vatic
           pip install .
 
-          vatic-det RTS-GMLC 2020-07-20 2 --solver cbc --threads 2 \
-            --ruc-mipgap=0.01 --reserve-factor=0.10 --output-detail 2 --sced-horizon=2
+          vatic-det RTS-GMLC 2020-07-20 2 \
+                      --solver cbc --threads 2 --ruc-mipgap=0.01 \
+                      --reserve-factor=0.10 --sced-horizon=2 --output-detail 2 
 
           echo tests finished successfully!
