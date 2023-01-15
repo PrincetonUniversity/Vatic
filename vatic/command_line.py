@@ -15,99 +15,99 @@ def run_deterministic():
     # we define here the options governing the behaviour of the simulation
     # that are accessible to the user through the command line interface...
     parser = argparse.ArgumentParser(
-        'vatic-det', description="Simulate a deterministic scenario.")
+        "vatic-det", description="Simulate a deterministic scenario.")
 
     # ...starting with which power grid dataset should be used
-    parser.add_argument('input_grid', type=str,
+    parser.add_argument("input_grid", type=str,
                         help="the name of or the directory containing the "
                              "input datasets of a power grid")
 
     # instead of using all the days in the input files we can choose a subset
-    parser.add_argument('start_date',
-                        type=lambda s: datetime.strptime(s, '%Y-%m-%d').date(),
+    parser.add_argument("start_date",
+                        type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
                         help="starting date for the scenario")
-    parser.add_argument('num_days', type=int,
+    parser.add_argument("num_days", type=int,
                         help="how many days to run the simulation for")
 
-    parser.add_argument('--out-dir', '-o', type=Path, dest='out_dir',
+    parser.add_argument("--out-dir", "-o", type=Path, dest="out_dir",
                         help="directory where output will be stored")
 
     # which solver is used for optimizations within the simulation, and which
     # solver hyper-parameters will be used
-    parser.add_argument('--solver', type=str, default='cbc',
+    parser.add_argument("--solver", type=str, default="cbc",
                         help="How to solve RUCs and SCEDs.")
-    parser.add_argument('--solver-args', nargs='*', dest='solver_args',
+    parser.add_argument("--solver-args", nargs='*', dest="solver_args",
                         help="A list of arguments to pass to the solver for "
                              "both RUCs and SCEDs.")
-    parser.add_argument('--threads', '-t', type=int, default=1,
+    parser.add_argument("--threads", "-t", type=int, default=1,
                         help="How many compute cores to use for parallelizing "
                              "solver operations.")
 
     parser.add_argument(
-        '--lmps', action='store_true',
+        "--lmps", action='store_true',
         help="solve for locational marginal prices after each SCED?"
         )
 
     #TODO: separate mipgaps for RUCs and SCEDs
     parser.add_argument(
-        '--ruc-mipgap', '-g', type=float, default=0.01, dest='ruc_mipgap',
+        "--ruc-mipgap", "-g", type=float, default=0.01, dest="ruc_mipgap",
         help="Specifies the mipgap for all deterministic RUC solves."
         )
     parser.add_argument(
-        '--reserve-factor', '-r',
-        type=float, default=0.05, dest='reserve_factor',
+        "--reserve-factor", "-r",
+        type=float, default=0.05, dest="reserve_factor",
         help="Spinning reserve factor as a constant fraction of demand."
         )
 
-    parser.add_argument('--init-ruc-file', type=Path, dest='init_ruc_file',
-                        help='where to save/load the initial RUC from')
-    parser.add_argument('--renew-costs', '-c', nargs='*', dest='renew_costs',
+    parser.add_argument("--init-ruc-file", type=Path, dest="init_ruc_file",
+                        help="where to save/load the initial RUC from")
+    parser.add_argument("--renew-costs", "-c", nargs='*', dest="renew_costs",
                         help="use costs for renewables from input directory")
 
     parser.add_argument(
-        '--init-conditions-file', type=Path, dest='init_conds_file',
-        help='where to save/load the initial thermal generator conditions from'
+        "--init-conditions-file", type=Path, dest="init_conds_file",
+        help="where to save/load the initial thermal generator conditions from"
         )
     parser.add_argument(
-        '--last-conditions-file', type=Path, dest='last_conds_file',
-        help='where to save the final thermal generator states'
+        "--last-conditions-file", type=Path, dest="last_conds_file",
+        help="where to save the final thermal generator states"
         )
 
     # determines what kinds of output files we create
-    parser.add_argument('--output-detail',
-                        type=int, default=1, dest='output_detail',
+    parser.add_argument("--output-detail",
+                        type=int, default=1, dest="output_detail",
                         help="how much information to save in the output file")
-    parser.add_argument('--output-max-decimals',
-                        type=int, default=4, dest='output_max_decimals',
+    parser.add_argument("--output-max-decimals",
+                        type=int, default=4, dest="output_max_decimals",
                         help="How much precision to use when writing summary "
                              "output files.")
 
-    parser.add_argument('--create-plots', '-p',
-                        action='store_true', dest='create_plots',
+    parser.add_argument("--create-plots", "-p",
+                        action='store_true', dest="create_plots",
                         help="Create summary plots of simulation stats?")
-    parser.add_argument('--csv', action='store_true',
+    parser.add_argument("--csv", action='store_true',
                         help="save output data to .csv files instead of a "
                              "compressed Python pickle")
 
     # how are reliability unit commitments run: how often, at which time, for
     # how long, and with (or without) what information?
-    parser.add_argument('--ruc-every-hours',
-                        type=int, dest='ruc_every_hours', default=24,
+    parser.add_argument("--ruc-every-hours",
+                        type=int, dest="ruc_every_hours", default=24,
                         help="Specifies when the the RUC process is executed. "
                              "Negative values indicate time before horizon, "
                              "positive after.")
-    parser.add_argument('--ruc-execution-hour',
-                        type=int, dest='ruc_execution_hour', default=16,
+    parser.add_argument("--ruc-execution-hour",
+                        type=int, dest="ruc_execution_hour", default=16,
                         help="Specifies when the RUC process is executed. "
                              "Negative values indicate time before horizon, "
                              "positive after.")
-    parser.add_argument('--ruc-horizon',
-                        type=int, dest='ruc_horizon', default=48,
+    parser.add_argument("--ruc-horizon",
+                        type=int, dest="ruc_horizon", default=48,
                         help="The number of hours for which the reliability "
                              "unit commitment is executed. Must be <= 48 "
                              "hours and >= --ruc-every-hours.")
-    parser.add_argument('--ruc-prescience-hour',
-                        type=int, dest='ruc_prescience_hour', default=0,
+    parser.add_argument("--ruc-prescience-hour",
+                        type=int, dest="ruc_prescience_hour", default=0,
                         help="Hour before which linear blending of forecast "
                              "and actuals takes place when running RUCs."
                              "The default value of 0 indicates we always take "
@@ -116,21 +116,21 @@ def run_deterministic():
     # how are security-constrained economic dispatches run: for how long and
     # with what information?
     parser.add_argument(
-        '--sced-horizon', type=int, default=4, dest='sced_horizon',
+        "--sced-horizon", type=int, default=4, dest="sced_horizon",
         help="Specifies the number of time periods in the look-ahead horizon "
              "for each SCED. Must be at least 1."
         )
-    parser.add_argument('--prescient-sced-forecasts',
-                        action='store_true', dest='prescient_sced_forecasts',
+    parser.add_argument("--prescient-sced-forecasts",
+                        action='store_true', dest="prescient_sced_forecasts",
                         help="make forecasts used by SCEDs equal to actuals")
 
-    parser.add_argument('--lmp-shortfall-costs',
-                        action='store_true', dest='lmp_shortfall_costs',
+    parser.add_argument("--lmp-shortfall-costs",
+                        action='store_true', dest="lmp_shortfall_costs",
                         help="take reserve shortfall costs into "
                              "account when calculating LMPs")
 
     # how generator startup and shutdown constraints are calculated and used
-    parser.add_argument('--enforce-sced-shutdown-ramprate',
+    parser.add_argument("--enforce-sced-shutdown-ramprate",
                         action='store_true',
                         dest="enforce_sced_shutdown_ramprate",
                         help="Enforces shutdown ramp-rate constraints in the "
@@ -138,13 +138,13 @@ def run_deterministic():
                              "SCED look-ahead (at least an hour) to ensure "
                              "the shutdown ramp-rate constraints can "
                              "be satisfied.")
-    parser.add_argument('--no-startup-shutdown-curves',
+    parser.add_argument("--no-startup-shutdown-curves",
                         action='store_true', dest="no_startup_shutdown_curves",
                         help="For thermal generators, do not infer "
                              "startup/shutdown ramping curves when "
                              "starting-up and shutting-down.")
 
-    parser.add_argument('--verbose', '-v', action='count', default=0,
+    parser.add_argument("--verbose", "-v", action='count', default=0,
                         help="how much info to print about the ongoing state "
                              "of the simulator and its solvers")
 
@@ -161,7 +161,7 @@ def run_deterministic():
     solver_args = {'Threads': args.threads}
     if args.solver_args:
         for arg_str in args.solver_args:
-            arg_name, arg_val = arg_str.split('=')
+            arg_name, arg_val = arg_str.split("=")
             solver_args[arg_name] = literal_eval(arg_val)
 
     if (args.renew_costs is not None and len(args.renew_costs) == 1
