@@ -200,8 +200,9 @@ class VaticSimulationState:
         # number of hours, float if fractional
 
         minutes_per_period = sced.get_system_attr('time_period_length_minutes')
-        hours_per_period = minutes_per_period // 60 if minutes_per_period % 60 == 0 \
-            else minutes_per_period / 60
+        hours_per_period = (minutes_per_period // 60
+                            if minutes_per_period % 60 == 0
+                            else minutes_per_period / 60)
 
         for g, g_dict in sced.elements('generator', generator_type='thermal'):
             ### Get generator state (whether on or off, and for how long) ###

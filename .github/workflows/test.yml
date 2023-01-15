@@ -26,8 +26,8 @@ jobs:
           cd $GITHUB_WORKSPACE
           git submodule update --init
 
-          conda create --name vatic --file vatic/tests/spec-file_linux.txt
-          conda activate vatic
+          conda create --name vatic-env --file vatic/tests/spec-file_linux.txt
+          conda activate vatic-env
           pip install .
 
           sh vatic/tests/check_rts.sh
@@ -54,11 +54,11 @@ jobs:
           cd $GITHUB_WORKSPACE
           git submodule update --init
 
-          conda create --name vatic -c conda-forge \
+          conda create --name vatic-env -c conda-forge \
                         python=${{ matrix.python-version }} \
-                        numpy pandas scipy dill matplotlib pyomo
+                        numpy pandas scipy dill matplotlib pyomo coincbc
 
-          conda activate vatic
+          conda activate vatic-env
           pip install .
 
           vatic-det RTS-GMLC 2020-07-20 2 \

@@ -147,7 +147,7 @@ class VaticModelData(object):
 
     def time_series(self,
                     element_types: Iterable[str] | None = None,
-                    include_reserves=True,
+                    include_reserves: bool = True,
                     **element_args: str) -> Iterator[tuple]:
         """Retrieves timeseries for grid elements that match a set of criteria.
 
@@ -310,7 +310,7 @@ class VaticModelData(object):
         return self._data['system']['solver_runtime']
 
     @property
-    def duration_minutes(self):
+    def duration_minutes(self) -> int:
         return self._data['system']['time_period_length_minutes']
 
     @staticmethod
