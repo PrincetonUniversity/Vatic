@@ -124,6 +124,11 @@ def run_deterministic():
                         action='store_true', dest='prescient_sced_forecasts',
                         help="make forecasts used by SCEDs equal to actuals")
 
+    parser.add_argument('--lmp-shortfall-costs',
+                        action='store_true', dest='lmp_shortfall_costs',
+                        help="take reserve shortfall costs into "
+                             "account when calculating LMPs")
+
     # how generator startup and shutdown constraints are calculated and used
     parser.add_argument('--enforce-sced-shutdown-ramprate',
                         action='store_true',
@@ -175,6 +180,7 @@ def run_deterministic():
         ruc_execution_hour=args.ruc_execution_hour,
         ruc_every_hours=args.ruc_every_hours,
         ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
+        lmp_shortfall_costs=args.lmp_shortfall_costs,
         enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
         no_startup_shutdown_curves=args.no_startup_shutdown_curves,
         output_detail=args.output_detail, init_ruc_file=args.init_ruc_file,

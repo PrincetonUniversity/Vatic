@@ -45,6 +45,7 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          python-version: ${{ matrix.python-version }}
           auto-update-conda: true
 
       - name: test-run

@@ -98,6 +98,7 @@ class Simulator:
                  prescient_sced_forecasts: bool, ruc_prescience_hour: int,
                  ruc_execution_hour: int, ruc_every_hours: int,
                  ruc_horizon: int, sced_horizon: int,
+                 lmp_shortfall_costs: bool,
                  enforce_sced_shutdown_ramprate: bool,
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: str | Path | None, verbosity: int,
@@ -109,6 +110,7 @@ class Simulator:
         self.run_lmps = run_lmps
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
+        self.lmp_shortfall_costs = lmp_shortfall_costs
 
         self._hours_in_objective = None
         self._current_timestep = None
@@ -422,6 +424,11 @@ class Simulator:
 
             if shortfall_cost >= max_price:
                 lmp_sced_instance.set_system_attr(cost_lbl, max_price)
+
+        # often we want to avoid having the reserve requirement shortfall make
+        # any impact on the prices whatsoever
+        if not self.lmp_shortfall_costs:
+            lmp_sced_instance.set_system_attr('reserve_shortfall_cost', 0)
 
         if self.sced_model.pyo_instance is None:
             self._ptdf_manager.mark_active(lmp_sced_instance)

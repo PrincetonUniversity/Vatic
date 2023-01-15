@@ -1,11 +1,11 @@
 """Representations of grid states used as optimization model input/output."""
 
+from __future__ import annotations
+
 import dill as pickle
 from pathlib import Path
 from copy import copy, deepcopy
-
-from typing import (Any, TypeVar, Union, Optional, Iterable, Iterator,
-                    List, Tuple, Dict)
+from typing import Any, TypeVar, Iterable, Iterator
 VModelData = TypeVar('VModelData', bound='VaticModelData')
 
 from egret.data.model_data import ModelData as EgretModel
@@ -19,8 +19,7 @@ class VaticModelData(object):
     """Simplified version of egret.data.model_data.ModelData"""
 
     def __init__(self,
-                 source: Union[dict, VModelData, str, Path,
-                               None] = None) -> None:
+                 source: dict | VModelData | str | Path | None = None) -> None:
         if isinstance(source, dict):
             self._data = deepcopy(source)
 
@@ -64,7 +63,7 @@ class VaticModelData(object):
 
     def elements(self,
                  element_type: str,
-                 **element_args) -> Iterator[Tuple[str, Dict]]:
+                 **element_args) -> Iterator[tuple[str, dict]]:
         """Retrieves grid elements that match a set of criteria.
 
         Args
@@ -113,7 +112,7 @@ class VaticModelData(object):
 
         return attr_dict
 
-    def get_system_attr(self, attr: str, default: Optional[Any] = None) -> Any:
+    def get_system_attr(self, attr: str, default: Any = None) -> Any:
         if attr in self._data['system']:
             return self._data['system'][attr]
 
@@ -131,8 +130,8 @@ class VaticModelData(object):
         return self._data[
             'system']['reserve_requirement']['values'][time_index]
 
-    def get_forecastables(self) -> Iterator[Tuple[Tuple[str, str],
-                                                  List[float]]]:
+    def get_forecastables(self) -> Iterator[tuple[tuple[str, str],
+                                                  list[float]]]:
         """Retrieves grid elements' timeseries that can be forecast."""
 
         for gen, gen_data in self.elements('generator',
@@ -147,9 +146,9 @@ class VaticModelData(object):
             'system']['reserve_requirement']['values']
 
     def time_series(self,
-                    element_types: Optional[Iterable[str]] = None,
+                    element_types: Iterable[str] | None = None,
                     include_reserves=True,
-                    **element_args: str) -> Iterator[Tuple]:
+                    **element_args: str) -> Iterator[tuple]:
         """Retrieves timeseries for grid elements that match a set of criteria.
 
         Args
@@ -187,8 +186,8 @@ class VaticModelData(object):
 
     def copy_elements(self,
                       other: VModelData, element_type: str,
-                      attrs: Optional[Iterable[str]] = None,
-                      strict_mode=False, **element_args: str) -> None:
+                      attrs: Iterable[str] | None = None,
+                      strict_mode: bool = False, **element_args: str) -> None:
         """Replaces grid elements with those in another model data object.
 
         Args
@@ -261,7 +260,7 @@ class VaticModelData(object):
             time_entry['values'] = list()
 
     def set_time_steps(self,
-                       time_steps: Union[int, List[int]],
+                       time_steps: int | list[int],
                        period_minutes: int) -> None:
         """Initializes time indices, creates empty placeholder timeseries.
 

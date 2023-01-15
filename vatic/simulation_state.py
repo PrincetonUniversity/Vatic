@@ -1,8 +1,10 @@
 """Storing the states of a grid's generation assets within a simulation run."""
 
+from __future__ import annotations
+
 import math
 import itertools
-from typing import Iterator, Sequence, Tuple
+from typing import Iterator, Sequence
 from .model_data import VaticModelData
 
 
@@ -66,7 +68,7 @@ class VaticSimulationState:
         """Get state of charge in the previous time period."""
         return self._init_soc[s]
 
-    def get_current_actuals(self, k: Tuple[str, str]) -> float:
+    def get_current_actuals(self, k: tuple[str, str]) -> float:
         """Get the current actual value for each forecastable.
 
         This is the actual value for the current time period (time index 0).
@@ -77,7 +79,7 @@ class VaticSimulationState:
         """
         return self._actuals[k][0]
 
-    def get_forecasts(self, k: Tuple[str, str]) -> Sequence[float]:
+    def get_forecasts(self, k: tuple[str, str]) -> Sequence[float]:
         """Get the forecast values for each forecastable.
 
         This is very similar to VaticModelData.get_forecastables(); the
@@ -90,7 +92,7 @@ class VaticSimulationState:
         """
         return self._forecasts[k]
 
-    def get_future_actuals(self, k: Tuple[str, str]) -> Sequence[float]:
+    def get_future_actuals(self, k: tuple[str, str]) -> Sequence[float]:
         """Warning: Returns actual values for current time AND FUTURE TIMES.
 
         Be aware that this function returns information that is not yet known!
@@ -191,7 +193,7 @@ class VaticSimulationState:
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
 
     def get_generator_states_at_sced_offset(
-            self, sced: VaticModelData, sced_index: int) -> Tuple:
+            self, sced: VaticModelData, sced_index: int) -> tuple:
         # We'll be converting between time periods and hours.
         # Make the data type of hours_per_period an int if it's an integer
         # number of hours, float if fractional
@@ -284,7 +286,7 @@ class VaticStateWithOffset:
         return self._parent.get_generator_commitment(g,
                                                      time_index + self._offset)
 
-    def get_current_actuals(self, k: Tuple[str, str]) -> float:
+    def get_current_actuals(self, k: tuple[str, str]) -> float:
         """Get the current actual value for each forecastable.
 
         This is the actual value for the current time period (time index 0).
@@ -295,7 +297,7 @@ class VaticStateWithOffset:
         """
         return self._parent.get_future_actuals(k)[self._offset]
 
-    def get_forecasts(self, k: Tuple[str, str]) -> Sequence[float]:
+    def get_forecasts(self, k: tuple[str, str]) -> Sequence[float]:
         """Get the forecast values for each forecastable.
 
         This is very similar to VaticModelData.get_forecastables(); the
@@ -309,7 +311,7 @@ class VaticStateWithOffset:
         return list(itertools.islice(self._parent.get_forecasts(k),
                                      self._offset, None))
 
-    def get_future_actuals(self, k: Tuple[str, str]) -> Sequence[float]:
+    def get_future_actuals(self, k: tuple[str, str]) -> Sequence[float]:
         """Warning: Returns actual values for current time AND FUTURE TIMES.
 
         Be aware that this function returns information that is not yet known!
