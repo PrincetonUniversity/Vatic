@@ -19,13 +19,15 @@ rtsgmlc_to_dat.py and process_RTS_GMLC_data.py in
 Prescient/prescient/downloaders/rts_gmlc_prescient.
 """
 
+from __future__ import annotations
+
 import bz2
 import dill as pickle
 from pathlib import Path
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from typing import Tuple, Dict, Mapping, Optional, Union, Set, Iterable
+from typing import Mapping, Iterable
 
 import math
 import pandas as pd
@@ -36,7 +38,7 @@ _ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 def load_input(grid, start_date, num_days,
-               init_state_file=None) -> Tuple[dict,
+               init_state_file=None) -> tuple[dict,
                                               pd.DataFrame, pd.DataFrame]:
     if grid == 'RTS-GMLC':
         use_loader = RtsLoader(init_state_file)
@@ -140,7 +142,7 @@ class GridLoader(ABC):
     renew_gen_types = {'Wind': "W", 'Solar': "S", 'Hydro': "H"}
 
     def __init__(self,
-                 init_state_file: Optional[Union[str, Path]] = None,
+                 init_state_file: str | Path | None = None,
                  mins_per_time_period: int = 60) -> None:
         """Create the static characteristics of the grid.
 
@@ -424,11 +426,11 @@ class GridLoader(ABC):
 
     @property
     @abstractmethod
-    def timeseries_cohorts(self) -> Set[str]:
+    def timeseries_cohorts(self) -> set[str]:
         pass
 
     @property
-    def no_scenario_renews(self) -> Set[str]:
+    def no_scenario_renews(self) -> set[str]:
         return {'Hydro'}
 
     @staticmethod
@@ -467,8 +469,8 @@ class GridLoader(ABC):
             ).rename({'Area Name of Gen': 'Area'}, axis='columns')
 
     @staticmethod
-    def subset_dates(df: pd.DataFrame, start_date: Optional[datetime] = None,
-                     end_date: Optional[datetime] = None) -> pd.DataFrame:
+    def subset_dates(df: pd.DataFrame, start_date: datetime | None = None,
+                     end_date: datetime | None = None) -> pd.DataFrame:
         """Helper function to get the rows of a table matching a date range."""
 
         sub_df = df.copy()
@@ -481,9 +483,9 @@ class GridLoader(ABC):
         return sub_df
 
     def process_forecasts(self,
-                          forecasts_file: Union[str, Path],
-                          start_date: Optional[datetime] = None,
-                          end_date: Optional[datetime] = None) -> pd.DataFrame:
+                          forecasts_file: str | Path,
+                          start_date: datetime | None = None,
+                          end_date: datetime | None = None) -> pd.DataFrame:
         """Parse forecasted load/generation values read from an input file."""
 
         fcst_df = pd.read_csv(forecasts_file)
@@ -500,15 +502,15 @@ class GridLoader(ABC):
 
     @staticmethod
     @abstractmethod
-    def process_actuals(actuals_file: Union[str, Path],
-                        start_date: Optional[datetime] = None,
-                        end_date: Optional[datetime] = None) -> pd.DataFrame:
+    def process_actuals(actuals_file: str | Path,
+                        start_date: datetime | None = None,
+                        end_date: datetime | None = None) -> pd.DataFrame:
         """Parse realized load/generation values read from an input file."""
         pass
 
     def get_forecasts(self,
-                      asset_type: str, start_date: Optional[datetime] = None,
-                      end_date: Optional[datetime] = None) -> pd.DataFrame:
+                      asset_type: str, start_date: datetime | None = None,
+                      end_date: datetime | None = None) -> pd.DataFrame:
         """Find and parse forecasted values for a particular asset type."""
 
         data_dir = Path(self.in_dir, self.grid_dir,
@@ -520,8 +522,8 @@ class GridLoader(ABC):
         return self.process_forecasts(fcst_file[0], start_date, end_date)
 
     def get_actuals(self,
-                    asset_type: str, start_date: Optional[datetime] = None,
-                    end_date: Optional[datetime] = None) -> pd.DataFrame:
+                    asset_type: str, start_date: datetime | None = None,
+                    end_date: datetime | None = None) -> pd.DataFrame:
         """Find and parse realized values for a particular asset type."""
 
         data_dir = Path(self.in_dir, self.grid_dir,
@@ -533,9 +535,9 @@ class GridLoader(ABC):
         return self.process_actuals(actl_file[0], start_date, end_date)
 
     def load_by_bus(self,
-                    start_date: Optional[datetime] = None,
-                    end_date: Optional[datetime] = None,
-                    load_actls: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+                    start_date: datetime | None = None,
+                    end_date: datetime | None = None,
+                    load_actls: pd.DataFrame | None = None) -> pd.DataFrame:
         """Parse forecast and actual load demands from zone to bus level."""
         load_fcsts = self.get_forecasts('Load', start_date, end_date)
 
@@ -594,9 +596,9 @@ class GridLoader(ABC):
 
     def create_timeseries(
             self,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
-            ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+            start_date: datetime | None = None,
+            end_date: datetime | None = None
+            ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Get asset values using the historical sets of forecasts, actuals."""
         gen_dfs = list()
 
@@ -619,10 +621,10 @@ class GridLoader(ABC):
 
     def load_scenarios(
             self,
-            scen_dir: Union[str, Path], dates: Iterable[datetime],
+            scen_dir: str | Path, dates: Iterable[datetime],
             scenarios: Iterable[int],
-            asset_types: Tuple[str] = ('Load', 'Wind', 'Solar')
-            ) -> Dict[str, pd.DataFrame]:
+            asset_types: tuple[str] = ('Load', 'Wind', 'Solar')
+            ) -> dict[str, pd.DataFrame]:
         """Parse a set of scenarios saved to file."""
         scens = {asset_type: dict() for asset_type in asset_types}
 
@@ -660,7 +662,7 @@ class GridLoader(ABC):
             self,
             scen_dfs: Mapping[str, pd.DataFrame],
             start_date: datetime, end_date: datetime, scenario: int
-            ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+            ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Get asset values corresponding to a scenario for actuals."""
 
         use_scens = {asset_type: scen_df.loc[scenario]
@@ -727,7 +729,7 @@ class RtsLoader(GridLoader):
         return "RTS_Data"
 
     @property
-    def init_state_file(self):
+    def init_state_file(self) -> Path:
         return Path(self.in_dir, self.grid_dir,
                     'FormattedData', 'PLEXOS', 'PLEXOS_Solution',
                     'DAY_AHEAD Solution Files', 'noTX', 'on_time_7.12.csv')
@@ -737,7 +739,7 @@ class RtsLoader(GridLoader):
         return -pd.Timedelta(hours=8)
 
     @property
-    def timeseries_cohorts(self):
+    def timeseries_cohorts(self) -> set(str):
         return {'WIND', 'PV', 'RTPV', 'Hydro'}
 
     @staticmethod
@@ -840,7 +842,9 @@ class RtsLoader(GridLoader):
             )
 
     def process_forecasts(self,
-                          forecasts_file, start_date=None, end_date=None):
+                          forecasts_file: str | Path,
+                          start_date: datetime | None = None,
+                          end_date: datetime | None = None) -> pd.DataFrame:
         fcst_df = pd.read_csv(forecasts_file)
 
         df_times = [
@@ -854,7 +858,10 @@ class RtsLoader(GridLoader):
 
         return self.subset_dates(use_df, start_date, end_date)
 
-    def process_actuals(self, actuals_file, start_date=None, end_date=None):
+    def process_actuals(self,
+                        actuals_file: str | Path,
+                        start_date: datetime | None = None,
+                        end_date: datetime | None = None) -> pd.DataFrame:
         actl_df = pd.read_csv(actuals_file)
 
         actl_df['Hour'] = (actl_df.Period - 1) // 12

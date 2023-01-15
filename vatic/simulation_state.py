@@ -12,7 +12,8 @@ class VaticSimulationState:
     """A system state that can be updated with data from RUCs and SCEDs."""
 
     def __init__(self,
-                 ruc_execution_hour, ruc_every_hours, sced_frequency_minutes):
+                 ruc_execution_hour: int, ruc_every_hours: int,
+                 sced_frequency_minutes: int):
         self._forecasts = None
         self._actuals = None
         self._commits = dict()
@@ -32,7 +33,7 @@ class VaticSimulationState:
         self._next_forecast_pop_minute = 0
         self._next_actuals_pop_minute = 0
 
-        #TODO: should this be here or in the time manager?
+        # TODO: should this be here or in the time manager?
         self.ruc_delay = -(ruc_execution_hour % -ruc_every_hours)
         self._sced_frequency = sced_frequency_minutes
 
