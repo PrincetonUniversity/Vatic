@@ -385,6 +385,9 @@ class StatsManager:
         if self.last_conditions_file:
             tgen_gby = report_dfs['thermal_detail'].groupby('Generator')
 
+            # get the final output for each generator
+            final_dispatch = tgen_gby.apply(lambda x: round(x['Dispatch'][-1], 2))
+
             # get the final on/off state for each generator
             final_bool = tgen_gby.apply(
                 lambda x: (x['Unit State'][-1] * 2 - 1))
@@ -398,17 +401,24 @@ class StatsManager:
 
             # for generators which were on or off for the entire simulation
             last_conds[last_conds == 0] = len(self._sced_stats)
-            last_conds[last_conds == 0] *= final_bool[
-                last_conds[last_conds == 0].index]
+            last_conds[last_conds == len(self._sced_stats)] *= final_bool[
+                last_conds[last_conds == len(self._sced_stats)].index]
 
             # save the final states to file, merging with initial states for
             # this sim for generators that were on/off the entire time
-            pd.DataFrame(pd.Series({
-                gen: (last_conds[gen]
-                      if (init_cond > 0) ^ (last_conds[gen] > 0)
-                      else init_cond + last_conds[gen])
-                for gen, init_cond in self._grid_data['initial_states'].items()
-                })).T.to_csv(self.last_conditions_file, index=False)
+            last_cond_dict = {
+                gen: {
+                    'UnitOnT0State': (
+                        init_cond + last_conds[gen] 
+                        if (abs(last_conds[gen]) == len(self._sced_stats)) 
+                        and (np.sign(init_cond) == np.sign(last_conds[gen])) 
+                        else last_conds[gen]),
+                    'PowerGeneratedT0': final_dispatch[gen]
+                } for gen, init_cond in self._grid_data['initial_states'].items()
+            }
+
+            with open(self.last_conditions_file, 'wb') as handle:
+                pickle.dump(last_cond_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         if self.write_dir:
             if self.save_to_csv:
