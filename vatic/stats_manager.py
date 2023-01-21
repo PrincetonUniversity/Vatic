@@ -406,19 +406,20 @@ class StatsManager:
 
             # save the final states to file, merging with initial states for
             # this sim for generators that were on/off the entire time
-            last_cond_dict = {
-                gen: {
-                    'UnitOnT0State': (
-                        init_cond + last_conds[gen] 
-                        if (abs(last_conds[gen]) == len(self._sced_stats)) 
-                        and (np.sign(init_cond) == np.sign(last_conds[gen])) 
-                        else last_conds[gen]),
-                    'PowerGeneratedT0': final_dispatch[gen]
-                } for gen, init_cond in self._grid_data['initial_states'].items()
-            }
-
-            with open(self.last_conditions_file, 'wb') as handle:
-                pickle.dump(last_cond_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            df = pd.DataFrame.from_dict(
+                {
+                    gen: {
+                        'UnitOnT0State': (init_cond + last_conds[gen] 
+                            if (abs(last_conds[gen]) == len(self._sced_stats)) 
+                            and (np.sign(init_cond) == np.sign(last_conds[gen])) 
+                            else last_conds[gen]),
+                        'PowerGeneratedT0': final_dispatch[gen]
+                    }
+                    for gen, init_cond in self._grid_data['initial_states'].items()
+                }, orient='index'
+            )
+            df.index.name = 'GEN'
+            df.to_csv(self.last_conditions_file)
 
         if self.write_dir:
             if self.save_to_csv:

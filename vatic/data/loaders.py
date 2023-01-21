@@ -271,11 +271,11 @@ class GridLoader(ABC):
         tgens = list()
         rgens = list()
 
-        with open(self.init_state_file, 'rb') as handle:
-            first_states = pickle.load(handle)
+        first_states = pd.read_csv(self.init_state_file, 
+            index_col='GEN').to_dict(orient='index')
         if init_state_file:
-            with open(init_state_file, 'rb') as handle:
-                init_states = pickle.load(handle)
+            init_states = pd.read_csv(init_state_file, 
+                index_col='GEN').to_dict(orient='index')
         else:
             init_states = first_states
 
@@ -732,7 +732,7 @@ class RtsLoader(GridLoader):
 
     @property
     def init_state_file(self) -> Path:
-        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.12.p')
+        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.12.csv')
 
     @property
     def utc_offset(self):
@@ -908,7 +908,7 @@ class T7kLoader(GridLoader):
 
     @property
     def init_state_file(self):
-        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.10.p')
+        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.10.csv')
 
     @property
     def utc_offset(self):
