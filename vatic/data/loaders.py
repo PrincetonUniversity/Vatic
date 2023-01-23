@@ -271,11 +271,11 @@ class GridLoader(ABC):
         tgens = list()
         rgens = list()
 
-        first_states = pd.read_csv(self.init_state_file, 
-            index_col='GEN').to_dict(orient='index')
+        first_states = pd.read_csv(self.init_state_file,
+                                   index_col='GEN').to_dict(orient='index')
         if init_state_file:
-            init_states = pd.read_csv(init_state_file, 
-                index_col='GEN').to_dict(orient='index')
+            init_states = pd.read_csv(init_state_file,
+                                      index_col='GEN').to_dict(orient='index')
         else:
             init_states = first_states
 
@@ -392,13 +392,16 @@ class GridLoader(ABC):
             for gen in tgens
             }
 
-        template['UnitOnT0State'] = {gen.ID: init_states[gen.ID]['UnitOnT0State']
-                                     for gen in tgens if gen.ID in init_states}
+        template['UnitOnT0State'] = {
+            gen.ID: init_states[gen.ID]['UnitOnT0State']
+            for gen in tgens if gen.ID in init_states
+            }
 
         template['PowerGeneratedT0'] = {
-            gen.ID: 0. if init_states[gen.ID]['UnitOnT0State'] < 0 
-                    else round(init_states[gen.ID]['PowerGeneratedT0'], 2) 
-                    for gen in tgens if gen.ID in init_states}
+            gen.ID: (0. if init_states[gen.ID]['UnitOnT0State'] < 0
+                     else round(init_states[gen.ID]['PowerGeneratedT0'], 2))
+            for gen in tgens if gen.ID in init_states
+            }
 
         self.template = template
 
@@ -732,14 +735,15 @@ class RtsLoader(GridLoader):
 
     @property
     def init_state_file(self) -> Path:
-        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.12.csv')
+        return Path(_ROOT, "grids", "initial-state",
+                    self.data_lbl, "on_time_7.12.csv")
 
     @property
     def utc_offset(self):
         return -pd.Timedelta(hours=8)
 
     @property
-    def timeseries_cohorts(self) -> set(str):
+    def timeseries_cohorts(self) -> set[str]:
         return {'WIND', 'PV', 'RTPV', 'Hydro'}
 
     @staticmethod
@@ -908,7 +912,8 @@ class T7kLoader(GridLoader):
 
     @property
     def init_state_file(self):
-        return Path(_ROOT, 'grids', 'initial-state', self.data_lbl, 'on_time_7.10.csv')
+        return Path(_ROOT, "grids", "initial-state",
+                    self.data_lbl, "on_time_7.10.csv")
 
     @property
     def utc_offset(self):

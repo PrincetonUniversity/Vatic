@@ -17,7 +17,7 @@ def main():
 
     for i, out_fl in enumerate(args.out_fls):
         with bz2.BZ2File(out_fl, 'r') as f:
-            outputs[i] : Dict[str, pd.DataFrame] = pickle.load(f)
+            outputs[i]: Dict[str, pd.DataFrame] = pickle.load(f)
 
     assert len({tuple(out.keys()) for out in outputs}) == 1, (
         "These output files have differing levels of detail!")
