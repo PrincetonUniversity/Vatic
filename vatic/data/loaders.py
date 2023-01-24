@@ -271,6 +271,8 @@ class GridLoader(ABC):
         tgens = list()
         rgens = list()
 
+        print(self.init_state_file)
+
         first_states = pd.read_csv(self.init_state_file,
                                    index_col='GEN').to_dict(orient='index')
         if init_state_file:

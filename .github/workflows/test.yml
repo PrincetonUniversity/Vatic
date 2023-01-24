@@ -30,14 +30,17 @@ jobs:
           conda activate vatic-env
           pip install .
 
+          head vatic/data/grids/initial-state/RTS-GMLC/on_time_7.12.csv
+
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
