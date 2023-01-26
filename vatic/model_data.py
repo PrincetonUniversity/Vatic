@@ -47,7 +47,7 @@ class VaticModelData(object):
         return VaticModelData(copy(self._data))
 
     def __deepcopy__(self, memo):
-        return VaticModelData(deepcopy(self._data))
+        return VaticModelData(deepcopy(self._data, memo))
 
     def clone_in_service(self) -> VModelData:
         """Returns a version of this grid without out-of-service elements."""
@@ -69,15 +69,14 @@ class VaticModelData(object):
                  **element_args) -> Iterator[tuple[str, dict]]:
         """Retrieves grid elements that match a set of criteria.
 
-        Args
-        ----
-            element_type    Which type of element to search within, e.g. 'bus',
-                            'generator', 'load', 'branch', etc.
-            element_args    A set of element property values, all of which must
-                            be present in an element's data entry and equal to
-                            the given value for the element's entry to be
-                            returned. e.g. generator_type='renewable'
-                                           bus='Chifa'
+        Arguments
+        ---------
+        element_type    Which type of element to search within, e.g. 'bus',
+                        'generator', 'load', 'branch', etc.
+        element_args    A set of element property values, all of which must be
+                        present in an element's data entry and equal to the
+                        given value for the element's entry to be returned.
+                            e.g. generator_type='renewable' bus='Chifa'
 
         """
         if element_type not in self._data['elements']:
@@ -115,10 +114,11 @@ class VaticModelData(object):
 
         return attr_dict
 
-    def get_system_attr(self, attr: str, default: Any = None) -> Any:
+    def get_system_attr(self, attr: str, default: Optional[Any] = None) -> Any:
         if attr in self._data['system']:
             return self._data['system'][attr]
 
+        # throw error if the attribute is missing and no default value is given
         elif default is None:
             raise ModelError("This model does not include the system-level "
                              "attribute `{}`!".format(attr))
