@@ -289,8 +289,8 @@ class VaticModelData(object):
                              reserve_factor: float, time_index: int) -> None:
         """Sets reserve requirement at a time point as a ratio of all demand.
 
-        Args
-        ---
+        Arguments
+        ---------
             reserve_factor      The proportion of total system demand (load)
                                 that is necessary for the reserve requirement.
             time_index          Which time step to set the reserve req at.

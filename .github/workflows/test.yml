@@ -33,8 +33,6 @@ jobs:
           conda activate vatic-env
           pip install .
 
-          head vatic/data/grids/initial-state/RTS-GMLC/on_time_7.12.csv
-
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 

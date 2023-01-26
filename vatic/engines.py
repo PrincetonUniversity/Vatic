@@ -27,7 +27,66 @@ from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
 
 class Simulator:
-    """An engine for simulating the operation of a power grid."""
+    """An engine for simulating the operation of a power grid.
+
+    Parameters
+    ----------
+
+    template_data       Static grid properties such as line capacities, thermal
+                        generator cost curves, network topology, etc.
+    gen_data            Forecasted and actual renewable generator outputs.
+    load_data           Forecasted and actual load bus demands.
+
+    out_dir         Where to save the results of the simulation.
+    start_date      The first day to simulate.
+    num_days        How many days, including the first day, to simulate.
+
+    solver_options      A dictionary of parameters regulating the behaviour of
+                        the MILP solver used.
+    run_lmps            Whether to solve for locational marginal prices after
+                        each real-time economic dispatch.
+    mipgap      The minimum quality of each optimization model solution, given
+                as the ratio of the optimality gap to its objective value.
+    reserve_factor      The proportion of forecasted load demand that must be
+                        available as thermal generator headroom at each time
+                        step in case of unexpected shortfalls.
+
+    output_detail       The amount of information included in the results file.
+    prescient_sced_forecasts        If used, forecast errors are removed from
+                                    real-time dispatches.
+    ruc_prescience_hour         Before this hour, forecasts used by unit
+                                commitments will be made more accurate.
+    ruc_execution_hour          At which time during the preceding day the
+                                day-ahead unit commitment is run (except for
+                                the first day).
+
+    ruc_every_hours         How often unit commitments are executed.
+    ruc_horizon             For how many hours each unit commitment is run.
+    sced_horizon            For how many hours each real-time economic dispatch
+                            is run (including the current hour).
+
+    lmp_shortfall_costs     Whether or not calculation of locational marginal
+                            prices includes reserve shortfall costs.
+    enforce_sced_shutdown_curves        Whether to use generator shutdown
+                                        constraints in dispatches.
+
+    no_startup_shutdown_curves          Refrain from inferring startup and
+                                        shutdown costs for thermal generators?
+
+    init_ruc_file       Use these cached unit commitments for the first day
+                        instead of solving for them from the given forecasts.
+    verbosity           How many info messages to print during simulation.
+    output_max_decimals     Precision to use for values saved to file.
+
+    create_plots        Save visualizations of grid behaviour to file?
+    renew_costs         Use cost curves for renewable generators instead of
+                        assuming no costs.
+    save_to_csv         Use .csv format for results saved to file instead of
+                        Python-pickled archives (.p.gz).
+    last_condition_file     Save the final generator states to file. Especially
+                            useful for use as `init_ruc_file` above.
+
+    """
 
     # model formulations used by Egret, with separate types of models defined
     # for unit commitments and economic dispatches
@@ -104,6 +163,9 @@ class Simulator:
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
                  renew_costs, save_to_csv, last_conditions_file) -> None:
+
+        import pdb; pdb.set_trace()
+
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
@@ -169,10 +231,11 @@ class Simulator:
         """
         simulation_start_time = time.time()
 
-        # create commitments for the first day using an RUC
+        # create commitments for the first day using an initial unit commitment
         self.initialize_oracle()
         self.simulation_times['Init'] += time.time() - simulation_start_time
 
+        # simulate each time period
         for time_step in self._time_manager.time_steps():
             self._current_timestep = time_step
 
