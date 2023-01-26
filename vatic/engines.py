@@ -31,7 +31,6 @@ class Simulator:
 
     Parameters
     ----------
-
     template_data       Static grid properties such as line capacities, thermal
                         generator cost curves, network topology, etc.
     gen_data            Forecasted and actual renewable generator outputs.
@@ -163,8 +162,6 @@ class Simulator:
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
                  renew_costs, save_to_csv, last_conditions_file) -> None:
-
-        import pdb; pdb.set_trace()
 
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')

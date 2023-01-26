@@ -5,10 +5,10 @@ from __future__ import annotations
 import dill as pickle
 from pathlib import Path
 from copy import copy, deepcopy
-from typing import Any, TypeVar, Iterable, Iterator
-VModelData = TypeVar('VModelData', bound='VaticModelData')
-
 from egret.data.model_data import ModelData as EgretModel
+
+from typing import TypeVar, Any, Optional, Union, Iterable, Iterator
+VModelData = TypeVar('VModelData', bound='VaticModelData')
 
 
 class ModelError(Exception):
@@ -18,8 +18,11 @@ class ModelError(Exception):
 class VaticModelData(object):
     """Simplified version of egret.data.model_data.ModelData"""
 
-    def __init__(self,
-                 source: dict | VModelData | str | Path | None = None) -> None:
+    def __init__(
+            self,
+            source: Optional[Union[VModelData, dict, Path, str]] = None
+            ) -> None:
+
         if isinstance(source, dict):
             self._data = deepcopy(source)
 
@@ -146,22 +149,22 @@ class VaticModelData(object):
             'system']['reserve_requirement']['values']
 
     def time_series(self,
-                    element_types: Iterable[str] | None = None,
+                    element_types: Optional[Iterable[str]] = None,
                     include_reserves: bool = True,
                     **element_args: str) -> Iterator[tuple]:
         """Retrieves timeseries for grid elements that match a set of criteria.
 
-        Args
-        ----
-            element_types   Which types of element to search within,
-                            e.g. 'storage', 'load', generator', 'bus', etc.
-            include_reserves    Whether to return reserve requirements, which
-                                will never be returned otherwise.
-            element_args    A set of element property values, all of which must
-                            be present in an element's data entry and equal to
-                            the given value for the element's entry to be
-                            returned. e.g. generator_type='thermal'
-                                           in_service=True
+        Arguments
+        ---------
+        element_types   Which types of element to search within,
+                        e.g. 'storage', 'load', generator', 'bus', etc.
+        include_reserves    Whether to return reserve requirements, which
+                            will never be returned otherwise.
+
+        element_args    A set of element property values, all of which must be
+                        present in an element's data entry and equal to the
+                        given value for the element's entry to be returned.
+                            e.g. generator_type='thermal' in_service=True
 
         """
         if element_types is None:
@@ -185,27 +188,27 @@ class VaticModelData(object):
                    self._data['system']['reserve_requirement'])
 
     def copy_elements(self,
-                      other: VModelData, element_type: str,
-                      attrs: Iterable[str] | None = None,
-                      strict_mode: bool = False, **element_args: str) -> None:
+                      other: Self, element_type: str,
+                      attrs: Optional[Iterable[str]] = None,
+                      strict_mode: bool = False, **element_args: dict) -> None:
         """Replaces grid elements with those in another model data object.
 
-        Args
-        ----
-            other   The model data object we will be copying from.
-            element_type    Which type of element to copy from, e.g. 'bus',
-                            'generator', 'load', 'branch', etc.
-            attrs       If given, only copy data from within these element
-                        entry fields, e.g. 'p_min', 'generator_type', etc.
-            strict_mode     Raise an error if an element meeting the criteria
-                            for copying in the other model data object is
-                            not present in this model data object.
+        Arguments
+        ---------
+        other   The model data object we will be copying from.
 
-            element_args    A set of element property values, all of which must
-                            be present in an element's data entry and equal to
-                            the given value for the element's entry to be
-                            copied. e.g. generator_type='thermal'
-                                         in_service=False
+        element_type    Which type of element to copy from.
+                            e.g. 'bus', 'generator', 'load', 'branch', etc.
+        attrs       If given, only copy data from within these element entry
+                    fields, e.g. 'p_min', 'generator_type', etc.
+        strict_mode     Raise an error if an element meeting the criteria
+                        for copying in the other model data object is not
+                        present in this model data object.
+
+        element_args    A set of element property values, all of which must be
+                        present in an element's data entry and equal to the
+                        given value for the element's entry to be copied.
+                            e.g. generator_type='thermal' in_service=False
 
         """
         for name, elem in other.elements(element_type, **element_args):
@@ -228,11 +231,11 @@ class VaticModelData(object):
                            time_index: int, other_time_index: int) -> None:
         """Replaces forecastable values with those from another model data.
 
-        Args
-        ----
-            other               The model data object we will be copying from.
-            time_index          Which time step to replace in this model data.
-            other_time_index    Which time step to copy from in the other data.
+        Arguments
+        ---------
+        other               The model data object we will be copying from.
+        time_index          Which time step to replace in this model data.
+        other_time_index    Which time step to copy from in the other data.
 
         """
         for gen, gen_data in other.elements('generator',
@@ -264,12 +267,12 @@ class VaticModelData(object):
                        period_minutes: int) -> None:
         """Initializes time indices, creates empty placeholder timeseries.
 
-        Args
-        ----
-            time_steps      How many time steps there will be (creating time
-                            indices [1,2,...,<time_steps>]) or a list of the
-                            time indices themselves.
-            period_minutes      How many minutes are in each time step.
+        Arguments
+        ---------
+        time_steps      How many time steps there will be (creating time
+                        indices [1,2,...,<time_steps>]) or a list of the time
+                        indices themselves.
+        period_minutes      How many minutes are in each time step.
 
         """
         if isinstance(time_steps, int):
@@ -291,11 +294,11 @@ class VaticModelData(object):
 
         Arguments
         ---------
-            reserve_factor      The proportion of total system demand (load)
-                                that is necessary for the reserve requirement.
-            time_index          Which time step to set the reserve req at.
-        """
+        reserve_factor      The proportion of total system demand (load)
+                            that is necessary for the reserve requirement.
+        time_index          Which time step to set the reserve req at.
 
+        """
         if reserve_factor > 0:
             total_load = sum(bus_data['p_load']['values'][time_index]
                              for bus, bus_data in self.elements('load'))
@@ -304,6 +307,9 @@ class VaticModelData(object):
                 'system']['reserve_requirement']['values'][time_index]
             self._data['system']['reserve_requirement']['values'][time_index] \
                 = max(reserve_factor * total_load, cur_req)
+
+    def to_egret(self) -> EgretModel:
+        return EgretModel(deepcopy(self._data))
 
     @property
     def model_runtime(self):
@@ -632,6 +638,3 @@ class VaticModelData(object):
             pass
 
         return
-
-    def to_egret(self) -> EgretModel:
-        return EgretModel(deepcopy(self._data))

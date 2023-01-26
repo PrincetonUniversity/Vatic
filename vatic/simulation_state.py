@@ -9,11 +9,20 @@ from .model_data import VaticModelData
 
 
 class VaticSimulationState:
-    """A system state that can be updated with data from RUCs and SCEDs."""
+    """A system state that can be updated with data from RUCs and SCEDs.
+
+    Parameters
+    ----------
+
+    ruc_execution_hour      Which hour of the day the unit commitment is run.
+    ruc_every_hours         How often to run unit commitments.
+    sced_frequency_minutes  How often to run real-time economic dispatches.
+
+    """
 
     def __init__(self,
                  ruc_execution_hour: int, ruc_every_hours: int,
-                 sced_frequency_minutes: int):
+                 sced_frequency_minutes: int) -> None:
         self._forecasts = None
         self._actuals = None
         self._commits = dict()
@@ -25,7 +34,6 @@ class VaticSimulationState:
         # timestep durations; how often a SCED is run
         self._minutes_per_forecast_step = 60
         self._minutes_per_actuals_step = 60
-        self._sced_frequency = 60
 
         # the current simulation minute and the next minute when forecasts
         # should be popped
@@ -272,9 +280,16 @@ class VaticStateWithOffset:
 
     The offset state is identical to the state being offset, except that time
     periods before the offset time are skipped.
+
+    Parameters
+    ----------
+    parent_state        The current state we are using as the reference.
+    offset              The number of time periods to skip in the parent state.
+
     """
 
-    def __init__(self, parent_state: VaticSimulationState, offset: int):
+    def __init__(self,
+                 parent_state: VaticSimulationState, offset: int) -> None:
         self._parent = parent_state
         self._offset = offset
 
@@ -334,13 +349,13 @@ class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):
     is also offset, so that the initial state comes from the Nth time period
     of the sced.
 
-    Args
-    ----
-        parent_state    The state to project into the future.
-        sced    A sced instance whose state after the offset is used as
-                the initial state.
-        offset  The number of time periods into the future this state
-                should reflect.
+    Parameters
+    ----------
+    parent_state    The state to project into the future.
+    sced        A sced instance whose state after the offset is used as
+                the initial state here.
+    offset      The # of time periods into the future the state should reflect.
+
     """
 
     def __init__(self,
