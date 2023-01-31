@@ -181,10 +181,11 @@ class UCModel:
 
             cost_gens = {g for g, _ in model.ProductionCost}
             for t in zero_cost_hours:
-                for g in cost_gens:
-                    model.ProductionCostConstr[g, t].deactivate()
-                    model.ProductionCost[g, t].value = 0.
-                    model.ProductionCost[g, t].fix()
+                ## include production cost for sced horizon > 1
+                # for g in cost_gens:
+                #     model.ProductionCostConstr[g, t].deactivate()
+                #     model.ProductionCost[g, t].value = 0.
+                #     model.ProductionCost[g, t].fix()
 
                 for g in model.DualFuelGenerators:
                     model.DualFuelProductionCost[g, t].expr = 0.

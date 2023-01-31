@@ -171,6 +171,9 @@ class Simulator:
         self.sced_horizon = sced_horizon
         self.lmp_shortfall_costs = lmp_shortfall_costs
 
+        ## add class attribute for sced shortfall cost
+        self.sced_shortfall_costs = True
+
         self._hours_in_objective = None
         self._current_timestep = None
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
@@ -447,6 +450,11 @@ class Simulator:
 
         sced_model_data = self._data_provider.create_sced_instance(
             self._simulation_state, sced_horizon=sced_horizon)
+
+        ## set sced shortfall cost to 0
+        if not self.sced_shortfall_costs:
+            sced_model_data._data['system']['reserve_shortfall_cost'] = 0.
+
         self._ptdf_manager.mark_active(sced_model_data)
 
         self._hours_in_objective = hours_in_objective
