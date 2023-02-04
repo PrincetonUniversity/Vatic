@@ -152,6 +152,7 @@ class Simulator:
                  load_data: pd.DataFrame, out_dir: Path | str | None,
                  start_date: datetime.date, num_days: int, solver: str,
                  solver_options: dict, run_lmps: bool, mipgap: float,
+                 load_shed_penalty: float, reserve_shortfall_penalty: float,
                  reserve_factor: float, output_detail: int,
                  prescient_sced_forecasts: bool, ruc_prescience_hour: int,
                  ruc_execution_hour: int, ruc_every_hours: int,
@@ -183,7 +184,8 @@ class Simulator:
                 'production_forml'] = 'KOW_Vatic_production_costs_tightened'
 
         self._data_provider = PickleProvider(
-            template_data, gen_data, load_data, reserve_factor,
+            template_data, gen_data, load_data, load_shed_penalty,
+            reserve_shortfall_penalty, reserve_factor,
             prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
             ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
             no_startup_shutdown_curves, verbosity, start_date, num_days,

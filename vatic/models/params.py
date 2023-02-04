@@ -1583,8 +1583,10 @@ def load_base_params(
     # penalty costs for constraint violation #
     #########################################
 
-    kinda_big_penalty = 1e3 * model_data.get_system_attr('baseMVA')
-    big_penalty = 1e4 * model_data.get_system_attr('baseMVA')
+    kinda_big_penalty = (model_data.get_system_attr('reserve_shortfall_cost')
+                         * model_data.get_system_attr('baseMVA'))
+    big_penalty = (model_data.get_system_attr('load_mismatch_cost')
+                   * model_data.get_system_attr('baseMVA'))
 
     model.ReserveShortfallPenalty = pe.Param(
         within=pe.NonNegativeReals, mutable=True,

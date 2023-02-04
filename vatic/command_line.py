@@ -53,6 +53,16 @@ def run_deterministic():
         "--ruc-mipgap", "-g", type=float, default=0.01, dest="ruc_mipgap",
         help="Specifies the mipgap for all deterministic RUC solves."
         )
+
+    parser.add_argument("--load-shed-penalty",
+                        type=float, default=1e4, dest="load_shed_penalty",
+                        help="The #/MWh cost of failing to meet "
+                             "load demand in each time step.")
+    parser.add_argument("--reserve-shortfall-penalty",
+                        type=float, default=1e3, dest="reserve_short_penalty",
+                        help="The #/MWh cost of failing to meet "
+                             "load demand in each time step.")
+
     parser.add_argument(
         "--reserve-factor", "-r",
         type=float, default=0.05, dest="reserve_factor",
@@ -174,6 +184,8 @@ def run_deterministic():
         template_data, gen_data, load_data, out_dir=out_dir,
         start_date=args.start_date, num_days=args.num_days, solver=args.solver,
         solver_options=solver_args, run_lmps=args.lmps, mipgap=args.ruc_mipgap,
+        load_shed_penalty=args.load_shed_penalty,
+        reserve_shortfall_penalty=args.reserve_short_penalty,
         reserve_factor=args.reserve_factor,
         prescient_sced_forecasts=args.prescient_sced_forecasts,
         ruc_prescience_hour=args.ruc_prescience_hour,

@@ -8,6 +8,7 @@ from copy import deepcopy
 import dill as pickle
 import pandas as pd
 import math
+from typing import Optional
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
@@ -47,17 +48,18 @@ class PickleProvider:
                         load demand buses in the grid.
     """
 
-    def __init__(self,
-                 template_data: dict, gen_data: pd.DataFrame,
-                 load_data: pd.DataFrame, reserve_factor: float,
-                 prescient_sced_forecasts: bool,
-                 ruc_prescience_hour: int, ruc_execution_hour: int,
-                 ruc_every_hours: int, ruc_horizon: int,
-                 enforce_sced_shutdown_ramprate: bool,
-                 no_startup_shutdown_curves: bool, verbosity: int,
-                 start_date: date | None = None,
-                 num_days: int | None = None,
-                 renew_costs: str | Path | list[float] | None = None) -> None:
+    def __init__(
+            self,
+            template_data: dict, gen_data: pd.DataFrame,
+            load_data: pd.DataFrame, load_shed_penalty: float,
+            reserve_shortfall_penalty: float, reserve_factor: float,
+            prescient_sced_forecasts: bool, ruc_prescience_hour: int,
+            ruc_execution_hour: int, ruc_every_hours: int,
+            ruc_horizon: int, enforce_sced_shutdown_ramprate: bool,
+            no_startup_shutdown_curves: bool, verbosity: int,
+            start_date: Optional[date] = None, num_days: Optional[int] = None,
+            renew_costs: Optional[str | Path | list[float]] = None
+            ) -> None:
 
         if not (gen_data.index == load_data.index).all():
             raise ProviderError("The generator and the bus demand datasets "
@@ -68,8 +70,8 @@ class PickleProvider:
         self.load_data = load_data.sort_index()
 
         self._time_period_mins = 60
-        self._load_mismatch_cost = 1e4
-        self._reserve_mismatch_cost = 1e3
+        self._load_mismatch_cost = load_shed_penalty
+        self._reserve_mismatch_cost = reserve_shortfall_penalty
         self._reserve_factor = reserve_factor
 
         self._ruc_execution_hour = ruc_execution_hour
