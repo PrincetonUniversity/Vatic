@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: Vatic
-Version: 0.2.0rc5
+Version: 0.4.0b0
 Summary: lightweight PJM power grid interface for Egret + Pyomo
 Author: Michal Radoslaw Grzadkowski
 Author-email: mg2332@princeton.edu
-Requires-Python: ==3.8.*
+Requires-Python: >=3.8,<3.11
 License-File: LICENSE

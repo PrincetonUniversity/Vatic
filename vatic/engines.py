@@ -223,7 +223,7 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
-    @profile
+    #@profile
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 

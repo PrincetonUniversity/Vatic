@@ -3,6 +3,6 @@ pandas
 scipy
 dill
 matplotlib
-pyomo>=5.7.1
+pyomo>=6
 gurobipy
 gridx-egret@ git+https://github.com/shrivats-pu/Egret.git
