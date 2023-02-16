@@ -1,6 +1,4 @@
-from gurobipy import quicksum
-from gurobipy import tupledict
-from gurobipy import LinExpr
+from gurobipy import tupledict, LinExpr, quicksum
 
 def _add_power_generated_startup_shutdown(model, g, t):
     assert model._InitialTime == 1
