@@ -1,3 +1,4 @@
+import os
 import logging
 from datetime import datetime
 
@@ -9,7 +10,8 @@ from vatic.data import load_input
 from vatic.models_gurobi import default_params, garver_3bin_vars, \
                                 garver_power_vars, garver_power_avail_vars, \
                                 file_non_dispatchable_vars, \
-                                pan_guan_gentile_KOW_generation_limits
+                                pan_guan_gentile_KOW_generation_limits, \
+                                damcikurt_ramping
 
 
 component_name = 'data_loader'
@@ -85,12 +87,20 @@ use_model = model_data.clone_in_service()
 
 model = gp.Model('UnitCommitment')
 model._model_data = use_model.to_egret()  #_model_data in model is egret object, while model_data is vatic object
+# Set up attributes under the specific tighten unit commitment model
+model._enforce_t1_ramp_rates = True
+
+# Run the function to build variables and constraints
 model = default_params(model, model_data)
 model = garver_3bin_vars(model)
 model = garver_power_vars(model)
 model = garver_power_avail_vars(model)
 model = file_non_dispatchable_vars(model)
 model = pan_guan_gentile_KOW_generation_limits(model)
+model = damcikurt_ramping(model)
 
 # save gurobi model in a file
-# model.write('/Users/jf3375/Desktop/Gurobi/output/UnitCommitment.mps')
+os.chdir('/Users/jf3375/Desktop/Gurobi/output/')
+model.write('UnitCommitment.mps')
+# more human readable than mps file, but might lose some info
+model.write('UnitCommitment.lp')

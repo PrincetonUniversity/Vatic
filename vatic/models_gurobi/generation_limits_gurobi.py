@@ -1,7 +1,6 @@
-from gurobipy import quicksum
-from gurobipy import LinExpr
-
+from gurobipy import LinExpr, quicksum
 ##LinExpr works faster than quicksum
+
 component_name = 'generation_limits'
 
 ## generate new time periods by looking forward
