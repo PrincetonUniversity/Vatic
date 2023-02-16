@@ -149,8 +149,6 @@ class UCModel:
 
         #ToDo: change whole things into gurobi; import functions from gurobi version instead
         self._load_params(model)
-
-
         self._get_formulation('status_vars')(model)
         self._get_formulation('power_vars')(model)
         self._get_formulation('reserve_vars')(model)

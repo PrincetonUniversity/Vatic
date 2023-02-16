@@ -1,18 +1,20 @@
+import logging
 from datetime import datetime
+
 import multiprocessing
-# import sys
-import os
-from pathlib import Path
-#set parent directory to the root directory to use absolute reference to import files from not packages
-# sys.path.insert(0, str(Path(__file__).resolve()))
+import gurobipy as gp
 
-#Profiling Packages
-# import cProfile, pstats, infeasibleOrUnbounded
-from pstats import SortKey
-from vatic.data import load_input
 from vatic.engines import Simulator
+from vatic.data import load_input
+from vatic.models_gurobi import default_params, garver_3bin_vars, \
+                                garver_power_vars, garver_power_avail_vars, \
+                                file_non_dispatchable_vars, \
+                                pan_guan_gentile_KOW_generation_limits
 
 
+component_name = 'data_loader'
+
+logger = logging.getLogger('pyomo.core')
 
 #relative import does not work when we run the file inside pycharm
 #from ..engines import Simulator
@@ -53,7 +55,7 @@ template_data, gen_data, load_data = load_input(input_grid, start_date, num_days
 
 # pr = cProfile.Profile()
 # pr.enable()
-Simulator(
+simulator = Simulator(
     template_data, gen_data, load_data, out_dir=out_dir,
     last_conditions_file=last_condition_file,
     start_date=start_date, num_days=num_days, solver=solver,
@@ -73,13 +75,22 @@ Simulator(
     verbosity=verbose, output_max_decimals=output_max_decimals,
     create_plots=create_plots, renew_costs=renew_costs,
     save_to_csv = csv
-).simulate()
-# pr.disable()
-# s = io.StringIO()
-# ps = pstats.Stats(pr, stream=s).sort_stats('cumtime', 'calls')
-# ps.print_stats(30)
-# print(s.getvalue())
-#
-# with open('vatic_run_test_cprofile.txt', 'w+') as f:
-#     f.write(s.getvalue())
+)
 
+sim_state_for_ruc = None
+first_step = simulator._time_manager.get_first_timestep()
+model_data = simulator._data_provider.create_deterministic_ruc(
+    first_step, sim_state_for_ruc)
+use_model = model_data.clone_in_service()
+
+model = gp.Model('UnitCommitment')
+model._model_data = use_model.to_egret()  #_model_data in model is egret object, while model_data is vatic object
+model = default_params(model, model_data)
+model = garver_3bin_vars(model)
+model = garver_power_vars(model)
+model = garver_power_avail_vars(model)
+model = file_non_dispatchable_vars(model)
+model = pan_guan_gentile_KOW_generation_limits(model)
+
+# save gurobi model in a file
+# model.write('/Users/jf3375/Desktop/Gurobi/output/UnitCommitment.mps')

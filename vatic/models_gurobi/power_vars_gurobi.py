@@ -38,7 +38,7 @@ def _add_power_generated_startup_shutdown(model, g, t):
         if past_shutdown_power_index <= len(shutdown_curve):
             future_startup_past_shutdown_production += shutdown_curve[past_shutdown_power_index]
 
-        linear_vars, linear_coefs = model._get_power_generated_lists(m,g,t)
+        linear_vars, linear_coefs = model._get_power_generated_lists(model,g,t)
         for startup_idx in range(1, min( len(startup_curve)+1, model._NumTimePeriods+1-t )):
             linear_vars.append(model._UnitStart[g,t+startup_idx])
             linear_coefs.append(startup_curve[startup_idx])
@@ -70,22 +70,22 @@ def garver_power_vars(model):
     model._power_vars='garver_power_vars'
     # ensure the upper bound is ordered here ('101_CT_1', 1), ..., ('101_CT_1', 48), ('101_CT_2', 1), ..., ('101_CT_2', 48),..
     model._PowerGeneratedAboveMinimum = model.addVars(model._ThermalGenerators, model._TimePeriods, lb=0,
-                                                      ub=[model._MaximumPowerOutput[g, t] - model._MinimumPowerOutput[
-                                                          g, t] \
+                                                      ub=[model._MaximumPowerOutput[g, t]
+                                                          - model._MinimumPowerOutput[g, t]
                                                           for g in model._ThermalGenerators for t in
                                                           model._TimePeriods],
                                                       name='PowerGeneratedAboveMinimum')
 
-    model._get_power_generated_above_minimum_lists = lambda m, g, t: ([model.PowerGeneratedAboveMinimum[g, t]], [1.])
+    model._get_power_generated_above_minimum_lists = lambda m, g, t: ([model._PowerGeneratedAboveMinimum[g, t]], [1.])
     model._get_negative_power_generated_above_minimum_lists = lambda m, g, t: (
-    [model.PowerGeneratedAboveMinimum[g, t]], [-1.])
+    [model._PowerGeneratedAboveMinimum[g, t]], [-1.])
 
     model._get_power_generated_lists = lambda m, g, t: (
-    [model.PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [1., model.MinimumPowerOutput[g, t]])
+    [model._PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [1., model._MinimumPowerOutput[g, t]])
     model._get_negative_power_generated_lists = lambda m, g, t: (
-    [model.PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [-1., -model.MinimumPowerOutput[g, t]])
+    [model._PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [-1., -model._MinimumPowerOutput[g, t]])
 
-    def power_generated_expr_rule(m, g, t):
+    def power_generated_expr_rule(model, g, t):
         return model._PowerGeneratedAboveMinimum[g, t] + model._MinimumPowerOutput[g, t] * model._UnitOn[g, t]
 
     model._PowerGenerated = tupledict({(g, t): power_generated_expr_rule(model, g, t) for g in model._ThermalGenerators
@@ -93,11 +93,8 @@ def garver_power_vars(model):
 
     model._PowerGeneratedStartupShutdown = tupledict({(g, t): _add_power_generated_startup_shutdown(model, g, t)
                                          for g in model._ThermalGenerators for t in model._TimePeriods})
+    return model
 
-    model.update()
-    return
-
-garver_power_vars(model)
 
 
 

@@ -27,9 +27,7 @@ def garver_3bin_vars(model):
         _add_unit_on_vars(model)
         _add_unit_start_vars(model)
         _add_unit_stop_vars(model)
-    #use model.update(); no need to return model as output
-    model.update()
-    return
+    return model
 
 def _add_unit_on_vars(model, relaxed=False):
     # indicator variables for each generator, at each time period.
@@ -51,5 +49,3 @@ def _add_unit_stop_vars(model, relaxed=False):
     else:
         model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStop')
 
-garver_3bin_vars(model)
-#add var names into model

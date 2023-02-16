@@ -64,7 +64,6 @@ def garver_power_avail_vars(model):
     model._ReserveProvided = tupledict({(g, t): model._MaximumPowerAvailableAboveMinimum[g,t] - model._PowerGeneratedAboveMinimum[g,t]
                                         for g in model._ThermalGenerators for t in model._TimePeriods})
 
-    model.update()
-    return
+    return model
 
-garver_power_avail_vars(model)
+

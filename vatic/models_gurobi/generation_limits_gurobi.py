@@ -256,5 +256,4 @@ def pan_guan_gentile_KOW_generation_limits(model):
     _MLR_generation_limits_uptime_1(model, True)
     _pan_guan_generation_limits(model, False)
     _KOW_generation_limits(model)
-
-pan_guan_gentile_KOW_generation_limits(model)
+    return model
