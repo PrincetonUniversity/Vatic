@@ -7,8 +7,8 @@ import egret.data.ptdf_utils as ptdf_utils
 import egret.common.lazy_ptdf_utils as lpu
 from egret.model_library.defn import BasePointType, CoordinateType, ApproximationType
 
-from .power_vars import _add_reactive_power_vars
-from .generation_limits import _add_reactive_limits
+from .power_vars_gurobi import _add_reactive_power_vars
+from .generation_limits_gurobi import _add_reactive_limits
 
 component_name = 'power_balance'
 
@@ -567,7 +567,7 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
     if reactive_power:
         if system_load_mismatch:
             raise Exception("Need to implement system mismatch for reactive power")
-        _add_reactive_power_vars(model)
+        model = _add_reactive_power_vars(model)
         _add_reactive_limits(model)
         if slacks:
             _add_q_load_mismatch(model)

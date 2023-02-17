@@ -256,3 +256,21 @@ def pan_guan_gentile_KOW_generation_limits(model):
     _pan_guan_generation_limits(model, False)
     _KOW_generation_limits(model)
     return model
+
+def _add_reactive_limits(model, grid):
+
+    def reactive_upper_limit(m,g,t):
+        return m._ReactivePowerGenerated[g,t] <= m._MaximumReactivePowerOutput[g,t]*m._UnitOn[g,t]
+
+    model._EnforceReactiveUpperLimit = model.addConstrs(
+        (reactive_upper_limit(model, g, t) for g in model._ThermalGenerators
+            for t in model._TimePeriods),
+        name = 'EnforceReactiveUpperLimit')
+
+    def reactive_lower_limit(m,g,t):
+        return m._MinimumReactivePowerOutput[g,t]*m._UnitOn[g,t] <= m._ReactivePowerGenerated[g,t]
+
+    model._EnforceReactiveLowerLimit = model.addConstrs(
+        (reactive_lower_limit(model, g, t) for g in model._ThermalGenerators
+            for t in model._TimePeriods),
+        name = 'EnforceReactiveLowerLimit')

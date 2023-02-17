@@ -1,5 +1,13 @@
 from gurobipy import tupledict, LinExpr, quicksum
 
+def _add_reactive_power_vars(model):
+    model._ReactivePowerGenerated = model.addVars(model._ThermalGenerators, model._TimePeriods,
+                                                  lb = [model._MinimumReactivePowerOutput[g, t] for g in model._ThermalGenerators
+                                                            for t in model._TimePeriods],
+                                                  ub = [model._MaximumReactivePowerOutput[g, t] for g in model._ThermalGenerators
+                                                            for t in model._TimePeriods], name = 'ReactivePowerGenerated')
+    return model
+
 def _add_power_generated_startup_shutdown(model, g, t):
     assert model._InitialTime == 1
     linear_vars, linear_coefs = [model._PowerGeneratedAboveMinimum[g,t], model._UnitOn[g,t]], [1., model._MinimumPowerOutput[g,t]]
