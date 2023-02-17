@@ -3,10 +3,10 @@ import math
 import gurobipy as gp
 import pyomo.environ as pe
 from gurobipy import tupledict, tuplelist
-from collections import OrderedDict
 from ordered_set import OrderedSet
 
 from egret.model_library.transmission import tx_utils
+from egret.common.log import logger
 from egret.model_library.unit_commitment.uc_utils import (
     add_model_attr, uc_time_helper)
 from vatic.models._utils import ModelError
@@ -171,7 +171,7 @@ def load_base_params(
 
     ## Interfaces
     model._Interfaces = interface_attrs['names']
-    model._InterfaceLines = OrderedDict(interface_attrs.get('lines', {}))
+    model._InterfaceLines = dict(interface_attrs.get('lines', {}))
 
     model._InterfaceMinFlow = tupledict(interface_attrs.get('minimum_limit', {}))
 
@@ -574,7 +574,7 @@ def load_base_params(
 
         return startup_curve[0:min_down_time]
 
-    model._StartupCurve = OrderedDict([(g, startup_curve_init_rule(model, g)) for g in model._ThermalGenerators])
+    model._StartupCurve = {g: startup_curve_init_rule(model, g) for g in model._ThermalGenerators}
 
 
     def shutdown_curve_init_rule(m, g):
@@ -594,7 +594,7 @@ def load_base_params(
 
         return shutdown_curve[0:min_down_time]
 
-    model._ShutdownCurve = OrderedDict([(g, shutdown_curve_init_rule(model, g)) for g in model._ThermalGenerators])
+    model._ShutdownCurve = {g: shutdown_curve_init_rule(model, g) for g in model._ThermalGenerators}
 
     ####################################################################
     # generator power output at t=0 (initial condition). units are MW. #
@@ -817,7 +817,7 @@ def load_base_params(
 
 
     # units are hours / time periods.
-    model._StartupLags = OrderedDict((g, startup_lags_init_rule(model, g)) for g in model._ThermalGenerators)
+    model._StartupLags = {g: startup_lags_init_rule(model, g) for g in model._ThermalGenerators}
 
     def _get_startup_cost(startup, fixed_adder, multiplier):
         try:
@@ -855,7 +855,7 @@ def load_base_params(
 
 
     # units are $.
-    model._StartupCosts = OrderedDict([(g, startup_costs_init_rule(model, g)) for g in model._ThermalGenerators])
+    model._StartupCosts = {g: startup_costs_init_rule(model, g) for g in model._ThermalGenerators}
 
 
     # startup lags must be monotonically increasing...
@@ -912,10 +912,10 @@ def load_base_params(
     #change to 0-based indices when rewriting it directly in Gurobi
 
     def startup_cost_indices_init_rule(m, g):
-        return range(1, len(m._StartupLags[g]) + 1)
+        return range(0, len(m._StartupLags[g]))
 
 
-    model._StartupCostIndices = tupledict({g: startup_cost_indices_init_rule(model, g) for g in model._ThermalGenerators})
+    model._StartupCostIndices = {g: startup_cost_indices_init_rule(model, g) for g in model._ThermalGenerators}
 
     ## scale the startup lags
     ## Again, assert that this must be at least one in the time units of the model
@@ -923,7 +923,7 @@ def load_base_params(
         return [max(int(round(this_lag / m._TimePeriodLengthHours)), 1)
                 for this_lag in m._StartupLags[g]]
 
-    model._ScaledStartupLags = OrderedDict([(g, scaled_startup_lags_rule(model, g)) for g in model._ThermalGenerators])
+    model._ScaledStartupLags = {g: scaled_startup_lags_rule(model, g) for g in model._ThermalGenerators}
 
     ##################################################################################
     # shutdown cost for each generator. in the literature, these are often set to 0. #
