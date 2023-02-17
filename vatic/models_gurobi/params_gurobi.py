@@ -194,7 +194,7 @@ def load_base_params(
                               interface['line_orientation']):
             _interface_line_orientation_dict[intfc, line] = sign
 
-    model._InterfaceLineOrientation = pe.Param(_interface_line_orientation_dict)
+    model._InterfaceLineOrientation = _interface_line_orientation_dict
 
     _interface_penalties = tupledict()
     _md_violation_penalties = tupledict(interface_attrs.get('violation_penalty', {}))
@@ -1492,7 +1492,7 @@ def load_base_params(
     model._MinimumPowerInputStorage = tupledict(storage_attrs.get('min_charge_rate', {storage: 0 for storage in model._Storage}))
 
     def maximum_power_input_validator_storage(m, v, s):
-        return v >= pe.value(m.MinimumPowerInputStorage[s])
+        return v >= m._MinimumPowerInputStorage[s]
     model._MaximumPowerInputStorage = tupledict(storage_attrs.get('max_charge_rate', {storage: 0 for storage in model._Storage}))
 
     def maximum_power_input_validator_storage(m, v, s):
