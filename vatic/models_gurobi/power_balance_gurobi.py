@@ -10,7 +10,6 @@ from .power_vars_gurobi import _add_reactive_power_vars
 from .generation_limits_gurobi import _add_reactive_limits
 import vatic.models_gurobi.transmission_gurobi.bus as libbus
 import vatic.models_gurobi.transmission_gurobi.branch as libbranch
-from vatic.models_gurobi.params_gurobi import default_params
 from vatic.models_gurobi.power_vars_gurobi import _add_power_generated_startup_shutdown
 from vatic.models_gurobi.non_dispatchable_vars_gurobi import file_non_dispatchable_vars
 
@@ -112,6 +111,7 @@ def _add_blank_load_mismatch(model):
     model._negLoadGenerateMismatch = tupledict({(b, t): 0 for b in model._Buses \
                                                 for t in model._TimePeriods})
     model._LoadMismatchCost = {t: 0 for t in model._TimePeriods}
+    return model
 
 def _add_blank_q_load_mismatch(model):
     model._LoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
@@ -392,7 +392,7 @@ def _setup_egret_network_topology(m,tm):
     return buses, branches, branches_in_service, branches_out_service, interfaces, contingencies
 
 def _setup_egret_network_model(block, tm):
-    m = block
+    m = block._parent
 
     ## this is not the "real" gens by bus, but the
     ## index of net injections from the UC model
@@ -408,6 +408,7 @@ def _setup_egret_network_model(block, tm):
     return m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts
 
 def _ptdf_dcopf_network_model(block, tm):
+    # m is our main model, the parent of block
     m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts = \
         _setup_egret_network_model(block, tm)
 
@@ -417,7 +418,9 @@ def _ptdf_dcopf_network_model(block, tm):
 
     ptdf_options = m._ptdf_options
 
-    libbus.declare_var_p_nw(block, m._Buses)
+    block._p_nw_tm = m.addVars(m._Buses, name='p_nw_{}'.format(tm))
+
+    # libbus.declare_var_p_nw(block, m._Buses)
 
     ### declare net withdraw expression for use in PTDF power flows
     libbus.declare_eq_p_net_withdraw_at_bus(model=block,
@@ -480,7 +483,7 @@ def _ptdf_dcopf_network_model(block, tm):
 
     if ptdf_options['lazy']:
         ### add "blank" real power flow limits
-        libbranch.declare_ineq_p_branch_thermal_bounds(model=block,
+        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, period = tm,
                                                        index_set=branches_in_service,
                                                        branches=branches,
                                                        p_thermal_limits=None,
@@ -491,7 +494,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                            tm]
                                                        )
         ### declare the "blank" interface flow limits
-        libbranch.declare_ineq_p_interface_bounds(model=block,
+        libbranch.declare_ineq_p_interface_bounds(model=block, period = tm,
                                                   index_set=interfaces.keys(),
                                                   interfaces=interfaces,
                                                   approximation_type=None,
@@ -500,7 +503,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                   m._InterfaceViolationCost[tm]
                                                   )
         ### declare the "blank" interface flow limits
-        libbranch.declare_ineq_p_contingency_branch_thermal_bounds(model=block,
+        libbranch.declare_ineq_p_contingency_branch_thermal_bounds(model=block, period = tm,
                                                                    index_set=block._contingency_set,
                                                                    pc_thermal_limits=None,
                                                                    approximation_type=None,
@@ -530,14 +533,14 @@ def _ptdf_dcopf_network_model(block, tm):
                  branches_in_service}
 
         ### declare the branch power flow approximation constraints
-        libbranch.declare_eq_branch_power_ptdf_approx(model=block,
+        libbranch.declare_eq_branch_power_ptdf_approx(model=block, period = tm,
                                                       index_set=branches_in_service,
                                                       PTDF=PTDF,
                                                       abs_ptdf_tol=abs_ptdf_tol,
                                                       rel_ptdf_tol=rel_ptdf_tol
                                                       )
         ### declare the real power flow limits
-        libbranch.declare_ineq_p_branch_thermal_bounds(model=block,
+        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, period = tm,
                                                        index_set=branches_in_service,
                                                        branches=branches,
                                                        p_thermal_limits=p_max,
@@ -549,7 +552,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                        )
 
         ### declare the branch power flow approximation constraints
-        libbranch.declare_eq_interface_power_ptdf_approx(model=block,
+        libbranch.declare_eq_interface_power_ptdf_approx(model=block, period = tm,
                                                          index_set=interfaces.keys(),
                                                          PTDF=PTDF,
                                                          abs_ptdf_tol=abs_ptdf_tol,
@@ -557,7 +560,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                          )
 
         ### declare the interface flow limits
-        libbranch.declare_ineq_p_interface_bounds(model=block,
+        libbranch.declare_ineq_p_interface_bounds(model=block, period = tm,
                                                   index_set=interfaces.keys(),
                                                   interfaces=interfaces,
                                                   approximation_type=ApproximationType.PTDF,
@@ -614,71 +617,17 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
     # for contingency violation costs at a time step
     model._ContingencyViolationCost = {t: 0 for t in model._TimePeriods}
 
+    # set up the empty model block for each time period to add constraints
+    block = gp.Model()
 
+    block._gens_by_bus = {bus: [bus] for bus in model._Buses}
+    block._parent = model
     for tm in model._TimePeriods:
-
-        b = model.copy()
-
-        # The deep copy does not copy private attributes starting with _
-        b._ThermalGenerators = model._ThermalGenerators
-        b._TimePeriods = model._TimePeriods
-        b._ThermalGeneratorsAtBus = model._ThermalGeneratorsAtBus
-        # b._PowerOutputStorage = model._PowerOutputStorage
-        b._StorageAtBus = model._StorageAtBus
-        b._MinimumPowerOutput = model._MinimumPowerOutput
-
-        # b._PowerInputStorage = model._PowerInputStorage
-
-        b._NondispatchableGeneratorsAtBus = model._NondispatchableGeneratorsAtBus
-        b._HVDCLinePower = model._HVDCLinePower
-        b._HVDCLinesTo = model._HVDCLinesTo
-        b._HVDCLinesFrom = model._HVDCLinesTo
-
-        # b._ReactivePowerGenerated = model._ReactivePowerGenerated
-        # b._LoadGenerateMismatchReactive = model._LoadGenerateMismatchReactive
-        b._ptdf_options = model._ptdf_options
-        b._Buses = model._Buses
-        b._Contingencies = model._Contingencies
-        b._contingencies = model._contingencies
-        b._TransmissionLines = model._TransmissionLines
-        b._PTDFs = model._PTDFs
-        b._ReferenceBus = model._ReferenceBus
-        b._BranchViolationCost = model._BranchViolationCost
-        b._InterfaceViolationCost = model._InterfaceViolationCost
-        # b._gens_by_bus = model._gens_by_bus
-        b._Demand = model._Demand
-        b._bus_gs_fixed_shunts = model._bus_gs_fixed_shunts
-        b._buses = model._buses
-        b._branches = model._branches
-        b._interfaces = model._interfaces
-        b._LineOutOfService = model._LineOutOfService
-        b._InterfacesWithSlack = model._InterfacesWithSlack
-        b._BranchesWithSlack = model._BranchesWithSlack
-        b._InitialTime = model._InitialTime
-        b._StartupCurve = model._StartupCurve
-        b._ShutdownCurve = model._ShutdownCurve
-
-
-
-        # Add private attributes needed in the function below
-        # The gurobi variables and thus the related expressions could not be copied; must recreated
-        b._PowerGeneratedAboveMinimum = {}
-        for key in model._PowerGeneratedAboveMinimum.keys():
-            print(b.getVarByName('PowerGeneratedAboveMinimum[{}]'.format(key)))
-            b._PowerGeneratedAboveMinimum[key] = b.getVarByName('PowerGeneratedAboveMinimum[{},{}]'.format(key[0], key[1]))
-
-        b._UnitOn = {}
-        for key in model._UnitOn.keys():
-            b._UnitOn[key] = b.getVarByName('UnitOn[{},{}]'.format(key[0], key[1]))
-
-        b._PowerGeneratedStartupShutdown = tupledict({(g, t): _add_power_generated_startup_shutdown(b, g, t)
-                                         for g in b._ThermalGenerators for t in b._TimePeriods})
-        b = file_non_dispatchable_vars(b)
-        b = _add_blank_load_mismatch(model)
-
-        b._pg = {bus: _get_pg_expr_rule(tm, b, bus) for bus in b._Buses}
+        block._tm = tm
+        block._pg = {bus: _get_pg_expr_rule(tm, model, bus) for bus in
+                     model._Buses}
         if reactive_power:
-            b._qg = {bus: _get_qg_expr_rule(tm, b, bus) for bus in b._Buses}
-        b._gens_by_bus = {bus : [bus] for bus in b._Buses}
-        network_model_builder(b,tm)
+            block._qg = {bus: _get_qg_expr_rule(tm, model, bus) for bus in
+                         model._Buses}
+        network_model_builder(block, tm)
 

@@ -16,7 +16,7 @@ def get_power_flow_interface_expr_ptdf(model, interface_name, PTDF, rel_ptdf_tol
 
     ptdf_tol = max(abs_ptdf_tol, rel_ptdf_tol*max_coef)
 
-    m_p_nw = model._p_nw
+    m_p_nw = model._p_nw_tm
     ## if model.p_nw is Var, we can use LinearExpression
     ## to build these dense constraints much faster
     coef_list = []
@@ -30,7 +30,7 @@ def get_power_flow_interface_expr_ptdf(model, interface_name, PTDF, rel_ptdf_tol
 
     return expr
 
-def get_power_flow_expr_ptdf_approx(model, branch_name, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
+def get_power_flow_expr_ptdf_approx(model,  branch_name, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
     """
     Create a pyomo power flow expression from PTDF matrix
     """
@@ -47,7 +47,7 @@ def get_power_flow_expr_ptdf_approx(model, branch_name, PTDF, rel_ptdf_tol=None,
     ptdf_tol = max(abs_ptdf_tol, rel_ptdf_tol*max_coef)
     ## NOTE: It would be easy to hold on to the 'ptdf' dictionary here,
     ##       if we wanted to
-    m_p_nw = model._p_nw
+    m_p_nw = model._p_nw_tm
     ## if model.p_nw is Var, we can use LinearExpression
     ## to build these dense constraints much faster
     coef_list = []
@@ -92,7 +92,7 @@ def generate_thermal_bounds(pf, llimit, ulimit, neg_slack=None, pos_slack=None):
             expr -= pos_slack
     return (llimit, expr, ulimit)
 
-def declare_ineq_p_branch_thermal_bounds(model, index_set,
+def declare_ineq_p_branch_thermal_bounds(model, period, index_set,
                                         branches, p_thermal_limits,
                                         approximation_type=ApproximationType.BTHETA,
                                         slacks=False, slack_cost_expr=None):
@@ -100,7 +100,7 @@ def declare_ineq_p_branch_thermal_bounds(model, index_set,
     Create an inequality constraint for the branch thermal limits
     based on the power variables or expressions.
     """
-    m = model
+    m = model._parent
     # con_set = decl.declare_set('_con_ineq_p_branch_thermal_bounds',
     #                            model=model, index_set=index_set)
     # flag for if slacks are on the model
@@ -121,28 +121,28 @@ def declare_ineq_p_branch_thermal_bounds(model, index_set,
             if limit is None:
                 continue
 
-            if slacks and branch_name in m._pf_slack_neg.index_set():
-                assert branch_name in m.pf_slack_pos.index_set()
-                neg_slack = m._pf_slack_neg[branch_name]
-                pos_slack = m._pf_slack_pos[branch_name]
+            if slacks and branch_name in model._pf_slack_neg.index_set():
+                assert branch_name in model.pf_slack_pos.index_set()
+                neg_slack = model._pf_slack_neg[branch_name]
+                pos_slack = model._pf_slack_pos[branch_name]
                 uc_model = slack_cost_expr.parent_block()
                 slack_cost_expr.expr += (uc_model._TimePeriodLengthHours*uc_model._BranchLimitPenalty[branch_name] *
                                     (neg_slack + pos_slack) )
-                assert len(m._pf_slack_pos) == len(m._pf_slack_neg)
+                assert len(model._pf_slack_pos) == len(model._pf_slack_neg)
             else:
                 neg_slack = None
                 pos_slack = None
 
-            lb, expr, ub = generate_thermal_bounds(m.pf[branch_name], -limit, limit,
+            lb, expr, ub = generate_thermal_bounds(model.pf[branch_name], -limit, limit,
                                     neg_slack, pos_slack)
-            m._ineq_pf_branch_thermal_upper_bounds = m.addConstr(
+            m.addConstr(
                     (expr <= ub),
-                    name = 'ineq_pf_branch_thermal_upper_bounds[{}]'.format(branch_name))
-            m._ineq_pf_branch_thermal_lower_bounds = m.addConstr(
+                    name = 'ineq_pf_branch_thermal_upper_bounds_branch[{}]_period[{}]'.format(branch_name, period))
+            m.addConstr(
                     (-expr <= -lb),
-                    name = 'ineq_pf_branch_thermal_lower_bounds[{}]'.format(branch_name))
+                    name = 'ineq_pf_branch_thermal_lower_bounds_branch[{}]_period[{}]'.format(branch_name, period))
 
-def declare_ineq_p_interface_bounds(model, index_set, interfaces,
+def declare_ineq_p_interface_bounds(model, period, index_set, interfaces,
                                         approximation_type=ApproximationType.BTHETA,
                                         slacks=False, slack_cost_expr=None):
     """
@@ -151,7 +151,7 @@ def declare_ineq_p_interface_bounds(model, index_set, interfaces,
 
     p_interface_limits should be (lower, upper) tuple
     """
-    m = model
+    m = model._parent
     # con_set = decl.declare_set('_con_ineq_p_interface_bounds',
     #                            model=model, index_set=index_set)
     #
@@ -174,28 +174,28 @@ def declare_ineq_p_interface_bounds(model, index_set, interfaces,
                     interface['maximum_limit'] is None:
                 continue
 
-            if slacks and interface_name in m._pfi_slack_neg.index_set():
-                assert interface_name in m._pfi_slack_pos.index_set()
-                neg_slack = m._pfi_slack_neg[interface_name]
-                pos_slack = m._pfi_slack_pos[interface_name]
+            if slacks and interface_name in model._pfi_slack_neg.index_set():
+                assert interface_name in model._pfi_slack_pos.index_set()
+                neg_slack = model._pfi_slack_neg[interface_name]
+                pos_slack = model._pfi_slack_pos[interface_name]
                 uc_model = slack_cost_expr.parent_block()
                 slack_cost_expr.expr += (uc_model._TimePeriodLengthHours*uc_model._InterfaceLimitPenalty[interface_name] *
                                     (neg_slack + pos_slack) )
-                assert len(m._pfi_slack_pos) == len(m._pfi_slack_neg)
+                assert len(model._pfi_slack_pos) == len(model._pfi_slack_neg)
             else:
                 neg_slack = None
                 pos_slack = None
 
-            lb, expr, ub =  generate_thermal_bounds(m._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
+            lb, expr, ub =  generate_thermal_bounds(model._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
                                         neg_slack, pos_slack)
-            m._ineq_pf_interface_upper_bounds = m.addConstr(
+            m.addConstr(
                     (expr <= ub),
-                    name = 'ineq_pf_interface_upper_bounds[{}]'.format(interface_name))
-            m._ineq_pf_interface_lower_bounds = m.addConstr(
+                    name = 'ineq_pf_interface_upper_bounds_interface[{}]_peiord[{}]'.format(interface_name, period))
+            m.addConstr(
                     (-expr <= -lb),
-                    name = 'ineq_pf_interface_lower_bounds[{}]'.format(interface_name))
+                    name = 'ineq_pf_interface_lower_bounds_interface[{}]_period[{}]'.format(interface_name, period))
 
-def declare_ineq_p_contingency_branch_thermal_bounds(model, index_set,
+def declare_ineq_p_contingency_branch_thermal_bounds(model, period, index_set,
                                                      pc_thermal_limits,
                                                      approximation_type=ApproximationType.PTDF,
                                                      slacks=False, slack_cost_expr=None):
@@ -203,7 +203,7 @@ def declare_ineq_p_contingency_branch_thermal_bounds(model, index_set,
     Create an inequality constraint for the branch thermal limits
     based on the power variables or expressions.
     """
-    m = model
+    m = model._parent
     # # flag for if slacks are on the model
     # if slacks:
     #     if not hasattr(model, 'pfc_slack_pos'):
@@ -222,35 +222,35 @@ def declare_ineq_p_contingency_branch_thermal_bounds(model, index_set,
             if limit is None:
                 continue
 
-            if slacks and (contingency_name, branch_name) in m._pfc_slack_neg.index_set():
-                assert (contingency_name, branch_name) in m._pfc_slack_pos.index_set()
-                neg_slack = m._pfc_slack_neg[contingency_name, branch_name]
-                pos_slack = m._pfc_slack_pos[contingency_name, branch_name]
+            if slacks and (contingency_name, branch_name) in model._pfc_slack_neg.index_set():
+                assert (contingency_name, branch_name) in model._pfc_slack_pos.index_set()
+                neg_slack = model._pfc_slack_neg[contingency_name, branch_name]
+                pos_slack = model._pfc_slack_pos[contingency_name, branch_name]
                 uc_model = slack_cost_expr.parent_block()
                 slack_cost_expr.expr += (uc_model._TimePeriodLengthHours
                                          * uc_model._ContingencyLimitPenalty
                                          * (neg_slack + pos_slack) )
-                assert len(m._pfc_slack_pos) == len(m._pfc_slack_neg)
+                assert len(model._pfc_slack_pos) == len(model._pfc_slack_neg)
             else:
                 neg_slack = None
                 pos_slack = None
 
-            lb, expr, ub =  generate_thermal_bounds(m._pfc[contingency_name, branch_name], -limit, limit, neg_slack, pos_slack)
-            m._ineq_pf_contingency_branch_thermal_upper_bounds = m.addConstr(
+            lb, expr, ub =  generate_thermal_bounds(model._pfc[contingency_name, branch_name], -limit, limit, neg_slack, pos_slack)
+            m.addConstr(
                     (expr <= ub),
-                    name = 'ineq_pf_interface_upper_bounds[{}]'.format(branch_name))
-            m._ineq_pf_contingency_branch_thermal_lower_bounds  = m.addConstr(
+                    name = 'ineq_pf_interface_upper_bounds_branch[{}]_peiord[{}]'.format(branch_name, period))
+            m.addConstr(
                     (-expr <= -lb),
-                    name = 'ineq_pf_interface_lower_bounds[{}]'.format(branch_name))
+                    name = 'ineq_pf_interface_lower_bounds_branch[{}]_period[{}]'.format(branch_name, period))
 
 
-def declare_eq_branch_power_ptdf_approx(model, index_set, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
+def declare_eq_branch_power_ptdf_approx(model, period, index_set, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
     """
     Create the equality constraints or expressions for power (from PTDF
     approximation) in the branch
     """
 
-    m = model
+    m = model._parent
 
     # con_set = decl.declare_set("_con_eq_branch_power_ptdf_approx_set", model, index_set)
 
@@ -265,11 +265,11 @@ def declare_eq_branch_power_ptdf_approx(model, index_set, PTDF, rel_ptdf_tol=Non
         expr = \
             get_power_flow_expr_ptdf_approx(m, branch_name, PTDF, rel_ptdf_tol=rel_ptdf_tol, abs_ptdf_tol=abs_ptdf_tol)
 
-        m.addConstr((m._pf[branch_name] == expr), name = '_eq_pf_branch[{}]'.format(branch_name))
+        m.addConstr((model._pf[branch_name] == expr), name = '_eq_pf_branch[{}]_period[{}]'.format(branch_name, period))
 
 
 
-def declare_ineq_p_branch_thermal_bounds(model, index_set,
+def declare_ineq_p_branch_thermal_bounds(model, period, index_set,
                                         branches, p_thermal_limits,
                                         approximation_type=ApproximationType.BTHETA,
                                         slacks=False, slack_cost_expr=None):
@@ -277,7 +277,7 @@ def declare_ineq_p_branch_thermal_bounds(model, index_set,
     Create an inequality constraint for the branch thermal limits
     based on the power variables or expressions.
     """
-    m = model
+    m = model._parent
     # con_set = decl.declare_set('_con_ineq_p_branch_thermal_bounds',
     #                            model=model, index_set=index_set)
     # # flag for if slacks are on the model
@@ -298,34 +298,34 @@ def declare_ineq_p_branch_thermal_bounds(model, index_set,
             if limit is None:
                 continue
 
-            if slacks and branch_name in m._pf_slack_neg.index_set():
-                assert branch_name in m._pf_slack_pos.index_set()
-                neg_slack = m._pf_slack_neg[branch_name]
-                pos_slack = m._pf_slack_pos[branch_name]
+            if slacks and branch_name in model._pf_slack_neg.index_set():
+                assert branch_name in model._pf_slack_pos.index_set()
+                neg_slack = model._pf_slack_neg[branch_name]
+                pos_slack = model._pf_slack_pos[branch_name]
                 uc_model = slack_cost_expr.parent_block()
                 slack_cost_expr.expr += (uc_model._TimePeriodLengthHours*uc_model._BranchLimitPenalty[branch_name] *
                                     (neg_slack + pos_slack) )
-                assert len(m._pf_slack_pos) == len(m._pf_slack_neg)
+                assert len(model._pf_slack_pos) == len(model._pf_slack_neg)
             else:
                 neg_slack = None
                 pos_slack = None
 
-            lb, expr, ub = generate_thermal_bounds(m._pf[branch_name], -limit, limit, neg_slack, pos_slack)
-            m._ineq_pf_branch_thermal_upper_bounds = model.addConstrs(
-                (expr >= ub), name = 'ineq_pf_branch_thermal_upper-bounds[{}]'.format(branch_name)
+            lb, expr, ub = generate_thermal_bounds(model._pf[branch_name], -limit, limit, neg_slack, pos_slack)
+            model.addConstrs(
+                (expr >= ub), name = 'ineq_pf_branch_thermal_upper-bounds_branch[{}]_period[{}]'.format(branch_name, period)
             )
-            m._ineq_pf_branch_thermal_lower_bounds = model.addConstrs(
-                (-expr >= -lb), name = 'ineq_pf_branch_thermal_lower_bounds[{}]'.format(branch_name)
+            model.addConstrs(
+                (-expr >= -lb), name = 'ineq_pf_branch_thermal_lower_bounds_branch[{}]_period[{}]'.format(branch_name, period)
             )
 
 
-def declare_eq_interface_power_ptdf_approx(model, index_set, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
+def declare_eq_interface_power_ptdf_approx(model, period, index_set, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
     """
     Create equality constraints or expressions for power (from PTDF
     approximation) across the interface
     """
 
-    m = model
+    m = model._parent
     # con_set = decl.declare_set("_con_eq_interface_power_ptdf_approx_set", model, index_set)
     #
     # pfi_is_var = isinstance(m._pfi, pe.Var)
@@ -345,18 +345,18 @@ def declare_eq_interface_power_ptdf_approx(model, index_set, PTDF, rel_ptdf_tol=
         #     m._eq_pf_interface[interface_name] = \
         #             m._pfi[interface_name] == expr
         # else:
-        m._pfi = m.addConstr(expr, name = 'pfi[{}]'.format(interface_name))
+    m.addConstr((expr), name = 'pfi_interface_[{}]_period[{}]'.format(interface_name, period))
 
 
 
-def declare_ineq_s_branch_thermal_limit(model, index_set,
+def declare_ineq_s_branch_thermal_limit(model, period, index_set,
                                         branches, s_thermal_limits,
                                         flow_type=FlowType.POWER):
     """
     Create the inequality constraints for the branch thermal limits
     based on the power variables.
     """
-    m = model
+    m = model._parent
     # con_set = decl.declare_set('_con_ineq_s_branch_thermal_limit',
     #                            model=model, index_set=index_set)
     #
@@ -372,13 +372,13 @@ def declare_ineq_s_branch_thermal_limit(model, index_set,
             to_bus = branches[branch_name]['to_bus']
 
             m.addConstr(
-                ((m._vr[from_bus] ** 2 + m._vj[from_bus] ** 2) * (m._ifr[branch_name] ** 2 + m._ifj[branch_name] ** 2) \
+                ((model._vr[from_bus] ** 2 + model._vj[from_bus] ** 2) * (model._ifr[branch_name] ** 2 + model._ifj[branch_name] ** 2) \
                 <= s_thermal_limits[branch_name] ** 2),
-                name = '_ineq_sf_branch_thermal_limit[{}]'.format(branch_name))
+                name = '_ineq_sf_branch_thermal_limit[{}]_period[{}]'.format(branch_name, period))
             m.addConstr(
-                ((m._vr[to_bus] ** 2 + m._vj[to_bus] ** 2) * (m._itr[branch_name] ** 2 + m._itj[branch_name] ** 2) \
+                ((model._vr[to_bus] ** 2 + model._vj[to_bus] ** 2) * (model._itr[branch_name] ** 2 + model._itj[branch_name] ** 2) \
                 <= s_thermal_limits[branch_name] ** 2),
-                name='_ineq_st_branch_thermal_limit[{}]'.format(branch_name)
+                name='_ineq_st_branch_thermal_limit[{}]_period[{}]'.format(branch_name, period)
             )
 
     elif flow_type == FlowType.POWER:
@@ -386,16 +386,16 @@ def declare_ineq_s_branch_thermal_limit(model, index_set,
             if s_thermal_limits[branch_name] is None:
                 continue
             m.addConstr(
-                (m._pf[branch_name] ** 2 + m._qf[branch_name] ** 2 \
+                (model._pf[branch_name] ** 2 + model._qf[branch_name] ** 2 \
                 <= s_thermal_limits[branch_name] ** 2),
-                name = '_ineq_sf_branch_thermal_limit[{}]'.format(branch_name))
+                name = '_ineq_sf_branch_thermal_limit_branch[{}]_period[{}]'.format(branch_name, period))
             m.addConstr(
-                (m._pt[branch_name] ** 2 + m._qt[branch_name] ** 2 \
+                (model._pt[branch_name] ** 2 + model._qt[branch_name] ** 2 \
                 <= s_thermal_limits[branch_name] ** 2),
-                name='_ineq_st_branch_thermal_limit[{}]'.format(branch_name)
+                name='_ineq_st_branch_thermal_limit_branch[{}]_period[{}]'.format(branch_name, period)
             )
 
-def declare_ineq_p_interface_bounds(model, index_set, interfaces,
+def declare_ineq_p_interface_bounds(model, period, index_set, interfaces,
                                         approximation_type=ApproximationType.BTHETA,
                                         slacks=False, slack_cost_expr=None):
     """
@@ -404,7 +404,7 @@ def declare_ineq_p_interface_bounds(model, index_set, interfaces,
 
     p_interface_limits should be (lower, upper) tuple
     """
-    m = model
+    m = model._parent
     # con_set = decl.declare_set('_con_ineq_p_interface_bounds',
     #                            model=model, index_set=index_set)
     #
@@ -427,24 +427,24 @@ def declare_ineq_p_interface_bounds(model, index_set, interfaces,
                     interface['maximum_limit'] is None:
                 continue
 
-            if slacks and interface_name in m._pfi_slack_neg.index_set():
-                assert interface_name in m._pfi_slack_pos.index_set()
-                neg_slack = m._pfi_slack_neg[interface_name]
-                pos_slack = m._pfi_slack_pos[interface_name]
+            if slacks and interface_name in model._pfi_slack_neg.index_set():
+                assert interface_name in model._pfi_slack_pos.index_set()
+                neg_slack = model._pfi_slack_neg[interface_name]
+                pos_slack = model._pfi_slack_pos[interface_name]
                 uc_model = slack_cost_expr.parent_block()
                 slack_cost_expr.expr += (uc_model._TimePeriodLengthHours*uc_model._InterfaceLimitPenalty[interface_name] *
                                     (neg_slack + pos_slack) )
-                assert len(m._pfi_slack_pos) == len(m._pfi_slack_neg)
+                assert len(model._pfi_slack_pos) == len(model._pfi_slack_neg)
             else:
                 neg_slack = None
                 pos_slack = None
 
-            lb, expr, ub = generate_thermal_bounds(m._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
+            lb, expr, ub = generate_thermal_bounds(model._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
                                         neg_slack, pos_slack)
             m.addConstr(
                 (expr <= ub),
-                name = '_ineq_pf_interface_upper_bounds[{}]'.format(interface_name))
+                name = '_ineq_pf_interface_upper_bounds_interface[{}]_period[{}]'.format(interface_name, period))
 
             m.addConstr(
                 (-expr <= -lb),
-                name = '_ineq_pf_interface_upper_bounds[{}]'.format(interface_name))
+                name = '_ineq_pf_interface_upper_bounds_interface[{}]_period[{}]'.format(interface_name, period))

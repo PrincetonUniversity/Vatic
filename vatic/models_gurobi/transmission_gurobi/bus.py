@@ -17,41 +17,39 @@ def declare_eq_p_balance_ed(model, index_set, bus_p_loads, gens_by_bus, bus_gs_f
 
     NOTE: Equation build orientates constants to the RHS in order to compute the correct dual variable sign
     """
-    m = model
+    m = model._parent
 
-    p_expr = sum(m._pg[gen_name] for bus_name in index_set for gen_name in gens_by_bus[bus_name])
-    p_expr -= sum(m._pl[bus_name] for bus_name in index_set if bus_p_loads[bus_name] is not None)
+    p_expr = sum(model._pg[gen_name] for bus_name in index_set for gen_name in gens_by_bus[bus_name])
+    p_expr -= sum(model._pl[bus_name] for bus_name in index_set if bus_p_loads[bus_name] is not None)
     p_expr -= sum(bus_gs_fixed_shunts[bus_name] for bus_name in index_set if bus_gs_fixed_shunts[bus_name] != 0.0)
 
     relaxed_balance = False
 
     if relaxed_balance:
-        m._eq_p_balance = model.addConstr(p_expr >= 0.0, name = 'eq_p_balance')
+        m.addConstr((p_expr >= 0.0), name = 'eq_p_balance_at_period_[{}]'.format(model._tm))
     else:
-        m._eq_p_balance = model.addConstr(expr = p_expr == 0.0, name = 'eq_p_balance')
+        m.addConstr((p_expr == 0.0), name = 'eq_p_balance_at_period_[{}]'.formar(model._tm))
 
 def declare_eq_p_net_withdraw_at_bus(model, index_set, bus_p_loads, gens_by_bus, bus_gs_fixed_shunts,
                                      dc_inlet_branches_by_bus=None, dc_outlet_branches_by_bus=None):
     """
     Create a named pyomo expression for bus net withdraw
     """
-    m = model
-
+    m = model._parent
     dc_inlet_branches_by_bus, dc_outlet_branches_by_bus = _get_dc_dicts(dc_inlet_branches_by_bus,
                                                                         dc_outlet_branches_by_bus,
                                                                         index_set)
 
     for b in index_set:
-        print(b)
-        rhs = ( bus_gs_fixed_shunts[b]+ (m._pl[b] if bus_p_loads[b] != 0.0 else 0.0 )
-                                            - quicksum(m._pg[g] for g in gens_by_bus[b] )
-                                            + quicksum(m._dcpf[branch_name] for branch_name
+        rhs = ( bus_gs_fixed_shunts[b]+ (model._pl[b] if bus_p_loads[b] != 0.0 else 0.0 )
+                                            - quicksum(model._pg[g] for g in gens_by_bus[b] )
+                                            + quicksum(model._dcpf[branch_name] for branch_name
                                                    in dc_outlet_branches_by_bus[b])
-                                            - quicksum(m._dcpf[branch_name] for branch_name
+                                            - quicksum(model._dcpf[branch_name] for branch_name
                                                    in dc_inlet_branches_by_bus[b])
                                             )
 
-        m.addConstr((m._p_nw[b] == rhs) , name =  '_eq_p_net_withdraw_at_bus[{}]'.format(b))
+        m.addConstr((model._p_nw_tm[b] == rhs) , name =  '_eq_p_net_withdraw_at_bus[{}]_at_period[{}]'.format(b, model._tm))
 
 def declare_eq_p_balance_ed(model, index_set, bus_p_loads, gens_by_bus, bus_gs_fixed_shunts, **rhs_kwargs):
     """
@@ -60,24 +58,23 @@ def declare_eq_p_balance_ed(model, index_set, bus_p_loads, gens_by_bus, bus_gs_f
 
     NOTE: Equation build orientates constants to the RHS in order to compute the correct dual variable sign
     """
-    m = model
-
-    p_expr = quicksum(m._pg[gen_name] for bus_name in index_set for gen_name in gens_by_bus[bus_name])
-    p_expr -= quicksum(m._pl[bus_name] for bus_name in index_set if bus_p_loads[bus_name] is not None)
+    m = model._parent
+    p_expr = quicksum(model._pg[gen_name] for bus_name in index_set for gen_name in gens_by_bus[bus_name])
+    p_expr -= quicksum(model._pl[bus_name] for bus_name in index_set if bus_p_loads[bus_name] is not None)
     p_expr -= quicksum(bus_gs_fixed_shunts[bus_name] for bus_name in index_set if bus_gs_fixed_shunts[bus_name] != 0.0)
 
     relaxed_balance = False
 
     if relaxed_balance:
-        m._eq_p_balance = model.addConstr((p_expr >= 0.0), name = 'eq_p_balance')
+        m.addConstr((p_expr >= 0.0), name = 'eq_p_balance_at_period{}'.format(model._tm))
     else:
-        m._eq_p_balance = model.addConstr((p_expr == 0.0), name = 'eq_p_balance')
+        m.addConstr((p_expr == 0.0), name = 'eq_p_balance_at_period{}'.format(model._tm))
 
-def declare_var_p_nw(model, index_set, **kwargs):
-    """
-    Create variable for the reactive power load at a bus
-    """
-    model._p_nw = model.addVars(index_set, name = 'p_nw')
+# def declare_var_p_nw(model, index_set, **kwargs):
+#     """
+#     Create variable for the reactive power load at a bus
+#     """
+#     model._p_nw = model.addVars(index_set, name = 'p_nw')
 
 
 
