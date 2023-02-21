@@ -155,8 +155,9 @@ def _add_system_load_mismatch(model):
         else:
             return 0
 
-    model._LoadGenerateMismatch = tupledict({(b, t): define_pos_neg_load_generate_mismatch_rule(model, b, t)
-                                                for b in model._Buses for t in model._TimePeriods})
+    model._LoadGenerateMismatch = {(b, t): define_pos_neg_load_generate_mismatch_rule(model, b, t)
+                                                for b in model._Buses for t in model._TimePeriods}
+
 
     # the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent
     # the appearance of load generation mismatch component values in the range of *negative* e-5.
@@ -571,6 +572,7 @@ def _ptdf_dcopf_network_model(block, tm):
 
 def ptdf_power_flow(model, slacks=True):
     _add_egret_power_flow(model, _ptdf_dcopf_network_model, reactive_power=False, slacks=slacks)
+    model.update()
     return model
 
 # Defines generic interface for egret tramsmission models

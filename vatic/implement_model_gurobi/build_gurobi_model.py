@@ -17,8 +17,9 @@ from vatic.models_gurobi import default_params, garver_3bin_vars, \
                                 KOW_production_costs_tightened, \
                                 rajan_takriti_UT_DT,\
                                 KOW_startup_costs, \
-                                storage_services, ancillary_services,\
-                                ptdf_power_flow
+                                storage_services, ancillary_services, \
+                                ptdf_power_flow, \
+                                CA_reserve_constraints
 
 import egret.common.lazy_ptdf_utils as lpu
 
@@ -136,6 +137,7 @@ model = KOW_startup_costs(model)
 model = storage_services(model)
 model = ancillary_services(model)
 model = ptdf_power_flow(model)
+model = CA_reserve_constraints(model)
 
 # save gurobi model in a file
 os.chdir('/Users/jf3375/Desktop/Gurobi/output/')
