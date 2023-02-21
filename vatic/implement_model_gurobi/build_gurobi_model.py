@@ -100,6 +100,7 @@ use_model = model_data.clone_in_service()
 model = gp.Model('UnitCommitment')
 model._power_balance = 'ptdf_power_flow'
 model._model_data = use_model.to_egret()  #_model_data in model is egret object, while model_data is vatic object
+model._model_data_vatic = model_data
 # Set up attributes under the specific tighten unit commitment model
 ## munge PTDF options if necessary
 

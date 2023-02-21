@@ -616,7 +616,7 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
 
 
     for tm in model._TimePeriods:
-        b = default_params(model, model._model_data_vatic)
+
         b = model.copy()
 
         # The deep copy does not copy private attributes starting with _
@@ -625,6 +625,7 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
         b._ThermalGeneratorsAtBus = model._ThermalGeneratorsAtBus
         # b._PowerOutputStorage = model._PowerOutputStorage
         b._StorageAtBus = model._StorageAtBus
+        b._MinimumPowerOutput = model._MinimumPowerOutput
 
         # b._PowerInputStorage = model._PowerInputStorage
 
@@ -654,21 +655,26 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
         b._InterfacesWithSlack = model._InterfacesWithSlack
         b._BranchesWithSlack = model._BranchesWithSlack
         b._InitialTime = model._InitialTime
+        b._StartupCurve = model._StartupCurve
+        b._ShutdownCurve = model._ShutdownCurve
 
 
 
         # Add private attributes needed in the function below
         # The gurobi variables and thus the related expressions could not be copied; must recreated
+        b._PowerGeneratedAboveMinimum = {}
+        for key in model._PowerGeneratedAboveMinimum.keys():
+            print(b.getVarByName('PowerGeneratedAboveMinimum[{}]'.format(key)))
+            b._PowerGeneratedAboveMinimum[key] = b.getVarByName('PowerGeneratedAboveMinimum[{},{}]'.format(key[0], key[1]))
+
+        b._UnitOn = {}
+        for key in model._UnitOn.keys():
+            b._UnitOn[key] = b.getVarByName('UnitOn[{},{}]'.format(key[0], key[1]))
+
         b._PowerGeneratedStartupShutdown = tupledict({(g, t): _add_power_generated_startup_shutdown(b, g, t)
                                          for g in b._ThermalGenerators for t in b._TimePeriods})
         b = file_non_dispatchable_vars(b)
         b = _add_blank_load_mismatch(model)
-
-        b._PowerGeneratedAboveMinimum = {}
-        for g in model._ThermalGenerators:
-            for t in model._TimePeriods:
-                b._PowerGeneratedAboveMinimum = \
-                    b.getVarByName('PowerGeneratedAboveMinimum[{}, {}]').format(g, t)
 
         b._pg = {bus: _get_pg_expr_rule(tm, b, bus) for bus in b._Buses}
         if reactive_power:
