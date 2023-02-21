@@ -13,5 +13,6 @@ def file_non_dispatchable_vars(model):
 
     model._NondispatchablePowerUsed = model.addVars(model._AllNondispatchableGenerators, model._TimePeriods,
                                                     lb = lb_, ub = ub_, name = 'NondispatchablePowerUsed')
+    model.update()
     return model
 

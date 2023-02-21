@@ -66,13 +66,13 @@ def load_base_params(
 
     ## attach some of these to the model object for ease/speed later
     # model._loads = loads
-    model._buses = OrderedSet(buses)
-    model._branches = OrderedSet(branches)
-    model._shunts = OrderedSet(shunts)
-    model._bus_gs_fixed_shunts = OrderedSet(bus_gs_fixed_shunts)
-    model._interfaces = OrderedSet(interfaces)
-    model._contingencies = OrderedSet(contingencies)
-    model._dc_branches = OrderedSet(dc_branches)
+    model._buses = buses
+    model._branches = branches
+    model._shunts =shunts
+    model._bus_gs_fixed_shunts = bus_gs_fixed_shunts
+    model._interfaces = interfaces
+    model._contingencies = contingencies
+    model._dc_branches = dc_branches
 
     #
     # Parameters

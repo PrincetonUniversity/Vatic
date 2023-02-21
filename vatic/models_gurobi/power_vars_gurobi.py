@@ -99,6 +99,7 @@ def garver_power_vars(model):
 
     model._PowerGeneratedStartupShutdown = tupledict({(g, t): _add_power_generated_startup_shutdown(model, g, t)
                                          for g in model._ThermalGenerators for t in model._TimePeriods})
+    model.update()
     return model
 
 

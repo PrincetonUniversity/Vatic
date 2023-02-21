@@ -27,6 +27,7 @@ def garver_3bin_vars(model):
         _add_unit_on_vars(model)
         _add_unit_start_vars(model)
         _add_unit_stop_vars(model)
+    model.update()
     return model
 
 def _add_unit_on_vars(model, relaxed=False):
@@ -35,6 +36,7 @@ def _add_unit_on_vars(model, relaxed=False):
         model._UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitOn')
     else:
         model._UnitOn = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitOn')
+    return model
 
 def _add_unit_start_vars(model, relaxed=False):
     # unit start
@@ -42,10 +44,12 @@ def _add_unit_start_vars(model, relaxed=False):
         model._UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStart')
     else:
         model._UnitStart = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStart')
+    return model
 
 def _add_unit_stop_vars(model, relaxed=False):
     if relaxed:
         model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStoop')
     else:
         model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStop')
+    return model
 

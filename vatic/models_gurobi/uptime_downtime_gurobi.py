@@ -136,4 +136,5 @@ def rajan_takriti_UT_DT(model):
                                         downtime_rule_cons.keys()), name = 'downtime')
 
     _3bin_logic(model)
+    model.update()
     return model

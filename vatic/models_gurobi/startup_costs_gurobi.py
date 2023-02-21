@@ -147,5 +147,5 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
         (ComputeStartupCost2_rule(model, g, t)
             for g in model._SingleFuelGenerators for t in model._TimePeriods)
                                            ,name='ComputeStartupCost2_rule')
-
+    model.update()
     return model

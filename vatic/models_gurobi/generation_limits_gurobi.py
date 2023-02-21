@@ -62,7 +62,6 @@ def _CA_lower_limit(model):
 
     model.addConstrs((enforce_generator_output_limits_rule_part_a(model, g, t) for g in model._ThermalGenerators
                      for t in model._TimePeriods), name = 'EnforceGeneratorOutputLimitsPartA')
-    model.update()
 
 def _MLR_generation_limits_uptime_1(model, tightened=False):
     ## equations (9), (10) in ME:
@@ -243,7 +242,6 @@ def _KOW_generation_limits(model):
 
     if len(_power_limit_from_start_stop_cons)!= 0:
         model._power_limit_from_start_stop = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop')
-    model.update()
 
 def pan_guan_gentile_KOW_generation_limits(model):
     model._generation_limits = 'pan_guan_gentile_KOW_generation_limits'
@@ -255,6 +253,7 @@ def pan_guan_gentile_KOW_generation_limits(model):
     _MLR_generation_limits_uptime_1(model, True)
     _pan_guan_generation_limits(model, False)
     _KOW_generation_limits(model)
+    model.update()
     return model
 
 def _add_reactive_limits(model, grid):

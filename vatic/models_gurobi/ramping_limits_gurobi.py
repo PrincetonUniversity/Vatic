@@ -173,4 +173,4 @@ def _damcikurt_basic_ramping(model):
                                name = 'enforce_ramp_down_limits')
 
     model.update()
-    return
+    return model

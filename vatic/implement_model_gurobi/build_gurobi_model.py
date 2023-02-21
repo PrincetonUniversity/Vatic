@@ -5,6 +5,8 @@ from datetime import datetime
 import multiprocessing
 import gurobipy as gp
 
+
+
 from vatic.engines import Simulator
 from vatic.data import load_input
 from vatic.models_gurobi import default_params, garver_3bin_vars, \
@@ -15,7 +17,10 @@ from vatic.models_gurobi import default_params, garver_3bin_vars, \
                                 KOW_production_costs_tightened, \
                                 rajan_takriti_UT_DT,\
                                 KOW_startup_costs, \
-                                storage_services, ancillary_services
+                                storage_services, ancillary_services,\
+                                ptdf_power_flow
+
+import egret.common.lazy_ptdf_utils as lpu
 
 component_name = 'data_loader'
 
@@ -82,6 +87,10 @@ simulator = Simulator(
     save_to_csv = csv
 )
 
+ptdf_options = {'rel_ptdf_tol': 1e-06, 'abs_ptdf_tol': 1e-10, 'abs_flow_tol': 0.001, 'rel_flow_tol': 1e-05, 'lazy_rel_flow_tol': -0.01, 'iteration_limit': 100000, 'lp_iteration_limit': 100, 'max_violations_per_iteration': 5, 'lazy': True, 'branch_kv_threshold': None, 'kv_threshold_type': 'one', 'pre_lp_iteration_limit': 100, 'active_flow_tol': 50.0, 'lp_cleanup_phase': True}
+ptdf_matrix_dict = None
+relax_binaries = False
+
 sim_state_for_ruc = None
 first_step = simulator._time_manager.get_first_timestep()
 model_data = simulator._data_provider.create_deterministic_ruc(
@@ -89,9 +98,28 @@ model_data = simulator._data_provider.create_deterministic_ruc(
 use_model = model_data.clone_in_service()
 
 model = gp.Model('UnitCommitment')
+model._power_balance = 'ptdf_power_flow'
 model._model_data = use_model.to_egret()  #_model_data in model is egret object, while model_data is vatic object
 # Set up attributes under the specific tighten unit commitment model
+## munge PTDF options if necessary
+
+if model._power_balance == 'ptdf_power_flow':
+
+    _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
+
+    baseMVA = model_data.get_system_attr('baseMVA')
+    lpu.check_and_scale_ptdf_options(_ptdf_options, baseMVA)
+
+    model._ptdf_options = _ptdf_options
+
+    if ptdf_matrix_dict is not None:
+        model._PTDFs = ptdf_matrix_dict
+    else:
+        model._PTDFs = {}
+
+# enforce time 1 ramp rates, relax binaries
 model._enforce_t1_ramp_rates = True
+model._relax_binaries = relax_binaries
 
 # Run the function to build variables and constraints
 model = default_params(model, model_data)
@@ -106,6 +134,7 @@ model = rajan_takriti_UT_DT(model)
 model = KOW_startup_costs(model)
 model = storage_services(model)
 model = ancillary_services(model)
+model = ptdf_power_flow(model)
 
 # save gurobi model in a file
 os.chdir('/Users/jf3375/Desktop/Gurobi/output/')

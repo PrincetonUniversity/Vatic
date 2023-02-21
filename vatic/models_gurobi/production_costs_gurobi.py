@@ -151,6 +151,7 @@ def KOW_production_costs_tightened(model):
     equations (19d)--(19h) with some tightening for when SU != SD, as mentioned in text
     '''
     _KOW_production_costs(model, True)
+    model.update()
     return model
 
 
@@ -237,3 +238,4 @@ def _KOW_production_costs(model, tightened=False):
                          name = 'piecewise_production_limits_rule2')
 
     _basic_production_costs_constr(model)
+
