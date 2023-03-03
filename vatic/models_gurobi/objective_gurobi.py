@@ -7,7 +7,7 @@ def _1bin_shutdown_costs(model, add_shutdown_cost_var=True):
     if add_shutdown_cost_var:
         model._ShutdownCost = model.addVars(
                     model.ThermalGenerators, model.TimePeriods,
-                    lb = 0, ub = GRB.INFINITY)
+                    lb = 0, ub = GRB.INFINITY, name = 'ShutdownCost')
 
     def compute_shutdown_costs_rule(m, g, t):
         if t == m._InitialTime:
@@ -33,7 +33,7 @@ def _3bin_shutdown_costs(model, add_shutdown_cost_var=True):
     if add_shutdown_cost_var:
         model._ShutdownCost = model.addVars(
                     model._ThermalGenerators, model._TimePeriods,
-                    lb = -GRB.INFINITY, ub = GRB.INFINITY)
+                    lb = -GRB.INFINITY, ub = GRB.INFINITY, name = 'ShutdownCost')
 
     def compute_shutdown_costs_rule(m, g, t):
         linear_vars = [m._ShutdownCost[g, t], m._UnitStop[g, t]]

@@ -408,12 +408,15 @@ class Simulator:
             time_step, sim_state_for_ruc)
         self._ptdf_manager.mark_active(ruc_model_data)
 
+        generatemodel_start_time = time.time()
         self.ruc_model.generate_model(
             ruc_model_data, relax_binaries=False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
             )
 
+        generatemodel_time = time.time() - generatemodel_start_time
+        print('generatemodel_time', generatemodel_time)
         # update in case lines were taken out
         # TODO: why is this necessary?
         self._ptdf_manager.PTDF_matrix_dict = self.ruc_model.pyo_instance._PTDFs

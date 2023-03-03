@@ -13,7 +13,8 @@ def _add_reserve_shortfall(model, fixed=False):
         # the reserve shortfall can't be more than the reserve requirement in any given time period.
         model._ReserveShortfall = model.addVars(
                 model._TimePeriods, lb = 0,
-                ub = [model._ReserveRequirement[t] for t in model._TimePeriods])
+                ub = [model._ReserveRequirement[t] for t in model._TimePeriods],
+                name = 'ReserveShortfall')
 
 def CA_reserve_constraints(model):
     '''

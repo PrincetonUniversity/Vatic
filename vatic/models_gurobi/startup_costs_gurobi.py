@@ -60,10 +60,10 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
 
     if _is_relaxed(model):
         model._StartupIndicator = model.addVars(model._StartupIndicator_domain,
-                                                    lb = 0, ub = 1)
+                                                    lb = 0, ub = 1, name = 'StartupIndicator')
     else:
         model._StartupIndicator = model.addVars(model._StartupIndicator_domain,
-                                                     vtype=GRB.BINARY)
+                                                     vtype=GRB.BINARY, name = 'StartupIndicator')
 
     ############################################################
     # compute the per-generator, per-time period startup costs #
@@ -91,7 +91,7 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
 
     model._StartupMatch = model.addConstrs((startup_match_rule(model, g, t)
         for g in model._ThermalGenerators for t in model._TimePeriods),
-                                    name='startup_match_rule')
+                                    name='StartupMatch')
 
     def shutdown_match_rule(m, g, t):
         begin_times = m._StartupsByShutdowns[g, t]
@@ -116,12 +116,12 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
 
     model._ShutdownMatch = model.addConstrs((shutdown_match_cons[g_t]
                                                 for g_t in shutdown_match_cons.keys()),
-                                            name = 'shutdown_match')
+                                            name = 'ShutdownMatch')
 
     if add_startup_cost_var:
         model._StartupCost = model.addVars(model._SingleFuelGenerators, model._TimePeriods,
                                 lb = -GRB.INFINITY, ub = GRB.INFINITY,
-                                name = 'startupcost')
+                                name = 'StartupCost')
 
 
     def ComputeStartupCost2_rule(m, g, t):

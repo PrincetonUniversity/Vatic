@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime
-
+import time
 import multiprocessing
 import gurobipy as gp
 
@@ -127,7 +127,7 @@ if model._power_balance == 'ptdf_power_flow':
 model._enforce_t1_ramp_rates = True
 model._relax_binaries = relax_binaries
 
-
+generatemodel_start_time = time.time()
 # Set up parameters
 model = default_params(model, model_data)
 
@@ -150,9 +150,13 @@ model = CA_reserve_constraints(model)
 
 # set up objective
 model = basic_objective(model)
-
+generatemodel_time =time.time()- generatemodel_start_time
+print('generatemodel_time', generatemodel_time)
 # save gurobi model in a file
 os.chdir('/Users/jf3375/Desktop/Gurobi/output/')
 model.write('UnitCommitment.mps')
 # more human readable than mps file, but might lose some info
 model.write('UnitCommitment.lp')
+
+
+
