@@ -1,7 +1,5 @@
 import time
 
-from .build_gurobi_model import model
-
 # Set Gurobi Solving Model Status
 mipgap = 0.01
 threads = 9

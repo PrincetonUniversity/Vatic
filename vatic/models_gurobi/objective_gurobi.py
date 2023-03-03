@@ -38,7 +38,7 @@ def _3bin_shutdown_costs(model, add_shutdown_cost_var=True):
     def compute_shutdown_costs_rule(m, g, t):
         linear_vars = [m._ShutdownCost[g, t], m._UnitStop[g, t]]
         linear_coefs = [-1., m._ShutdownFixedCost[g]]
-        return (LinExpr(linear_coefs, linear_vars) <= 0)
+        return (LinExpr(linear_coefs, linear_vars) == 0)
 
     model._ComputeShutdownCosts = model.addConstrs(
         (compute_shutdown_costs_rule(model, g, t)

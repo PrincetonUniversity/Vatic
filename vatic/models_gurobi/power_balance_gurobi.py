@@ -111,7 +111,6 @@ def _add_blank_load_mismatch(model):
     model._negLoadGenerateMismatch = tupledict({(b, t): 0 for b in model._Buses \
                                                 for t in model._TimePeriods})
     model._LoadMismatchCost = {t: 0 for t in model._TimePeriods}
-    return model
 
 def _add_blank_q_load_mismatch(model):
     model._LoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
@@ -122,16 +121,6 @@ def _add_blank_q_load_mismatch(model):
                                                 for t in model._TimePeriods})
     model._LoadMismatchCostReactive = {t: 0 for t in model._TimePeriods}
 
-
-def _add_blank_q_load_mismatch(model):
-    model._LoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
-                                                for t in model._TimePeriods})
-    model._posLoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
-                                                for t in model._TimePeriods})
-    model._negLoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
-                                                for t in model._TimePeriods})
-    model._LoadMismatchCostReactive = {t: 0 for t in model._TimePeriods}
-    return model
 
 def _add_system_load_mismatch(model):
     #####################################################
@@ -245,25 +234,24 @@ def _add_load_mismatch(model):
             if max_injections > 0:
                 over_gen_maxes[b, t] = max_injections
                 over_gen_times_per_bus[b].append(t)
+            else:
+                over_gen_maxes[b, t] = GRB.INFINITY
+
             if max_withdrawls > 0:
                 load_shed_maxes[b, t] = max_withdrawls
                 load_shed_times_per_bus[b].append(t)
+            else:
+                load_shed_maxes[b, t] = GRB.INFINITY
 
-    model._OverGenerationBusTimes = over_gen_maxes.keys()
-    model._LoadSheddingBusTimes = load_shed_maxes.keys()
-
-    def get_over_gen_bounds(m, b, t):
-        return (0, over_gen_maxes[b, t])
+    model._OverGenerationBusTimes = list(over_gen_maxes.keys())
+    model._LoadSheddingBusTimes = list(load_shed_maxes.keys())
 
     model._OverGeneration = model.addVars(model._OverGenerationBusTimes,
-                                          lb = 0, ub = GRB.INFINITY,
+                                          lb = 0, ub = [over_gen_maxes[key] for key in model._OverGenerationBusTimes],
                                           name = 'OverGeneration') # over generation
 
-    def get_load_shed_bounds(m, b, t):
-        return (0, load_shed_maxes[b, t])
-
     model._LoadShedding = model.addVars(model._LoadSheddingBusTimes,
-                                        lb=0, ub=GRB.INFINITY,
+                                        lb=0, ub= [load_shed_maxes[key] for key in model._LoadSheddingBusTimes],
                                         name='LoadShedding'
                                         )
 
@@ -314,7 +302,7 @@ def _add_load_mismatch(model):
     for b, t in model._LoadSheddingBusTimes:
         model._LoadGenerateMismatch[b, t] += model._LoadShedding[b, t]
     for b, t in model._OverGenerationBusTimes:
-        model._LoadGenerateMismatch[b, t]= model._OverGeneration[b, t]
+        model._LoadGenerateMismatch[b, t] -= model._OverGeneration[b, t]
 
     model._LoadMismatchCost = {}
     for t in model._TimePeriods:
@@ -419,7 +407,7 @@ def _ptdf_dcopf_network_model(block, tm):
 
     ptdf_options = m._ptdf_options
 
-    block._p_nw_tm = m.addVars(m._Buses, name='p_nw_{}'.format(tm))
+    block._p_nw_tm = m.addVars(m._Buses, lb = -GRB.INFINITY, ub = GRB.INFINITY, name='p_nw_{}'.format(tm))
 
     # libbus.declare_var_p_nw(block, m._Buses)
 

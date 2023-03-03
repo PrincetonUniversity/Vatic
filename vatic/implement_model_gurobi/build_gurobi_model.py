@@ -157,6 +157,9 @@ os.chdir('/Users/jf3375/Desktop/Gurobi/output/')
 model.write('UnitCommitment.mps')
 # more human readable than mps file, but might lose some info
 model.write('UnitCommitment.lp')
-
+# Check inconsistent constraints and debug
+# If this returns error, that means all constraints form the feasible set
+model.computeIIS()
+model.write('UnitCommitment.ilp')
 
 

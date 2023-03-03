@@ -87,7 +87,7 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
         linear_coefs = [1.] * len(linear_vars)
         linear_vars.append(m._UnitStart[g, t])
         linear_coefs.append(-1.)
-        return (LinExpr(linear_coefs, linear_vars) >= 0)
+        return (LinExpr(linear_coefs, linear_vars) <= 0)
 
     model._StartupMatch = model.addConstrs((startup_match_rule(model, g, t)
         for g in model._ThermalGenerators for t in model._TimePeriods),
@@ -141,7 +141,7 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
                     linear_coefs.append(startup_costs[s] - last_startup_cost)
                     break
 
-        return LinExpr(linear_coefs, linear_vars) <= 0
+        return LinExpr(linear_coefs, linear_vars) == 0
 
     model._ComputeStartupCosts = model.addConstrs(
         (ComputeStartupCost2_rule(model, g, t)

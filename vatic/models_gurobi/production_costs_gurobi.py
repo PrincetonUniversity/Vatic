@@ -88,7 +88,7 @@ def _basic_production_costs_vars(model):
         linear_coefs = [1.] * len(linear_vars)
         linear_vars.append(m._PowerGeneratedAboveMinimum[g, t])
         linear_coefs.append(-1.)
-        return LinExpr(linear_coefs, linear_vars) <= 0
+        return LinExpr(linear_coefs, linear_vars) == 0
 
     model._PiecewiseProductionSum = model.addConstrs((
         piecewise_production_sum_rule(model, g_t[0], g_t[1])
@@ -114,7 +114,7 @@ def _basic_production_costs_constr(model):
                            range(len(points) - 1)]
             linear_coefs.append(-1.)
             linear_vars.append(m._ProductionCost[g, t])
-            return LinExpr(linear_coefs, linear_vars) <= 0
+            return LinExpr(linear_coefs, linear_vars) == 0
         elif (g, t) in m._LinearGeneratorTimeIndexSet:
             i = 0
             points = m._PowerGenerationPiecewisePoints[g, t]
@@ -127,15 +127,15 @@ def _basic_production_costs_constr(model):
             linear_coefs = [slope * coef for coef in linear_coefs]
             linear_vars.append(m._ProductionCost[g, t])
             linear_coefs.append(-1.)
-            return LinExpr(linear_coefs, linear_vars) <= 0
+            return LinExpr(linear_coefs, linear_vars) == 0
         else:
-            return m.ProductionCost[g, t] <= 0.
+            return m.ProductionCost[g, t] == 0.
 
     model._ProductionCostConstr = \
         model.addConstrs((piecewise_production_costs_rule(model, g, t)
                             for g in model._SingleFuelGenerators
                             for t in model._TimePeriods),
-                          name = 'piecewise_production_costs')
+                          name = 'ProductionCostConstr')
 
     _compute_total_production_cost(model)
 
@@ -198,7 +198,7 @@ def _KOW_production_costs(model, tightened=False):
     model._PiecewiseProductionLimits = model.addConstrs((
         piecewise_production_limits_rule(model, g_t_i[0], g_t_i[1], g_t_i[2])
         for g_t_i in model._PiecewiseProductionCostsIndexSet),
-        name='piecewise_production_limits')
+        name='PiecewiseProductionLimits')
 
     def piecewise_production_limits_rule2(m, g, t, i):
         ### these can always be tightened based on SU/SD, regardless of the ramping/aggregation

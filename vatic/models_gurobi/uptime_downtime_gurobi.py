@@ -19,7 +19,7 @@ def _3bin_logic(model):
                        m._UnitStop[g, t]]
         linear_coefs = [1., -1, -1., 1.]
         rhs = 0
-        return LinExpr(linear_coefs, linear_vars) <= rhs
+        return LinExpr(linear_coefs, linear_vars) == rhs
 
     model._Logical = model.addConstrs((logical_rule(model, g, t)
                                         for g in model._ThermalGenerators
@@ -99,7 +99,7 @@ def rajan_takriti_UT_DT(model):
         linear_coefs = [1.] * len(linear_vars)
         linear_vars.append(m._UnitOn[g, t])
         linear_coefs.append(-1.)
-        return LinExpr(linear_coefs, linear_vars) >= 0
+        return LinExpr(linear_coefs, linear_vars) <= 0
 
     uptime_rule_cons = {}
     for g in model._ThermalGenerators:
@@ -109,7 +109,7 @@ def rajan_takriti_UT_DT(model):
                 uptime_rule_cons[g, t] = cons
 
     model._UpTime = model.addConstrs((uptime_rule_cons[g_t] for g_t in
-                                        uptime_rule_cons.keys()), name = 'uptime')
+                                        uptime_rule_cons.keys()), name = 'UpTime')
 
     #########################
     # down-time constraints #
@@ -123,7 +123,7 @@ def rajan_takriti_UT_DT(model):
         linear_coefs = [1.] * len(linear_vars)
         linear_vars.append(m._UnitOn[g, t])
         linear_coefs.append(1.)
-        return LinExpr(linear_coefs, linear_vars) >= 1
+        return LinExpr(linear_coefs, linear_vars) <= 1
 
     downtime_rule_cons = {}
     for g in model._ThermalGenerators:
@@ -133,7 +133,7 @@ def rajan_takriti_UT_DT(model):
                 downtime_rule_cons[g, t] = cons
 
     model._DownTime = model.addConstrs((downtime_rule_cons[g_t] for g_t in
-                                        downtime_rule_cons.keys()), name = 'downtime')
+                                        downtime_rule_cons.keys()), name = 'DownTime')
 
     _3bin_logic(model)
     model.update()
