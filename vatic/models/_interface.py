@@ -408,6 +408,13 @@ class UCModel:
                 )
             solve_time = results.solver.wallclock_time
 
+        # seems that direct and persistent solver may provide different solutions
+        # call direct solver at the end to make sure model is optimally solved
+        # this is opposed the idea of using persistent solver for speed performance
+        if solver.endswith('persistent'):
+            direct_solver = pe.SolverFactory(solver.replace('_persistent', ''))
+            direct_solver.solve(self.pyo_instance)
+
         md = _save_uc_results(self.pyo_instance, relaxed)
         md.data['system']['solver_runtime'] = solve_time
         self.solver = use_solver
