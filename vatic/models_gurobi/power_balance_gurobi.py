@@ -380,8 +380,8 @@ def _setup_egret_network_topology(m,tm):
 
     return buses, branches, branches_in_service, branches_out_service, interfaces, contingencies
 
-def _setup_egret_network_model(block, tm):
-    m = block._parent
+def _setup_egret_network_model(block, tm, parent_model):
+    m = parent_model
 
     ## this is not the "real" gens by bus, but the
     ## index of net injections from the UC model
@@ -608,16 +608,18 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
     model._ContingencyViolationCost = {t: 0 for t in model._TimePeriods}
 
     # set up the empty model block for each time period to add constraints
+    model._TransmissionBlock = {}
     block = gp.Model()
 
     block._gens_by_bus = {bus: [bus] for bus in model._Buses}
-    block._parent = model
+    parent_model = model
     for tm in model._TimePeriods:
+        model._TransmissionBlock[tm] = block
         block._tm = tm
         block._pg = {bus: _get_pg_expr_rule(tm, model, bus) for bus in
                      model._Buses}
         if reactive_power:
             block._qg = {bus: _get_qg_expr_rule(tm, model, bus) for bus in
                          model._Buses}
-        network_model_builder(block, tm)
+        network_model_builder(block, tm, parent_model)
 
