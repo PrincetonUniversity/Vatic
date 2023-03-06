@@ -322,7 +322,7 @@ def _copperplate_network_model(block, tm, relax_balance=None):
             _setup_egret_network_model(block, tm)
 
     ### declare the p balance
-    libbus.declare_eq_p_balance_ed(model=block,
+    libbus.declare_eq_p_balance_ed(model=block, parent_model = parent_model,
                                    index_set=m._Buses,
                                    bus_p_loads=bus_p_loads,
                                    gens_by_bus=gens_by_bus,
@@ -337,7 +337,7 @@ def _copperplate_relax_network_model(block,tm):
 def _copperplate_approx_network_model(block,tm):
     _copperplate_network_model(block, tm, relax_balance=False)
 
-def _setup_branch_slacks(m,block,tm):
+def _setup_branch_slacks(m,block):
     # declare the branch slack variables
     # they have a sparse index set
     block._pf_slack_pos = block.addVars(m._BranchesWithSlack, lb = 0, ub = GRB.INFINITY,
@@ -346,7 +346,7 @@ def _setup_branch_slacks(m,block,tm):
     block._pf_slack_pos = block.addVars(m._BranchesWithSlack, lb = 0, ub = GRB.INFINITY,
                     name = 'pf_slack_neg')
 
-def _setup_interface_slacks(m,block,tm):
+def _setup_interface_slacks(m, block):
     # declare the interface slack variables
     # they have a sparse index set
     block._pfi_slack_pos = block.addVars(m._InterfacesWithSlack, lb = 0, ub = GRB.INFINITY,
@@ -355,7 +355,7 @@ def _setup_interface_slacks(m,block,tm):
     block._pfi_slac_neg =  block.addVars(m._InterfacesWithSlack, lb = 0, ub = GRB.INFINITY,
                     name = 'pfi_slack_neg')
 
-def _setup_contingency_slacks(m,block,tm):
+def _setup_contingency_slacks(m, block):
     # declare the interface slack variables
     # they have a sparse index set
 
@@ -396,10 +396,10 @@ def _setup_egret_network_model(block, tm, parent_model):
 
     return m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts
 
-def _ptdf_dcopf_network_model(block, tm):
+def _ptdf_dcopf_network_model(block, tm, parent_model = None):
     # m is our main model, the parent of block
     m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts = \
-        _setup_egret_network_model(block, tm)
+        _setup_egret_network_model(block, tm, parent_model)
 
     buses, branches, \
     branches_in_service, branches_out_service, \
@@ -412,7 +412,7 @@ def _ptdf_dcopf_network_model(block, tm):
     # libbus.declare_var_p_nw(block, m._Buses)
 
     ### declare net withdraw expression for use in PTDF power flows
-    libbus.declare_eq_p_net_withdraw_at_bus(model=block,
+    libbus.declare_eq_p_net_withdraw_at_bus(model=block, parent_model = parent_model,
                                             index_set=m._Buses,
                                             bus_p_loads=bus_p_loads,
                                             gens_by_bus=gens_by_bus,
@@ -420,7 +420,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                             )
 
     ### declare the p balance
-    libbus.declare_eq_p_balance_ed(model=block,
+    libbus.declare_eq_p_balance_ed(model=block, parent_model = parent_model,
                                    index_set=m._Buses,
                                    bus_p_loads=bus_p_loads,
                                    gens_by_bus=gens_by_bus,
@@ -430,19 +430,19 @@ def _ptdf_dcopf_network_model(block, tm):
     ### add "blank" power flow expressions
     block._branches_inservice = branches_in_service
 
-    _setup_branch_slacks(m, block, tm)
+    _setup_branch_slacks(m, block)
 
     ### interface setup
     block._interfae_keys = interfaces.keys()
 
-    _setup_interface_slacks(m, block, tm)
+    _setup_interface_slacks(m, block)
 
     ### contingency setup
     ### NOTE: important that this not be dense, we'll add elements
     ###       as we find violations
     block._contingency_set = [(c, i) for c in m._Contingencies for i in m._TransmissionLines]
     # block._pfc = Expression(block._contingency_set)
-    _setup_contingency_slacks(m, block, tm)
+    _setup_contingency_slacks(m, block)
 
     ### Get the PTDF matrix from cache, from file, or create a new one
     ### m._PTDFs set in uc_model_generator
@@ -472,7 +472,7 @@ def _ptdf_dcopf_network_model(block, tm):
 
     if ptdf_options['lazy']:
         ### add "blank" real power flow limits
-        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, period = tm,
+        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, parent_model = parent_model, period = tm,
                                                        index_set=branches_in_service,
                                                        branches=branches,
                                                        p_thermal_limits=None,
@@ -483,7 +483,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                            tm]
                                                        )
         ### declare the "blank" interface flow limits
-        libbranch.declare_ineq_p_interface_bounds(model=block, period = tm,
+        libbranch.declare_ineq_p_interface_bounds(model=block, parent_model = parent_model, period = tm,
                                                   index_set=interfaces.keys(),
                                                   interfaces=interfaces,
                                                   approximation_type=None,
@@ -492,7 +492,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                   m._InterfaceViolationCost[tm]
                                                   )
         ### declare the "blank" interface flow limits
-        libbranch.declare_ineq_p_contingency_branch_thermal_bounds(model=block, period = tm,
+        libbranch.declare_ineq_p_contingency_branch_thermal_bounds(model=block, parent_model = parent_model, period = tm,
                                                                    index_set=block._contingency_set,
                                                                    pc_thermal_limits=None,
                                                                    approximation_type=None,
@@ -522,14 +522,14 @@ def _ptdf_dcopf_network_model(block, tm):
                  branches_in_service}
 
         ### declare the branch power flow approximation constraints
-        libbranch.declare_eq_branch_power_ptdf_approx(model=block, period = tm,
+        libbranch.declare_eq_branch_power_ptdf_approx(model=block, parent_model = parent_model, period = tm,
                                                       index_set=branches_in_service,
                                                       PTDF=PTDF,
                                                       abs_ptdf_tol=abs_ptdf_tol,
                                                       rel_ptdf_tol=rel_ptdf_tol
                                                       )
         ### declare the real power flow limits
-        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, period = tm,
+        libbranch.declare_ineq_p_branch_thermal_bounds(model=block, parent_model = parent_model, period = tm,
                                                        index_set=branches_in_service,
                                                        branches=branches,
                                                        p_thermal_limits=p_max,
@@ -541,7 +541,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                        )
 
         ### declare the branch power flow approximation constraints
-        libbranch.declare_eq_interface_power_ptdf_approx(model=block, period = tm,
+        libbranch.declare_eq_interface_power_ptdf_approx(model=block, parent_model = parent_model, period = tm,
                                                          index_set=interfaces.keys(),
                                                          PTDF=PTDF,
                                                          abs_ptdf_tol=abs_ptdf_tol,
@@ -549,7 +549,7 @@ def _ptdf_dcopf_network_model(block, tm):
                                                          )
 
         ### declare the interface flow limits
-        libbranch.declare_ineq_p_interface_bounds(model=block, period = tm,
+        libbranch.declare_ineq_p_interface_bounds(model=block, parent_model = parent_model, period = tm,
                                                   index_set=interfaces.keys(),
                                                   interfaces=interfaces,
                                                   approximation_type=ApproximationType.PTDF,
