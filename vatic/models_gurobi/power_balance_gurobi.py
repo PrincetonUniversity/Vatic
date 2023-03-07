@@ -2,10 +2,10 @@ from gurobipy import tupledict, LinExpr, GRB, quicksum
 import gurobipy as gp
 
 import egret.model_library.transmission.branch as libbranch
-import egret.data.ptdf_utils as ptdf_utils
 import egret.common.lazy_ptdf_utils as lpu
 from egret.model_library.defn import BasePointType, CoordinateType, ApproximationType
 
+import vatic.models_gurobi.ptdf_utils_gurobi as ptdf_utils
 from .power_vars_gurobi import _add_reactive_power_vars
 from .generation_limits_gurobi import _add_reactive_limits
 import vatic.models_gurobi.transmission_gurobi.bus as libbus
