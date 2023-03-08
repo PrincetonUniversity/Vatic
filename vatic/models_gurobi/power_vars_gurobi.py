@@ -87,9 +87,9 @@ def garver_power_vars(model):
     [model._PowerGeneratedAboveMinimum[g, t]], [-1.])
 
     model._get_power_generated_lists = lambda m, g, t: (
-    [model._PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [1., model._MinimumPowerOutput[g, t]])
+    [model._PowerGeneratedAboveMinimum[g, t], model._UnitOn[g, t]], [1., model._MinimumPowerOutput[g, t]])
     model._get_negative_power_generated_lists = lambda m, g, t: (
-    [model._PowerGeneratedAboveMinimum[g, t], model.UnitOn[g, t]], [-1., -model._MinimumPowerOutput[g, t]])
+    [model._PowerGeneratedAboveMinimum[g, t], model._UnitOn[g, t]], [-1., -model._MinimumPowerOutput[g, t]])
 
     def power_generated_expr_rule(model, g, t):
         return model._PowerGeneratedAboveMinimum[g, t] + model._MinimumPowerOutput[g, t] * model._UnitOn[g, t]

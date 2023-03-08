@@ -5,6 +5,115 @@ from ._status_vars_gurobi import _is_relaxed
 component_name = 'startup_costs'
 
 
+def MLR_startup_costs(model, add_startup_cost_var=True):
+    '''
+    Start-up cost formulation in equations (2)--(3) from
+
+    G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+    formulation for the thermal unit commitment problem. IEEE Transactions on
+    Power Systems, 28(4):4897–4908, 2013.
+    '''
+
+    # begin latorre startup costs
+
+    ############################################################
+    # compute the per-generator, per-time period startup costs #
+    ############################################################
+    ## BK -- replace with delta's
+    def startup_costs_index_set_generator(m):
+        return ((g, s, t) for t in m._TimePeriods for g in m._ThermalGenerators
+                for s in m._StartupCostIndices[g])
+
+    model._StartupCostsIndexSet = [(g, s, t) for t in model._TimePeriods for g in model._ThermalGenerators
+                for s in model._StartupCostIndices[g]]
+
+    if _is_relaxed(model):
+        model._delta = model.addVars(model._StartupCostsIndexSet, lb = 1, ub = 0, name = 'delta')
+    else:
+        model._delta = model.addVars(model._StartupCostsIndexSet, vtype=GRB.BINARY, name = 'delta')
+    model.update()
+
+    def delta_eq_rule(m, g, t):
+        linear_vars = [m._delta[g, s, t] for s in m._StartupCostIndices[g]]
+        linear_coefs = [1.] * len(linear_vars)
+        linear_vars.append(m._UnitStart[g, t])
+        linear_coefs.append(-1.)
+        return (LinExpr(linear_coefs, linear_vars) == 0)
+
+    model._delta_eq = model.addConstrs((delta_eq_rule(model, g, t) for g in
+                                       model._ThermalGenerators for t in model._TimePeriods),
+                                       name = 'delta_eq')
+
+    ## BK -- updated to reflect previous generator condition
+    ## BK -- assumes initial time is 1
+    def delta_ineq_rule(m, g, s, t):
+        assert (m._InitialTime == 1)
+        ## the last startup indicator doesn't have a lag
+        if s == len(m._StartupCostIndices[g])-1:
+            return None
+        this_lag = m._ScaledStartupLags[g][s]
+        next_lag = m._ScaledStartupLags[g][s+1]
+        ## this is negative if the generator has previously been off
+        generator_t0_state = int(round(m._UnitOnT0State[g] / m._TimePeriodLengthHours))
+
+        ## equation (15) in ME
+        if next_lag + generator_t0_state < t < next_lag:
+            m._delta[(g, s, t)].lb = 0
+            m._delta[(g, s, t)].ub = 0
+            return None
+
+        if m._status_vars == 'garver_2bin_vars':
+            linear_vars = [m._UnitStart[g, t - i] for i in
+                           range(this_lag, next_lag)]
+            linear_coefs = [-1.] * len(linear_vars)
+            linear_vars += [m._delta[g, s, t], m._UnitOn[g, t - this_lag]]
+            linear_coefs += [1., 1.]
+            if t == next_lag:
+                return (LinExpr(linear_coefs, linear_vars) <= m._UnitOnT0[g])
+                # return m.delta[g,s,t] <= m.UnitOnT0[g] - m.UnitOn[g,t-this_lag] + sum(m.UnitStart[g,t-i] for i in range(this_lag, next_lag))
+            elif t > next_lag:
+                linear_vars.append(m._UnitOn[g, t - next_lag])
+                linear_coefs.apppend(-1.)
+                return (LinExpr(linear_coefs, linear_vars) <= 0)
+                # return m.delta[g,s,t] <= m.UnitOn[g,t-next_lag] - m.UnitOn[g,t-this_lag] + sum(m.UnitStart[g,t-i] for i in range(this_lag, next_lag))
+        else:
+            ## equation (2) in ME
+            if t >= next_lag:
+                linear_vars = [m._UnitStop[g, t - i] for i in
+                               range(this_lag, next_lag)]
+                linear_coefs = [-1.] * len(linear_vars)
+                linear_vars.append(m._delta[g, s, t])
+                linear_coefs.append(1.)
+                return (LinExpr(linear_coefs, linear_vars) <= 0)
+
+        return None
+
+    delta_ineq_constrs = {}
+    for set in model._StartupCostsIndexSet:
+        constr = delta_ineq_rule(model, set[0], set[1], set[2])
+        if constr != None:
+            delta_ineq_constrs[set] = constr
+
+    model._delta_ineq = model.addConstrs((delta_ineq_constrs[g_s_t] for g_s_t in delta_ineq_constrs.keys()),
+                                         name = 'delta_ineq')
+
+    if add_startup_cost_var:
+        model._StartupCost = model.addVars(model._SingleFuelGenerators, model._TimePeriods, name = 'StartupCost')
+
+    def ComputeStartupCost2_rule(m, g, t):
+        linear_vars = [m._delta[g, s, t] for s in m._StartupCostIndices[g]]
+        linear_coefs = [m._StartupCosts[g][s] for s in m._StartupCostIndices[g]]
+        linear_vars.append(m._StartupCost[g, t])
+        linear_coefs.append(-1.)
+        return (LinExpr(linear_coefs, linear_vars) == 0)
+
+    model._ComputeStartupCosts = model.addConstrs((ComputeStartupCost2_rule(model, g, t)
+                                                    for g in model._SingleFuelGenerators for t in model._TimePeriods), name = 'ComputeStartupCosts')
+    model.update()
+    return model
+
+
+
 def KOW_startup_costs(model, add_startup_cost_var=True):
     '''
     Start-up cost formulation "Match" from

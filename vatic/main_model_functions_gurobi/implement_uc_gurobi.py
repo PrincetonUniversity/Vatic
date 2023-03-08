@@ -1,18 +1,19 @@
+import os
+import logging
 from datetime import datetime
 import multiprocessing
-# import sys
-import os
-from pathlib import Path
-#set parent directory to the root directory to use absolute reference to import files from not packages
-# sys.path.insert(0, str(Path(__file__).resolve()))
+import time
 
-#Profiling Packages
-# import cProfile, pstats, infeasibleOrUnbounded
-from pstats import SortKey
-from vatic.data import load_input
+import vatic.main_model_functions_gurobi.generate_model_gurobi
 from vatic.engines import Simulator
+from vatic.data import load_input
 
+from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
+from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
 
+component_name = 'data_loader'
+
+logger = logging.getLogger('pyomo.core')
 
 #relative import does not work when we run the file inside pycharm
 #from ..engines import Simulator
@@ -20,11 +21,12 @@ from vatic.engines import Simulator
 #could either be key to access os environ or input dir
 input_grid = 'RTS-GMLC'
 start_date = datetime.strptime('2020-02-15', '%Y-%m-%d').date()
-num_days = 2
+num_days = 1
 out_dir = '/Users/jf3375/Desktop/Vatic_Run/outputs'
 last_condition_file = '/Users/jf3375/Desktop/Vatic_Run/outputs/last_condition.csv'
 solver = 'gurobi'
 solver_args = {'Threads': multiprocessing.cpu_count()-1}
+threads = multiprocessing.cpu_count()-1
 lmps = False
 ruc_mipgap = 0.01
 reserve_factor = 0.15
@@ -53,7 +55,7 @@ template_data, gen_data, load_data = load_input(input_grid, start_date, num_days
 
 # pr = cProfile.Profile()
 # pr.enable()
-Simulator(
+simulator = Simulator(
     template_data, gen_data, load_data, out_dir=out_dir,
     last_conditions_file=last_condition_file,
     start_date=start_date, num_days=num_days, solver=solver,
@@ -73,13 +75,22 @@ Simulator(
     verbosity=verbose, output_max_decimals=output_max_decimals,
     create_plots=create_plots, renew_costs=renew_costs,
     save_to_csv = csv
-).simulate()
-# pr.disable()
-# s = io.StringIO()
-# ps = pstats.Stats(pr, stream=s).sort_stats('cumtime', 'calls')
-# ps.print_stats(30)
-# print(s.getvalue())
-#
-# with open('vatic_run_test_cprofile.txt', 'w+') as f:
-#     f.write(s.getvalue())
+)
 
+ptdf_options = {'rel_ptdf_tol': 1e-06, 'abs_ptdf_tol': 1e-10, 'abs_flow_tol': 0.001, 'rel_flow_tol': 1e-05, 'lazy_rel_flow_tol': -0.01, 'iteration_limit': 100000, 'lp_iteration_limit': 100, 'max_violations_per_iteration': 5, 'lazy': True, 'branch_kv_threshold': None, 'kv_threshold_type': 'one', 'pre_lp_iteration_limit': 100, 'active_flow_tol': 50.0, 'lp_cleanup_phase': True}
+ptdf_matrix_dict = None
+relax_binaries = False
+
+sim_state_for_ruc = None
+first_step = simulator._time_manager.get_first_timestep()
+model_data = simulator._data_provider.create_deterministic_ruc(
+    first_step, sim_state_for_ruc)
+
+
+model = generate_model(
+            model_data, relax_binaries,
+            ptdf_options,
+            ptdf_matrix_dict,
+            save_model_file = True, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/UnitCommitment')
+
+ruc_plan = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)

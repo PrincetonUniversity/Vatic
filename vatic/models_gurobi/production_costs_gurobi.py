@@ -239,3 +239,19 @@ def _KOW_production_costs(model, tightened=False):
 
     _basic_production_costs_constr(model)
 
+
+def CA_production_costs(model):
+    '''
+    This is a production cost model with additional variables for each
+    piecewise linear segment, equations (7)--(11) in
+
+    M. Carrion and J. M. Arroyo. A computationally efficient mixed-integer
+    linear formulation for the thermal unit commitment problem. IEEE
+    Transactions on Power Systems, 21(3):1371–1378, Aug 2006. ISSN 0885-8950.
+    doi: 10.1109/TPWRS.2006.876672.
+    '''
+
+    _basic_production_costs_vars(model)
+    _basic_production_costs_constr(model)
+    model.update()
+    return model

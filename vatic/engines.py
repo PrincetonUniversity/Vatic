@@ -25,6 +25,8 @@ from pyomo.environ import Suffix as PyomoSuffix
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
+from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
+from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
 
 class Simulator:
     """An engine for simulating the operation of a power grid.
@@ -168,6 +170,7 @@ class Simulator:
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
         self.run_lmps = run_lmps #lmp: Locational Marginal Price
+        self.mipgap = mipgap #Put mipgap in the initalization
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
         self.lmp_shortfall_costs = lmp_shortfall_costs
@@ -199,6 +202,7 @@ class Simulator:
 
         self.init_ruc_file = init_ruc_file
         self.verbosity = verbosity
+
 
         self._simulation_state = VaticSimulationState(
             ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
@@ -409,31 +413,39 @@ class Simulator:
         self._ptdf_manager.mark_active(ruc_model_data)
 
         generatemodel_start_time = time.time()
-        self.ruc_model.generate_model(
-            ruc_model_data, relax_binaries=False,
+        # self.ruc_model.generate_model(
+        #     ruc_model_data, relax_binaries=False,
+        #     ptdf_options=self._ptdf_manager.ruc_ptdf_options,
+        #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+        #     )
+
+        model = generate_model(
+            ruc_model_data, relax_binaries = False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
-            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
-            )
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+            save_model_file=True,
+            file_path_name='/Users/jf3375/Desktop/Gurobi/output/UnitCommitment')
 
         generatemodel_time = time.time() - generatemodel_start_time
         print('generatemodel_time', generatemodel_time)
         # update in case lines were taken out
-        # TODO: why is this necessary?
-        self._ptdf_manager.PTDF_matrix_dict = self.ruc_model.pyo_instance._PTDFs
+
+        self._ptdf_manager.PTDF_matrix_dict = model._PTDFs
 
         # TODO: better error handling
-        try:
-            ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
-                                                  self.solver_options)
 
-        except:
-            print("Failed to solve deterministic RUC instance - likely "
-                  "because no feasible solution exists!")
+            # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
+            #                                       self.solver_options)
+        ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
 
-            output_filename = "bad_ruc.json"
-            ruc_model_data.write(output_filename)
-            print("Wrote failed RUC model to file=" + output_filename)
-            raise
+        # except:
+        #     print("Failed to solve deterministic RUC instance - likely "
+        #           "because no feasible solution exists!")
+        #
+        #     output_filename = "bad_ruc.json"
+        #     ruc_model_data.write(output_filename)
+        #     print("Wrote failed RUC model to file=" + output_filename)
+        #     raise
 
         self._ptdf_manager.update_active(ruc_plan)
         # TODO: add the reporting stuff in
@@ -459,6 +471,7 @@ class Simulator:
 
         sced_model_data = self._data_provider.create_sced_instance(
             self._simulation_state, sced_horizon=sced_horizon)
+
         self._ptdf_manager.mark_active(sced_model_data)
 
         self._hours_in_objective = hours_in_objective

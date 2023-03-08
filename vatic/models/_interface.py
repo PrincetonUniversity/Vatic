@@ -125,10 +125,6 @@ class UCModel:
         model.model_data = use_model.to_egret()
         model.name = "UnitCommitment"
 
-        #TODO: create the gurobi model here
-        model_gurobi = gp.Model('UnitCommitment')
-        model_gurobi._model_data = model.model_data
-
         ## munge PTDF options if necessary
         if self.model_parts['power_balance'] == 'ptdf_power_flow':
             _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
@@ -148,7 +144,6 @@ class UCModel:
         model.relax_binaries = relax_binaries
 
         #ToDo: change whole things into gurobi; import functions from gurobi version instead
-        generatemodel_start_time = time.time()
         self._load_params(model)
         self._get_formulation('status_vars')(model)
         self._get_formulation('power_vars')(model)
@@ -216,8 +211,6 @@ class UCModel:
                     for g in model.ThermalGenerators:
                         model.SupplementalReserveCostGeneration[g, t].expr = 0.
 
-        generatemodel_time =time.time()- generatemodel_start_time
-        print('generatemodel_tine', generatemodel_time)
         self.pyo_instance = model
         #print model
 

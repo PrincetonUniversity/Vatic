@@ -914,7 +914,6 @@ def load_base_params(
     def startup_cost_indices_init_rule(m, g):
         return range(0, len(m._StartupLags[g]))
 
-
     model._StartupCostIndices = {g: startup_cost_indices_init_rule(model, g) for g in model._ThermalGenerators}
 
     ## scale the startup lags

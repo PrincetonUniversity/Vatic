@@ -3,6 +3,12 @@ from gurobipy import LinExpr, quicksum
 
 component_name = 'generation_limits'
 
+def _get_initial_maximum_power_available_upperbound_lists(m,g,t):
+    linear_vars, linear_coefs = m._get_maximum_power_available_lists(m,g,t)
+    linear_vars.append(m._UnitOn[g,t])
+    linear_coefs.append(-m._MaximumPowerOutput[g,t])
+    return linear_vars, linear_coefs
+
 ## generate new time periods by looking forward
 def _get_look_forward_periods(m,g,t,UT_end):
     expr = 0.
@@ -273,3 +279,52 @@ def _add_reactive_limits(model, grid):
         (reactive_lower_limit(model, g, t) for g in model._ThermalGenerators
             for t in model._TimePeriods),
         name = 'EnforceReactiveLowerLimit')
+
+def MLR_generation_limits(model):
+    '''
+    Equations (9)--(11) from
+
+    G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+    formulation for the thermal unit commitment problem. IEEE Transactions on
+    Power Systems, 28(4):4897–4908, 2013.
+
+    with lower limits if required
+    '''
+    model._generation_limits = 'MLR_generation_limits'
+    if model._power_vars in ['garver_power_vars',]:
+        pass
+    else:
+        _CA_lower_limit(model)
+    _MLR_generation_limits(model, False)
+    model.update()
+    return model
+
+
+def _MLR_generation_limits(model, tightened=False):
+    _MLR_generation_limits_uptime_1(model, tightened)
+
+    ## equation (11) in ME:
+    def power_limit_from_start_stop_rule(m, g, t):
+        if m._ScaledMinimumUpTime[g] <= 1:
+            return None
+        linear_vars, linear_coefs = _get_initial_maximum_power_available_upperbound_lists(
+            m, g, t)
+        linear_vars.append(m._UnitStart[g, t])
+        linear_coefs.append(
+            m._MaximumPowerOutput[g, t] - m._ScaledStartupRampLimit[g, t])
+        if t == m._NumTimePeriods:
+            return (LinExpr(linear_coefs, linear_vars) <= 0)
+        linear_vars.append(m._UnitStop[g, t + 1])
+        linear_coefs.append(
+            m._MaximumPowerOutput[g, t] - m._ScaledShutdownRampLimit[g, t])
+        return (LinExpr(linear_coefs, linear_vars) <= 0)
+
+    _power_limit_from_start_stop_cons = {}
+    for g in model._ThermalGenerators:
+        for t in model._TimePeriods:
+            cons = power_limit_from_start_stop_rule(model, g, t)
+            if cons != None:
+                _power_limit_from_start_stop_cons[(g,t)] = cons
+
+    if len(_power_limit_from_start_stop_cons)!= 0:
+        model._power_limit_from_start_stop = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop')

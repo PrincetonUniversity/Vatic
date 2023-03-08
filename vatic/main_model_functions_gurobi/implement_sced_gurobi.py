@@ -93,4 +93,4 @@ model = generate_model(
             ptdf_matrix_dict,
             save_model_file = True, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/UnitCommitment')
 
-md_data = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)
+ruc_plan = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)

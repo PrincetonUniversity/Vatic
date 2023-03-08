@@ -16,6 +16,18 @@ def _add_reserve_shortfall(model, fixed=False):
                 ub = [model._ReserveRequirement[t] for t in model._TimePeriods],
                 name = 'ReserveShortfall')
 
+
+def _MLR_reserve_constraint(model):
+    def enforce_reserve_requirements_rule(m, t):
+        linear_vars = list(
+            m._ReserveProvided[g, t] for g in m._ThermalGenerators)
+        linear_vars.append(m._ReserveShortfall[t])
+        linear_coefs = [1.] * len(linear_vars)
+        return (LinExpr(linear_coefs, linear_vars) >= m._ReserveRequirement[t])
+
+    model._EnforceReserveRequirements = model.addConstrs((enforce_reserve_requirements_rule(model, t) for t in model._TimePeriods),
+                                                         name = 'EnforceReserveRequirements')
+
 def CA_reserve_constraints(model):
     '''
     This is the reserve requirement with slacks given by equation (3) in
@@ -56,6 +68,32 @@ def CA_reserve_constraints(model):
             (enforce_reserve_requirements_rule(model, t) for t in model._TimePeriods),
             name = 'EnforceReserveRequirements')
 
+
+    model.update()
+    return model
+
+
+def MLR_reserve_constraints(model):
+    '''
+    This is the reserve requirement with slacks given by equation (5) in
+
+    G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+    formulation for the thermal unit commitment problem. IEEE Transactions on
+    Power Systems, 28(4):4897–4908, 2013.
+    '''
+
+    if not check_reserve_requirement(model):
+        _add_reserve_shortfall(model, fixed=True)
+        return
+
+    _add_reserve_shortfall(model)
+    # ensure there is sufficient maximal power output available to meet both the
+    # demand and the spinning reserve requirements in each time period.
+    # encodes Constraint 3 in Carrion and Arroyo.
+
+    # IMPT: In contrast to power balance, reserves are (1) not per-bus and (2) expressed in terms of
+    #       maximum power available, and not actual power generated.
+    _MLR_reserve_constraint(model)
 
     model.update()
     return model

@@ -78,9 +78,6 @@ def generate_model(
     # set up objective
     model = basic_objective(model)
 
-    generatemodel_time = time.time() - generatemodel_start_time
-    print('generatemodel_time', generatemodel_time)
-
     # save gurobi model in a file
     if save_model_file:
         model.write('{}.mps'.format(file_path_name))
