@@ -129,8 +129,11 @@ def _basic_production_costs_constr(model):
             linear_coefs.append(-1.)
             return LinExpr(linear_coefs, linear_vars) == 0
         else:
-            return m.ProductionCost[g, t] == 0.
+            return (m._ProductionCost[g, t] == 0)
 
+    for g in model._SingleFuelGenerators:
+        for t in model._TimePeriods:
+            piecewise_production_costs_rule(model, g, t)
     model._ProductionCostConstr = \
         model.addConstrs((piecewise_production_costs_rule(model, g, t)
                             for g in model._SingleFuelGenerators

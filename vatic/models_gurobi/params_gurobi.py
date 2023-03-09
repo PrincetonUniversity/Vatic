@@ -735,7 +735,7 @@ def load_base_params(
         else:
             return temp + m._MinimumPowerOutput[g, t]
 
-    model._ScaledShutdownRampLimit = tupledict({(g, t): scale_startup_limit(model, g, t) for g in model._ThermalGenerators for t in model._TimePeriods})
+    model._ScaledShutdownRampLimit = tupledict({(g, t): scale_shutdown_limit(model, g, t) for g in model._ThermalGenerators for t in model._TimePeriods})
 
 
     ramp_limit_validator(model)

@@ -24,8 +24,8 @@ def MLR_startup_costs(model, add_startup_cost_var=True):
         return ((g, s, t) for t in m._TimePeriods for g in m._ThermalGenerators
                 for s in m._StartupCostIndices[g])
 
-    model._StartupCostsIndexSet = [(g, s, t) for t in model._TimePeriods for g in model._ThermalGenerators
-                for s in model._StartupCostIndices[g]]
+    model._StartupCostsIndexSet = [(g, s, t) for g in model._ThermalGenerators
+                for s in model._StartupCostIndices[g] for t in model._TimePeriods]
 
     if _is_relaxed(model):
         model._delta = model.addVars(model._StartupCostsIndexSet, lb = 1, ub = 0, name = 'delta')
@@ -255,6 +255,6 @@ def KOW_startup_costs(model, add_startup_cost_var=True):
     model._ComputeStartupCosts = model.addConstrs(
         (ComputeStartupCost2_rule(model, g, t)
             for g in model._SingleFuelGenerators for t in model._TimePeriods)
-                                           ,name='ComputeStartupCost2_rule')
+                                           ,name='ComputeStartupCosts')
     model.update()
     return model

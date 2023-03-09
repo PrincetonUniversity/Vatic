@@ -434,8 +434,8 @@ class Simulator:
 
         # TODO: better error handling
 
-            # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
-            #                                       self.solver_options)
+        # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
+        #                                       self.solver_options)
         ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
 
         # except:

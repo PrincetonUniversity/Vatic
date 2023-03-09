@@ -148,6 +148,7 @@ model = CA_reserve_constraints(model)
 
 # set up objective
 model = basic_objective(model)
+objective_hours = None
 
 generatemodel_time =time.time()- generatemodel_start_time
 print('generatemodel_time', generatemodel_time)

@@ -99,6 +99,7 @@ ptdf_matrix_dict = None
 relax_binaries = False
 hours_in_objective = 1
 
+
 sim_state_for_ruc = None
 first_step = simulator._time_manager.get_first_timestep()
 
@@ -161,6 +162,52 @@ model = MLR_reserve_constraints(model)
 # set up objective
 model = basic_objective(model)
 
+objective_hours = hours_in_objective
+if objective_hours:
+    zero_cost_hours = model._TimePeriods
+
+    for i, t in enumerate(model._TimePeriods):
+        if i < objective_hours:
+            zero_cost_hours.remove(t)
+        else:
+            break
+
+    cost_gens = {g for g, _ in model._ProductionCost}
+    for t in zero_cost_hours:
+        for g in cost_gens:
+            model.remove(model._ProductionCostConstr[g, t])
+            model._ProductionCost[g, t].lb = 0.
+            model._ProductionCost[g, t].ub = 0.
+
+        for g in model._DualFuelGenerators:
+            constr = model._DualFuelProductionCost[g, t]
+            constr.rhs = 0
+            constr.sense = '='
+
+        if model._regulation_service:
+            for g in model._AGC_Generators:
+                constr = model._RegulationCostGeneration[g, t]
+                constr.rhs = 0
+                constr.sense = '='
+
+        if model._spinning_reserve:
+            for g in model._ThermalGenerators:
+                constr = model._SpinningReserveCostGeneration[g, t]
+                constr.rhs = 0
+                constr.sense = '='
+
+        if model._non_spinning_reserve:
+            for g in model._ThermalGenerators:
+                constr = model._NonSpinningReserveCostGeneration[g, t]
+                constr.rhs = 0
+                constr.sense = '='
+
+        if model._supplemental_reserve:
+            for g in model.ThermalGenerators:
+                constr = model._SupplementalReserveCostGeneration[g, t]
+                constr.rhs = 0
+                constr.sense = '='
+model.update()
 # save gurobi model in a file
 os.chdir('/Users/jf3375/Desktop/Gurobi/output/')
 model.write('EconomicDispatch.mps')
