@@ -419,12 +419,12 @@ class Simulator:
         #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
         #     )
 
-        model = generate_model(
-            ruc_model_data, relax_binaries = False,
+        model = generate_model(model_name = 'UnitCommitment',
+            model_data = ruc_model_data, relax_binaries = False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             save_model_file=True,
-            file_path_name='/Users/jf3375/Desktop/Gurobi/output/UnitCommitment')
+            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
 
         generatemodel_time = time.time() - generatemodel_start_time
         print('generatemodel_time', generatemodel_time)
@@ -486,11 +486,19 @@ class Simulator:
             objective_hours=hours_in_objective
             )
 
-        # update in case lines were taken out
-        self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
+        model = generate_model(model_name = 'EconomicDispatch',
+            model_data = sced_model_data, relax_binaries = False,
+            ptdf_options=ptdf_options,
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+            objective_hours=hours_in_objective,
+            save_model_file=True,
+            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
 
-        sced_results = self.sced_model.solve_model(self._sced_solver,
-                                                   self.solver_options)
+
+        # update in case lines were taken out
+        sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
+                                threads=self.solver_options['Threads'],
+                                outputflag=0)
         self._ptdf_manager.update_active(sced_results)
 
         return sced_results

@@ -138,7 +138,7 @@ def _damcikurt_basic_ramping(model):
                                            m._MinimumPowerOutput[g, t] - 0) * \
                   m._UnitOnT0[g]
 
-            return LinExpr(linear_coefs, linear_vars >= LHS)
+            return LinExpr(linear_coefs, linear_vars) >= LHS
         else:
             linear_vars_power_t, linear_coefs_power_t = m._get_power_generated_above_minimum_lists(
                 m, g, t)

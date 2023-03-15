@@ -17,15 +17,15 @@ model.Params.Threads = threads
 # Based on tuning, the original set of parameters is fastest
 # model.Params.TuneCriterion = 2
 # Increase the number of tuning trials to control the randomness of MIP models
-# model.Params.TuneTrials = 100
-# model.Params.TuneResults = -1
-# model.tune()
-# for i in range(model.tuneResultCount):
-#     print(i)
-#     model.write('Tune_UnitCommitment.prm')
+model.Params.TuneTrials = 10
+model.Params.TuneResults = -1
+model.tune()
+for i in range(model.tuneResultCount):
+    print(i)
+    model.write('/Users/jf3375/Desktop/Gurobi/output/Tune_EconomicDispatch.prm')
 
 # Output and Read the Current Model Parameter File to set Model Parameters
-# model.read('Tune_UnitCommitment.prm')
+# model.read('/Users/jf3375/Desktop/Gurobi/output/Tune_UnitCommitment.prm')
 
 #Reset all parameters
 # gurobi.resetParams()

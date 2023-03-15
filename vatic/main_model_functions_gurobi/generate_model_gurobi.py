@@ -5,30 +5,31 @@ import gurobipy as gp
 import egret.common.lazy_ptdf_utils as lpu
 
 from vatic.models_gurobi import default_params, garver_3bin_vars, \
-                                garver_power_vars, garver_power_avail_vars, \
+                                garver_power_vars, \
+                                garver_power_avail_vars,  MLR_reserve_vars,\
                                 file_non_dispatchable_vars, \
-                                pan_guan_gentile_KOW_generation_limits, \
+                                pan_guan_gentile_KOW_generation_limits, MLR_generation_limits,\
                                 damcikurt_ramping,\
-                                KOW_production_costs_tightened, \
+                                KOW_production_costs_tightened, CA_production_costs,\
                                 rajan_takriti_UT_DT,\
-                                KOW_startup_costs, \
+                                KOW_startup_costs, MLR_startup_costs,\
                                 storage_services, ancillary_services, \
                                 ptdf_power_flow, \
-                                CA_reserve_constraints, \
+                                CA_reserve_constraints, MLR_reserve_constraints,\
                                 basic_objective
 
 
-def generate_model(
+def generate_model(model_name,
             model_data, relax_binaries,
             ptdf_options,
-            ptdf_matrix_dict, objective_hours = None,
-            save_model_file = False, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/UnitCommitment'):
+            ptdf_matrix_dict,  objective_hours = None,
+            save_model_file = False, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/'):
 
+    #model name = 'UnitComitment'
     use_model = model_data.clone_in_service()
 
-    model = gp.Model('UnitCommitment')
+    model = gp.Model(model_name)
     model._model_data = use_model.to_egret()  # _model_data in model is egret object, while model_data is vatic object
-    model._model_data_vatic = model_data
     model._fuel_supply = None
     model._fuel_consumption = None
     model._security_constraints = None
@@ -61,25 +62,41 @@ def generate_model(
     # Set up variables
     model = garver_3bin_vars(model)
     model = garver_power_vars(model)
-    model = garver_power_avail_vars(model)
+    if model_name == 'UnitCommitment':
+        model = garver_power_avail_vars(model)
+    elif model_name == 'EconomicDispatch':
+        model = MLR_reserve_vars(model)
     model = file_non_dispatchable_vars(model)
 
     # Set up constraints
-    model = pan_guan_gentile_KOW_generation_limits(model)
+    if model_name == 'UnitCommitment':
+        model = pan_guan_gentile_KOW_generation_limits(model)
+    elif model_name == 'EconomicDispatch':
+        model = MLR_generation_limits(model)
     model = damcikurt_ramping(model)
-    model = KOW_production_costs_tightened(model)
+    if model_name == 'UnitCommitment':
+        model = KOW_production_costs_tightened(model)
+    elif model_name == 'EconomicDispatch':
+        model = CA_production_costs(model)
     model = rajan_takriti_UT_DT(model)
-    model = KOW_startup_costs(model)
+    if model_name == 'UnitCommitment':
+        model = KOW_startup_costs(model)
+    elif model_name == 'EconomicDispatch':
+        model = MLR_startup_costs(model)
     model = storage_services(model)
     model = ancillary_services(model)
     model = ptdf_power_flow(model)
-    model = CA_reserve_constraints(model)
+    if model_name == 'UnitCommitment':
+        model = CA_reserve_constraints(model)
+    elif model_name == 'EconomicDispatch':
+        model = MLR_reserve_constraints(model)
 
     # set up objective
     model = basic_objective(model)
 
     if objective_hours:
-        zero_cost_hours = model._TimePeriods
+        # Need to Deep Copy of Model Attributes so the Original Attribute does not get removed
+        zero_cost_hours = model._TimePeriods.copy()
 
         for i, t in enumerate(model._TimePeriods):
             if i < objective_hours:
@@ -127,7 +144,7 @@ def generate_model(
     model.update()
     # save gurobi model in a file
     if save_model_file:
-        model.write('{}.mps'.format(file_path_name))
+        model.write('{}.mps'.format(file_path_name+model_name))
         # more human readable than mps file, but might lose some info
-        model.write('{}.lp'.format(file_path_name))
+        model.write('{}.lp'.format(file_path_name+model_name))
     return model

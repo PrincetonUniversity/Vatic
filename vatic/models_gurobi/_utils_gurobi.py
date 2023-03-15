@@ -1,7 +1,15 @@
+from gurobipy import Var
+
 from math import degrees
 from egret.models.unit_commitment import _time_series_dict, _preallocated_list
 from egret.common.log import logger
 
+
+def _get_value_general_gurobi(input):
+    if type(input) == Var :
+        return input.X
+    else:
+        return input.getValue()
 
 def _save_uc_results(m, relaxed):
     # dual suffix is on top-level model
@@ -105,7 +113,7 @@ def _save_uc_results(m, relaxed):
             for dt, mt in enumerate(m._TimePeriods):
                 pg_dict[dt] = m._PowerGeneratedStartupShutdown[g, mt].getValue()
                 if reserve_requirement:
-                    rg_dict[dt] = m._ReserveProvided[g, mt].getValue()
+                    rg_dict[dt] = _get_value_general_gurobi(m._ReserveProvided[g, mt])
                 if relaxed:
                     commitment_dict[dt] = m._UnitOn[g, mt].x
                 else:
@@ -253,6 +261,7 @@ def _save_uc_results(m, relaxed):
                     va_dict[dt] = m._TransmissionBlock[mt]._va[b].x
                     p_balance_violation_dict[dt] = m._LoadGenerateMismatch[b, mt].x
                     pl_dict[dt] = m._TransmissionBlock[mt]._pl[b].x
+                print(va_dict)
                 b_dict['va'] = _time_series_dict([degrees(v) for v in va_dict])
                 b_dict['p_balance_violation'] = _time_series_dict(
                     p_balance_violation_dict)
@@ -372,7 +381,8 @@ def _save_uc_results(m, relaxed):
                 b_dict['p_balance_violation'] = _time_series_dict(
                     p_balance_violation_dict)
                 b_dict['pl'] = _time_series_dict(pl_dict)
-                b_dict['va'] = _time_series_dict([degrees(v) for v in va_dict])
+                if all(x is None for x in va_dict):
+                    b_dict['va'] = _time_series_dict([degrees(v) for v in va_dict])
                 if relaxed:
                     lmp_dict = _preallocated_list(data_time_periods)
                     for dt, mt in enumerate(m._TimePeriods):

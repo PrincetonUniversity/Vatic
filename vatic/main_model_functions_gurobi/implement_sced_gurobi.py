@@ -1,15 +1,33 @@
 import os
+import sys
 import logging
 from datetime import datetime
-import multiprocessing
 import time
+import multiprocessing
+import pandas as pd
+import gurobipy as gp
 
-import vatic.main_model_functions_gurobi.generate_model_gurobi
 from vatic.engines import Simulator
 from vatic.data import load_input
+from vatic.models_gurobi import default_params, garver_3bin_vars, \
+                                garver_power_vars, MLR_reserve_vars, \
+                                file_non_dispatchable_vars, \
+                                MLR_generation_limits, \
+                                damcikurt_ramping,\
+                                CA_production_costs, \
+                                rajan_takriti_UT_DT,\
+                                MLR_startup_costs, \
+                                storage_services, ancillary_services, \
+                                ptdf_power_flow, \
+                                MLR_reserve_constraints, \
+                                basic_objective
+
+import egret.common.lazy_ptdf_utils as lpu
 
 from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
 from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
+
+sys.path.extend(['/Users/jf3375/PycharmProjects/Vatic'])
 
 component_name = 'data_loader'
 
@@ -26,7 +44,6 @@ out_dir = '/Users/jf3375/Desktop/Vatic_Run/outputs'
 last_condition_file = '/Users/jf3375/Desktop/Vatic_Run/outputs/last_condition.csv'
 solver = 'gurobi'
 solver_args = {'Threads': multiprocessing.cpu_count()-1}
-threads = multiprocessing.cpu_count()-1
 lmps = False
 ruc_mipgap = 0.01
 reserve_factor = 0.15
@@ -77,20 +94,33 @@ simulator = Simulator(
     save_to_csv = csv
 )
 
-ptdf_options = {'rel_ptdf_tol': 1e-06, 'abs_ptdf_tol': 1e-10, 'abs_flow_tol': 0.001, 'rel_flow_tol': 1e-05, 'lazy_rel_flow_tol': -0.01, 'iteration_limit': 100000, 'lp_iteration_limit': 100, 'max_violations_per_iteration': 5, 'lazy': True, 'branch_kv_threshold': None, 'kv_threshold_type': 'one', 'pre_lp_iteration_limit': 100, 'active_flow_tol': 50.0, 'lp_cleanup_phase': True}
+# Run RUC to get simulation_states: actual, forecast, commits, power_generated...
+simulator.initialize_oracle()
+
+ptdf_options = {'lp_iteration_limit': 0,  'pre_lp_iteration_limit': 0}
 ptdf_matrix_dict = None
 relax_binaries = False
+hours_in_objective = 1
+
 
 sim_state_for_ruc = None
 first_step = simulator._time_manager.get_first_timestep()
-model_data = simulator._data_provider.create_deterministic_ruc(
-    first_step, sim_state_for_ruc)
 
+sced_model_data = simulator._data_provider.create_sced_instance(
+    simulator._simulation_state, sced_horizon=sced_horizon)
+simulator._ptdf_manager.mark_active(sced_model_data)
+ptdf_options = simulator._ptdf_manager.sced_ptdf_options
 
-model = generate_model(
-            model_data, relax_binaries,
-            ptdf_options,
-            ptdf_matrix_dict,
-            save_model_file = True, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/UnitCommitment')
+model = generate_model(model_name='EconomicDispatch',
+                       model_data=sced_model_data, relax_binaries=False,
+                       ptdf_options=ptdf_options,
+                       ptdf_matrix_dict=simulator._ptdf_manager.PTDF_matrix_dict,
+                       objective_hours=hours_in_objective,
+                       save_model_file=True,
+                       file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
 
-ruc_plan = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)
+sced_results = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)
+
+for branch, branch_data in sced_results.elements(element_type='branch'):
+    print(branch_data['pf']['values'])
+    # print(branch_data['rating_long_term'])

@@ -31,8 +31,8 @@ def _add_initial(model):
     def enforce_up_time_constraints_initial(m, g):
         if m._InitialTimePeriodsOnLine[g] == 0:
             return
-        for t in range(m._TimePeriods.first(),
-                m._InitialTimePeriodsOnLine[g]) + m._TimePeriods.first():
+        for t in range(m._TimePeriods[0],
+                m._InitialTimePeriodsOnLine[g] + m._TimePeriods[0]):
             if m._status_vars == 'ALS_state_transition_vars':
                 m._UnitStayOn[g, t].ub = 1
                 m._UnitStayOn[g, t].lb = 1
@@ -47,8 +47,8 @@ def _add_initial(model):
     def enforce_down_time_constraints_initial(m, g):
         if m._InitialTimePeriodsOffLine[g] == 0:
             return
-        for t in range(m._TimePeriods.first(),
-                m._InitialTimePeriodsOffLine[g]) + m._TimePeriods.first():
+        for t in range(m._TimePeriods[0],
+                m._InitialTimePeriodsOffLine[g] + m._TimePeriods[0]):
             if m._status_vars == 'ALS_state_transition_vars':
                 m._UnitStayOn[g, t].lb = 0
                 m._UnitStayOn[g, t].ub = 0
