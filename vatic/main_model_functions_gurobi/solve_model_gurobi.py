@@ -6,9 +6,9 @@ from vatic.models_gurobi import _save_uc_results
 
 
 def solve_model(model, relaxed, mipgap, threads, outputflag) -> VaticModelData:
+    model.Params.OutputFlag = outputflag
     model.Params.MIPGap = mipgap
     model.Params.Threads = threads
-    model.Params.OutputFlag = outputflag
 
     solvemodel_start_time = time.time()
     model.optimize()
