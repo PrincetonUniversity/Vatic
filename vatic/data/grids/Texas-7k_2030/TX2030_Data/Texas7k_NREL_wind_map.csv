@@ -1,0 +1,294 @@
+Texas7k BusNum,Texas7k GenID,Texas7k Max MW,Texas7k Min MW,NREL Wind Site,Mapping Status,Distribution Factor,NREL Capacity Proportion
+93,OnshoreWindTurbine_93_1,300.0,102.71,McAdoo Wind Farm,1,1.0,196.0
+94,OnshoreWindTurbine_94_PA,300.0,102.71,McAdoo Wind Farm,1,1.0,196.0
+95,OnshoreWindTurbine_95_PB,300.0,102.71,McAdoo Wind Farm,1,1.0,196.0
+96,OnshoreWindTurbine_96_PC,300.0,102.71,McAdoo Wind Farm,1,1.0,196.0
+97,OnshoreWindTurbine_97_PP,142.88,41.23,McAdoo Wind Farm,1,1.0,196.0
+98,OnshoreWindTurbine_98_1,120.0,22.3,Wake,1,1.0,336.0
+99,OnshoreWindTurbine_99_PA,120.0,22.3,Wake,1,1.0,336.0
+100,OnshoreWindTurbine_100_PB,120.0,22.3,Wake,1,1.0,336.0
+101,OnshoreWindTurbine_101_PC,120.0,22.3,Wake,1,1.0,336.0
+102,OnshoreWindTurbine_102_PP,57.15,22.31,Wake,1,1.0,336.0
+112,OnshoreWindTurbine_112_1,160.0,32.14,RTS 2 Wind,1,1.0,179.91
+113,OnshoreWindTurbine_113_PA,160.0,32.14,RTS 2 Wind,1,1.0,179.91
+114,OnshoreWindTurbine_114_PB,160.0,32.14,RTS 2 Wind,1,1.0,179.91
+115,OnshoreWindTurbine_115_PC,160.0,32.14,RTS 2 Wind,1,1.0,179.91
+116,OnshoreWindTurbine_116_PP,76.2,15.81,RTS 2 Wind,1,1.0,179.91
+117,OnshoreWindTurbine_117_1,144.9,48.73,Magic Valley,1,1.0,263.0
+118,OnshoreWindTurbine_118_PA,144.9,48.73,Magic Valley,1,1.0,263.0
+119,OnshoreWindTurbine_119_PB,144.9,48.73,Magic Valley,1,1.0,263.0
+120,OnshoreWindTurbine_120_PC,144.9,48.73,Magic Valley,1,1.0,263.0
+121,OnshoreWindTurbine_121_PP,69.01,17.22,Magic Valley,1,1.0,263.0
+134,OnshoreWindTurbine_134_1,250.0,42.13,Mozart,1,1.0,39.0
+135,OnshoreWindTurbine_135_PA,250.0,42.13,Mozart,1,1.0,39.0
+136,OnshoreWindTurbine_136_PB,250.0,42.13,Mozart,1,1.0,39.0
+137,OnshoreWindTurbine_137_PC,250.0,42.13,Mozart,1,1.0,39.0
+138,OnshoreWindTurbine_138_PP,119.07,27.81,Mozart,1,1.0,39.0
+139,OnshoreWindTurbine_139_1,209.4,41.78,Torrecillas Wind,1,1.0,300.5
+140,OnshoreWindTurbine_140_PA,209.4,41.78,Torrecillas Wind,1,1.0,300.5
+141,OnshoreWindTurbine_141_PB,209.4,41.78,Torrecillas Wind,1,1.0,300.5
+142,OnshoreWindTurbine_142_PC,209.4,41.78,Torrecillas Wind,1,1.0,300.5
+143,OnshoreWindTurbine_143_PP,99.73,18.22,Torrecillas Wind,1,1.0,300.5
+144,OnshoreWindTurbine_144_1,225.6,51.31,Montgomery Ranch Wind,1,1.0,200.2
+145,OnshoreWindTurbine_145_PA,225.6,51.31,Montgomery Ranch Wind,1,1.0,200.2
+146,OnshoreWindTurbine_146_PB,225.6,51.31,Montgomery Ranch Wind,1,1.0,200.2
+147,OnshoreWindTurbine_147_PC,225.6,51.31,Montgomery Ranch Wind,1,1.0,200.2
+148,OnshoreWindTurbine_148_PP,107.45,38.12,Montgomery Ranch Wind,1,1.0,200.2
+164,OnshoreWindTurbine_164_1,50.0,12.83,Notrees,1,1.0,197.0
+165,OnshoreWindTurbine_165_PA,50.0,12.83,Notrees,1,1.0,197.0
+166,OnshoreWindTurbine_166_PB,50.0,12.83,Notrees,1,1.0,197.0
+167,OnshoreWindTurbine_167_PC,50.0,12.83,Notrees,1,1.0,197.0
+168,OnshoreWindTurbine_168_PP,23.81,5.21,Notrees,1,1.0,197.0
+169,OnshoreWindTurbine_169_1,418.9,103.41,Buffalo Gap Wind Farm,1,1.0,683.0
+170,OnshoreWindTurbine_170_PA,418.9,103.41,Buffalo Gap Wind Farm,1,1.0,683.0
+171,OnshoreWindTurbine_171_PB,418.9,103.41,Buffalo Gap Wind Farm,1,1.0,683.0
+172,OnshoreWindTurbine_172_PC,418.9,103.41,Buffalo Gap Wind Farm,1,1.0,683.0
+173,OnshoreWindTurbine_173_PP,199.51,52.13,Callahan Divide Wind Energy Center,1,1.0,149.0
+180,OnshoreWindTurbine_180_1,180.1,35.13,Tyler Bluff,1,1.0,164.0
+181,OnshoreWindTurbine_181_PA,180.1,35.13,Tyler Bluff,1,1.0,164.0
+182,OnshoreWindTurbine_182_PB,180.1,35.13,Tyler Bluff,1,1.0,164.0
+183,OnshoreWindTurbine_183_PC,180.1,35.13,Tyler Bluff,1,1.0,164.0
+184,OnshoreWindTurbine_184_PP,85.78,38.41,Tyler Bluff,1,1.0,164.0
+188,OnshoreWindTurbine_188_1,242.8,42.13,Green Pastures,1,1.0,392.0
+189,OnshoreWindTurbine_189_PA,242.8,42.13,Green Pastures,1,1.0,392.0
+190,OnshoreWindTurbine_190_PB,242.8,42.13,Green Pastures,1,1.0,392.0
+191,OnshoreWindTurbine_191_PC,242.8,42.13,Green Pastures,1,1.0,392.0
+192,OnshoreWindTurbine_192_PP,115.64,39.41,Green Pastures,1,1.0,392.0
+202,OnshoreWindTurbine_202_1,239.6,82.13,Karankawa Wind,1,1.0,206.64
+203,OnshoreWindTurbine_203_PA,239.6,82.13,Karankawa Wind,1,1.0,206.64
+204,OnshoreWindTurbine_204_PB,239.6,82.13,Karankawa Wind,1,1.0,206.64
+205,OnshoreWindTurbine_205_PC,239.6,82.13,Karankawa Wind,1,1.0,206.64
+206,OnshoreWindTurbine_206_PP,114.12,42.13,Karankawa 2 Wind,1,1.0,101.0
+207,OnshoreWindTurbine_207_1,200.0,34.21,Hidalgo,1,1.0,326.0
+208,OnshoreWindTurbine_208_PA,200.0,34.21,Hidalgo,1,1.0,326.0
+209,OnshoreWindTurbine_209_PB,200.0,34.21,Hidalgo,1,1.0,326.0
+210,OnshoreWindTurbine_210_PC,200.0,34.21,Hidalgo,1,1.0,326.0
+211,OnshoreWindTurbine_211_PP,95.26,45.13,Hidalgo,1,1.0,326.0
+215,OnshoreWindTurbine_215_1,293.4,75.81,Lone Star I Wind Farm,1,1.0,522.0
+216,OnshoreWindTurbine_216_PA,293.4,75.81,Lone Star I Wind Farm,1,1.0,522.0
+217,OnshoreWindTurbine_217_PB,293.4,75.81,Lone Star I Wind Farm,1,1.0,522.0
+218,OnshoreWindTurbine_218_PC,293.4,75.81,Lone Star I Wind Farm,1,1.0,522.0
+219,OnshoreWindTurbine_219_PP,139.83,48.51,Lone Star I Wind Farm,1,1.0,522.0
+220,OnshoreWindTurbine_220_1,182.4,25.13,Horse Hollow,1,1.0,960.0
+221,OnshoreWindTurbine_221_PA,182.4,25.13,Horse Hollow,1,1.0,960.0
+222,OnshoreWindTurbine_222_PB,182.4,25.13,Horse Hollow,1,1.0,960.0
+223,OnshoreWindTurbine_223_PC,182.4,25.13,Horse Hollow,1,1.0,960.0
+224,OnshoreWindTurbine_224_PP,86.87,39.21,Horse Hollow,1,1.0,960.0
+232,OnshoreWindTurbine_232_1,150.0,48.13,Langford Wind Farm,1,1.0,196.0
+233,OnshoreWindTurbine_233_PA,150.0,48.13,Langford Wind Farm,1,1.0,196.0
+234,OnshoreWindTurbine_234_PB,150.0,48.13,Langford Wind Farm,1,1.0,196.0
+235,OnshoreWindTurbine_235_PC,150.0,48.13,Langford Wind Farm,1,1.0,196.0
+236,OnshoreWindTurbine_236_PP,71.44,24.31,Langford Wind Farm,1,1.0,196.0
+240,OnshoreWindTurbine_240_1,524.4,138.41,RTS 2 Wind,1,1.0,179.91
+241,OnshoreWindTurbine_241_PA,524.4,138.41,RTS 2 Wind,1,1.0,179.91
+242,OnshoreWindTurbine_242_PB,524.4,138.41,RTS 2 Wind,1,1.0,179.91
+243,OnshoreWindTurbine_243_PC,524.4,138.41,RTS 2 Wind,1,1.0,179.91
+244,OnshoreWindTurbine_244_PP,249.76,41.07,RTS 2 Wind,1,1.0,179.91
+245,OnshoreWindTurbine_245_1,239.8,80.12,Bruenning's Breeze,1,1.0,298.0
+246,OnshoreWindTurbine_246_PA,239.8,80.12,Bruenning's Breeze,1,1.0,298.0
+247,OnshoreWindTurbine_247_PB,239.8,80.12,Bruenning's Breeze,1,1.0,298.0
+248,OnshoreWindTurbine_248_PC,239.8,80.12,Bruenning's Breeze,1,1.0,298.0
+249,OnshoreWindTurbine_249_PP,114.21,42.57,Bruenning's Breeze,1,1.0,298.0
+250,OnshoreWindTurbine_250_1,200.2,52.86,Monte Bueno,1,1.0,201.1
+251,OnshoreWindTurbine_251_PA,200.2,52.86,Monte Bueno,1,1.0,201.1
+252,OnshoreWindTurbine_252_PB,200.2,52.86,Monte Bueno,1,1.0,201.1
+253,OnshoreWindTurbine_253_PC,200.2,52.86,Monte Bueno,1,1.0,201.1
+254,OnshoreWindTurbine_254_PP,95.35,25.13,Hidalgo II Wind,1,1.0,51.0
+255,OnshoreWindTurbine_255_1,272.6,73.12,Las Majadas Wind,1,1.0,272.8
+256,OnshoreWindTurbine_256_PA,272.6,73.12,Las Majadas Wind,1,1.0,272.8
+257,OnshoreWindTurbine_257_PB,272.6,73.12,Las Majadas Wind,1,1.0,272.8
+258,OnshoreWindTurbine_258_PC,272.6,73.12,Las Majadas Wind,1,1.0,272.8
+259,OnshoreWindTurbine_259_PP,129.83,32.18,East Raymond Wind,1,1.0,201.6
+275,OnshoreWindTurbine_275_1,300.0,91.32,Prairie Hill Wind,1,1.0,300.0
+276,OnshoreWindTurbine_276_PA,300.0,91.32,Prairie Hill Wind,1,1.0,300.0
+277,OnshoreWindTurbine_277_PB,300.0,91.32,Prairie Hill Wind,1,1.0,300.0
+278,OnshoreWindTurbine_278_PC,300.0,91.32,Prairie Hill Wind,1,1.0,300.0
+279,OnshoreWindTurbine_279_PP,142.88,41.23,Prairie Hill Wind,1,1.0,300.0
+280,OnshoreWindTurbine_280_1,201.6,52.13,Mesteno Windpower,1,1.0,201.6
+281,OnshoreWindTurbine_281_PA,201.6,52.13,Mesteno Windpower,1,1.0,201.6
+282,OnshoreWindTurbine_282_PB,201.6,52.13,Mesteno Windpower,1,1.0,201.6
+283,OnshoreWindTurbine_283_PC,201.6,52.13,Mesteno Windpower,1,1.0,201.6
+284,OnshoreWindTurbine_284_PP,96.02,33.01,Las Lomas Wind,1,1.0,200.0
+306,OnshoreWindTurbine_306_1,525.0,141.23,Goat Mountain Phase Wind Farm,1,1.0,195.0
+307,OnshoreWindTurbine_307_PA,525.0,141.23,Goat Mountain Phase Wind Farm,1,1.0,195.0
+308,OnshoreWindTurbine_308_PB,525.0,141.23,Goat Mountain Phase Wind Farm,1,1.0,195.0
+309,OnshoreWindTurbine_309_PC,525.0,141.23,Goat Mountain Phase Wind Farm,1,1.0,195.0
+310,OnshoreWindTurbine_310_PP,250.04,43.12,Goat Mountain Phase Wind Farm,1,1.0,195.0
+326,OnshoreWindTurbine_326_1,175.0,34.13,Midway Wind,1,1.0,162.9
+327,OnshoreWindTurbine_327_PA,175.0,34.13,Midway Wind,1,1.0,162.9
+328,OnshoreWindTurbine_328_PB,175.0,34.13,Midway Wind,1,1.0,162.9
+329,OnshoreWindTurbine_329_PC,175.0,34.13,Midway Wind,1,1.0,162.9
+330,OnshoreWindTurbine_330_PP,83.35,34.13,Karankawa 2 Expansion,1,1.0,98.3
+349,OnshoreWindTurbine_349_1,162.1,38.13,Forest Creek Wind Farm,1,1.0,162.0
+350,OnshoreWindTurbine_350_PA,162.1,38.13,Forest Creek Wind Farm,1,1.0,162.0
+351,OnshoreWindTurbine_351_PB,162.1,38.13,Forest Creek Wind Farm,1,1.0,162.0
+352,OnshoreWindTurbine_352_PC,162.1,38.13,Forest Creek Wind Farm,1,1.0,162.0
+353,OnshoreWindTurbine_353_PP,77.2,14.21,Forest Creek Wind Farm,1,1.0,162.0
+354,OnshoreWindTurbine_354_1,293.3,73.12,Capricorn I & III repower,1,1.0,32.0
+355,OnshoreWindTurbine_355_PA,293.3,73.12,Capricorn I & III repower,1,1.0,32.0
+356,OnshoreWindTurbine_356_PB,293.3,73.12,Capricorn I & III repower,1,1.0,32.0
+357,OnshoreWindTurbine_357_PC,293.3,73.12,Capricorn I & III repower,1,1.0,32.0
+358,OnshoreWindTurbine_358_PP,139.7,44.51,Capricorn I & III repower,1,1.0,32.0
+368,OnshoreWindTurbine_368_1,198.5,90.21,San Roman,1,1.0,121.0
+369,OnshoreWindTurbine_369_PA,198.5,90.21,San Roman,1,1.0,121.0
+370,OnshoreWindTurbine_370_PB,198.5,90.21,San Roman,1,1.0,121.0
+371,OnshoreWindTurbine_371_PC,198.5,90.21,San Roman,1,1.0,121.0
+372,OnshoreWindTurbine_372_PP,94.54,34.81,San Roman,1,1.0,121.0
+375,OnshoreWindTurbine_375_1,242.5,40.18,Snyder Wind Project,1,1.0,82.0
+376,OnshoreWindTurbine_376_PA,242.5,40.18,Snyder Wind Project,1,1.0,82.0
+377,OnshoreWindTurbine_377_PB,242.5,40.18,Snyder Wind Project,1,1.0,82.0
+378,OnshoreWindTurbine_378_PC,242.5,40.18,Snyder Wind Project,1,1.0,82.0
+379,OnshoreWindTurbine_379_PP,115.49,38.13,Snyder Wind Project,1,1.0,82.0
+120493,OnshoreWindTurbine_120493_1,99.8,20.75,Anacacho Wind Farm,1,1.0,129.0
+150492,OnshoreWindTurbine_150492_1,60.0,27.95,Silver Star Wind Farm,1,1.0,78.0
+150496,OnshoreWindTurbine_150496_1,120.0,45.51,Barton Chapel Wind Farm,1,1.0,157.0
+150499,OnshoreWindTurbine_150499_1,225.0,112.16,Trinity Hills,1,1.0,294.0
+150502,OnshoreWindTurbine_150502_1,161.0,26.89,Bobcat Bluff,1,1.0,196.0
+150505,OnshoreWindTurbine_150505_1,150.0,63.38,Senate,1,1.0,196.0
+150507,OnshoreWindTurbine_150507_1,112.5,17.68,Wolf Ridge Wind Farm,1,1.0,147.0
+150510,OnshoreWindTurbine_150510_1,135.4,33.61,Blue Summit,1,1.0,177.0
+150512,OnshoreWindTurbine_150512_1,110.0,45.8,Keechi,1,1.0,144.0
+150515,OnshoreWindTurbine_150515_1,204.0,46.71,Shannon,1,1.0,266.0
+150517,OnshoreWindTurbine_150517_1,67.6,33.41,Windthorst-2,1,1.0,89.0
+150520,OnshoreWindTurbine_150520_1,150.0,34.28,Green Pastures,1,1.0,392.0
+150528,OnshoreWindTurbine_150528_1,230.0,65.32,Electra Wind,1,1.0,300.0
+150531,OnshoreWindTurbine_150531_1,125.0,23.31,Tyler Bluff,1,1.0,164.0
+150534,OnshoreWindTurbine_150534_1,100.5,18.94,Buckthorn,1,1.0,117.0
+150549,OnshoreWindTurbine_150549_1,30.2,8.08,S_Hills Wind,1,1.0,30.24
+150552,OnshoreWindTurbine_150552_1,183.8,24.33,Lockett Wind,1,1.0,184.0
+160263,OnshoreWindTurbine_160263_1,283.2,130.47,Penascal II,1,1.0,263.0
+160270,OnshoreWindTurbine_160270_1,201.6,100.49,Gulf Wind Farm,1,1.0,370.0
+160273,OnshoreWindTurbine_160273_1,180.0,30.06,Papalote Creek,1,1.0,496.0
+160275,OnshoreWindTurbine_160275_1,201.0,84.93,Gulf Wind Farm,1,1.0,370.0
+160278,OnshoreWindTurbine_160278_1,200.1,31.44,Papalote Creek,1,1.0,496.0
+160281,OnshoreWindTurbine_160281_1,188.0,46.66,Baffin,1,1.0,264.0
+160283,OnshoreWindTurbine_160283_1,9.0,3.96,Papalote Creek,1,1.0,496.0
+160286,OnshoreWindTurbine_160286_1,226.1,103.56,Chapman Ranch,1,1.0,325.0
+160288,OnshoreWindTurbine_160288_1,201.0,34.11,Stella 2 Wind,1,1.0,201.0
+160291,OnshoreWindTurbine_160291_1,249.0,37.2,Chapman Ranch,1,1.0,325.0
+160301,OnshoreWindTurbine_160301_1,307.1,88.86,Karankawa Wind,1,1.0,206.64
+160303,OnshoreWindTurbine_160303_1,162.9,33.87,Papalote Creek,1,1.0,496.0
+180119,OnshoreWindTurbine_180119_1,150.0,37.02,Cedro Hill,1,1.0,196.0
+180121,OnshoreWindTurbine_180121_1,91.2,30.55,White Tail,1,1.0,119.0
+180123,OnshoreWindTurbine_180123_1,200.0,20.0,Las Lomas Wind,1,1.0,200.0
+180126,OnshoreWindTurbine_180126_1,200.0,25.34,Las Lomas Wind,1,1.0,200.0
+180128,OnshoreWindTurbine_180128_1,78.0,9.58,Sendero,1,1.0,102.0
+180131,OnshoreWindTurbine_180131_1,249.7,40.94,Sendero,1,1.0,102.0
+180134,OnshoreWindTurbine_180134_1,200.0,42.39,Javelina,1,1.0,263.0
+180137,OnshoreWindTurbine_180137_1,237.6,117.31,Cabezon Wind,1,1.0,237.6
+180140,OnshoreWindTurbine_180140_1,300.0,46.48,Cedro Hill,1,1.0,196.0
+180143,OnshoreWindTurbine_180143_1,200.0,24.36,Las Lomas Wind,1,1.0,200.0
+190106,OnshoreWindTurbine_190106_1,160.0,47.66,Fluvanna I,1,1.0,203.0
+190111,OnshoreWindTurbine_190111_1,84.0,26.37,Brazos Wind Ranch,1,1.0,289.0
+190114,OnshoreWindTurbine_190114_1,130.5,41.0,Coyote Wind,1,1.0,242.5
+190116,OnshoreWindTurbine_190116_1,57.0,21.29,Whirlwind Wind Farm,1,1.0,78.0
+190118,OnshoreWindTurbine_190118_1,150.0,37.02,McAdoo Wind Farm,1,1.0,196.0
+190120,OnshoreWindTurbine_190120_1,180.0,60.3,Bull Creek Wind Farm,1,1.0,235.0
+190123,OnshoreWindTurbine_190123_1,211.0,21.1,Stephens Ranch,1,1.0,491.0
+190124,OnshoreWindTurbine_190124_1,165.0,20.91,Stephens Ranch,1,1.0,491.0
+190126,OnshoreWindTurbine_190126_1,30.0,9.93,Mozart,1,1.0,39.0
+190129,OnshoreWindTurbine_190129_1,218.0,100.4,Llano Estacado Wind Ranch at White Deer,1,1.0,104.0
+190132,OnshoreWindTurbine_190132_1,211.2,101.98,Grandview,1,1.0,538.0
+190134,OnshoreWindTurbine_190134_1,150.0,67.52,Route 66,1,1.0,196.0
+190136,OnshoreWindTurbine_190136_1,181.7,29.81,Majestic,1,1.0,208.0
+190139,OnshoreWindTurbine_190139_1,288.6,71.75,Miami Texas Wind,1,1.0,377.0
+190142,OnshoreWindTurbine_190142_1,257.0,112.9,Wake,1,1.0,336.0
+190145,OnshoreWindTurbine_190145_1,200.0,29.64,Longhorn,1,1.0,261.0
+190147,OnshoreWindTurbine_190147_1,200.0,55.1,Jumbo Road,1,1.0,391.0
+190149,OnshoreWindTurbine_190149_1,161.0,52.98,Spinning Spur,1,1.0,674.0
+190152,OnshoreWindTurbine_190152_1,194.0,25.95,Canadian Breaks Wind,1,1.0,210.0
+190155,OnshoreWindTurbine_190155_1,230.4,66.6,Mariah North Wind,1,1.0,301.0
+190157,OnshoreWindTurbine_190157_1,200.0,57.88,Grandview,1,1.0,538.0
+190159,OnshoreWindTurbine_190159_1,155.4,67.69,Fluvanna I,1,1.0,203.0
+190162,OnshoreWindTurbine_190162_1,200.0,32.48,Pumpkin Farm Wind,1,1.0,280.9
+190165,OnshoreWindTurbine_190165_1,299.7,89.2,Jumbo Road,1,1.0,391.0
+190167,OnshoreWindTurbine_190167_1,150.0,57.32,Green Pastures,1,1.0,392.0
+190169,OnshoreWindTurbine_190169_1,150.0,65.16,Briscoe,1,1.0,196.0
+190172,OnshoreWindTurbine_190172_1,300.0,41.75,Panther Creek,1,1.0,653.0
+190174,OnshoreWindTurbine_190174_1,50.4,12.83,Whirlwind Wind Farm,1,1.0,78.0
+190177,OnshoreWindTurbine_190177_1,148.4,53.98,Mariah Del Este,1,1.0,152.5
+190182,OnshoreWindTurbine_190182_1,151.2,37.81,Whirlwind Wind Farm,1,1.0,78.0
+190185,OnshoreWindTurbine_190185_1,174.0,39.14,Salt Fork,1,1.0,227.0
+190190,OnshoreWindTurbine_190190_1,163.0,22.04,Falvez Astra,1,1.0,213.0
+190193,OnshoreWindTurbine_190193_1,253.0,34.1,Amazon Wind Farm Texas,1,1.0,330.0
+190196,OnshoreWindTurbine_190196_1,350.3,166.12,Foard City Wind,1,1.0,350.0
+190198,OnshoreWindTurbine_190198_1,158.0,28.16,Fluvanna I,1,1.0,203.0
+190201,OnshoreWindTurbine_190201_1,300.0,98.39,Impala Flats Wind,1,1.0,282.0
+190203,OnshoreWindTurbine_190203_1,99.4,42.92,Blue Summit,1,1.0,177.0
+190206,OnshoreWindTurbine_190206_1,200.2,62.86,Pease River Wind,1,1.0,301.4
+190209,OnshoreWindTurbine_190209_1,210.1,64.33,Golden Spread Panhandle Wind Ranch,1,1.0,102.0
+200179,OnshoreWindTurbine_200179_1,250.0,89.47,Hidalgo,1,1.0,326.0
+200181,OnshoreWindTurbine_200181_1,200.0,31.79,Magic Valley,1,1.0,263.0
+200184,OnshoreWindTurbine_200184_1,201.6,79.12,Magic Valley,1,1.0,263.0
+200186,OnshoreWindTurbine_200186_1,203.0,42.09,East Raymond Wind,1,1.0,201.6
+200189,OnshoreWindTurbine_200189_1,228.0,49.75,Bruenning's Breeze,1,1.0,298.0
+200192,OnshoreWindTurbine_200192_1,165.0,80.5,Cameron,1,1.0,215.0
+200204,OnshoreWindTurbine_200204_1,95.3,24.84,San Roman,1,1.0,121.0
+200207,OnshoreWindTurbine_200207_1,110.0,38.06,Hidalgo,1,1.0,326.0
+210346,OnshoreWindTurbine_210346_1,150.0,48.67,Goldthwaite,1,1.0,184.0
+210349,OnshoreWindTurbine_210349_1,200.1,59.55,Logan's Gap Wind,1,1.0,261.0
+210354,OnshoreWindTurbine_210354_1,200.0,65.59,Flat Top,1,1.0,261.0
+220136,OnshoreWindTurbine_220136_1,34.3,6.36,Sand Bluff Wind Farm,1,1.0,118.0
+220149,OnshoreWindTurbine_220149_1,278.0,74.12,King Mountain,1,1.0,373.0
+220151,OnshoreWindTurbine_220151_1,82.5,39.83,Sherbino,1,1.0,392.0
+220153,OnshoreWindTurbine_220153_1,78.0,10.54,Woodward Mountain I & II Wind Farm,1,1.0,209.0
+220156,OnshoreWindTurbine_220156_1,82.0,11.05,Woodward Mountain I & II Wind Farm,1,1.0,209.0
+220159,OnshoreWindTurbine_220159_1,167.7,79.53,Desert Sky Wind Farm,1,1.0,210.0
+220169,OnshoreWindTurbine_220169_1,124.2,15.25,Forest Creek Wind Farm,1,1.0,162.0
+220171,OnshoreWindTurbine_220171_1,90.0,40.75,Forest Creek Wind Farm,1,1.0,162.0
+220174,OnshoreWindTurbine_220174_1,120.0,15.27,Stanton Energy Center Wind Farm,1,1.0,157.0
+220176,OnshoreWindTurbine_220176_1,120.0,31.55,Octotillo Wind Farm,1,1.0,77.0
+220178,OnshoreWindTurbine_220178_1,150.0,61.18,Sherbino,1,1.0,392.0
+220181,OnshoreWindTurbine_220181_1,121.9,43.42,Big Spring Wind Farm,1,1.0,45.0
+220183,OnshoreWindTurbine_220183_1,142.5,44.34,Ocotillo,1,1.0,76.0
+220186,OnshoreWindTurbine_220186_1,115.5,37.27,Forest Creek Wind Farm,1,1.0,162.0
+220188,OnshoreWindTurbine_220188_1,58.8,8.81,Big Spring Wind Farm,1,1.0,45.0
+220191,OnshoreWindTurbine_220191_2,92.5,12.51,Notrees,1,1.0,197.0
+220192,OnshoreWindTurbine_220192_1,60.0,15.64,Notrees,1,1.0,197.0
+220195,OnshoreWindTurbine_220195_1,145.0,50.17,Desert Sky repower,1,1.0,7.2
+220209,OnshoreWindTurbine_220209_1,211.2,46.24,Mesquite Creek,1,1.0,276.0
+220214,OnshoreWindTurbine_220214_1,207.2,31.72,Rattlesnake,1,1.0,270.0
+220216,OnshoreWindTurbine_220216_1,196.7,65.47,Bearkat I,1,1.0,257.0
+240210,OnshoreWindTurbine_240210_1,152.0,24.16,South Trent Mesa Wind Farm,1,1.0,132.0
+240212,OnshoreWindTurbine_240212_1,37.5,16.29,Pyron (Roscoe III) Wind Farm,1,1.0,325.0
+240214,OnshoreWindTurbine_240214_1,98.8,13.75,Inadale (Roscoe IV) Wind Farm,1,1.0,257.0
+240217,OnshoreWindTurbine_240217_1,120.6,30.69,Callahan Divide Wind Energy Center,1,1.0,149.0
+240219,OnshoreWindTurbine_240219_1,114.0,41.47,Turkey Track Wind Farm,1,1.0,221.0
+240221,OnshoreWindTurbine_240221_1,299.0,74.78,Turkey Track Wind Farm,1,1.0,221.0
+240222,OnshoreWindTurbine_240222_1,223.5,50.27,Turkey Track Wind Farm,1,1.0,221.0
+240223,OnshoreWindTurbine_240223_1,213.0,65.5,Turkey Track Wind Farm,1,1.0,221.0
+240225,OnshoreWindTurbine_240225_1,135.0,38.72,Buffalo Gap 4,1,1.0,175.0
+240228,OnshoreWindTurbine_240228_1,241.0,78.2,Maryneal Windpower,1,1.0,182.4
+240230,OnshoreWindTurbine_240230_1,80.5,23.96,Sweetwater 2 repower,1,1.0,7.3
+240233,OnshoreWindTurbine_240233_1,200.0,97.8,Lone Star I Wind Farm,1,1.0,522.0
+240236,OnshoreWindTurbine_240236_1,200.0,74.98,Lone Star I Wind Farm,1,1.0,522.0
+240239,OnshoreWindTurbine_240239_1,232.5,98.23,Callahan Divide Wind Energy Center,1,1.0,149.0
+240241,OnshoreWindTurbine_240241_1,126.5,20.0,Loraine,1,1.0,392.0
+240244,OnshoreWindTurbine_240244_1,209.0,102.94,Loraine,1,1.0,392.0
+240246,OnshoreWindTurbine_240246_1,63.0,20.42,Camp Springs II Wind Farm,1,1.0,327.0
+240248,OnshoreWindTurbine_240248_1,170.2,21.59,Trent Mesa Wind Farm,1,1.0,196.0
+240250,OnshoreWindTurbine_240250_1,101.2,41.42,South Trent Mesa Wind Farm,1,1.0,132.0
+240255,OnshoreWindTurbine_240255_1,80.0,11.52,Goat Mountain Phase Wind Farm,1,1.0,195.0
+240256,OnshoreWindTurbine_240256_1,69.6,18.23,Goat Mountain Phase Wind Farm,1,1.0,195.0
+240258,OnshoreWindTurbine_240258_1,214.5,68.98,Capricorn Ridge,1,1.0,920.0
+240259,OnshoreWindTurbine_240259_1,186.0,19.13,Capricorn Ridge,1,1.0,920.0
+240260,OnshoreWindTurbine_240260_1,149.5,16.09,Capricorn Ridge,1,1.0,920.0
+240261,OnshoreWindTurbine_240261_1,112.5,38.65,Capricorn Ridge,1,1.0,920.0
+240266,OnshoreWindTurbine_240266_1,169.5,76.16,Horse Hollow,1,1.0,960.0
+240269,OnshoreWindTurbine_240269_1,120.0,16.0,Snyder Wind Project,1,1.0,82.0
+240272,OnshoreWindTurbine_240272_1,162.3,58.64,Hackberry Wind Project,1,1.0,216.0
+240275,OnshoreWindTurbine_240275_1,199.5,80.49,Capricorn I & III repower,1,1.0,32.0
+240278,OnshoreWindTurbine_240278_2,249.0,73.62,Champion (Roscoe II) Wind Farm,1,1.0,165.0
+240280,OnshoreWindTurbine_240280_2,197.0,90.94,Champion (Roscoe II) Wind Farm,1,1.0,165.0
+240282,OnshoreWindTurbine_240282_1,150.0,38.26,Langford Wind Farm,1,1.0,196.0
+240284,OnshoreWindTurbine_240284_1,75.0,17.98,Loraine,1,1.0,392.0
+240285,OnshoreWindTurbine_240285_1,75.0,13.01,Loraine,1,1.0,392.0
+240291,OnshoreWindTurbine_240291_1,149.3,55.67,Rocksprings,1,1.0,36.0
+240293,OnshoreWindTurbine_240293_1,230.0,58.11,Horse Creek Wind,1,1.0,300.0
+240296,OnshoreWindTurbine_240296_1,160.0,28.06,RTS 2 Wind,1,1.0,179.91
+240301,OnshoreWindTurbine_240301_1,250.0,51.32,Willow Springs Wind Farm,1,1.0,326.0
+240304,OnshoreWindTurbine_240304_1,300.0,139.59,Oveja Wind,1,1.0,300.0
+240307,OnshoreWindTurbine_240307_1,150.0,24.19,Cactus Flats Wind,1,1.0,148.4
+240312,OnshoreWindTurbine_240312_1,199.5,43.68,Langford Wind Farm,1,1.0,196.0
+240317,OnshoreWindTurbine_240317_1,302.4,109.37,Oveja Wind,1,1.0,300.0
+240320,OnshoreWindTurbine_240320_1,300.0,123.43,Ranchero Wind,1,1.0,300.0
