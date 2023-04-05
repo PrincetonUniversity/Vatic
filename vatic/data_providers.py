@@ -58,7 +58,7 @@ class PickleProvider:
             ruc_horizon: int, enforce_sced_shutdown_ramprate: bool,
             no_startup_shutdown_curves: bool, verbosity: int,
             start_date: Optional[date] = None, num_days: Optional[int] = None,
-            renew_costs: Optional[str | Path | list[float]] = None
+            renew_costs: Optional[dict | str | Path | list[float]] = None
             ) -> None:
 
         if not (gen_data.index == load_data.index).all():
@@ -86,8 +86,11 @@ class PickleProvider:
         self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
         self._no_startup_shutdown_curves = no_startup_shutdown_curves
 
-        # parse cost curves given for renewable generators
-        if isinstance(renew_costs, (str, Path)):
+        # parse cost curves given for renewable generators as necessary
+        if isinstance(renew_costs, dict):
+            self.renew_costs = renew_costs
+
+        elif isinstance(renew_costs, (str, Path)):
             with open(renew_costs, 'rb') as f:
                 self.renew_costs = pickle.load(f)
 

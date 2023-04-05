@@ -162,7 +162,8 @@ class Simulator:
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
-                 renew_costs, save_to_csv, last_conditions_file) -> None:
+                 renew_costs: Optional[dict | str | Path | list[float]],
+                 save_to_csv, last_conditions_file) -> None:
 
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
