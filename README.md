@@ -109,6 +109,15 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
  - `--reserve-factor (-r)` How much headroom or spare capacity must the system plan for at each operating time step
                            given as a proportion of the total load demand at a time step; the default value is 0.05.
 
+ - `--load-shed-penalty` The dollar amount the grid will be penalized per MWh if load shed occurs.
+                         This and the reserve penalty described below govern how hard the grid tries to avoid 
+                         situtations where load fails (or almost fails) to meet demand in real-time.
+                         However, it is the reserve factor requirement as used in the commitment planning stage
+                         that usually decides whether or not the grid actually manages to avoid such situations.
+
+ - `--reserve-shortfall-penalty` The dollar amount the grid should be penalized per MWh if the reserve requirement is
+                                 not met.
+
  - `--init-ruc-file` If this file exists, it will be treated as a saved reliability unit commitment from a previous
                      iteration of Vatic that used the same grid and starting date. If it doesn't exist, Vatic will save
                      the RUC from this run to the file for future use. The cached RUC file takes the form of a `.p`
