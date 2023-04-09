@@ -1138,7 +1138,7 @@ class T7k2030Loader(T7kLoader):
         mapped_vals = dict()
 
         for _, gen_info in wind_gens.iterrows():
-            map_match = wind_maps['BUS UID'] == gen_info['BUS UID']
+            map_match = wind_maps['Texas7k BusNum'] == gen_info['Bus ID']
             assert map_match.sum() == 1
 
             nrel_name, t7k_max, nrel_capacity, dist_factor = wind_maps[
@@ -1165,11 +1165,12 @@ class T7k2030Loader(T7kLoader):
         mapped_vals = dict()
 
         for _, gen_info in solar_gens.iterrows():
-            map_match = solar_maps['BUS UID'] == gen_info['BUS UID']
+            gen_bus = int(gen_info['BUS UID'].split('_')[0])
+            map_match = solar_maps['BusNum'] == gen_bus
             assert map_match.sum() == 1
 
             mapped_vals[gen_info['GEN UID']] = (
-                    asset_df[solar_maps[map_match]['min_site'].iloc[0]]
+                    asset_df[solar_maps[map_match]['Min_site'].iloc[0]]
                     * float(solar_maps[map_match]['dist_factor'].iloc[0])
                     )
 
