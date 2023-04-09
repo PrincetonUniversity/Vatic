@@ -29,9 +29,13 @@ pip install .
 The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
 https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)
 produced by [Adam Birchfield et al.](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8423655) at Texas A&M with a
-few modifications (see release notes). You can also download the smaller testing
-[RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid for use with Vatic by running
-```cd Vatic; git submodule init; git submodule update; pip install .```.
+few modifications (see release notes).
+
+We have also included a hypothetical 2030 version of the Texas-7k grid in which renewables penetration has
+been increased to roughly 50%, as opposed to 20% in the default 2020 version.
+
+You can additionally download the smaller testing [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid for
+use with Vatic by running ```cd Vatic; git submodule init; git submodule update; pip install .```.
 
 
 ## Running Vatic ##
@@ -41,7 +45,7 @@ is:
 
 ```vatic-det $input_grid $start_date $num_days ```
 
-`input_grid` can be either of the currently supported grids: "RTS-GMLC" or "Texas-7k".
+`input_grid` can be either of the currently supported grids: "RTS-GMLC", "Texas-7k", or "Texas-7k_2030."
 
 `start_date` is the first day that will be simulated by Vatic, given in YYYY-MM-DD format. For RTS-GMLC, only dates in
 2020 are supported, while the Texas grids only support dates in 2018.
