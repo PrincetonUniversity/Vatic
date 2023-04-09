@@ -69,9 +69,22 @@ class GridLoader(ABC):
     In some cases there are "default" behaviours with concrete implementations
     in this root class that are overridden in classes whose grids exhibit
     unusual characteristics.
-    """
 
-    data_lbl = None
+    Attributes
+    ----------
+    grid_lbl    the label used for this grid's data folder within
+                vatic/data/grids, and in other contexts such as command line
+                arguments, plot labels, etc.
+
+    plot_lbl    a short name for the grid to be used in plots
+
+    _data_dir   the name of the data folder *within* this grid's own data
+                folder that by convention contains the grid data (as opposed
+                to the metadata)
+
+    """
+    grid_lbl = None
+    _data_dir = None
 
     # the three static elements of a power grid, with the properties of each
     # thermal generators produce power based on a partly pre-planned schedule
@@ -209,16 +222,15 @@ class GridLoader(ABC):
 
         """
         self.mins_per_time_period = mins_per_time_period
-        self.in_dir = Path(_ROOT, 'grids', self.data_lbl)
 
         # read in metadata about static grid elements from file, clean data
         # where necessary, and parse grid elements to get key properties
-        self.gen_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
+        self.gen_df = pd.read_csv(Path(self.data_path,
                                        "SourceData", "gen.csv"))
-        self.branch_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
+        self.branch_df = pd.read_csv(Path(self.data_path,
                                           "SourceData", "branch.csv"))
 
-        self.bus_df = pd.read_csv(Path(self.in_dir, self.grid_dir,
+        self.bus_df = pd.read_csv(Path(self.data_path,
                                        "SourceData", "bus.csv"))
         self.bus_df.loc[pd.isnull(self.bus_df['MW Load']), 'MW Load'] = 0.
 
@@ -406,16 +418,14 @@ class GridLoader(ABC):
         self.template = template
 
     @property
-    @abstractmethod
-    def grid_label(self) -> str:
-        """A short name for the grid to be used in plots, file names, etc."""
-        pass
+    def in_path(self) -> Path:
+        """The folder containing this grid's data and metadata."""
+        return Path(_ROOT, 'grids', self.grid_lbl)
 
     @property
-    @abstractmethod
-    def grid_dir(self) -> str:
-        """Name of the folder inside the input path storing grid data."""
-        pass
+    def data_path(self) -> Path:
+        """The folder containing this grid's datasets."""
+        return Path(self.in_path, self._data_dir)
 
     @property
     @abstractmethod
@@ -518,9 +528,7 @@ class GridLoader(ABC):
                       end_date: datetime | None = None) -> pd.DataFrame:
         """Find and parse forecasted values for a particular asset type."""
 
-        data_dir = Path(self.in_dir, self.grid_dir,
-                        'timeseries_data_files', asset_type)
-
+        data_dir = Path(self.data_path, 'timeseries_data_files', asset_type)
         fcst_file = tuple(data_dir.glob("DAY_AHEAD_*.csv"))
         assert len(fcst_file) == 1
 
@@ -531,9 +539,7 @@ class GridLoader(ABC):
                     end_date: datetime | None = None) -> pd.DataFrame:
         """Find and parse realized values for a particular asset type."""
 
-        data_dir = Path(self.in_dir, self.grid_dir,
-                        'timeseries_data_files', asset_type)
-
+        data_dir = Path(self.data_path, 'timeseries_data_files', asset_type)
         actl_file = tuple(data_dir.glob("REAL_TIME_*.csv"))
         assert len(actl_file) == 1
 
@@ -721,22 +727,16 @@ class RtsLoader(GridLoader):
     """The RTS-GMLC grid which was created for testing purposes.
 
     See github.com/GridMod/RTS-GMLC for the raw data files used for this grid.
+
     """
-
-    data_lbl = 'RTS-GMLC'
-
-    @property
-    def grid_label(self) -> str:
-        return "RTS-GMLC"
-
-    @property
-    def grid_dir(self) -> str:
-        return "RTS_Data"
+    grid_lbl = "RTS-GMLC"
+    plot_lbl = "RTS-GMLC"
+    _data_dir = "RTS_Data"
 
     @property
     def init_state_file(self) -> Path:
         return Path(_ROOT, "grids", "initial-state",
-                    self.data_lbl, "on_time_7.12.csv")
+                    self.grid_lbl, "on_time_7.12.csv")
 
     @property
     def utc_offset(self):
@@ -890,7 +890,9 @@ class RtsLoader(GridLoader):
 class T7kLoader(GridLoader):
     """The Texas-7k grid modeling the ERCOT system, developed by Texas A&M."""
 
-    data_lbl = 'Texas-7k'
+    grid_lbl = "Texas-7k"
+    plot_lbl = "Texas-7k"
+    _data_dir = "TX_Data"
 
     thermal_gen_types = {
         'NUC (Nuclear)': 'N', 'NG (Natural Gas)': 'G',
@@ -903,17 +905,9 @@ class T7kLoader(GridLoader):
                        'WAT (Water)': "H"}
 
     @property
-    def grid_label(self):
-        return "Texas-7k"
-
-    @property
-    def grid_dir(self) -> str:
-        return "TX_Data"
-
-    @property
     def init_state_file(self):
         return Path(_ROOT, "grids", "initial-state",
-                    self.data_lbl, "on_time_7.10.csv")
+                    self.grid_lbl, "on_time_7.10.csv")
 
     @property
     def utc_offset(self):
@@ -936,12 +930,12 @@ class T7kLoader(GridLoader):
             }
 
     def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
-        wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
-                                     "Texas7k_NREL_wind_map.csv"),
-                                index_col=0)
-        wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
+        wind_maps = pd.read_csv(Path(self.data_path,
+                                     "Texas7k_NREL_wind_map.csv"))
 
+        wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
         mapped_vals = dict()
+
         for _, gen_info in wind_gens.iterrows():
             map_match = wind_maps['Texas7k BusNum'] == gen_info['Bus ID']
             assert map_match.sum() == 1
@@ -963,12 +957,12 @@ class T7kLoader(GridLoader):
         return pd.concat(mapped_vals, axis=1)
 
     def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
-        solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
-                                      "Texas7k_NREL_solar_map.csv"),
-                                 index_col=0)
-        solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
+        solar_maps = pd.read_csv(Path(self.data_path,
+                                      "Texas7k_NREL_solar_map.csv"))
 
+        solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
         mapped_vals = dict()
+
         for _, gen_info in solar_gens.iterrows():
             map_match = solar_maps['BusNum'] == gen_info['Bus ID']
             assert map_match.sum() == 1
@@ -1076,31 +1070,23 @@ class T7kLoader(GridLoader):
 class T7k2030Loader(T7kLoader):
     """The Texas-7k grid projected into a future with more renewables."""
 
-    data_lbl = 'Texas-7k_2030'
-
-    @property
-    def grid_label(self):
-        return "Texas-7k(2030)"
-
-    @property
-    def grid_dir(self) -> str:
-        return "TX2030_Data"
+    grid_lbl = "Texas-7k_2030"
+    plot_lbl = "Texas-7k(2030)"
+    _data_dir = "TX2030_Data"
 
     def get_forecasts(self, asset_type, start_date=None, end_date=None):
-        fcst_file = tuple(
-            Path(self.in_dir, self.grid_dir,
-                 'timeseries_data_files', asset_type).glob("DAY_AHEAD_*.csv")
-            )
-
+        fcst_file = tuple(Path(self.data_path, 'timeseries_data_files',
+                               asset_type).glob("DAY_AHEAD_*.csv"))
         assert len(fcst_file) == 1
-        fcst_df = pd.read_csv(fcst_file[0], parse_dates=['Forecast_time'])
 
+        fcst_df = pd.read_csv(fcst_file[0], parse_dates=['Forecast_time'])
         fcst_df.drop('Issue_time', axis=1, inplace=True)
+
         fcst_df.Forecast_time += self.utc_offset
         fcst_df.set_index('Forecast_time', inplace=True, verify_integrity=True)
         fcst_df = self.subset_dates(fcst_df, start_date, end_date)
 
-        #TODO: should scenarios and T7k(2030) output values be "pre-mapped"?
+        # TODO: should scenarios and T7k(2030) output values be "pre-mapped"?
         if asset_type == 'WIND':
             fcst_df = self.map_wind_generators(fcst_df)
         elif asset_type == 'PV':
@@ -1109,15 +1095,13 @@ class T7k2030Loader(T7kLoader):
         return fcst_df
 
     def get_actuals(self, asset_type, start_date=None, end_date=None):
-        actl_file = tuple(
-            Path(self.in_dir, self.grid_dir,
-                 'timeseries_data_files', asset_type).glob("REAL_TIME_*.csv")
-            )
-
+        actl_file = tuple(Path(self.data_path, 'timeseries_data_files',
+                               asset_type).glob("REAL_TIME_*.csv"))
         assert len(actl_file) == 1
-        actl_df = pd.read_csv(actl_file[0], parse_dates=['Time'])
 
+        actl_df = pd.read_csv(actl_file[0], parse_dates=['Time'])
         actl_df.Time += self.utc_offset
+
         actl_df.set_index('Time', inplace=True, verify_integrity=True)
         actl_df = self.subset_dates(actl_df, start_date, end_date)
 
@@ -1128,37 +1112,10 @@ class T7k2030Loader(T7kLoader):
 
         return actl_df
 
-    #TODO: should we standardize the mapping file format between the T7k and
-    #      the T7k(2030) grids instead of doing this?
-    def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
-        wind_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
-                                     "Texas7k_NREL_wind_map.csv"))
-
-        wind_gens = self.gen_df.loc[self.gen_df.Fuel == 'WND (Wind)']
-        mapped_vals = dict()
-
-        for _, gen_info in wind_gens.iterrows():
-            map_match = wind_maps['Texas7k BusNum'] == gen_info['Bus ID']
-            assert map_match.sum() == 1
-
-            nrel_name, t7k_max, nrel_capacity, dist_factor = wind_maps[
-                map_match][['NREL Wind Site', 'Texas7k Max MW',
-                            'NREL Capacity Proportion',
-                            'Distribution Factor']].iloc[0]
-
-            parsed_name = nrel_name.replace('_', ' ')
-            if parsed_name == 'S Hills Wind':
-                parsed_name = 'S_Hills Wind'
-
-            mapped_vals[gen_info['GEN UID']] = (
-                    asset_df[parsed_name]
-                    * float(dist_factor / nrel_capacity * t7k_max)
-                    )
-
-        return pd.concat(mapped_vals, axis=1)
-
+    # TODO: should we standardize the mapping file format between the T7k and
+    #       the T7k(2030) grids instead of doing this?
     def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
-        solar_maps = pd.read_csv(Path(self.in_dir, self.grid_dir,
+        solar_maps = pd.read_csv(Path(self.data_path,
                                       "Texas7k_NREL_solar_map.csv"))
 
         solar_gens = self.gen_df.loc[self.gen_df.Fuel == 'SUN (Solar)']
