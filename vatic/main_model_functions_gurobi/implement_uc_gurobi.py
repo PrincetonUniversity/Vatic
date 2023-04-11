@@ -87,7 +87,7 @@ model_data = simulator._data_provider.create_deterministic_ruc(
     first_step, sim_state_for_ruc)
 
 
-model = generate_model(
+model = generate_model('UnitCommitment',
             model_data, relax_binaries,
             ptdf_options,
             ptdf_matrix_dict,
