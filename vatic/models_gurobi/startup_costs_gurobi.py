@@ -28,7 +28,7 @@ def MLR_startup_costs(model, add_startup_cost_var=True):
                 for s in model._StartupCostIndices[g] for t in model._TimePeriods]
 
     if _is_relaxed(model):
-        model._delta = model.addVars(model._StartupCostsIndexSet, lb = 1, ub = 0, name = 'delta')
+        model._delta = model.addVars(model._StartupCostsIndexSet, lb = 0, ub = 1, name = 'delta')
     else:
         model._delta = model.addVars(model._StartupCostsIndexSet, vtype=GRB.BINARY, name = 'delta')
     model.update()

@@ -12,10 +12,6 @@ def _get_value_general_gurobi(input):
         return input.getValue()
 
 def _save_uc_results(m, relaxed):
-    # dual suffix is on top-level model
-    if relaxed:
-        dual = m.dual
-
     md = m._model_data
 
     # save results data to ModelData object
@@ -321,7 +317,14 @@ def _save_uc_results(m, relaxed):
                     voltage_angle_dict[mt][bn] = VA[i]
 
                 if relaxed:
-                    LMP = PTDF.calculate_LMP(b, dual, b._eq_p_balance)
+                    LMPC_Constr =  m._ineq_pf_branch_thermal_bounds
+                    if hasattr(m, '_ineq_pf_interface_bounds'):
+                        LMPI_Constr = m._ineq_pf_interface_bounds
+                    else:
+                        LMPI_Constr = None
+
+                    LMPE_Constr = m.getConstrByName('eq_p_balance_at_period{}'.format(mt))
+                    LMP = PTDF.calculate_LMP(LMPC_Constr, LMPI_Constr, LMPE_Constr)
                     lmps_dict[mt] = dict()
                     for i, bn in enumerate(buses_idx):
                         lmps_dict[mt][bn] = LMP[i]
@@ -469,8 +472,8 @@ def _save_uc_results(m, relaxed):
                 for dt, mt in enumerate(m._TimePeriods):
                     ## TODO: if the 'relaxed' flag is set, we should automatically
                     ##       pick a formulation which uses the MLR reserve constraints
-                    sr_p_dict[dt] = dual[m._EnforceReserveRequirements[
-                        mt]].x / time_period_length_hours
+                    sr_p_dict[dt] = m._EnforceReserveRequirements[
+                        mt].Pi / time_period_length_hours
                 sys_dict['reserve_price'] = _time_series_dict(sr_p_dict)
 
         ## TODO: Can the code above this be re-factored in a similar way?

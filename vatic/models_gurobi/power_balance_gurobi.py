@@ -614,7 +614,6 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
     block._gens_by_bus = {bus: [bus] for bus in model._Buses}
     parent_model = model
     for tm in model._TimePeriods:
-        model._TransmissionBlock[tm] = block
         block._tm = tm
         block._pg = {bus: _get_pg_expr_rule(tm, model, bus) for bus in
                      model._Buses}
@@ -622,4 +621,5 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
             block._qg = {bus: _get_qg_expr_rule(tm, model, bus) for bus in
                          model._Buses}
         network_model_builder(block, tm, parent_model)
+        model._TransmissionBlock[tm] = block
 

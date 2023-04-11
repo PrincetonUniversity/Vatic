@@ -111,9 +111,7 @@ def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
     #         raise Exception('No negative slack branch variables on model, but slacks=True')
     #     if slack_cost_expr is None:
     #         raise Exception('No cost expression for slacks, but slacks=True')
-
-    # m._ineq_pf_branch_thermal_bounds = pe.Constraint(con_set)
-
+    m._ineq_pf_branch_thermal_bounds = {}
     if approximation_type == ApproximationType.BTHETA or \
             approximation_type == ApproximationType.PTDF:
         for branch_name in index_set:
@@ -135,7 +133,7 @@ def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
 
             lb, expr, ub = generate_thermal_bounds(model.pf[branch_name], -limit, limit,
                                     neg_slack, pos_slack)
-            m.addConstr(
+            m._ineq_pf_branch_thermal_bounds[branch_name, period] = m.addConstr(
                     (expr <= ub),
                     name = 'ineq_pf_branch_thermal_upper_bounds_branch[{}]_period[{}]'.format(branch_name, period))
             m.addConstr(
@@ -165,6 +163,7 @@ def declare_ineq_p_interface_bounds(model, parent_model, period, index_set, inte
     #         raise Exception('No negative slack interface variables on model, but slacks=True')
     #     if slack_cost_expr is None:
     #         raise Exception('No cost expression for slacks, but slacks=True')
+    m._ineq_p_interface_bounds = {}
 
     if approximation_type == ApproximationType.BTHETA or \
             approximation_type == ApproximationType.PTDF:
@@ -188,7 +187,7 @@ def declare_ineq_p_interface_bounds(model, parent_model, period, index_set, inte
 
             lb, expr, ub =  generate_thermal_bounds(model._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
                                         neg_slack, pos_slack)
-            m.addConstr(
+            m._ineq_p_interface_bounds[interface_name, period] = m.addConstr(
                     (expr <= ub),
                     name = 'ineq_pf_interface_upper_bounds_interface[{}]_peiord[{}]'.format(interface_name, period))
             m.addConstr(
@@ -289,10 +288,11 @@ def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
     #     if slack_cost_expr is None:
     #         raise Exception('No cost expression for slacks, but slacks=True')
 
-    # m._ineq_pf_branch_thermal_bounds = pe.Constraint(con_set)
+    m._ineq_pf_branch_thermal_bounds = False
 
     if approximation_type == ApproximationType.BTHETA or \
             approximation_type == ApproximationType.PTDF:
+        m._ineq_pf_branch_thermal_bounds = True
         for branch_name in index_set:
             limit = p_thermal_limits[branch_name]
             if limit is None:

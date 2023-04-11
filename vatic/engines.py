@@ -27,6 +27,7 @@ from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
 from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
 from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
+from vatic.models_gurobi import basic_objective
 
 class Simulator:
     """An engine for simulating the operation of a power grid.
@@ -332,14 +333,20 @@ class Simulator:
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
-        current_sced_instance = self.solve_sced(hours_in_objective=1,
-                                                sced_horizon=self.sced_horizon)
+        # Return SCED model to calculate dual of relaxed sced model to find lmp
+        if not self.run_lmps:
+            current_sced_instance = self.solve_sced(hours_in_objective=1,
+                                                    sced_horizon=self.sced_horizon)
+        else:
+            current_sced_instance = self.solve_sced(hours_in_objective=1,
+                                                    sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
 
         if self.run_lmps:
-            lmp_sced = self.solve_lmp(current_sced_instance)
+            lmp_sced = self.solve_lmp(hours_in_objective=1,
+                                                    sced_horizon=self.sced_horizon)
         else:
             lmp_sced = None
 
@@ -480,12 +487,6 @@ class Simulator:
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
 
-        self.sced_model.generate_model(
-            sced_model_data, relax_binaries=False, ptdf_options=ptdf_options,
-            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            objective_hours=hours_in_objective
-            )
-
         model = generate_model(model_name = 'EconomicDispatch',
             model_data = sced_model_data, relax_binaries = False,
             ptdf_options=ptdf_options,
@@ -503,8 +504,29 @@ class Simulator:
 
         return sced_results
 
-    def solve_lmp(self, sced_instance: VaticModelData) -> VaticModelData:
-        lmp_sced_instance = deepcopy(sced_instance)
+    def solve_lmp(self,
+                   hours_in_objective: int,
+                   sced_horizon: int) -> VaticModelData:
+        # Construct relax model to calculate the dual and shadow price to calculate mip
+        sced_model_data = self._data_provider.create_sced_instance(
+            self._simulation_state, sced_horizon=sced_horizon)
+
+        self._ptdf_manager.mark_active(sced_model_data)
+
+        self._hours_in_objective = hours_in_objective
+        if self._hours_in_objective > 10:
+            ptdf_options = self._ptdf_manager.look_ahead_sced_ptdf_options
+        else:
+            ptdf_options = self._ptdf_manager.sced_ptdf_options
+
+        sced_model_relaxed = generate_model(model_name='EconomicDispatch',
+                               model_data=sced_model_data,
+                               relax_binaries=True,
+                               ptdf_options=ptdf_options,
+                               ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+                               objective_hours=hours_in_objective,
+                               save_model_file=False)
+
 
         # in the case of a shortfall in meeting demand or the reserve
         # requirement, the price skyrockets, so we set max price values
@@ -512,79 +534,48 @@ class Simulator:
                 ['load_mismatch_cost', 'reserve_shortfall_cost'],
                 [10000., 1000.]
                 ):
-            shortfall_cost = lmp_sced_instance.get_system_attr(
-                cost_lbl, max_price)
+            shortfall_cost = sced_model_relaxed._model_data.data['system'][cost_lbl]
 
             if shortfall_cost >= max_price:
-                lmp_sced_instance.set_system_attr(cost_lbl, max_price)
+                sced_model_relaxed._model_data.data['system'][cost_lbl] = max_price
+
 
         # often we want to avoid having the reserve requirement shortfall make
         # any impact on the prices whatsoever
         if not self.lmp_shortfall_costs:
-            lmp_sced_instance.set_system_attr('reserve_shortfall_cost', 0)
+            sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost'] = 0
 
-        if self.sced_model.pyo_instance is None:
-            self._ptdf_manager.mark_active(lmp_sced_instance)
+        ## reset the penalties
+        update_obj = False
+        base_MVA = sced_model_relaxed._model_data.data['system']['baseMVA']
+        new_load_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['load_mismatch_cost']
 
-            self.sced_model.generate_model(
-                lmp_sced_instance, relax_binaries=True,
-                ptdf_options=self._ptdf_manager.lmpsced_ptdf_options,
-                ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-                objective_hours=self._hours_in_objective
-                )
+        if not math.isclose(
+                new_load_penalty,
+                sced_model_relaxed._LoadMismatchPenalty
+                ):
+            sced_model_relaxed._LoadMismatchPenalty = new_load_penalty
+            update_obj = True
 
-        else:
-            uc_instance_binary_relaxer(self.sced_model.pyo_instance,
-                                       self.sced_model.solver)
+        new_reserve_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost']
 
-            ## reset the penalties
-            update_obj = False
-            base_MVA = lmp_sced_instance.get_system_attr('baseMVA')
-            new_load_penalty = base_MVA * lmp_sced_instance.get_system_attr(
-                'load_mismatch_cost')
+        if not math.isclose(
+                new_reserve_penalty,
+                sced_model_relaxed._ReserveShortfallPenalty
+                ):
+            sced_model_relaxed._ReserveShortfallPenalty = new_reserve_penalty
+            update_obj = True
 
-            if not math.isclose(
-                    new_load_penalty,
-                    self.sced_model.pyo_instance.LoadMismatchPenalty.value
-                    ):
-                self.sced_model.pyo_instance.LoadMismatchPenalty.value = new_load_penalty
-                update_obj = True
+        if update_obj:
+            sced_model_relaxed.update()
+            sced_model_relaxed = basic_objective(sced_model_relaxed)
+            sced_model_relaxed.update()
 
-            new_reserve_penalty = base_MVA * lmp_sced_instance.get_system_attr(
-                'reserve_shortfall_cost')
-
-            if not math.isclose(
-                    new_reserve_penalty,
-                    self.sced_model.pyo_instance.ReserveShortfallPenalty.value
-                    ):
-                self.sced_model.pyo_instance.ReserveShortfallPenalty.value = new_reserve_penalty
-                update_obj = True
-
-            self.sced_model.pyo_instance.model_data = lmp_sced_instance
-
-            if update_obj and isinstance(self.sced_model.solver,
-                                         PersistentSolver):
-                self.sced_model.solver.set_objective(
-                    self.sced_model.pyo_instance.TotalCostObjective)
-
-        self.sced_model.pyo_instance.dual = PyomoSuffix(
-            direction=PyomoSuffix.IMPORT)
-
-        try:
-            lmp_sced_results = self.sced_model.solve_model(
-                solver_options=self.solver_options, relaxed=True,
-                set_instance=(self.sced_model.pyo_instance is None),
-                )
-
-        except:
-            print("Some issue with LMP SCED, writing instance")
-            quickstart_uc_filename = (self.options.output_directory
-                                      + os.sep + "FAILED_LMP_SCED.json")
-
-            lmp_sced_instance.write(quickstart_uc_filename)
-            print(f"Problematic LMP SCED written to {quickstart_uc_filename}")
-            raise
-
+        #Relax Binary Constraints
+        #Need set relaxed = True to initiate the calculation of lmps
+        lmp_sced_results = solve_model(sced_model_relaxed, relaxed=True, mipgap=self.mipgap,
+                                threads=self.solver_options['Threads'],
+                                outputflag=0)
         return lmp_sced_results
 
     def _get_projected_state(self) -> VaticSimulationState:

@@ -111,15 +111,6 @@ sced_model_data = simulator._data_provider.create_sced_instance(
 simulator._ptdf_manager.mark_active(sced_model_data)
 ptdf_options = simulator._ptdf_manager.sced_ptdf_options
 
-model = generate_model(model_name='EconomicDispatch',
-                       model_data=sced_model_data, relax_binaries=False,
-                       ptdf_options=ptdf_options,
-                       ptdf_matrix_dict=simulator._ptdf_manager.PTDF_matrix_dict,
-                       objective_hours=hours_in_objective,
-                       save_model_file=True,
-                       file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
-
-sced_results = solve_model(model, relaxed = False, mipgap = ruc_mipgap, threads = multiprocessing.cpu_count()-1, outputflag = 0)
 
 # How to get shadow price
 model_fixed = generate_model(model_name='EconomicDispatch',
@@ -129,10 +120,10 @@ model_fixed = generate_model(model_name='EconomicDispatch',
                        objective_hours=hours_in_objective,
                        save_model_file=True,
                        file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+
 model_fixed.optimize()
 model_fixed.getConstrs()[0].Pi
 
-model_fixed._TransmissionBlock[0]
-# for branch, branch_data in sced_results.elements(element_type='branch'):
-#     print(branch_data['pf']['values'])
-    # print(branch_data['rating_long_term'])
+b = model_fixed._TransmissionBlock[1]
+
+model_fixed.getConstrByName('eq_p_balance_at_period1').Pi

@@ -1,7 +1,7 @@
 from gurobipy import GRB
 
 def _is_relaxed(model):
-    if hasattr(model, 'relax_binaries') and model._relax_binaries:
+    if hasattr(model, '_relax_binaries') and model._relax_binaries:
         return True
     else:
         return False
@@ -48,7 +48,7 @@ def _add_unit_start_vars(model, relaxed=False):
 
 def _add_unit_stop_vars(model, relaxed=False):
     if relaxed:
-        model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStoop')
+        model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, lb = 0, ub =1, name = 'UnitStop')
     else:
         model._UnitStop = model.addVars(model._ThermalGenerators, model._TimePeriods, vtype=GRB.BINARY, name = 'UnitStop')
     return model
