@@ -10,6 +10,8 @@ import time
 import datetime
 import math
 import pandas as pd
+import gurobipy as gp
+from gurobipy import GRB
 from copy import deepcopy
 
 from .data_providers import PickleProvider
@@ -244,6 +246,7 @@ class Simulator:
 
         # simulate each time period
         for time_step in self._time_manager.time_steps():
+            print(time_step)
             self._current_timestep = time_step
 
             # run the day-ahead RUC at some point in the day before
@@ -258,6 +261,7 @@ class Simulator:
             self.call_oracle()
             self.simulation_times['Sim'] += time.time() - oracle_start_time
 
+            # clean gurobi envrionment to remove memory cache and run faster
         sim_time = time.time() - simulation_start_time
 
         if self.verbosity > 0:
@@ -335,18 +339,17 @@ class Simulator:
 
         # Return SCED model to calculate dual of relaxed sced model to find lmp
         if not self.run_lmps:
-            current_sced_instance = self.solve_sced(hours_in_objective=1,
+            current_sced_instance, _ = self.solve_sced(hours_in_objective=1,
                                                     sced_horizon=self.sced_horizon)
         else:
-            current_sced_instance = self.solve_sced(hours_in_objective=1,
+            current_sced_instance, model = self.solve_sced(hours_in_objective=1,
                                                     sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
 
         if self.run_lmps:
-            lmp_sced = self.solve_lmp(hours_in_objective=1,
-                                                    sced_horizon=self.sced_horizon)
+            lmp_sced = self.solve_lmp(hours_in_objective=1, sced_horizon=self.sced_horizon, sced_model = model)
         else:
             lmp_sced = None
 
@@ -468,7 +471,7 @@ class Simulator:
 
         if self.verbosity > 0:
             print("\nExtracting scenario to simulate")
-
+        model.dispose()
         return self.create_simulation_actuals(time_step), ruc_plan
 
     #@profile
@@ -495,37 +498,56 @@ class Simulator:
             save_model_file=True,
             file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
 
-
         # update in case lines were taken out
         sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
                                 threads=self.solver_options['Threads'],
                                 outputflag=0)
         self._ptdf_manager.update_active(sced_results)
-
-        return sced_results
+        if not self.run_lmps:
+            model.dispose()
+            model = None
+            sced_model_data = None
+        return sced_results, model
 
     def solve_lmp(self,
                    hours_in_objective: int,
-                   sced_horizon: int) -> VaticModelData:
+                   sced_horizon: int, sced_model: gp.model) -> VaticModelData:
         # Construct relax model to calculate the dual and shadow price to calculate mip
-        sced_model_data = self._data_provider.create_sced_instance(
-            self._simulation_state, sced_horizon=sced_horizon)
+        # Has SCED model: revise the existing model by converting all binary variables to continous
+        if sced_model:
+            sced_model_relaxed = sced_model.copy()
+            sced_model_relaxed.__dict__ = sced_model.__dict__.copy()
+            for x in sced_model_relaxed._UnitOn.values():
+                x.vtype = GRB.CONTINUOUS
 
-        self._ptdf_manager.mark_active(sced_model_data)
+            for x in sced_model_relaxed._UnitStart.values():
+                x.vtype = GRB.CONTINUOUS
 
-        self._hours_in_objective = hours_in_objective
-        if self._hours_in_objective > 10:
-            ptdf_options = self._ptdf_manager.look_ahead_sced_ptdf_options
+            for x in sced_model_relaxed._UnitStop.values():
+                x.vtype = GRB.CONTINUOUS
+
+            for x in sced_model_relaxed._delta.values():
+                x.vtype = GRB.CONTINUOUS
+        # No SCED model: generate from the starting poiint
         else:
-            ptdf_options = self._ptdf_manager.sced_ptdf_options
+            sced_model_data = self._data_provider.create_sced_instance(
+                self._simulation_state, sced_horizon=sced_horizon)
 
-        sced_model_relaxed = generate_model(model_name='EconomicDispatch',
-                               model_data=sced_model_data,
-                               relax_binaries=True,
-                               ptdf_options=ptdf_options,
-                               ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-                               objective_hours=hours_in_objective,
-                               save_model_file=False)
+            self._ptdf_manager.mark_active(sced_model_data)
+
+            self._hours_in_objective = hours_in_objective
+            if self._hours_in_objective > 10:
+                ptdf_options = self._ptdf_manager.look_ahead_sced_ptdf_options
+            else:
+                ptdf_options = self._ptdf_manager.sced_ptdf_options
+
+            sced_model_relaxed = generate_model(model_name='EconomicDispatch',
+                                   model_data=sced_model_data,
+                                   relax_binaries=True,
+                                   ptdf_options=ptdf_options,
+                                   ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+                                   objective_hours=hours_in_objective,
+                                   save_model_file=False)
 
 
         # in the case of a shortfall in meeting demand or the reserve
@@ -576,6 +598,8 @@ class Simulator:
         lmp_sced_results = solve_model(sced_model_relaxed, relaxed=True, mipgap=self.mipgap,
                                 threads=self.solver_options['Threads'],
                                 outputflag=0)
+        sced_model_relaxed.dispose()
+        sced_model.dispose()
         return lmp_sced_results
 
     def _get_projected_state(self) -> VaticSimulationState:
@@ -615,7 +639,7 @@ class Simulator:
         #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
         proj_hours = min(24, self._simulation_state.timestep_count)
-        proj_sced_instance = self.solve_sced(hours_in_objective=proj_hours,
+        proj_sced_instance, _ = self.solve_sced(hours_in_objective=proj_hours,
                                              sced_horizon=proj_hours)
 
         return VaticStateWithScedOffset(self._simulation_state,
