@@ -37,18 +37,18 @@ def _add_power_generated_startup_shutdown(model, g, t):
 
         future_startup_past_shutdown_production = 0.
         future_startup_power_index = time_periods_before_startup + model._NumTimePeriods - t
-        if future_startup_power_index <= len(startup_curve):
+        if future_startup_power_index <= len(startup_curve)-1:
             future_startup_past_shutdown_production += startup_curve[future_startup_power_index]
 
         past_shutdown_power_index = time_periods_since_shutdown + t
-        if past_shutdown_power_index <= len(shutdown_curve):
+        if past_shutdown_power_index <= len(shutdown_curve)-1:
             future_startup_past_shutdown_production += shutdown_curve[past_shutdown_power_index]
 
         linear_vars, linear_coefs = model._get_power_generated_lists(model,g,t)
-        for startup_idx in range(1, min( len(startup_curve)+1, model._NumTimePeriods+1-t )):
+        for startup_idx in range(1, min(len(startup_curve), model._NumTimePeriods+1-t)):
             linear_vars.append(model._UnitStart[g,t+startup_idx])
             linear_coefs.append(startup_curve[startup_idx])
-        for shutdown_idx in range(1, min( len(shutdown_curve)+1, t+1 )):
+        for shutdown_idx in range(1, min(len(shutdown_curve), t+1)):
             linear_vars.append(model._UnitStop[g,t-shutdown_idx+1])
             linear_coefs.append(shutdown_curve[shutdown_idx])
         return LinExpr(linear_coefs, linear_vars) + future_startup_past_shutdown_production
