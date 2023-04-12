@@ -317,14 +317,25 @@ def _save_uc_results(m, relaxed):
                     voltage_angle_dict[mt][bn] = VA[i]
 
                 if relaxed:
-                    LMPC_Constr =  m._ineq_pf_branch_thermal_bounds
-                    if hasattr(m, '_ineq_pf_interface_bounds'):
-                        LMPI_Constr = m._ineq_pf_interface_bounds
-                    else:
-                        LMPI_Constr = None
+                    LMPC_Constrs = None
+                    LMPI_Constrs = None
+                    if hasattr(m, '_ineq_pf_branch_thermal_ub') and len(m._ineq_pf_branch_thermal_ub) != 0:
+                        LMPC_Constrs = [{}, {}]
+                        for k in m._ineq_pf_branch_thermal_ub.keys():
+                            if k[1] == mt:
+                                LMPC_Constrs[0][k[0]] = m._ineq_pf_branch_thermal_ub[k]
+                                LMPC_Constrs[1][k[0]] = m._ineq_pf_branch_thermal_lb[k]
 
-                    LMPE_Constr = m.getConstrByName('eq_p_balance_at_period{}'.format(mt))
-                    LMP = PTDF.calculate_LMP(LMPC_Constr, LMPI_Constr, LMPE_Constr)
+                    if hasattr(m, '_ineq_pf_interface_ub') and len(m._ineq_pf_interface_ub) != 0:
+                        LMPI_Constrs = [{}, {}]
+                        for k in m._ineq_pf_interface_ub.keys():
+                            if k[1] == mt:
+                                LMPI_Constrs[0][k[0]] = m._ineq_pf_interface_ub[k]
+                                LMPI_Constrs[1][k[0]] = m._ineq_pf_interface_lb[k]
+
+
+                    LMPE_Constrs = m.getConstrByName('eq_p_balance_at_period{}'.format(mt))
+                    LMP = PTDF.calculate_LMP(LMPC_Constrs, LMPI_Constrs, LMPE_Constrs)
                     lmps_dict[mt] = dict()
                     for i, bn in enumerate(buses_idx):
                         lmps_dict[mt][bn] = LMP[i]

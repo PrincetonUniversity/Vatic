@@ -580,7 +580,7 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
         '''
         return self._calculate_PFV(mb, masked=False)
 
-    def calculate_LMP(self, LMPC_Constr, LMPI_Constr, LMPE_Constr):
+    def calculate_LMP(self, LMPC_Constrs, LMPI_Constrs, LMPE_Constrs):
         '''
         Calculate a vector of locational marginal prices
         indexed by buses_keys.
@@ -596,8 +596,8 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
         LMP : np.array of LMPs indexed by buses_keys
         '''
         ## NOTE: unmonitored lines cannot contribute to LMPC
-        if LMPC_Constr:
-            PFD = np.fromiter((LMPC_Constr[bn, tm].Pi
+        if LMPC_Constrs:
+            PFD = np.fromiter((LMPC_Constrs[0][bn].Pi + LMPC_Constrs[1][bn].Pi
                               for i, bn in enumerate(self.branches_keys_masked)),
                 float, count=len(self.branches_keys_masked))
         else:
@@ -605,8 +605,8 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
                 float, count=len(self.branches_keys_masked))
 
         ## interface constributes to LMP
-        if LMPE_Constr:
-            PFID = np.fromiter((LMPE_Constr[bn, tm].Pi
+        if LMPI_Constrs:
+            PFID = np.fromiter((LMPI_Constrs[0][i_n].Pi + LMPI_Constrs[1][i_n].Pi
                               for i, i_n in enumerate(self.interface_keys)),
                 float, count=len(self.interface_keys))
         else:
@@ -620,7 +620,7 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
         LMPI = self.MLU.solve(I_PFD, trans='T')
 
         # Find shadow price corresponds to constraints
-        LMPE = LMPE_Constr.Pi
+        LMPE = LMPE_Constrs.Pi
 
         if self.contingencies:
             LMPCC = np.zeros_like(LMPC)

@@ -1,4 +1,4 @@
-from gurobipy import LinExpr, quicksum
+from gurobipy import LinExpr, tupledict
 
 from egret.model_library.defn import FlowType, CoordinateType, ApproximationType, RelaxationType
 
@@ -111,7 +111,8 @@ def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
     #         raise Exception('No negative slack branch variables on model, but slacks=True')
     #     if slack_cost_expr is None:
     #         raise Exception('No cost expression for slacks, but slacks=True')
-    m._ineq_pf_branch_thermal_bounds = {}
+    m._ineq_pf_branch_thermal_ub = tupledict()
+    m._ineq_pf_branch_thermal_lb = tupledict()
     if approximation_type == ApproximationType.BTHETA or \
             approximation_type == ApproximationType.PTDF:
         for branch_name in index_set:
@@ -133,10 +134,10 @@ def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
 
             lb, expr, ub = generate_thermal_bounds(model.pf[branch_name], -limit, limit,
                                     neg_slack, pos_slack)
-            m._ineq_pf_branch_thermal_bounds[branch_name, period] = m.addConstr(
+            m._ineq_pf_branch_thermal_ub[(branch_name, period)] = m.addConstr(
                     (expr <= ub),
                     name = 'ineq_pf_branch_thermal_upper_bounds_branch[{}]_period[{}]'.format(branch_name, period))
-            m.addConstr(
+            m._ineq_pf_branch_thermal_lb[(branch_name, period)] = m.addConstr(
                     (-expr <= -lb),
                     name = 'ineq_pf_branch_thermal_lower_bounds_branch[{}]_period[{}]'.format(branch_name, period))
 
@@ -163,7 +164,8 @@ def declare_ineq_p_interface_bounds(model, parent_model, period, index_set, inte
     #         raise Exception('No negative slack interface variables on model, but slacks=True')
     #     if slack_cost_expr is None:
     #         raise Exception('No cost expression for slacks, but slacks=True')
-    m._ineq_p_interface_bounds = {}
+    m._ineq_p_interface_ub = tupledict()
+    m._ineq_p_interface_lb = tupledict()
 
     if approximation_type == ApproximationType.BTHETA or \
             approximation_type == ApproximationType.PTDF:
@@ -187,10 +189,10 @@ def declare_ineq_p_interface_bounds(model, parent_model, period, index_set, inte
 
             lb, expr, ub =  generate_thermal_bounds(model._pfi[interface_name], interface['minimum_limit'], interface['maximum_limit'],
                                         neg_slack, pos_slack)
-            m._ineq_p_interface_bounds[interface_name, period] = m.addConstr(
+            m._ineq_p_interface_ub[(interface_name, period)] = m.addConstr(
                     (expr <= ub),
                     name = 'ineq_pf_interface_upper_bounds_interface[{}]_peiord[{}]'.format(interface_name, period))
-            m.addConstr(
+            m._ineq_p_interface_lb[(interface_name, period)] = m.addConstr(
                     (-expr <= -lb),
                     name = 'ineq_pf_interface_lower_bounds_interface[{}]_period[{}]'.format(interface_name, period))
 
@@ -265,59 +267,6 @@ def declare_eq_branch_power_ptdf_approx(model, parent_model, period, index_set, 
             get_power_flow_expr_ptdf_approx(m, branch_name, PTDF, rel_ptdf_tol=rel_ptdf_tol, abs_ptdf_tol=abs_ptdf_tol)
 
         m.addConstr((model._pf[branch_name] == expr), name = '_eq_pf_branch[{}]_period[{}]'.format(branch_name, period))
-
-
-
-def declare_ineq_p_branch_thermal_bounds(model, parent_model, period, index_set,
-                                        branches, p_thermal_limits,
-                                        approximation_type=ApproximationType.BTHETA,
-                                        slacks=False, slack_cost_expr=None):
-    """
-    Create an inequality constraint for the branch thermal limits
-    based on the power variables or expressions.
-    """
-    m = parent_model
-    # con_set = decl.declare_set('_con_ineq_p_branch_thermal_bounds',
-    #                            model=model, index_set=index_set)
-    # # flag for if slacks are on the model
-    # if slacks:
-    #     if not hasattr(model, 'pf_slack_pos'):
-    #         raise Exception('No positive slack branch variables on model, but slacks=True')
-    #     if not hasattr(model, 'pf_slack_neg'):
-    #         raise Exception('No negative slack branch variables on model, but slacks=True')
-    #     if slack_cost_expr is None:
-    #         raise Exception('No cost expression for slacks, but slacks=True')
-
-    m._ineq_pf_branch_thermal_bounds = False
-
-    if approximation_type == ApproximationType.BTHETA or \
-            approximation_type == ApproximationType.PTDF:
-        m._ineq_pf_branch_thermal_bounds = True
-        for branch_name in index_set:
-            limit = p_thermal_limits[branch_name]
-            if limit is None:
-                continue
-
-            if slacks and branch_name in model._pf_slack_neg.index_set():
-                assert branch_name in model._pf_slack_pos.index_set()
-                neg_slack = model._pf_slack_neg[branch_name]
-                pos_slack = model._pf_slack_pos[branch_name]
-                uc_model = slack_cost_expr.parent_block()
-                slack_cost_expr.expr += (uc_model._TimePeriodLengthHours*uc_model._BranchLimitPenalty[branch_name] *
-                                    (neg_slack + pos_slack) )
-                assert len(model._pf_slack_pos) == len(model._pf_slack_neg)
-            else:
-                neg_slack = None
-                pos_slack = None
-
-            lb, expr, ub = generate_thermal_bounds(model._pf[branch_name], -limit, limit, neg_slack, pos_slack)
-            model.addConstrs(
-                (expr >= ub), name = 'ineq_pf_branch_thermal_upper-bounds_branch[{}]_period[{}]'.format(branch_name, period)
-            )
-            model.addConstrs(
-                (-expr >= -lb), name = 'ineq_pf_branch_thermal_lower_bounds_branch[{}]_period[{}]'.format(branch_name, period)
-            )
-
 
 def declare_eq_interface_power_ptdf_approx(model, parent_model, period, index_set, PTDF, rel_ptdf_tol=None, abs_ptdf_tol=None):
     """
