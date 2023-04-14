@@ -461,9 +461,30 @@ class GridLoader(ABC):
         """The asset class of this generator, e.g. WIND, PV."""
         pass
 
+    @abstractmethod
     def get_generator_zone(self, gen):
         """The geographical area within the grid this generator is in."""
         pass
+
+    @property
+    def renews_list(self) -> list[str]:
+        """Gets the solar and wind assets in this grid."""
+
+        return sorted({
+            gen for gen, fuel in self.template[
+                'NondispatchableGeneratorType'].items() if fuel in {'S', 'W'}
+            })
+
+    @property
+    def renews_info(self) -> pd.DataFrame:
+        """Gets the metadata on the solar and wind assets in this grid."""
+
+        gen_df = self.gen_df.set_index('GEN UID')
+        gen_df = gen_df.loc[gen_df.index.isin(self.renews_list)]
+        gen_df['Type'] = [self.get_generator_type(gen) for gen in gen_df.index]
+        gen_df['Zone'] = [self.get_generator_zone(gen) for gen in gen_df.index]
+
+        return gen_df
 
     def map_wind_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         """Transform data for NREL wind farms to those used in the grid."""
@@ -472,18 +493,6 @@ class GridLoader(ABC):
     def map_solar_generators(self, asset_df: pd.DataFrame) -> pd.DataFrame:
         """Transform data for NREL solar plants to those used in the grid."""
         return asset_df
-
-    def get_asset_info(self) -> pd.DataFrame:
-        type_dict = dict()
-
-        for asset_type in self.timeseries_cohorts - self.no_scenario_renews:
-            for asset in self.get_forecasts(asset_type).columns:
-                type_dict[asset] = asset_type
-
-        return pd.DataFrame({'Type': pd.Series(type_dict)}).merge(
-            self.gen_df.set_index('GEN UID', verify_integrity=True),
-            left_index=True, right_index=True
-            ).rename({'Area Name of Gen': 'Area'}, axis='columns')
 
     @staticmethod
     def subset_dates(df: pd.DataFrame, start_date: Optional[datetime] = None,
@@ -1047,6 +1056,11 @@ class T7kLoader(GridLoader):
             gen_type = 'PV'
 
         return gen_type
+
+    def get_generator_zone(self, gen: str) -> str:
+        return self.bus_df.set_index('Bus ID').loc[
+            int(self.gen_df.set_index('GEN UID').loc[
+                    gen, 'BUS UID'].split('_')[0]), 'Zone']
 
     @classmethod
     def must_gen_run(cls, gen: GridLoader.Generator) -> bool:
