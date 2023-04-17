@@ -66,7 +66,7 @@ def _CA_lower_limit(model):
     def enforce_generator_output_limits_rule_part_a(m, g, t):
         return m._MinimumPowerOutput[g, t] * m._UnitOn[g, t] <= m._PowerGenerated[g, t]
 
-    model.addConstrs((enforce_generator_output_limits_rule_part_a(model, g, t) for g in model._ThermalGenerators
+    model._EnforceGeneratorOutputLimitsPartA = model.addConstrs((enforce_generator_output_limits_rule_part_a(model, g, t) for g in model._ThermalGenerators
                      for t in model._TimePeriods), name = 'EnforceGeneratorOutputLimitsPartA')
 
 def _MLR_generation_limits_uptime_1(model, tightened=False):
@@ -162,7 +162,7 @@ def _pan_guan_generation_limits(model, include_UT_1=True):
                 _power_limit_from_start_stop_cons[(g,t)] = cons
 
     if len(_power_limit_from_start_stop_cons)!= 0:
-        model._power_limit_from_start_stop = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop')
+        model._power_limit_from_start_stop_pan_guan_gentile = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop_pan_guan_gentile')
 
     model.update()
 
@@ -174,7 +174,7 @@ def _KOW_generation_limits(model):
             return None
         UT = m._ScaledMinimumUpTime[g]
         ## this case is handled better above
-        if time_RU <= UT - 2 or t == m.NumTimePeriods:
+        if time_RU <= UT - 2 or t == m._NumTimePeriods:
             return None
         Start = m._UnitStart
         Pmax = m._MaximumPowerOutput[g,t]
@@ -200,7 +200,7 @@ def _KOW_generation_limits(model):
                 _max_power_limit_from_starts_cons[(g,t)] = cons
 
     if len(_max_power_limit_from_starts_cons)!= 0:
-        model._power_limit_from_start_stop = model.addConstrs((_max_power_limit_from_starts_cons[g_t] for g_t in _max_power_limit_from_starts_cons.keys()), name = '_max_power_limit_from_starts')
+        model._max_power_limit_from_starts = model.addConstrs((_max_power_limit_from_starts_cons[g_t] for g_t in _max_power_limit_from_starts_cons.keys()), name = '_max_power_limit_from_starts')
 
     ## NOTE: it seems this tightening should really be done on the p^l variables, when they exist
     def power_limit_from_start_stops_rule(m,g,t):
@@ -247,7 +247,7 @@ def _KOW_generation_limits(model):
                 _power_limit_from_start_stop_cons[(g,t)] = cons
 
     if len(_power_limit_from_start_stop_cons)!= 0:
-        model._power_limit_from_start_stop = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop')
+        model._power_limit_from_start_stop_KOW = model.addConstrs((_power_limit_from_start_stop_cons[g_t] for g_t in _power_limit_from_start_stop_cons.keys()), name = '_power_limit_from_start_stop_KOW')
 
 def pan_guan_gentile_KOW_generation_limits(model):
     model._generation_limits = 'pan_guan_gentile_KOW_generation_limits'

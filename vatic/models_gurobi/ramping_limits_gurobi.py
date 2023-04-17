@@ -82,7 +82,7 @@ def _damcikurt_basic_ramping(model):
             linear_coefs = [*linear_coefs_power_t, *rhs_neg_linear_coefs]
 
             RHS = m._PowerGeneratedT0[g]
-            return LinExpr(linear_coefs, linear_vars <= RHS)
+            return LinExpr(linear_coefs, linear_vars) <= RHS
 
         else:
             linear_vars_power_t, linear_coefs_power_t = m._get_maximum_power_available_above_minimum_lists(
@@ -103,7 +103,7 @@ def _damcikurt_basic_ramping(model):
             linear_coefs = [*linear_coefs_power_t, *linear_coefs_power_t_1,
                             *rhs_neg_linear_coefs]
 
-            return LinExpr(linear_coefs, linear_vars <= 0)
+            return LinExpr(linear_coefs, linear_vars) <= 0
 
     enforce_max_available_ramp_up_rates_cons = {}
     for g in model._ThermalGenerators:
@@ -157,7 +157,7 @@ def _damcikurt_basic_ramping(model):
             linear_coefs = [*linear_coefs_power_t, *linear_coefs_power_t_1,
                             *lhs_neg_linear_coefs]
 
-            return LinExpr(linear_coefs, linear_vars >= 0)
+            return LinExpr(linear_coefs, linear_vars) >= 0
 
 
     enforce_ramp_down_limits_cons = {}
