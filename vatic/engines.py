@@ -430,12 +430,13 @@ class Simulator:
         #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
         #     )
 
-        model = generate_model(model_name = 'UnitCommitment',
-            model_data = ruc_model_data, relax_binaries = False,
+        model = generate_model(
+            model_name='UnitCommitment',
+            model_data=ruc_model_data, relax_binaries=False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            save_model_file=True,
-            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+            save_model_file=True
+            )
 
         generatemodel_time = time.time() - generatemodel_start_time
         print('generatemodel_time', generatemodel_time)
@@ -491,23 +492,26 @@ class Simulator:
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
 
-        model = generate_model(model_name = 'EconomicDispatch',
-            model_data = sced_model_data, relax_binaries = False,
+        model = generate_model(
+            model_name='EconomicDispatch',
+            model_data=sced_model_data, relax_binaries=False,
             ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             objective_hours=hours_in_objective,
-            save_model_file=True,
-            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+            save_model_file=True
+            )
 
         # update in case lines were taken out
         sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
-                                threads=self.solver_options['Threads'],
-                                outputflag=0)
+                                   threads=self.solver_options['Threads'],
+                                   outputflag=0)
         self._ptdf_manager.update_active(sced_results)
+
         if not self.run_lmps:
             model.dispose()
             model = None
             sced_model_data = None
+
         return sced_results, model
 
     def solve_lmp(self,

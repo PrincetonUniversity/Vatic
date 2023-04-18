@@ -19,14 +19,15 @@ from vatic.models_gurobi import default_params, garver_3bin_vars, \
                                 basic_objective
 
 
-def generate_model(model_name,
-            model_data, relax_binaries,
-            ptdf_options,
-            ptdf_matrix_dict,  objective_hours = None,
-            save_model_file = False, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/'):
+def generate_model(model_name, model_data, relax_binaries, ptdf_options,
+                   ptdf_matrix_dict,  objective_hours = None,
+                   save_model_file=False, file_path_name=None):
 
     #model name = 'UnitComitment'
     use_model = model_data.clone_in_service()
+
+    if file_path_name is None:
+        file_path_name = 'model'
 
     model = gp.Model(model_name)
     model._model_data = use_model.to_egret()  # _model_data in model is egret object, while model_data is vatic object
