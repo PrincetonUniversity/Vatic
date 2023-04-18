@@ -10,6 +10,8 @@ import time
 import datetime
 import math
 import pandas as pd
+import gurobipy as gp
+from gurobipy import GRB
 from copy import deepcopy
 
 from .data_providers import PickleProvider
@@ -25,6 +27,9 @@ from pyomo.environ import Suffix as PyomoSuffix
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
+from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
+from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
+from vatic.models_gurobi import basic_objective
 
 class Simulator:
     """An engine for simulating the operation of a power grid.
@@ -168,17 +173,20 @@ class Simulator:
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
-        self.run_lmps = run_lmps
+        self.run_lmps = run_lmps #lmp: Locational Marginal Price
+        self.mipgap = mipgap #Put mipgap in the initalization
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
         self.lmp_shortfall_costs = lmp_shortfall_costs
 
         self._hours_in_objective = None
         self._current_timestep = None
+        #time dictionary for profiling
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
         # if cost curves for renewable generators are given, use alternate
         # model formulations that do not assume no costs for renewables
+        # only change it at unit commitment phase
         if renew_costs is not None:
             self.ruc_formulations['params_forml'] = 'renewable_cost_params'
             self.ruc_formulations[
@@ -198,6 +206,7 @@ class Simulator:
 
         self.init_ruc_file = init_ruc_file
         self.verbosity = verbosity
+
 
         self._simulation_state = VaticSimulationState(
             ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
@@ -222,6 +231,7 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
+    #@profile
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 
@@ -237,6 +247,7 @@ class Simulator:
 
         # simulate each time period
         for time_step in self._time_manager.time_steps():
+            print(time_step)
             self._current_timestep = time_step
 
             # run the day-ahead RUC at some point in the day before
@@ -251,6 +262,7 @@ class Simulator:
             self.call_oracle()
             self.simulation_times['Sim'] += time.time() - oracle_start_time
 
+            # clean gurobi envrionment to remove memory cache and run faster
         sim_time = time.time() - simulation_start_time
 
         if self.verbosity > 0:
@@ -267,6 +279,7 @@ class Simulator:
 
         return self._stats_manager.save_output(sim_time)
 
+    #@profile
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
 
@@ -315,6 +328,7 @@ class Simulator:
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
+    #@profile
     def call_oracle(self) -> None:
         """Solves the real-time economic dispatch for the current time step.
 
@@ -324,14 +338,19 @@ class Simulator:
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
-        current_sced_instance = self.solve_sced(hours_in_objective=1,
-                                                sced_horizon=self.sced_horizon)
+        # Return SCED model to calculate dual of relaxed sced model to find lmp
+        if not self.run_lmps:
+            current_sced_instance, _ = self.solve_sced(hours_in_objective=1,
+                                                    sced_horizon=self.sced_horizon)
+        else:
+            current_sced_instance, model = self.solve_sced(hours_in_objective=1,
+                                                    sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
 
         if self.run_lmps:
-            lmp_sced = self.solve_lmp(current_sced_instance)
+            lmp_sced = self.solve_lmp(hours_in_objective=1, sced_horizon=self.sced_horizon, sced_model = model)
         else:
             lmp_sced = None
 
@@ -393,6 +412,7 @@ class Simulator:
 
         return self._stats_manager._sced_stats[self._current_timestep]
 
+    #@profile
     def solve_ruc(
             self,
             time_step: VaticTime,
@@ -403,29 +423,40 @@ class Simulator:
             time_step, sim_state_for_ruc)
         self._ptdf_manager.mark_active(ruc_model_data)
 
-        self.ruc_model.generate_model(
-            ruc_model_data, relax_binaries=False,
-            ptdf_options=self._ptdf_manager.ruc_ptdf_options,
-            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
-            )
+        generatemodel_start_time = time.time()
+        # self.ruc_model.generate_model(
+        #     ruc_model_data, relax_binaries=False,
+        #     ptdf_options=self._ptdf_manager.ruc_ptdf_options,
+        #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
+        #     )
 
+        model = generate_model(model_name = 'UnitCommitment',
+            model_data = ruc_model_data, relax_binaries = False,
+            ptdf_options=self._ptdf_manager.ruc_ptdf_options,
+            ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+            save_model_file=True,
+            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+
+        generatemodel_time = time.time() - generatemodel_start_time
+        print('generatemodel_time', generatemodel_time)
         # update in case lines were taken out
-        # TODO: why is this necessary?
-        self._ptdf_manager.PTDF_matrix_dict = self.ruc_model.pyo_instance._PTDFs
+
+        self._ptdf_manager.PTDF_matrix_dict = model._PTDFs
 
         # TODO: better error handling
-        try:
-            ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
-                                                  self.solver_options)
 
-        except:
-            print("Failed to solve deterministic RUC instance - likely "
-                  "because no feasible solution exists!")
+        # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
+        #                                       self.solver_options)
+        ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
 
-            output_filename = "bad_ruc.json"
-            ruc_model_data.write(output_filename)
-            print("Wrote failed RUC model to file=" + output_filename)
-            raise
+        # except:
+        #     print("Failed to solve deterministic RUC instance - likely "
+        #           "because no feasible solution exists!")
+        #
+        #     output_filename = "bad_ruc.json"
+        #     ruc_model_data.write(output_filename)
+        #     print("Wrote failed RUC model to file=" + output_filename)
+        #     raise
 
         self._ptdf_manager.update_active(ruc_plan)
         # TODO: add the reporting stuff in
@@ -441,15 +472,17 @@ class Simulator:
 
         if self.verbosity > 0:
             print("\nExtracting scenario to simulate")
-
+        model.dispose()
         return self.create_simulation_actuals(time_step), ruc_plan
 
+    #@profile
     def solve_sced(self,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:
 
         sced_model_data = self._data_provider.create_sced_instance(
             self._simulation_state, sced_horizon=sced_horizon)
+
         self._ptdf_manager.mark_active(sced_model_data)
 
         self._hours_in_objective = hours_in_objective
@@ -458,23 +491,65 @@ class Simulator:
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
 
-        self.sced_model.generate_model(
-            sced_model_data, relax_binaries=False, ptdf_options=ptdf_options,
+        model = generate_model(model_name = 'EconomicDispatch',
+            model_data = sced_model_data, relax_binaries = False,
+            ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            objective_hours=hours_in_objective
-            )
+            objective_hours=hours_in_objective,
+            save_model_file=True,
+            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
 
         # update in case lines were taken out
-        self._ptdf_manager.PTDF_matrix_dict = self.sced_model.pyo_instance._PTDFs
-
-        sced_results = self.sced_model.solve_model(self._sced_solver,
-                                                   self.solver_options)
+        sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
+                                threads=self.solver_options['Threads'],
+                                outputflag=0)
         self._ptdf_manager.update_active(sced_results)
+        if not self.run_lmps:
+            model.dispose()
+            model = None
+            sced_model_data = None
+        return sced_results, model
 
-        return sced_results
+    def solve_lmp(self,
+                   hours_in_objective: int,
+                   sced_horizon: int, sced_model: gp.model) -> VaticModelData:
+        # Construct relax model to calculate the dual and shadow price to calculate mip
+        # Has SCED model: revise the existing model by converting all binary variables to continous
+        if sced_model:
+            sced_model_relaxed = sced_model.copy()
+            sced_model_relaxed.__dict__ = sced_model.__dict__.copy()
+            for x in sced_model_relaxed._UnitOn.values():
+                x.vtype = GRB.CONTINUOUS
 
-    def solve_lmp(self, sced_instance: VaticModelData) -> VaticModelData:
-        lmp_sced_instance = deepcopy(sced_instance)
+            for x in sced_model_relaxed._UnitStart.values():
+                x.vtype = GRB.CONTINUOUS
+
+            for x in sced_model_relaxed._UnitStop.values():
+                x.vtype = GRB.CONTINUOUS
+
+            for x in sced_model_relaxed._delta.values():
+                x.vtype = GRB.CONTINUOUS
+        # No SCED model: generate from the starting poiint
+        else:
+            sced_model_data = self._data_provider.create_sced_instance(
+                self._simulation_state, sced_horizon=sced_horizon)
+
+            self._ptdf_manager.mark_active(sced_model_data)
+
+            self._hours_in_objective = hours_in_objective
+            if self._hours_in_objective > 10:
+                ptdf_options = self._ptdf_manager.look_ahead_sced_ptdf_options
+            else:
+                ptdf_options = self._ptdf_manager.sced_ptdf_options
+
+            sced_model_relaxed = generate_model(model_name='EconomicDispatch',
+                                   model_data=sced_model_data,
+                                   relax_binaries=True,
+                                   ptdf_options=ptdf_options,
+                                   ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
+                                   objective_hours=hours_in_objective,
+                                   save_model_file=False)
+
 
         # in the case of a shortfall in meeting demand or the reserve
         # requirement, the price skyrockets, so we set max price values
@@ -482,79 +557,50 @@ class Simulator:
                 ['load_mismatch_cost', 'reserve_shortfall_cost'],
                 [10000., 1000.]
                 ):
-            shortfall_cost = lmp_sced_instance.get_system_attr(
-                cost_lbl, max_price)
+            shortfall_cost = sced_model_relaxed._model_data.data['system'][cost_lbl]
 
             if shortfall_cost >= max_price:
-                lmp_sced_instance.set_system_attr(cost_lbl, max_price)
+                sced_model_relaxed._model_data.data['system'][cost_lbl] = max_price
+
 
         # often we want to avoid having the reserve requirement shortfall make
         # any impact on the prices whatsoever
         if not self.lmp_shortfall_costs:
-            lmp_sced_instance.set_system_attr('reserve_shortfall_cost', 0)
+            sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost'] = 0
 
-        if self.sced_model.pyo_instance is None:
-            self._ptdf_manager.mark_active(lmp_sced_instance)
+        ## reset the penalties
+        update_obj = False
+        base_MVA = sced_model_relaxed._model_data.data['system']['baseMVA']
+        new_load_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['load_mismatch_cost']
 
-            self.sced_model.generate_model(
-                lmp_sced_instance, relax_binaries=True,
-                ptdf_options=self._ptdf_manager.lmpsced_ptdf_options,
-                ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-                objective_hours=self._hours_in_objective
-                )
+        if not math.isclose(
+                new_load_penalty,
+                sced_model_relaxed._LoadMismatchPenalty
+                ):
+            sced_model_relaxed._LoadMismatchPenalty = new_load_penalty
+            update_obj = True
 
-        else:
-            uc_instance_binary_relaxer(self.sced_model.pyo_instance,
-                                       self.sced_model.solver)
+        new_reserve_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost']
 
-            ## reset the penalties
-            update_obj = False
-            base_MVA = lmp_sced_instance.get_system_attr('baseMVA')
-            new_load_penalty = base_MVA * lmp_sced_instance.get_system_attr(
-                'load_mismatch_cost')
+        if not math.isclose(
+                new_reserve_penalty,
+                sced_model_relaxed._ReserveShortfallPenalty
+                ):
+            sced_model_relaxed._ReserveShortfallPenalty = new_reserve_penalty
+            update_obj = True
 
-            if not math.isclose(
-                    new_load_penalty,
-                    self.sced_model.pyo_instance.LoadMismatchPenalty.value
-                    ):
-                self.sced_model.pyo_instance.LoadMismatchPenalty.value = new_load_penalty
-                update_obj = True
+        if update_obj:
+            sced_model_relaxed.update()
+            sced_model_relaxed = basic_objective(sced_model_relaxed)
+            sced_model_relaxed.update()
 
-            new_reserve_penalty = base_MVA * lmp_sced_instance.get_system_attr(
-                'reserve_shortfall_cost')
-
-            if not math.isclose(
-                    new_reserve_penalty,
-                    self.sced_model.pyo_instance.ReserveShortfallPenalty.value
-                    ):
-                self.sced_model.pyo_instance.ReserveShortfallPenalty.value = new_reserve_penalty
-                update_obj = True
-
-            self.sced_model.pyo_instance.model_data = lmp_sced_instance
-
-            if update_obj and isinstance(self.sced_model.solver,
-                                         PersistentSolver):
-                self.sced_model.solver.set_objective(
-                    self.sced_model.pyo_instance.TotalCostObjective)
-
-        self.sced_model.pyo_instance.dual = PyomoSuffix(
-            direction=PyomoSuffix.IMPORT)
-
-        try:
-            lmp_sced_results = self.sced_model.solve_model(
-                solver_options=self.solver_options, relaxed=True,
-                set_instance=(self.sced_model.pyo_instance is None),
-                )
-
-        except:
-            print("Some issue with LMP SCED, writing instance")
-            quickstart_uc_filename = (self.options.output_directory
-                                      + os.sep + "FAILED_LMP_SCED.json")
-
-            lmp_sced_instance.write(quickstart_uc_filename)
-            print(f"Problematic LMP SCED written to {quickstart_uc_filename}")
-            raise
-
+        #Relax Binary Constraints
+        #Need set relaxed = True to initiate the calculation of lmps
+        lmp_sced_results = solve_model(sced_model_relaxed, relaxed=True, mipgap=self.mipgap,
+                                threads=self.solver_options['Threads'],
+                                outputflag=0)
+        sced_model_relaxed.dispose()
+        sced_model.dispose()
         return lmp_sced_results
 
     def _get_projected_state(self) -> VaticSimulationState:
@@ -594,7 +640,7 @@ class Simulator:
         #       beyond (to avoid end-of-horizon effects).
         #       But for now we run for 24 hours.
         proj_hours = min(24, self._simulation_state.timestep_count)
-        proj_sced_instance = self.solve_sced(hours_in_objective=proj_hours,
+        proj_sced_instance, _ = self.solve_sced(hours_in_objective=proj_hours,
                                              sced_horizon=proj_hours)
 
         return VaticStateWithScedOffset(self._simulation_state,
