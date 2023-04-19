@@ -1,6 +1,9 @@
 [![CI-test](https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml/badge.svg)](
 https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
 
+[![DOI](https://zenodo.org/badge/406584271.svg)](https://zenodo.org/badge/latestdoi/406584271)
+
+
 # Vatic #
 
 Vatic is a Python package for running simulations of a power grid using the
@@ -25,6 +28,13 @@ Then, from inside the cloned directory, install Vatic:
 cd Vatic
 pip install .
 ```
+
+While this will install Vatic's Python package dependencies, you will need to also choose and install a MILP solver
+with Python support. A good free option is [Cbc](https://github.com/coin-or/Cbc); we also recommend considering
+obtaining a license for [Gurobi](https://www.gurobi.com/), which allows for much faster simulation.
+
+
+### Installing grid datasets ###
 
 The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
 https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)
