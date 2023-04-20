@@ -5,6 +5,7 @@ from __future__ import annotations
 import dill as pickle
 from pathlib import Path
 import time
+from typing import Optional
 
 import datetime
 import math
@@ -326,19 +327,17 @@ class Simulator:
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
-        # Return SCED model to calculate dual of relaxed sced model to find lmp
-        if not self.run_lmps:
-            current_sced_instance, _ = self.solve_sced(hours_in_objective=1,
-                                                    sced_horizon=self.sced_horizon)
-        else:
-            current_sced_instance, model = self.solve_sced(hours_in_objective=1,
-                                                    sced_horizon=self.sced_horizon)
+
+        current_sced_instance, model = self.solve_sced(
+            hours_in_objective=1, sced_horizon=self.sced_horizon)
 
         if self.verbosity > 0:
             print("Solving for LMPs")
 
         if self.run_lmps:
-            lmp_sced = self.solve_lmp(hours_in_objective=1, sced_horizon=self.sced_horizon, sced_model = model)
+            lmp_sced = self.solve_lmp(hours_in_objective=1,
+                                      sced_horizon=self.sced_horizon,
+                                      sced_model=model)
         else:
             lmp_sced = None
 
@@ -403,7 +402,7 @@ class Simulator:
     def solve_ruc(
             self,
             time_step: VaticTime,
-            sim_state_for_ruc: VaticSimulationState | None = None
+            sim_state_for_ruc: Optional[VaticSimulationState] = None
             ) -> tuple[VaticModelData, VaticModelData]:
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(
@@ -416,8 +415,6 @@ class Simulator:
         #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
         #     )
 
-
-        t0 = time.time()
         model = generate_model(
             model_name='UnitCommitment',
             model_data=ruc_model_data, relax_binaries=False,
@@ -425,7 +422,6 @@ class Simulator:
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             save_model_file=False
             )
-        print(f"GENERATE TIME: {round(time.time() - t0, 1)}")
 
         # update in case lines were taken out
         self._ptdf_manager.PTDF_matrix_dict = model._PTDFs
@@ -433,12 +429,9 @@ class Simulator:
         # TODO: better error handling
         # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
         #                                       self.solver_options)
-        t0 = time.time()
         ruc_plan = solve_model(model, relaxed=False, mipgap=self.mipgap,
                                threads=self.solver_options['Threads'],
-                               outputflag = 0)
-        print(f"SOLVE TIME: {round(time.time() - t0, 1)}")
-
+                               outputflag=0)
 
         # except:
         #     print("Failed to solve deterministic RUC instance - likely "
@@ -463,6 +456,7 @@ class Simulator:
 
         if self.verbosity > 0:
             print("\nExtracting scenario to simulate")
+
         model.dispose()
 
         return self.create_simulation_actuals(time_step), ruc_plan

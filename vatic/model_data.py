@@ -7,21 +7,18 @@ from pathlib import Path
 from copy import copy, deepcopy
 from egret.data.model_data import ModelData as EgretModel
 
-from typing import TypeVar, Any, Optional, Union, Iterable, Iterator
-VModelData = TypeVar('VModelData', bound='VaticModelData')
+from typing import Self, Any, Optional, Iterable, Iterator
 
 
-class ModelError(Exception):
+class ModelDataError(Exception):
     pass
 
 
-class VaticModelData(object):
+class VaticModelData:
     """Simplified version of egret.data.model_data.ModelData"""
 
-    def __init__(
-            self,
-            source: Optional[Union[VModelData, dict, Path, str]] = None
-            ) -> None:
+    def __init__(self,
+                 source: Optional[Self | dict | str | Path] = None) -> None:
 
         if isinstance(source, dict):
             self._data = deepcopy(source)
@@ -31,8 +28,7 @@ class VaticModelData(object):
 
         elif isinstance(source, (str, Path)):
             if not Path(source).is_file():
-                raise ModelError(
-                    "Cannot find model input file `{}`!".format(source))
+                raise ModelDataError(f"Missing model input file `{source}`!")
 
             with open(source, 'rb') as f:
                 self._data = pickle.load(f)
@@ -49,7 +45,7 @@ class VaticModelData(object):
     def __deepcopy__(self, memo):
         return VaticModelData(deepcopy(self._data, memo))
 
-    def clone_in_service(self) -> VModelData:
+    def clone_in_service(self) -> Self:
         """Returns a version of this grid without out-of-service elements."""
 
         new_dict = {'system': self._data['system'], 'elements': dict()}
@@ -80,8 +76,8 @@ class VaticModelData(object):
 
         """
         if element_type not in self._data['elements']:
-            raise ModelError("This model does not include the element "
-                             "type `{}`!".format(element_type))
+            raise ModelDataError(f"This model does not include the element "
+                                 f"type `{element_type}`!")
 
         for name, elem in self._data['elements'][element_type].items():
             if all(k in elem and elem[k] == v
@@ -99,8 +95,8 @@ class VaticModelData(object):
 
         """
         if element_type not in self._data['elements']:
-            raise ModelError("This model does not include the element "
-                             "type `{}`!".format(element_type))
+            raise ModelDataError(f"This model does not include the element "
+                                 f"type `{element_type}`!")
 
         attr_dict = {'names': list()}
         for name, elem in self.elements(element_type, **element_args):
@@ -120,8 +116,8 @@ class VaticModelData(object):
 
         # throw error if the attribute is missing and no default value is given
         elif default is None:
-            raise ModelError("This model does not include the system-level "
-                             "attribute `{}`!".format(attr))
+            raise ModelDataError(f"This model does not include the "
+                                 f"system-level attribute `{attr}`!")
 
         else:
             return default
@@ -173,8 +169,8 @@ class VaticModelData(object):
         else:
             for element_type in element_types:
                 if element_type not in self._data['elements']:
-                    raise ModelError("This model does not include the element "
-                                     "type `{}`!".format(element_type))
+                    raise ModelDataError(f"This model does not include the "
+                                         f"element type `{element_type}`!")
 
         for element_type in element_types:
             for name, elem in self.elements(element_type, **element_args):
@@ -211,23 +207,24 @@ class VaticModelData(object):
                             e.g. generator_type='thermal' in_service=False
 
         """
-        for name, elem in other.elements(element_type, **element_args):
-            if name in self._data['elements'][element_type]:
+        for k, elem in other.elements(element_type, **element_args):
+            if k in self._data['elements'][element_type]:
                 if attrs:
                     for attr in attrs:
-                        self._data['elements'][element_type][name][attr] \
+                        self._data['elements'][element_type][k][attr] \
                             = deepcopy(elem[attr])
 
                 else:
-                    self._data['elements'][element_type][name] = deepcopy(elem)
+                    self._data['elements'][element_type][k] = deepcopy(elem)
 
             elif strict_mode:
-                raise ModelError("Could not copy from other VaticModelData "
-                                 "object which contains the missing "
-                                 "element `{}`!".format(name))
+                raise ModelDataError(
+                    f"Could not copy from other VaticModelData object which "
+                    f"contains the missing element `{k}`!"
+                    )
 
     def copy_forecastables(self,
-                           other: VModelData,
+                           other: Self,
                            time_index: int, other_time_index: int) -> None:
         """Replaces forecastable values with those from another model data.
 
@@ -469,8 +466,8 @@ class VaticModelData(object):
             return gen_dict['commitment']['values'][0] > 0
 
         else:
-            raise ModelError("Cannot find commitment status "
-                             "for generator `{}`!".format(gen))
+            raise ModelDataError(f"Cannot find commitment status "
+                                 f"for generator `{gen}`!")
 
     def was_generator_on(self, gen: str) -> bool:
         return self._data['elements']['generator'][gen]['initial_status'] > 0
