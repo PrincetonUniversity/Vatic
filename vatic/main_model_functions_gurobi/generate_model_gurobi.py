@@ -1,7 +1,5 @@
-import time
 
 import gurobipy as gp
-
 import egret.common.lazy_ptdf_utils as lpu
 
 from vatic.models_gurobi import default_params, garver_3bin_vars, \

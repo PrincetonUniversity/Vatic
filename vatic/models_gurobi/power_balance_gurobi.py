@@ -1,33 +1,44 @@
+
 from gurobipy import tupledict, LinExpr, GRB, quicksum
 import gurobipy as gp
 
-import egret.model_library.transmission.branch as libbranch
-import egret.common.lazy_ptdf_utils as lpu
-from egret.model_library.defn import BasePointType, CoordinateType, ApproximationType
+from egret.model_library.defn import BasePointType, ApproximationType
 
-import vatic.models_gurobi.ptdf_utils_gurobi as ptdf_utils
+from ..models_gurobi import ptdf_utils_gurobi as ptdf_utils
 from .power_vars_gurobi import _add_reactive_power_vars
 from .generation_limits_gurobi import _add_reactive_limits
-import vatic.models_gurobi.transmission_gurobi.bus as libbus
-import vatic.models_gurobi.transmission_gurobi.branch as libbranch
-from vatic.models_gurobi.power_vars_gurobi import _add_power_generated_startup_shutdown
-from vatic.models_gurobi.non_dispatchable_vars_gurobi import file_non_dispatchable_vars
+from .transmission_gurobi import bus as libbus
+from .transmission_gurobi import branch as libbranch
+
 
 component_name = 'power_balance'
 
+
 def _get_pg_expr_rule(t, m, bus):
-    return quicksum(m._PowerGeneratedStartupShutdown[g, t] for g in m._ThermalGeneratorsAtBus[bus]) \
-                + quicksum(m._PowerOutputStorage[s, t] for s in m._StorageAtBus[bus])\
-                - quicksum(m._PowerInputStorage[s, t] for s in m._StorageAtBus[bus])\
-                + quicksum(m._NondispatchablePowerUsed[g, t] for g in m._NondispatchableGeneratorsAtBus[bus]) \
-                + quicksum(m._HVDCLinePower[k,t] for k in m._HVDCLinesTo[bus]) \
-                - quicksum(m._HVDCLinePower[k,t] for k in m._HVDCLinesFrom[bus]) \
-                + m._LoadGenerateMismatch[bus,t]
+    start_shut = quicksum(m._PowerGeneratedStartupShutdown[g, t]
+                          for g in m._ThermalGeneratorsAtBus[bus])
+
+    out_store = quicksum(m._PowerOutputStorage[s, t]
+                         for s in m._StorageAtBus[bus])
+    in_store = quicksum(m._PowerInputStorage[s, t]
+                        for s in m._StorageAtBus[bus])
+
+    non_dispatch = quicksum(m._NondispatchablePowerUsed[g, t]
+                            for g in m._NondispatchableGeneratorsAtBus[bus])
+
+    to_hdvc = quicksum(m._HVDCLinePower[k, t] for k in m._HVDCLinesTo[bus])
+    from_hdvc = quicksum(m._HVDCLinePower[k, t] for k in m._HVDCLinesFrom[bus])
+
+    return (start_shut + out_store - in_store + non_dispatch
+            + to_hdvc - from_hdvc + m._LoadGenerateMismatch[bus, t])
+
 
 ## helper defining reacative power injection at a bus
 def _get_qg_expr_rule(t, m, bus):
-    return sum(m._ReactivePowerGenerated[g, t] for g in m._ThermalGeneratorsAtBus[bus]) \
+    return sum(m._ReactivePowerGenerated[g, t]
+               for g in m._ThermalGeneratorsAtBus[bus]) \
             + m._LoadGenerateMismatchReactive[bus,t]
+
 
 def _add_hvdc(model):
     def dc_line_power_bounds_rule(m, k, t):
@@ -103,6 +114,7 @@ def _add_q_load_mismatch(model):
     model._LoadMismatchCostReactive = {t: compute_q_load_mismatch_cost_rule(model, t)
                                        for t in model._TimePeriods}
 
+
 def _add_blank_load_mismatch(model):
     model._LoadGenerateMismatch = tupledict({(b, t): 0 for b in model._Buses for t in model._TimePeriods})
 
@@ -111,6 +123,7 @@ def _add_blank_load_mismatch(model):
     model._negLoadGenerateMismatch = tupledict({(b, t): 0 for b in model._Buses \
                                                 for t in model._TimePeriods})
     model._LoadMismatchCost = {t: 0 for t in model._TimePeriods}
+
 
 def _add_blank_q_load_mismatch(model):
     model._LoadGenerateMismatchReactive = tupledict({(b, t): 0 for b in model._Buses \
@@ -185,6 +198,7 @@ def _add_system_load_mismatch(model):
     model._LoadMismatchCost = {t: compute_load_mismatch_cost_rule(t)
                                 for t in model._TimePeriods}
 
+
 def _add_load_mismatch(model):
     over_gen_maxes = {}
     over_gen_times_per_bus = {b: list() for b in model._Buses}
@@ -194,8 +208,7 @@ def _add_load_mismatch(model):
 
     for b in model._Buses:
 
-        # storage, for now, does not
-        # have time-vary parameters
+        # storage, for now, does not have time-varying parameters
         storage_max_injections = 0.
         storage_max_withdraws = 0.
 
@@ -316,6 +329,7 @@ def _add_load_mismatch(model):
             t] += model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
                        model._OverGeneration[b, t]
 
+
 def _copperplate_network_model(block, tm, relax_balance=None):
 
     m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts = \
@@ -334,8 +348,10 @@ def _copperplate_network_model(block, tm, relax_balance=None):
 def _copperplate_relax_network_model(block,tm):
     _copperplate_network_model(block, tm, relax_balance=True)
 
+
 def _copperplate_approx_network_model(block,tm):
     _copperplate_network_model(block, tm, relax_balance=False)
+
 
 def _setup_branch_slacks(m,block):
     # declare the branch slack variables
@@ -346,6 +362,7 @@ def _setup_branch_slacks(m,block):
     block._pf_slack_pos = block.addVars(m._BranchesWithSlack, lb = 0, ub = GRB.INFINITY,
                     name = 'pf_slack_neg')
 
+
 def _setup_interface_slacks(m, block):
     # declare the interface slack variables
     # they have a sparse index set
@@ -354,6 +371,7 @@ def _setup_interface_slacks(m, block):
 
     block._pfi_slac_neg =  block.addVars(m._InterfacesWithSlack, lb = 0, ub = GRB.INFINITY,
                     name = 'pfi_slack_neg')
+
 
 def _setup_contingency_slacks(m, block):
     # declare the interface slack variables
@@ -364,6 +382,7 @@ def _setup_contingency_slacks(m, block):
 
     block._pfc_slack_neg = block.addVars(m._Contingencies, m._TransmissionLines, lb=0, ub=GRB.INFINITY,
                   name='pfc_slack_neg')
+
 
 def _setup_egret_network_topology(m,tm):
     buses = m._buses
@@ -380,6 +399,7 @@ def _setup_egret_network_topology(m,tm):
 
     return buses, branches, branches_in_service, branches_out_service, interfaces, contingencies
 
+
 def _setup_egret_network_model(block, tm, parent_model):
     m = parent_model
 
@@ -395,6 +415,7 @@ def _setup_egret_network_model(block, tm, parent_model):
     bus_gs_fixed_shunts = m._bus_gs_fixed_shunts
 
     return m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts
+
 
 def _ptdf_dcopf_network_model(block, tm, parent_model = None):
     # m is our main model, the parent of block
@@ -558,31 +579,35 @@ def _ptdf_dcopf_network_model(block, tm, parent_model = None):
                                                   m._InterfaceViolationCost[tm]
                                                   )
 
+
 def ptdf_power_flow(model, slacks=True):
-    _add_egret_power_flow(model, _ptdf_dcopf_network_model, reactive_power=False, slacks=slacks)
+    _add_egret_power_flow(model, _ptdf_dcopf_network_model,
+                          reactive_power=False, slacks=slacks)
     model.update()
+
     return model
 
-# Defines generic interface for egret tramsmission models
-def _add_egret_power_flow(model, network_model_builder, reactive_power=False, slacks=True):
 
+# Defines generic interface for egret transmission models
+def _add_egret_power_flow(model, network_model_builder,
+                          reactive_power=False, slacks=True):
     ## save flag for objective
     model._reactive_power = reactive_power
 
-    system_load_mismatch = (network_model_builder in \
-                            [_copperplate_approx_network_model, \
-                             _copperplate_relax_network_model, \
-                            ]
-                           )
+    system_load_mismatch = (network_model_builder
+                            in [_copperplate_approx_network_model,
+                                _copperplate_relax_network_model])
 
     if slacks:
         if system_load_mismatch:
             _add_system_load_mismatch(model)
         else:
             _add_load_mismatch(model)
+
     else:
         if system_load_mismatch:
-            raise Exception('_add_blank_system_load_mismatch() is not defined in Egret')
+            raise Exception("_add_blank_system_load_mismatch() is "
+                            "not defined in Egret")
         else:
             _add_blank_load_mismatch(model)
 
@@ -590,13 +615,16 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
 
     if reactive_power:
         if system_load_mismatch:
-            raise Exception("Need to implement system mismatch for reactive power")
+            raise Exception("Need to implement system "
+                            "mismatch for reactive power")
+
         model = _add_reactive_power_vars(model)
         _add_reactive_limits(model)
+
         if slacks:
             _add_q_load_mismatch(model)
         else:
-            _add_blank_q_load_mistmatch(model)
+            _add_blank_q_load_mismatch(model)
 
     # for interface violation costs at a time step
     model._BranchViolationCost = {t: 0 for t in model._TimePeriods}
@@ -610,16 +638,17 @@ def _add_egret_power_flow(model, network_model_builder, reactive_power=False, sl
     # set up the empty model block for each time period to add constraints
     model._TransmissionBlock = {}
     block = gp.Model()
-
     block._gens_by_bus = {bus: [bus] for bus in model._Buses}
     parent_model = model
+
     for tm in model._TimePeriods:
         block._tm = tm
-        block._pg = {bus: _get_pg_expr_rule(tm, model, bus) for bus in
-                     model._Buses}
+        block._pg = {bus: _get_pg_expr_rule(tm, model, bus)
+                     for bus in model._Buses}
+
         if reactive_power:
-            block._qg = {bus: _get_qg_expr_rule(tm, model, bus) for bus in
-                         model._Buses}
+            block._qg = {bus: _get_qg_expr_rule(tm, model, bus)
+                         for bus in model._Buses}
+
         network_model_builder(block, tm, parent_model)
         model._TransmissionBlock[tm] = block
-
