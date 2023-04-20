@@ -56,17 +56,18 @@ def generate_model(model_name, model_data, relax_binaries, ptdf_options,
     model._enforce_t1_ramp_rates = True
     model._relax_binaries = relax_binaries
 
-    generatemodel_start_time = time.time()
     # Set up parameters
     model = default_params(model, model_data)
 
     # Set up variables
     model = garver_3bin_vars(model)
     model = garver_power_vars(model)
+
     if model_name == 'UnitCommitment':
         model = garver_power_avail_vars(model)
     elif model_name == 'EconomicDispatch':
         model = MLR_reserve_vars(model)
+
     model = file_non_dispatchable_vars(model)
 
     # Set up constraints
@@ -74,19 +75,23 @@ def generate_model(model_name, model_data, relax_binaries, ptdf_options,
         model = pan_guan_gentile_KOW_generation_limits(model)
     elif model_name == 'EconomicDispatch':
         model = MLR_generation_limits(model)
+
     model = damcikurt_ramping(model)
     if model_name == 'UnitCommitment':
         model = KOW_production_costs_tightened(model)
     elif model_name == 'EconomicDispatch':
         model = CA_production_costs(model)
+
     model = rajan_takriti_UT_DT(model)
     if model_name == 'UnitCommitment':
         model = KOW_startup_costs(model)
     elif model_name == 'EconomicDispatch':
         model = MLR_startup_costs(model)
+
     model = storage_services(model)
     model = ancillary_services(model)
     model = ptdf_power_flow(model)
+
     if model_name == 'UnitCommitment':
         model = CA_reserve_constraints(model)
     elif model_name == 'EconomicDispatch':
@@ -148,4 +153,5 @@ def generate_model(model_name, model_data, relax_binaries, ptdf_options,
         model.write('{}.mps'.format(file_path_name+model_name))
         # more human readable than mps file, but might lose some info
         model.write('{}.lp'.format(file_path_name+model_name))
+
     return model

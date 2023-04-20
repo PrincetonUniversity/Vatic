@@ -15,7 +15,5 @@ def solve_model(model, relaxed, mipgap, threads, outputflag) -> VaticModelData:
     solve_time =  time.time() - solvemodel_start_time
     md = _save_uc_results(model, relaxed)
     md.data['system']['solver_runtime'] = solve_time
+
     return VaticModelData(md.data)
-
-
-

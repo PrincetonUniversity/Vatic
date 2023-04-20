@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import dill as pickle
 from pathlib import Path
 import time
@@ -12,7 +11,7 @@ import math
 import pandas as pd
 import gurobipy as gp
 from gurobipy import GRB
-from copy import deepcopy
+from pyomo.environ import SolverFactory
 
 from .data_providers import PickleProvider
 from .model_data import VaticModelData
@@ -22,14 +21,10 @@ from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
 from .ptdf_manager import VaticPTDFManager
 
-from pyomo.environ import SolverFactory
-from pyomo.environ import Suffix as PyomoSuffix
-from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
-from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
+from .main_model_functions_gurobi.generate_model_gurobi import generate_model
+from .main_model_functions_gurobi.solve_model_gurobi import solve_model
+from .models_gurobi import basic_objective
 
-from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
-from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
-from vatic.models_gurobi import basic_objective
 
 class Simulator:
     """An engine for simulating the operation of a power grid.
@@ -207,7 +202,6 @@ class Simulator:
         self.init_ruc_file = init_ruc_file
         self.verbosity = verbosity
 
-
         self._simulation_state = VaticSimulationState(
             ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
         self._prior_sced_instance = None
@@ -231,7 +225,6 @@ class Simulator:
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
 
-    #@profile
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
 
@@ -247,7 +240,6 @@ class Simulator:
 
         # simulate each time period
         for time_step in self._time_manager.time_steps():
-            print(time_step)
             self._current_timestep = time_step
 
             # run the day-ahead RUC at some point in the day before
@@ -265,21 +257,18 @@ class Simulator:
             # clean gurobi envrionment to remove memory cache and run faster
         sim_time = time.time() - simulation_start_time
 
-        if self.verbosity > 0:
-            print("Simulation Complete")
-            print("Total simulation time: {:.1f} seconds".format(sim_time))
+        print("Simulation Complete")
+        print("Total simulation time: {:.1f} seconds".format(sim_time))
 
-            if self.verbosity > 1:
-                print("Initialization time: {:.2f} seconds".format(
-                    self.simulation_times['Init']))
-                print("Planning time: {:.2f} seconds".format(
-                    self.simulation_times['Plan']))
-                print("Real-time sim time: {:.2f} seconds".format(
-                    self.simulation_times['Sim']))
+        print("Initialization time: {:.2f} seconds".format(
+            self.simulation_times['Init']))
+        print("Planning time: {:.2f} seconds".format(
+            self.simulation_times['Plan']))
+        print("Real-time sim time: {:.2f} seconds".format(
+            self.simulation_times['Sim']))
 
         return self._stats_manager.save_output(sim_time)
 
-    #@profile
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
 
@@ -328,7 +317,6 @@ class Simulator:
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
 
-    #@profile
     def call_oracle(self) -> None:
         """Solves the real-time economic dispatch for the current time step.
 
@@ -412,7 +400,6 @@ class Simulator:
 
         return self._stats_manager._sced_stats[self._current_timestep]
 
-    #@profile
     def solve_ruc(
             self,
             time_step: VaticTime,
@@ -423,32 +410,35 @@ class Simulator:
             time_step, sim_state_for_ruc)
         self._ptdf_manager.mark_active(ruc_model_data)
 
-        generatemodel_start_time = time.time()
         # self.ruc_model.generate_model(
         #     ruc_model_data, relax_binaries=False,
         #     ptdf_options=self._ptdf_manager.ruc_ptdf_options,
         #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
         #     )
 
+
+        t0 = time.time()
         model = generate_model(
             model_name='UnitCommitment',
             model_data=ruc_model_data, relax_binaries=False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            save_model_file=True
+            save_model_file=False
             )
+        print(f"GENERATE TIME: {round(time.time() - t0, 1)}")
 
-        generatemodel_time = time.time() - generatemodel_start_time
-        print('generatemodel_time', generatemodel_time)
         # update in case lines were taken out
-
         self._ptdf_manager.PTDF_matrix_dict = model._PTDFs
 
         # TODO: better error handling
-
         # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
         #                                       self.solver_options)
-        ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
+        t0 = time.time()
+        ruc_plan = solve_model(model, relaxed=False, mipgap=self.mipgap,
+                               threads=self.solver_options['Threads'],
+                               outputflag = 0)
+        print(f"SOLVE TIME: {round(time.time() - t0, 1)}")
+
 
         # except:
         #     print("Failed to solve deterministic RUC instance - likely "
@@ -474,9 +464,9 @@ class Simulator:
         if self.verbosity > 0:
             print("\nExtracting scenario to simulate")
         model.dispose()
+
         return self.create_simulation_actuals(time_step), ruc_plan
 
-    #@profile
     def solve_sced(self,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:
@@ -498,7 +488,7 @@ class Simulator:
             ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             objective_hours=hours_in_objective,
-            save_model_file=True
+            save_model_file=False
             )
 
         # update in case lines were taken out
@@ -554,7 +544,6 @@ class Simulator:
                                    objective_hours=hours_in_objective,
                                    save_model_file=False)
 
-
         # in the case of a shortfall in meeting demand or the reserve
         # requirement, the price skyrockets, so we set max price values
         for cost_lbl, max_price in zip(
@@ -565,7 +554,6 @@ class Simulator:
 
             if shortfall_cost >= max_price:
                 sced_model_relaxed._model_data.data['system'][cost_lbl] = max_price
-
 
         # often we want to avoid having the reserve requirement shortfall make
         # any impact on the prices whatsoever
@@ -600,11 +588,14 @@ class Simulator:
 
         #Relax Binary Constraints
         #Need set relaxed = True to initiate the calculation of lmps
-        lmp_sced_results = solve_model(sced_model_relaxed, relaxed=True, mipgap=self.mipgap,
-                                threads=self.solver_options['Threads'],
-                                outputflag=0)
+        lmp_sced_results = solve_model(
+            sced_model_relaxed, relaxed=True, mipgap=self.mipgap,
+            threads=self.solver_options['Threads'], outputflag=0
+            )
+
         sced_model_relaxed.dispose()
         sced_model.dispose()
+
         return lmp_sced_results
 
     def _get_projected_state(self) -> VaticSimulationState:
