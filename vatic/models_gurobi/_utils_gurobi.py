@@ -1,5 +1,5 @@
-from gurobipy import Var
 
+from gurobipy import Var
 from math import degrees
 from egret.models.unit_commitment import _time_series_dict, _preallocated_list
 from egret.common.log import logger
@@ -11,7 +11,9 @@ def _get_value_general_gurobi(input):
     else:
         return input.getValue()
 
-def _save_uc_results(m, relaxed):
+
+def _save_uc_results(m, relaxed: bool):
+    """Parse the results of a solved model into a Vatic data structure."""
     md = m._model_data
 
     # save results data to ModelData object
@@ -19,6 +21,7 @@ def _save_uc_results(m, relaxed):
         md.elements(element_type='generator', generator_type='thermal'))
     renewable_gens = dict(
         md.elements(element_type='generator', generator_type='renewable'))
+
     buses = dict(md.elements(element_type='bus'))
     branches = dict(md.elements(element_type='branch'))
     interfaces = dict(md.elements(element_type='interface'))
@@ -76,8 +79,10 @@ def _save_uc_results(m, relaxed):
 
         for g, g_dict in thermal_gens.items():
             pg_dict = _preallocated_list(data_time_periods)
+
             if reserve_requirement:
                 rg_dict = _preallocated_list(data_time_periods)
+
             commitment_dict = _preallocated_list(data_time_periods)
             commitment_cost_dict = _preallocated_list(data_time_periods)
             production_cost_dict = _preallocated_list(data_time_periods)
@@ -87,39 +92,55 @@ def _save_uc_results(m, relaxed):
                 reg_prov = _preallocated_list(data_time_periods)
                 reg_up_supp = _preallocated_list(data_time_periods)
                 reg_dn_supp = _preallocated_list(data_time_periods)
+
             if spin:
                 spin_supp = _preallocated_list(data_time_periods)
+
             if nspin:
                 nspin_supp = _preallocated_list(data_time_periods)
+
             if supp:
                 supp_supp = _preallocated_list(data_time_periods)
+
             if flex:
                 flex_up_supp = _preallocated_list(data_time_periods)
                 flex_dn_supp = _preallocated_list(data_time_periods)
+
             gfs = (fs and (g in m.FuelSupplyGenerators))
             if gfs:
                 fuel_consumed = _preallocated_list(data_time_periods)
+
             gdf = (fc and (g in m.DualFuelGenerators))
             if gdf:
                 aux_fuel_consumed = _preallocated_list(data_time_periods)
+
             gdsf = (gdf and (g in m.SingleFireDualFuelGenerators))
             if gdsf:
                 aux_fuel_indicator = _preallocated_list(data_time_periods)
 
             for dt, mt in enumerate(m._TimePeriods):
-                pg_dict[dt] = m._PowerGeneratedStartupShutdown[g, mt].getValue()
+                pg_dict[dt] = m._PowerGeneratedStartupShutdown[
+                    g, mt].getValue()
+
                 if reserve_requirement:
-                    rg_dict[dt] = _get_value_general_gurobi(m._ReserveProvided[g, mt])
+                    rg_dict[dt] = _get_value_general_gurobi(
+                        m._ReserveProvided[g, mt])
+
                 if relaxed:
                     commitment_dict[dt] = m._UnitOn[g, mt].x
                 else:
                     commitment_dict[dt] = int(round(m._UnitOn[g, mt].x))
+
                 commitment_cost_dict[dt] = m._ShutdownCost[g, mt].x
                 if g in m._DualFuelGenerators:
-                    commitment_cost_dict[dt] += m._DualFuelCommitmentCost[g, mt].x
-                    production_cost_dict[dt] = m._DualFuelProductionCost[g, mt].x
+                    commitment_cost_dict[dt] += m._DualFuelCommitmentCost[
+                        g, mt].x
+                    production_cost_dict[dt] = m._DualFuelProductionCost[
+                        g, mt].x
+
                 else:
-                    commitment_cost_dict[dt] += m._NoLoadCost[g, mt].getValue() + m._StartupCost[g, mt].x
+                    commitment_cost_dict[dt] += m._NoLoadCost[g, mt].getValue()
+                    commitment_cost_dict[dt] += m._StartupCost[g, mt].x
                     production_cost_dict[dt] = m._ProductionCost[g, mt].x
 
                 if regulation:
@@ -128,10 +149,12 @@ def _save_uc_results(m, relaxed):
                             reg_prov[dt] = m._RegulationOn[g, mt].x
                         else:
                             reg_prov[dt] = int(round(m._RegulationOn[g, mt].x))
+
                         reg_up_supp[dt] = m._RegulationReserveUp[g, mt].x
                         reg_dn_supp[dt] = m._RegulationReserveDn[g, mt].x
                         commitment_cost_dict[dt] += m._RegulationCostCommitment[g, mt].x
                         production_cost_dict[dt] += m._RegulationCostGeneration[g, mt].x
+
                     else:
                         reg_prov[dt] = 0.
                         reg_up_supp[dt] = 0.
@@ -147,12 +170,15 @@ def _save_uc_results(m, relaxed):
                         production_cost_dict[dt] += m._NonSpinningReserveCostGeneration[g, mt].x
                     else:
                         nspin_supp[dt] = 0.
+
                 if supp:
                     supp_supp[dt] = m._SupplementalReserveDispatched[g, mt].x
                     production_cost_dict[dt] += m._SupplementalReserveCostGeneration[g, mt].x
+
                 if flex:
                     flex_up_supp[dt] = m._FlexUpProvided[g, mt].x
                     flex_dn_supp[dt] = m._FlexDnProvided[g, mt].x
+
                 if gfs:
                     fuel_consumed[dt] = m._PrimaryFuelConsumed[g, mt].x
                 if gdsf:
@@ -160,46 +186,57 @@ def _save_uc_results(m, relaxed):
                 if gdf:
                     aux_fuel_consumed[dt] = m._AuxiliaryFuelConsumed[g, mt].x
 
-                ## pyomo doesn't add constraints that are skiped to the index set, so we also
-                ## need check here if the index exists.
+                # pyomo doesn't add constraints that are skiped to the index
+                # set, so we also need check here if the index exists.
                 slack_list = []
                 for constr in ramp_up_avail_constrs:
                     if (g, mt) in constr:
                         slack_list.append(constr[g, mt].slack)
+
                 if slack_list != []:
                     ramp_up_avail_dict[dt] = min(slack_list)
 
             g_dict['pg'] = _time_series_dict(pg_dict)
             if reserve_requirement:
                 g_dict['rg'] = _time_series_dict(rg_dict)
+
             g_dict['commitment'] = _time_series_dict(commitment_dict)
             g_dict['commitment_cost'] = _time_series_dict(commitment_cost_dict)
             g_dict['production_cost'] = _time_series_dict(production_cost_dict)
+
             if regulation:
                 g_dict['reg_provider'] = _time_series_dict(reg_prov)
                 g_dict['reg_up_supplied'] = _time_series_dict(reg_up_supp)
                 g_dict['reg_down_supplied'] = _time_series_dict(reg_dn_supp)
+
             if spin:
                 g_dict['spinning_supplied'] = _time_series_dict(spin_supp)
             if nspin:
                 g_dict['non_spinning_supplied'] = _time_series_dict(nspin_supp)
+
             if supp:
                 g_dict['supplemental_supplied'] = _time_series_dict(supp_supp)
             if flex:
                 g_dict['flex_up_supplied'] = _time_series_dict(flex_up_supp)
                 g_dict['flex_down_supplied'] = _time_series_dict(flex_dn_supp)
+
             if gfs:
                 g_dict['fuel_consumed'] = _time_series_dict(fuel_consumed)
             if gdsf:
-                g_dict['aux_fuel_status'] = _time_series_dict(aux_fuel_indicator)
+                g_dict['aux_fuel_status'] = _time_series_dict(
+                    aux_fuel_indicator)
             if gdf:
-                g_dict['aux_fuel_consumed'] = _time_series_dict(aux_fuel_consumed)
+                g_dict['aux_fuel_consumed'] = _time_series_dict(
+                    aux_fuel_consumed)
+
             g_dict['headroom'] = _time_series_dict(ramp_up_avail_dict)
 
         for g, g_dict in renewable_gens.items():
             pg_dict = _preallocated_list(data_time_periods)
+
             for dt, mt in enumerate(m._TimePeriods):
                 pg_dict[dt] = m._NondispatchablePowerUsed[g, mt].x
+
             g_dict['pg'] = _time_series_dict(pg_dict)
 
         for s, s_dict in storage.items():
@@ -207,6 +244,7 @@ def _save_uc_results(m, relaxed):
             p_discharge_dict = _preallocated_list(data_time_periods)
             p_charge_dict = _preallocated_list(data_time_periods)
             operational_cost_dict = _preallocated_list(data_time_periods)
+
             for dt, mt in enumerate(m._TimePeriods):
                 p_discharge_dict[dt] = m._PowerOutputStorage[s, mt].x
                 p_charge_dict[dt] = m._PowerInputStorage[s, mt].x
@@ -221,32 +259,40 @@ def _save_uc_results(m, relaxed):
         for sc, sc_dict in pg_security_constraints.items():
             sc_violation = None
             sc_flow = _preallocated_list(data_time_periods)
+
             for dt, mt in enumerate(m._TimePeriods):
                 b = m._TransmissionBlock[mt]
                 sc_flow[dt] = b._pgSecurityExpression[sc].x
+
                 if sc in b._pgRelaxedSecuritySet:
                     if sc_violation is None:
                         sc_violation = _preallocated_list(data_time_periods)
-                    sc_violation[dt] = b._pgSecuritySlackPos[sc].x - b._pgSecuritySlackNeg[sc].x
+
+                    sc_violation[dt] = b._pgSecuritySlackPos[sc].x
+                    sc_violation[dt] -= b._pgSecuritySlackNeg[sc].x
+
             sc_dict['pf'] = _time_series_dict(sc_flow)
             if sc_violation is not None:
                 sc_dict['pf_violation'] = _time_series_dict(sc_violation)
 
-        ## NOTE: UC model currently has no notion of separate loads
-
+        # NOTE: UC model currently has no notion of separate loads
         if m._power_balance == 'btheta_power_flow':
             for l, l_dict in branches.items():
                 pf_dict = _preallocated_list(data_time_periods)
+
                 for dt, mt in enumerate(m._TimePeriods):
                     pf_dict[dt] = m._TransmissionBlock[mt]._pf[l].x
                 l_dict['pf'] = _time_series_dict(pf_dict)
+
                 if l in m._BranchesWithSlack:
                     pf_violation_dict = _preallocated_list(data_time_periods)
+
                     for dt, (mt, b) in enumerate(m._TransmissionBlock.items()):
                         if l in b._pf_slack_pos:
                             pf_violation_dict[dt] = b._pf_slack_pos[l].x - b._pf_slack_neg[l].x
                         else:
                             pf_violation_dict[dt] = 0.
+
                     l_dict['pf_violation'] = _time_series_dict(pf_violation_dict)
 
             for b, b_dict in buses.items():
@@ -386,12 +432,20 @@ def _save_uc_results(m, relaxed):
 
             for b, b_dict in buses.items():
                 va_dict = _preallocated_list(data_time_periods)
-                p_balance_violation_dict = _preallocated_list(data_time_periods)
+                p_balance_violation_dict = _preallocated_list(
+                    data_time_periods)
                 pl_dict = _preallocated_list(data_time_periods)
+
                 for dt, mt in enumerate(m._TimePeriods):
-                    p_balance_violation_dict[dt] = m._LoadGenerateMismatch[b, mt].getValue()
+                    if (b, mt) in m._LoadGenerateMismatch:
+                        p_balance_violation_dict[dt] = \
+                            m._LoadGenerateMismatch[b, mt].getValue()
+                    else:
+                        p_balance_violation_dict[dt] = 0.
+
                     pl_dict[dt] = m._TransmissionBlock[mt]._pl[b]
                     va_dict[dt] = voltage_angle_dict[mt][b]
+
                 b_dict['p_balance_violation'] = _time_series_dict(
                     p_balance_violation_dict)
                 b_dict['pl'] = _time_series_dict(pl_dict)
@@ -637,4 +691,5 @@ def _save_uc_results(m, relaxed):
                 f_dict['fuel_consumed'] = _time_series_dict(fuel_consumed)
 
         md.data['system']['total_cost'] = m.ObjVal
+
     return md

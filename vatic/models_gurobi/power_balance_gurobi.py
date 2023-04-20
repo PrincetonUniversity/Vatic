@@ -199,14 +199,16 @@ def _add_system_load_mismatch(model):
                                 for t in model._TimePeriods}
 
 
-def _add_load_mismatch(model):
+def _add_load_mismatch(model, active_buses=None):
+    if active_buses is None:
+        active_buses = set(model._Buses)
+
     over_gen_maxes = {}
-    over_gen_times_per_bus = {b: list() for b in model._Buses}
-
+    over_gen_times_per_bus = {b: list() for b in active_buses}
     load_shed_maxes = {}
-    load_shed_times_per_bus = {b: list() for b in model._Buses}
+    load_shed_times_per_bus = {b: list() for b in active_buses}
 
-    for b in model._Buses:
+    for b in active_buses:
 
         # storage, for now, does not have time-varying parameters
         storage_max_injections = 0.
@@ -259,14 +261,17 @@ def _add_load_mismatch(model):
     model._OverGenerationBusTimes = list(over_gen_maxes.keys())
     model._LoadSheddingBusTimes = list(load_shed_maxes.keys())
 
-    model._OverGeneration = model.addVars(model._OverGenerationBusTimes,
-                                          lb = 0, ub = [over_gen_maxes[key] for key in model._OverGenerationBusTimes],
-                                          name = 'OverGeneration') # over generation
+    model._OverGeneration = model.addVars(
+        model._OverGenerationBusTimes,
+        lb=0, ub=[over_gen_maxes[k] for k in model._OverGenerationBusTimes],
+        name='OverGeneration'
+        )
 
-    model._LoadShedding = model.addVars(model._LoadSheddingBusTimes,
-                                        lb=0, ub= [load_shed_maxes[key] for key in model._LoadSheddingBusTimes],
-                                        name='LoadShedding'
-                                        )
+    model._LoadShedding = model.addVars(
+        model._LoadSheddingBusTimes,
+        lb=0, ub=[load_shed_maxes[key] for key in model._LoadSheddingBusTimes],
+        name='LoadShedding'
+        )
 
     # the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent
     # the appearance of load generation mismatch component values in the range of *negative* e-5.
@@ -280,38 +285,43 @@ def _add_load_mismatch(model):
             linear_vars = list(
                 m._LoadShedding[b, t] for t in load_shed_times_per_bus[b])
             linear_coefs = [1.] * len(linear_vars)
+
             return (LinExpr(linear_coefs, linear_vars) >= 0)
         else:
             return None
 
-    for bus in model._Buses:
+    for bus in active_buses:
         const = pos_load_generate_mismatch_tolerance_rule(model, bus)
-        if const != None:
-            model.addConstr(
-                const, name = 'PosLoadGenerateMismatchTolerance[{}]'.format(bus))
+
+        if const is not None:
+            model.addConstr(const,
+                            name=f"PosLoadGenerateMismatchTolerance[{bus}]")
 
     def neg_load_generate_mismatch_tolerance_rule(m, b):
         if over_gen_times_per_bus[b]:
             linear_vars = list(
                 m._OverGeneration[b, t] for t in over_gen_times_per_bus[b])
             linear_coefs = [1.] * len(linear_vars)
-            return (LinExpr(linear_coefs, linear_vars) >= 0)
+
+            return LinExpr(linear_coefs, linear_vars) >= 0
         else:
             return None
 
-    for bus in model._Buses:
+    for bus in active_buses:
         const = neg_load_generate_mismatch_tolerance_rule(model, bus)
-        if const != None:
-            model.addConstr(
-                const, name = 'NegLoadGenerateMismatchTolerance[{}]'.format(bus))
+
+        if const is not None:
+            model.addConstr(const,
+                            name=f"NegLoadGenerateMismatchTolerance[{bus}]")
 
     #####################################################
     # load "shedding" can be both positive and negative #
     #####################################################
     model._LoadGenerateMismatch = {}
-    for b in model._Buses:
+    for b in active_buses:
         for t in model._TimePeriods:
             model._LoadGenerateMismatch[b, t] = 0.
+
     for b, t in model._LoadSheddingBusTimes:
         model._LoadGenerateMismatch[b, t] += model._LoadShedding[b, t]
     for b, t in model._OverGenerationBusTimes:
@@ -324,6 +334,7 @@ def _add_load_mismatch(model):
         model._LoadMismatchCost[
             t] += model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
                        model._LoadShedding[b, t]
+
     for b, t in model._OverGenerationBusTimes:
         model._LoadMismatchCost[
             t] += model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
@@ -417,7 +428,7 @@ def _setup_egret_network_model(block, tm, parent_model):
     return m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts
 
 
-def _ptdf_dcopf_network_model(block, tm, parent_model = None):
+def _ptdf_dcopf_network_model(block, tm, parent_model=None):
     # m is our main model, the parent of block
     m, gens_by_bus, bus_p_loads, bus_gs_fixed_shunts = \
         _setup_egret_network_model(block, tm, parent_model)
@@ -594,6 +605,12 @@ def _add_egret_power_flow(model, network_model_builder,
     ## save flag for objective
     model._reactive_power = reactive_power
 
+    active_buses = {bus for bus in model._Buses
+                    if model._ThermalGeneratorsAtBus[bus]
+                    or model._StorageAtBus[bus]
+                    or model._NondispatchableGeneratorsAtBus[bus]
+                    or model._HVDCLinesTo[bus] or model._HVDCLinesFrom[bus]}
+
     system_load_mismatch = (network_model_builder
                             in [_copperplate_approx_network_model,
                                 _copperplate_relax_network_model])
@@ -602,7 +619,7 @@ def _add_egret_power_flow(model, network_model_builder,
         if system_load_mismatch:
             _add_system_load_mismatch(model)
         else:
-            _add_load_mismatch(model)
+            _add_load_mismatch(model, active_buses)
 
     else:
         if system_load_mismatch:
@@ -643,12 +660,14 @@ def _add_egret_power_flow(model, network_model_builder,
 
     for tm in model._TimePeriods:
         block._tm = tm
-        block._pg = {bus: _get_pg_expr_rule(tm, model, bus)
+        block._pg = {bus: (_get_pg_expr_rule(tm, model, bus)
+                           if bus in active_buses else quicksum([]))
                      for bus in model._Buses}
 
         if reactive_power:
-            block._qg = {bus: _get_qg_expr_rule(tm, model, bus)
-                         for bus in model._Buses}
+            block._qg = {bus: (_get_qg_expr_rule(tm, model, bus)
+                               if bus in active_buses else quicksum([]))
+                         for bus in active_buses}
 
         network_model_builder(block, tm, parent_model)
         model._TransmissionBlock[tm] = block

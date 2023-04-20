@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.5.0-a1',
+    version='0.5.0-a2',
     description='lightweight PJM power grid simulation engine and interface',
 
     author='Michal Radoslaw Grzadkowski, Alice Fang',
