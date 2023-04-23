@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.5.0-a2',
+    version='0.5.0-a3',
     description='lightweight PJM power grid simulation engine and interface',
 
     author='Michal Radoslaw Grzadkowski, Alice Fang',
@@ -17,6 +17,7 @@ setuptools.setup(
         },
 
     python_requires='>=3.8,<3.12',
-    install_requires=['numpy>1.21', 'pandas', 'scipy', 'dill', 'matplotlib',
-                      'gurobipy', 'ordered-set'],
+    install_requires=['numpy>1.21', 'pandas<2', 'scipy', 'dill', 'matplotlib',
+                      'pyomo', 'gurobipy', 'ordered-set',
+                      'gridx-egret @ git+https://github.com/shrivats-pu/Egret.git'],
     )

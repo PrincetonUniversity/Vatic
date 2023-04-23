@@ -22,7 +22,6 @@ from egret.model_library.unit_commitment.params import (
     _add_initial_time_periods_on_off_line
     )
 
-from ..model_data import VaticModelData
 from ._utils import ModelError
 
 from typing import Optional
@@ -31,7 +30,7 @@ component_name = 'data_loader'
 
 def load_base_params(
         model: pe.ConcreteModel,
-        model_data: Optional[VaticModelData] = None, renew_costs: bool = False
+        model_data=None, renew_costs: bool = False
         ) -> pe.ConcreteModel:
 
     if model_data is None:
@@ -180,10 +179,8 @@ def load_base_params(
     model.HVDCLinesFrom = pe.Set(model.Buses, within=model.HVDCLines,
                                  initialize=dc_outlet_branches_by_bus)
 
-    def load_base_params(
-            model: pe.ConcreteModel,
-            model_data: Optional[VaticModelData] = None, renew_costs: bool = False
-    ) -> pe.ConcreteModel:
+    def load_base_params(model: pe.ConcreteModel,
+                         model_data=None, renew_costs: bool = False) -> pe.ConcreteModel:
 
         if model_data is None:
             model_data = model.model_data
@@ -1999,21 +1996,17 @@ def load_base_params(
 
 
 @add_model_attr(component_name)
-def default_params(
-        model: pe.ConcreteModel,
-        model_data: Optional[VaticModelData] = None
-        ) -> pe.ConcreteModel:
+def default_params(model: pe.ConcreteModel,
+                   model_data=None) -> pe.ConcreteModel:
     """This loads unit commitment params from a GridModel object."""
     return load_base_params(model, model_data, renew_costs=False)
 
 
 @add_model_attr(component_name)
-def renew_cost_params(
-        model: pe.ConcreteModel,
-        model_data: Optional[VaticModelData] = None
-        ) -> pe.ConcreteModel:
+def renew_cost_params(model: pe.ConcreteModel,
+                      model_data=None) -> pe.ConcreteModel:
     """This loads unit commitment params from a GridModel object."""
     return load_base_params(model, model_data, renew_costs=True)
 
-##add model parameters
 
+# add model parameters

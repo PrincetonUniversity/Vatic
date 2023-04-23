@@ -1,22 +1,21 @@
 import math
 
 import gurobipy as gp
-import pyomo.environ as pe
-from gurobipy import tupledict, tuplelist
+from gurobipy import tupledict
 from ordered_set import OrderedSet
+from typing import Optional
 
 from egret.model_library.transmission import tx_utils
 from egret.common.log import logger
-from egret.model_library.unit_commitment.uc_utils import (
-    add_model_attr, uc_time_helper)
-from vatic.models._utils import ModelError
-from vatic.model_data import VaticModelData
-from typing import Optional
+from egret.model_library.unit_commitment.uc_utils import uc_time_helper
 
-def load_base_params(
-        model: gp.Model,
-        model_data: Optional[VaticModelData] = None, renew_costs: bool = False
-        ) -> gp.Model:
+
+class ParamsError(Exception):
+    pass
+
+
+def load_base_params(model: gp.Model,
+                     model_data=None, renew_costs: bool = False) -> gp.Model:
     warn_neg_load = False
     time_keys = model_data.get_system_attr('time_keys')
 
@@ -181,7 +180,7 @@ def load_base_params(
     def check_min_less_max_interface_flow_limits(m):
         for intfc in m._Interfaces:
             if m._InterfaceMinFlow[intfc] > m._InterfaceMaxFlow[intfc]:
-                raise ModelError(
+                raise ParamsError(
                     "Interface {} has a minimum_limit which is greater than "
                     "the maximum_limit".format(intfc)
                 )
@@ -844,7 +843,7 @@ def load_base_params(
             fuel_cost = thermal_gens[g].get('fuel_cost')
 
             if fuel_cost is None:
-                raise ModelError("No fuel cost for generator }, but data is "
+                raise ParamsError("No fuel cost for generator }, but data is "
                                  "provided for fuel tracking".format(g))
 
             return _get_startup_cost(startup_fuel,
@@ -863,11 +862,11 @@ def load_base_params(
         startup_lags = list(m._StartupLags[g])
 
         if len(startup_lags) == 0:
-            raise ModelError("DATA ERROR: The number of startup lags for "
+            raise ParamsError("DATA ERROR: The number of startup lags for "
                              "thermal generator `}` must be >= 1!".format(g))
 
         if startup_lags[0] != m._MinimumDownTime[g]:
-            raise ModelError(
+            raise ParamsError(
                 "DATA ERROR: The first startup lag for thermal generator `}` "
                 "must be equal the minimum down time }!".format(
                     g, m._MinimumDownTime[g])
@@ -875,7 +874,7 @@ def load_base_params(
 
         for i in range(0, len(startup_lags) - 1):
             if startup_lags[i] >= startup_lags[i + 1]:
-                raise ModelError(
+                raise ParamsError(
                     "DATA ERROR: Startup lags for thermal generator `}` must "
                     "be monotonically increasing!".format(g)
                 )
@@ -888,7 +887,7 @@ def load_base_params(
 
         for i in range(1, len(startup_costs) - 1):
             if startup_costs[i] > startup_costs[i + 1]:
-                raise ModelError(
+                raise ParamsError(
                     "DATA ERROR: Startup costs for thermal generator `}` must "
                     "be monotonically non-decreasing!".format(g)
                 )
@@ -897,7 +896,7 @@ def load_base_params(
 
     def validate_startup_lag_cost_cardinalities(m, g):
         if len(m._StartupLags[g]) != len(m._StartupCosts[g]):
-            raise ModelError(
+            raise ParamsError(
                 "DATA ERROR: The number of startup lag entries (}) for "
                 "thermal generator `}` must equal the number of startup cost "
                 "entries (})".format(
@@ -959,7 +958,7 @@ def load_base_params(
             pass
 
         else:
-            raise ModelError("All fuel-constrained generators must have the "
+            raise ParamsError("All fuel-constrained generators must have the "
                              "<p_fuel> attribute which tracks their fuel "
                              "consumption, could not find such an attribute "
                              "for generator `{}`!'".format(g))
@@ -1046,14 +1045,14 @@ def load_base_params(
 
         else:
             if fuel_cost is None:
-                raise ModelError("Found fuel_curve but not fuel_cost "
+                raise ParamsError("Found fuel_curve but not fuel_cost "
                                  "for generator {}".format(g))
 
             _check_curve(m, g, fuel, 'fuel_curve')
             for i, t in enumerate(m._TimePeriods):
                 if fuel_cost is dict:
                     if fuel_cost['data_type'] != 'time_series':
-                        raise ModelError("fuel_cost must be either numeric "
+                        raise ParamsError("fuel_cost must be either numeric "
                                          "or time_series")
 
                     fuel_cost_t = fuel_cost['values'][i]
@@ -1062,7 +1061,7 @@ def load_base_params(
                     fuel_cost_t = fuel_cost
 
                 if fuel_cost_t < 0:
-                    raise ModelError(
+                    raise ParamsError(
                         "fuel_cost must be non-negative, found negative "
                         "fuel_cost for generator `{}`!".format(g)
                     )
@@ -1203,7 +1202,7 @@ def load_base_params(
                 break
 
             else:
-                raise ModelError(
+                raise ParamsError(
                     "Unexpected case in _piecewise_adjustment_helper, "
                     "p_min={}, p_max={}, output={}".format(
                         p_min, p_max, output)
@@ -1626,18 +1625,12 @@ def load_base_params(
 
 
 # @add_model_attr(component_name)
-def default_params(
-        model: gp.Model,
-        model_data: Optional[VaticModelData] = None
-        ) -> gp.Model:
+def default_params(model: gp.Model, model_data=None) -> gp.Model:
     """This loads unit commitment params from a GridModel object."""
     return load_base_params(model, model_data, renew_costs=False)
 
 
 # @add_model_attr(component_name)
-def renew_cost_params(
-        model: gp.Model,
-        model_data: Optional[VaticModelData] = None
-        ) -> gp.Model:
+def renew_cost_params(model: gp.Model, model_data=None) -> gp.Model:
     """This loads unit commitment params from a GridModel object."""
     return load_base_params(model, model_data, renew_costs=True)

@@ -1,7 +1,7 @@
 
 import time
 from ..model_data import VaticModelData
-from ..models_gurobi import _save_uc_results
+from ..models_gurobi._utils_gurobi import _save_uc_results
 
 
 def solve_model(model, relaxed, mipgap, threads, outputflag) -> VaticModelData:

@@ -199,16 +199,13 @@ def _add_system_load_mismatch(model):
                                 for t in model._TimePeriods}
 
 
-def _add_load_mismatch(model, active_buses=None):
-    if active_buses is None:
-        active_buses = set(model._Buses)
-
+def _add_load_mismatch(model):
     over_gen_maxes = {}
-    over_gen_times_per_bus = {b: list() for b in active_buses}
+    over_gen_times_per_bus = {b: list() for b in model._Buses}
     load_shed_maxes = {}
-    load_shed_times_per_bus = {b: list() for b in active_buses}
+    load_shed_times_per_bus = {b: list() for b in model._Buses}
 
-    for b in active_buses:
+    for b in model._Buses:
 
         # storage, for now, does not have time-varying parameters
         storage_max_injections = 0.
@@ -290,7 +287,7 @@ def _add_load_mismatch(model, active_buses=None):
         else:
             return None
 
-    for bus in active_buses:
+    for bus in model._Buses:
         const = pos_load_generate_mismatch_tolerance_rule(model, bus)
 
         if const is not None:
@@ -307,7 +304,7 @@ def _add_load_mismatch(model, active_buses=None):
         else:
             return None
 
-    for bus in active_buses:
+    for bus in model._Buses:
         const = neg_load_generate_mismatch_tolerance_rule(model, bus)
 
         if const is not None:
@@ -318,7 +315,7 @@ def _add_load_mismatch(model, active_buses=None):
     # load "shedding" can be both positive and negative #
     #####################################################
     model._LoadGenerateMismatch = {}
-    for b in active_buses:
+    for b in model._Buses:
         for t in model._TimePeriods:
             model._LoadGenerateMismatch[b, t] = 0.
 
@@ -602,14 +599,8 @@ def ptdf_power_flow(model, slacks=True):
 # Defines generic interface for egret transmission models
 def _add_egret_power_flow(model, network_model_builder,
                           reactive_power=False, slacks=True):
-    ## save flag for objective
+    # save flag for objective
     model._reactive_power = reactive_power
-
-    active_buses = {bus for bus in model._Buses
-                    if model._ThermalGeneratorsAtBus[bus]
-                    or model._StorageAtBus[bus]
-                    or model._NondispatchableGeneratorsAtBus[bus]
-                    or model._HVDCLinesTo[bus] or model._HVDCLinesFrom[bus]}
 
     system_load_mismatch = (network_model_builder
                             in [_copperplate_approx_network_model,
@@ -619,7 +610,7 @@ def _add_egret_power_flow(model, network_model_builder,
         if system_load_mismatch:
             _add_system_load_mismatch(model)
         else:
-            _add_load_mismatch(model, active_buses)
+            _add_load_mismatch(model)
 
     else:
         if system_load_mismatch:
@@ -660,14 +651,13 @@ def _add_egret_power_flow(model, network_model_builder,
 
     for tm in model._TimePeriods:
         block._tm = tm
-        block._pg = {bus: (_get_pg_expr_rule(tm, model, bus)
-                           if bus in active_buses else quicksum([]))
+
+        block._pg = {bus: _get_pg_expr_rule(tm, model, bus)
                      for bus in model._Buses}
 
         if reactive_power:
-            block._qg = {bus: (_get_qg_expr_rule(tm, model, bus)
-                               if bus in active_buses else quicksum([]))
-                         for bus in active_buses}
+            block._qg = {bus: _get_qg_expr_rule(tm, model, bus)
+                         for bus in model._Buses}
 
         network_model_builder(block, tm, parent_model)
         model._TransmissionBlock[tm] = block

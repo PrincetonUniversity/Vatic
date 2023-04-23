@@ -22,7 +22,6 @@ from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
 from .ptdf_manager import VaticPTDFManager
 
-from .main_model_functions_gurobi.generate_model_gurobi import generate_model
 from .main_model_functions_gurobi.solve_model_gurobi import solve_model
 from .models_gurobi import basic_objective
 
@@ -327,7 +326,6 @@ class Simulator:
         if self.verbosity > 0:
             print("\nSolving SCED instance")
 
-
         current_sced_instance, model = self.solve_sced(
             hours_in_objective=1, sced_horizon=self.sced_horizon)
 
@@ -409,18 +407,11 @@ class Simulator:
             time_step, sim_state_for_ruc)
         self._ptdf_manager.mark_active(ruc_model_data)
 
-        # self.ruc_model.generate_model(
-        #     ruc_model_data, relax_binaries=False,
-        #     ptdf_options=self._ptdf_manager.ruc_ptdf_options,
-        #     ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict
-        #     )
-
-        model = generate_model(
-            model_name='UnitCommitment',
-            model_data=ruc_model_data, relax_binaries=False,
+        model = ruc_model_data.create_ruc_model(
+            relax_binaries=False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            save_model_file=False
+            objective_hours=self._data_provider.ruc_horizon
             )
 
         # update in case lines were taken out
@@ -476,13 +467,10 @@ class Simulator:
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
 
-        model = generate_model(
-            model_name='EconomicDispatch',
-            model_data=sced_model_data, relax_binaries=False,
-            ptdf_options=ptdf_options,
+        model = sced_model_data.create_sced_model(
+            relax_binaries=False, ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             objective_hours=hours_in_objective,
-            save_model_file=False
             )
 
         # update in case lines were taken out
