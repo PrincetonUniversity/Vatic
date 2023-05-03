@@ -15,8 +15,8 @@ def ancillary_services(model):
     '''
     md = model._model_data
 
-    system = md.data['system']
-    elements = md.data['elements']
+    system = md._data['system']
+    elements = md._data['elements']
 
     ## list of possible ancillary services coming
     ## from model_data

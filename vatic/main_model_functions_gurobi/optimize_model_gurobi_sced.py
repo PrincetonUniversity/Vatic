@@ -30,9 +30,7 @@ for i in range(model.tuneResultCount):
 #Reset all parameters
 # gurobi.resetParams()
 
-solvemodel_start_time = time.time()
 model.optimize()
-print('solvemodel_time', time.time()- solvemodel_start_time)
 
 # Check inconsistent constraints and debug
 # If this returns error, that means all constraints form the feasible set

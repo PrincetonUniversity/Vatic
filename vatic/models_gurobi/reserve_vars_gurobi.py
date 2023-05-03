@@ -22,7 +22,7 @@ def _add_zero_reserve_hooks(model):
     model._ReserveProvided = tupledict({(g, t): 0 for g in model._ThermalGenerators for t in model._TimePeriods})
 
 def check_reserve_requirement(model):
-    system = model._model_data.data['system']
+    system = model._model_data._data['system']
     return ('reserve_requirement' in system)
 
 def garver_power_avail_vars(model):
@@ -52,8 +52,15 @@ def garver_power_avail_vars(model):
     ## Note: thes only get used in system balance constraints
     model._get_maximum_power_available_lists = lambda m,g,t : ([m._MaximumPowerAvailableAboveMinimum[g,t], m._UnitOn[g,t]], [1., m._MinimumPowerOutput[g,t]])
 
-    model._MaximumPowerAvailable = tupledict({(g, t): model._MaximumPowerAvailableAboveMinimum[g,t]+model._UnitOn[g,t]*model._MinimumPowerOutput[g,t]
-               for g in model._ThermalGenerators for t in model._TimePeriods})
+    model._MaximumPowerAvailable = {}
+    model._MaximumPowerAvailable_atT = {}
+    for t in model._TimePeriods:
+        total = 0
+        for g in model._ThermalGenerators:
+            powergenerated = model._MaximumPowerAvailableAboveMinimum[g,t]+model._UnitOn[g,t]*model._MinimumPowerOutput[g,t]
+            model._MaximumPowerAvailable[(g, t)] = powergenerated
+            total += powergenerated
+        model._MaximumPowerAvailable_atT[t] = total
 
     # m.MinimumPowerOutput[g] * m.UnitOn[g, t] <= m.PowerGenerated[g,t] <= m.MaximumPowerAvailable[g, t] <= m.MaximumPowerOutput[g] * m.UnitOn[g, t]
     # BK -- first <= now handled by bounds

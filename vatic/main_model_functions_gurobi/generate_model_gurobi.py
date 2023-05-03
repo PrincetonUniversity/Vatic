@@ -26,10 +26,11 @@ def generate_model(model_name,
             save_model_file = False, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/'):
 
     #model name = 'UnitComitment'
-    use_model = model_data.clone_in_service()
+    # use_model = model_data.clone_in_service()
 
     model = gp.Model(model_name)
-    model._model_data = use_model.to_egret()  # _model_data in model is egret object, while model_data is vatic object
+    model._model_data = model_data
+    # model._model_data = model_data.to_egret()  # _model_data in model is egret object, while model_data is vatic object
     model._fuel_supply = None
     model._fuel_consumption = None
     model._security_constraints = None
@@ -55,7 +56,6 @@ def generate_model(model_name,
     model._enforce_t1_ramp_rates = True
     model._relax_binaries = relax_binaries
 
-    generatemodel_start_time = time.time()
     # Set up parameters
     model = default_params(model, model_data)
 

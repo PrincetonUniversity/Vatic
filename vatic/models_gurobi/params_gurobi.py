@@ -566,11 +566,11 @@ def load_base_params(
         min_down_time = int(math.ceil(m._MinimumDownTime[g]
                                       / m._TimePeriodLengthHours))
 
-        if len(startup_curve) > min_down_time:
-            logger.warn(
-                "Truncating startup_curve longer than scaled minimum down "
-                "time {} for generator {}".format(min_down_time, g)
-            )
+        # if len(startup_curve) > min_down_time:
+        #     logger.warn(
+        #         "Truncating startup_curve longer than scaled minimum down "
+        #         "time {} for generator {}".format(min_down_time, g)
+        #     )
 
         return startup_curve[0:min_down_time]
 
@@ -586,11 +586,11 @@ def load_base_params(
         min_down_time = int(math.ceil(m._MinimumDownTime[g]
                                       / m._TimePeriodLengthHours))
 
-        if len(shutdown_curve) > min_down_time:
-            logger.warn(
-                "Truncating shutdown_curve longer than scaled minimum down "
-                "time {} for generator {}".format(min_down_time, g)
-            )
+        # if len(shutdown_curve) > min_down_time:
+        #     logger.warn(
+        #         "Truncating shutdown_curve longer than scaled minimum down "
+        #         "time {} for generator {}".format(min_down_time, g)
+        #     )
 
         return shutdown_curve[0:min_down_time]
 
@@ -800,9 +800,9 @@ def load_base_params(
         startup_cost = thermal_gens[g].get('startup_cost')
         startup_fuel = thermal_gens[g].get('startup_fuel')
 
-        if startup_cost is not None and startup_fuel is not None:
-            logger.warning("WARNING: found startup_fuel for generator }, "
-                           "ignoring startup_cost".format(g))
+        # if startup_cost is not None and startup_fuel is not None:
+        #     logger.warning("WARNING: found startup_fuel for generator }, "
+        #                    "ignoring startup_cost".format(g))
 
         if startup_fuel is None and startup_cost is None:
             return [model.__MinimumDownTime[g]]
@@ -1012,9 +1012,9 @@ def load_base_params(
             # (for backwards compatibility with no 'fuel_curve_type')
             if (curve_type + '_type' in curve
                     and curve_t[curve_type + '_type'] == 'polynomial'):
-                if not _check_curve.warn_piecewise_approx:
-                    logger.warning("WARNING: Polynomial cost curves will be "
-                                   "approximated using piecewise segments")
+                # if not _check_curve.warn_piecewise_approx:
+                #     logger.warning("WARNING: Polynomial cost curves will be "
+                #                    "approximated using piecewise segments")
                     _check_curve.warn_piecewise_approx = True
 
             if curve['data_type'] != 'time_series':
@@ -1032,13 +1032,13 @@ def load_base_params(
         fuel_cost = gen_dict.get('fuel_cost')
 
         if cost is None and fuel is None:
-            logger.warning("WARNING: Generator {} has no cost information "
-                           "associated with it".format(g))
+            # logger.warning("WARNING: Generator {} has no cost information "
+            #                "associated with it".format(g))
             return True
 
-        if cost is not None and fuel is not None:
-            logger.warning("WARNING: ignoring provided p_cost and using fuel "
-                           "cost data from p_fuel for generator {}".format(g))
+        # if cost is not None and fuel is not None:
+        #     logger.warning("WARNING: ignoring provided p_cost and using fuel "
+        #                    "cost data from p_fuel for generator {}".format(g))
 
         ## look at p_cost through time
         if fuel is None:

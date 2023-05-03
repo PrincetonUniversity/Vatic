@@ -31,8 +31,8 @@ def _save_uc_results(m, relaxed):
                     security_constraint_type='pg'))
     dc_branches = dict(md.elements(element_type='dc_branch'))
 
-    data_time_periods = md.data['system']['time_keys']
-    reserve_requirement = ('reserve_requirement' in md.data['system'])
+    data_time_periods = md._data['system']['time_keys']
+    reserve_requirement = ('reserve_requirement' in md._data['system'])
 
     regulation = bool(m._regulation_service)
     spin = bool(m._spinning_reserve)
@@ -456,7 +456,7 @@ def _save_uc_results(m, relaxed):
 
         elif m._power_balance in ['copperplate_power_flow',
                                  'copperplate_relaxed_power_flow']:
-            sys_dict = md.data['system']
+            sys_dict = md._data['system']
             p_viol_dict = _preallocated_list(data_time_periods)
             for dt, mt in enumerate(m._TimePeriods):
                 p_viol_dict[dt] = sum(
@@ -473,7 +473,7 @@ def _save_uc_results(m, relaxed):
 
         if reserve_requirement:
             ## populate the system attributes
-            sys_dict = md.data['system']
+            sys_dict = md._data['system']
             sr_s_dict = _preallocated_list(data_time_periods)
             for dt, mt in enumerate(m._TimePeriods):
                 sr_s_dict[dt] = m._ReserveShortfall[mt].x
@@ -620,7 +620,7 @@ def _save_uc_results(m, relaxed):
         _populate_zonal_reserves(areas, 'area_')
         _populate_zonal_reserves(zones, 'zone_')
 
-        _populate_system_reserves(md.data['system'])
+        _populate_system_reserves(md._data['system'])
 
         if fs:
             fuel_supplies = dict(md.elements(element_type='fuel_supply'))
@@ -636,5 +636,5 @@ def _save_uc_results(m, relaxed):
                             fuel_supply_type, f))
                 f_dict['fuel_consumed'] = _time_series_dict(fuel_consumed)
 
-        md.data['system']['total_cost'] = m.ObjVal
+        md._data['system']['total_cost'] = m.ObjVal
     return md

@@ -50,11 +50,15 @@ def CA_reserve_constraints(model):
     #       maximum power available, and not actual power generated.
 
     def enforce_reserve_requirements_rule(m, t):
-        m._LoadGenerateMismatch = tupledict(m._LoadGenerateMismatch)
-        linear_expr = (quicksum(m._MaximumPowerAvailable.select('*', t))
+        # linear_expr = (quicksum(m._MaximumPowerAvailable.select('*', t))
+        #             + quicksum(m._NondispatchablePowerUsed.select('*', t))
+        #             +  quicksum(m._LoadGenerateMismatch.select('*', t))
+        #             + m._ReserveShortfall[t])
+
+        linear_expr = (m._MaximumPowerAvailable_atT[t]
                     + quicksum(m._NondispatchablePowerUsed.select('*', t))
-                    +  quicksum(m._LoadGenerateMismatch.select('*', t))
-                    + quicksum(m._ReserveShortfall.select(t)))
+                    +  m._LoadGenerateMismatch_atT[t]
+                    + m._ReserveShortfall[t])
 
         if hasattr(model, '_PowerOutputStorage'):
             linear_expr += quicksum(m._PowerOutputStorage.select('*', t))

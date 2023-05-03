@@ -446,8 +446,11 @@ class Simulator:
 
         # ruc_plan = self.ruc_model.solve_model(self._ruc_solver,
         #                                       self.solver_options)
-        ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
 
+        start_time = time.time()
+        ruc_plan = solve_model(model, relaxed = False, mipgap = self.mipgap, threads = self.solver_options['Threads'], outputflag = 0)
+        end_time = time.time() - start_time
+        print('solvemodel_time', end_time)
         # except:
         #     print("Failed to solve deterministic RUC instance - likely "
         #           "because no feasible solution exists!")
@@ -556,21 +559,21 @@ class Simulator:
                 ['load_mismatch_cost', 'reserve_shortfall_cost'],
                 [10000., 1000.]
                 ):
-            shortfall_cost = sced_model_relaxed._model_data.data['system'][cost_lbl]
+            shortfall_cost = sced_model_relaxed._model_data._data['system'][cost_lbl]
 
             if shortfall_cost >= max_price:
-                sced_model_relaxed._model_data.data['system'][cost_lbl] = max_price
+                sced_model_relaxed._model_data._data['system'][cost_lbl] = max_price
 
 
         # often we want to avoid having the reserve requirement shortfall make
         # any impact on the prices whatsoever
         if not self.lmp_shortfall_costs:
-            sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost'] = 0
+            sced_model_relaxed._model_data._data['system']['reserve_shortfall_cost'] = 0
 
         ## reset the penalties
         update_obj = False
-        base_MVA = sced_model_relaxed._model_data.data['system']['baseMVA']
-        new_load_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['load_mismatch_cost']
+        base_MVA = sced_model_relaxed._model_data._data['system']['baseMVA']
+        new_load_penalty = base_MVA * sced_model_relaxed._model_data._data['system']['load_mismatch_cost']
 
         if not math.isclose(
                 new_load_penalty,
@@ -579,7 +582,7 @@ class Simulator:
             sced_model_relaxed._LoadMismatchPenalty = new_load_penalty
             update_obj = True
 
-        new_reserve_penalty = base_MVA * sced_model_relaxed._model_data.data['system']['reserve_shortfall_cost']
+        new_reserve_penalty = base_MVA * sced_model_relaxed._model_data._data['system']['reserve_shortfall_cost']
 
         if not math.isclose(
                 new_reserve_penalty,

@@ -106,15 +106,12 @@ def _basic_production_costs_constr(model):
             points = m._PowerGenerationPiecewisePoints[g, t]
             costs = m._PowerGenerationPiecewiseCostValues[g, t]
             time_scale = m._TimePeriodLengthHours
-            linear_coefs = [
-                (time_scale * costs[i + 1] - time_scale * costs[i]) / (
-                            points[i + 1] - points[i]) \
-                for i in range(len(points) - 1)]
-            linear_vars = [m._PiecewiseProduction[g, t, i] for i in
-                           range(len(points) - 1)]
-            linear_coefs.append(-1.)
-            linear_vars.append(m._ProductionCost[g, t])
-            return LinExpr(linear_coefs, linear_vars) == 0
+            linear_coefs = [None]*(len(points)-1)
+            linear_vars = [None]*(len(points)-1)
+            for i in range(len(points)-1):
+                linear_coefs[i] =  (time_scale * costs[i + 1] - time_scale * costs[i]) / (points[i + 1] - points[i])
+                linear_vars[i] = m._PiecewiseProduction[g, t, i]
+            return LinExpr(linear_coefs, linear_vars)-m._ProductionCost[g,t]== 0
         elif (g, t) in m._LinearGeneratorTimeIndexSet:
             i = 0
             points = m._PowerGenerationPiecewisePoints[g, t]
@@ -125,21 +122,15 @@ def _basic_production_costs_constr(model):
             linear_vars, linear_coefs = m._get_power_generated_above_minimum_lists(
                 m, g, t)
             linear_coefs = [slope * coef for coef in linear_coefs]
-            linear_vars.append(m._ProductionCost[g, t])
-            linear_coefs.append(-1.)
-            return LinExpr(linear_coefs, linear_vars) == 0
+            return LinExpr(linear_coefs, linear_vars)-m._ProductionCost[g, t] == 0
         else:
             return (m._ProductionCost[g, t] == 0)
 
+    model._ProductionCostConstr = {}
     for g in model._SingleFuelGenerators:
         for t in model._TimePeriods:
             piecewise_production_costs_rule(model, g, t)
-    model._ProductionCostConstr = \
-        model.addConstrs((piecewise_production_costs_rule(model, g, t)
-                            for g in model._SingleFuelGenerators
-                            for t in model._TimePeriods),
-                          name = 'ProductionCostConstr')
-
+            model._ProductionCostConstr[(g,t)] = model.addConstr(piecewise_production_costs_rule(model, g, t), name = 'ProductionCostConstr[{},{}]'.format(g,t))
     _compute_total_production_cost(model)
 
 def KOW_production_costs_tightened(model):

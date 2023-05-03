@@ -144,9 +144,15 @@ def _add_system_load_mismatch(model):
         else:
             return 0
 
-    model._LoadGenerateMismatch = {(b, t): define_pos_neg_load_generate_mismatch_rule(model, b, t)
-                                                for b in model._Buses for t in model._TimePeriods}
-
+    model._LoadGenerateMismatch_atT = {}
+    model._LoadGenerateMismatch = {}
+    for t in model._TimePeriods:
+        total = 0
+        for b in model._Buses:
+            mismatch =  define_pos_neg_load_generate_mismatch_rule(model, b, t)
+            model._LoadGenerateMismatch[(b, t)] = mismatch
+            total += mismatch
+        model._LoadGenerateMismatch_atT[t] = total
 
     # the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent
     # the appearance of load generation mismatch component values in the range of *negative* e-5.
@@ -186,11 +192,12 @@ def _add_system_load_mismatch(model):
                                 for t in model._TimePeriods}
 
 def _add_load_mismatch(model):
-    over_gen_maxes = {}
-    over_gen_times_per_bus = {b: list() for b in model._Buses}
 
-    load_shed_maxes = {}
+    over_gen_times_per_bus = {b: list() for b in model._Buses}
     load_shed_times_per_bus = {b: list() for b in model._Buses}
+
+    model._OverGeneration = {}
+    model._LoadShedding = {}
 
     for b in model._Buses:
 
@@ -232,28 +239,16 @@ def _add_load_mismatch(model):
                 max_injections += -load
 
             if max_injections > 0:
-                over_gen_maxes[b, t] = max_injections
+                model._OverGeneration[(b,t)] = model.addVar(lb = 0, ub = max_injections, name = 'OverGeneration[{},{}]'.format(b,t))
                 over_gen_times_per_bus[b].append(t)
             else:
-                over_gen_maxes[b, t] = GRB.INFINITY
+                model._OverGeneration[(b,t)] = model.addVar(lb = 0, ub = GRB.INFINITY, name = 'OverGeneration[{},{}]'.format(b,t))
 
             if max_withdrawls > 0:
-                load_shed_maxes[b, t] = max_withdrawls
+                model._LoadShedding[(b,t)] = model.addVar(lb = 0, ub = max_withdrawls, name = 'LoadShedding[{},{}]'.format(b,t))
                 load_shed_times_per_bus[b].append(t)
             else:
-                load_shed_maxes[b, t] = GRB.INFINITY
-
-    model._OverGenerationBusTimes = list(over_gen_maxes.keys())
-    model._LoadSheddingBusTimes = list(load_shed_maxes.keys())
-
-    model._OverGeneration = model.addVars(model._OverGenerationBusTimes,
-                                          lb = 0, ub = [over_gen_maxes[key] for key in model._OverGenerationBusTimes],
-                                          name = 'OverGeneration') # over generation
-
-    model._LoadShedding = model.addVars(model._LoadSheddingBusTimes,
-                                        lb=0, ub= [load_shed_maxes[key] for key in model._LoadSheddingBusTimes],
-                                        name='LoadShedding'
-                                        )
+                model._LoadShedding[(b,t)] = model.addVar(lb = 0, ub = GRB.INFINITY, name = 'LoadShedding[{},{}]'.format(b,t))
 
     # the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent
     # the appearance of load generation mismatch component values in the range of *negative* e-5.
@@ -295,26 +290,24 @@ def _add_load_mismatch(model):
     #####################################################
     # load "shedding" can be both positive and negative #
     #####################################################
+    model._LoadGenerateMismatch_atT = {}
     model._LoadGenerateMismatch = {}
-    for b in model._Buses:
-        for t in model._TimePeriods:
-            model._LoadGenerateMismatch[b, t] = 0.
-    for b, t in model._LoadSheddingBusTimes:
-        model._LoadGenerateMismatch[b, t] += model._LoadShedding[b, t]
-    for b, t in model._OverGenerationBusTimes:
-        model._LoadGenerateMismatch[b, t] -= model._OverGeneration[b, t]
+    for t in model._TimePeriods:
+        total = 0
+        for b in model._Buses:
+            mismatch = model._LoadShedding[b,t]-model._OverGeneration[b,t]
+            model._LoadGenerateMismatch[b,t] = mismatch
+            total += mismatch
+        model._LoadGenerateMismatch_atT[t] = total
 
     model._LoadMismatchCost = {}
     for t in model._TimePeriods:
-        model._LoadMismatchCost[t] = 0.
-    for b, t in model._LoadSheddingBusTimes:
-        model._LoadMismatchCost[
-            t] += model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
-                       model._LoadShedding[b, t]
-    for b, t in model._OverGenerationBusTimes:
-        model._LoadMismatchCost[
-            t] += model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
+        total = 0
+        for b in model._Buses:
+            total = total + model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
+                       model._LoadShedding[b, t]+ model._LoadMismatchPenalty * model._TimePeriodLengthHours * \
                        model._OverGeneration[b, t]
+        model._LoadMismatchCost[t] = total
 
 def _copperplate_network_model(block, tm, relax_balance=None):
 

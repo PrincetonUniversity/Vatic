@@ -24,10 +24,10 @@ class VaticModelData(object):
             ) -> None:
 
         if isinstance(source, dict):
-            self._data = deepcopy(source)
+            self._data = source
 
         elif isinstance(source, VaticModelData):
-            self._data = deepcopy(source._data)
+            self._data = source._data
 
         elif isinstance(source, (str, Path)):
             if not Path(source).is_file():
@@ -80,8 +80,7 @@ class VaticModelData(object):
 
         """
         if element_type not in self._data['elements']:
-            raise ModelError("This model does not include the element "
-                             "type `{}`!".format(element_type))
+            return
 
         for name, elem in self._data['elements'][element_type].items():
             if all(k in elem and elem[k] == v
