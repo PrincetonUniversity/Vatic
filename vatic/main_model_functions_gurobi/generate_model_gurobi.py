@@ -23,7 +23,7 @@ def generate_model(model_name,
             model_data, relax_binaries,
             ptdf_options,
             ptdf_matrix_dict,  objective_hours = None,
-            save_model_file = False, file_path_name = '/Users/jf3375/Desktop/Gurobi/output/'):
+            save_model_file = False):
 
     #model name = 'UnitComitment'
     # use_model = model_data.clone_in_service()

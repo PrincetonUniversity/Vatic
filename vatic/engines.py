@@ -434,8 +434,7 @@ class Simulator:
             model_data = ruc_model_data, relax_binaries = False,
             ptdf_options=self._ptdf_manager.ruc_ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
-            save_model_file=True,
-            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+            save_model_file=False)
 
         generatemodel_time = time.time() - generatemodel_start_time
         print('generatemodel_time', generatemodel_time)
@@ -499,8 +498,7 @@ class Simulator:
             ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             objective_hours=hours_in_objective,
-            save_model_file=True,
-            file_path_name='/Users/jf3375/Desktop/Gurobi/output/')
+            save_model_file=False)
 
         # update in case lines were taken out
         sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
