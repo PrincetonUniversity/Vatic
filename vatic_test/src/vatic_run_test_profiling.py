@@ -13,7 +13,6 @@ from vatic.data import load_input
 from vatic.engines import Simulator
 
 
-
 #relative import does not work when we run the file inside pycharm
 #from ..engines import Simulator
 
@@ -49,7 +48,7 @@ init_ruc_file = None
 
 
 #init_ruc_file: optional argument; the path storing the init_ruc_file
-template_data, gen_data, load_data = load_input(input_grid, start_date, num_days)
+template_data, gen_data, load_data = load_input(input_grid, start_date, num_days, None)
 
 # pr = cProfile.Profile()
 # pr.enable()

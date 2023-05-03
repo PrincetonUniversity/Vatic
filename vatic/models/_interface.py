@@ -418,7 +418,7 @@ class UCModel:
             solve_time = results.solver.wallclock_time
 
         md = _save_uc_results(self.pyo_instance, relaxed)
-        md.data['system']['solver_runtime'] = solve_time
+        md._data['system']['solver_runtime'] = solve_time
         self.solver = use_solver
 
         return VaticModelData(md.data)
