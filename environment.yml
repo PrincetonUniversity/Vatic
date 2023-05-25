@@ -182,7 +182,8 @@ dependencies:
   - zlib=1.2.12
   - zstd=1.4.9
   - pip:
-    - gurobipy==9.5.0
+    - gurobipy==10.0.1
+    - ordered-set==4.1.0
     - iniconfig==1.1.1
     - pluggy==1.0.0
     - py==1.11.0
