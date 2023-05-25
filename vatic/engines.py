@@ -27,9 +27,9 @@ from pyomo.environ import Suffix as PyomoSuffix
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from egret.common.lazy_ptdf_utils import uc_instance_binary_relaxer
 
-from vatic.main_model_functions_gurobi.generate_model_gurobi import generate_model
-from vatic.main_model_functions_gurobi.solve_model_gurobi import solve_model
-from vatic.models_gurobi import basic_objective
+from .main_model_functions_gurobi.generate_model_gurobi import generate_model
+from .main_model_functions_gurobi.solve_model_gurobi import solve_model
+from .models_gurobi import basic_objective
 
 class Simulator:
     """An engine for simulating the operation of a power grid.
