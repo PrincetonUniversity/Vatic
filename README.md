@@ -47,6 +47,9 @@ been increased to roughly 50%, as opposed to 20% in the default 2020 version.
 You can additionally download the smaller testing [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) grid for
 use with Vatic by running ```cd Vatic; git submodule init; git submodule update; pip install .```.
 
+### Installing Gurobi ###
+
+The Vatic supports the latest version of gurobi 10.0.1. Please install the gurobi version 10.0.1 on the PC or load it on the cluster with module load gurobi/10.0.1.
 
 ## Running Vatic ##
 
