@@ -11,6 +11,7 @@ from itertools import product
 import gurobipy as gp
 from gurobipy import GRB, tupledict, LinExpr, quicksum
 from ordered_set import OrderedSet
+from .models_gurobi import ptdf_utils_gurobi as ptdf_utils
 
 
 def _much_less_than(v1, v2):
@@ -512,13 +513,14 @@ class _BaseVaticModel(ABC):
             ## and no need to do the additional work
         return LinExpr(linear_coefs, linear_vars)
 
-    def _check_ptdf_options(self, ptdf_options: dict) -> dict:
+    @property
+    def ptdf_options(self) -> dict:
         """See egret.common.lazy_ptdf_utils"""
         new_options = dict()
 
         for ptdf_k, default_val in self.DEFAULT_PTDF_OPTIONS.items():
-            if ptdf_k in ptdf_options:
-                new_options[ptdf_k] = ptdf_options[ptdf_k]
+            if ptdf_k in self.PTDFoptions:
+                new_options[ptdf_k] = self.PTDFoptions[ptdf_k]
             else:
                 new_options[ptdf_k] = default_val
 
@@ -555,6 +557,23 @@ class _BaseVaticModel(ABC):
         self.LineOutOfService = {
             line: False for line in self.TransmissionLines}
 
+        self.branches = {
+            line: {'from_bus': grid_template['BusFrom'][line],
+                   'to_bus': grid_template['BusTo'][line],
+
+                   'reactance': grid_template['Impedence'][line],
+                   'rating_long_term': grid_template['ThermalLimit'][line],
+                   'rating_short_term': grid_template['ThermalLimit'][line],
+                   'rating_emergency': grid_template['ThermalLimit'][line],
+
+                   'in_service': True, 'branch_type': 'line',
+                   'angle_diff_min': -90, 'angle_diff_max': 90,
+                   }
+
+            for line in grid_template['TransmissionLines']
+            }
+
+        self.buses = {bus: {'base_kv': 1e3} for bus in grid_template['Buses']}
         self.ReferenceBus = self.Buses[0]
         self.ThermalGeneratorsAtBus = grid_template['ThermalGeneratorsAtBus']
         self.NondispatchableGeneratorsAtBus = grid_template[
@@ -570,8 +589,7 @@ class _BaseVaticModel(ABC):
         self.RenewOutput.columns = self.TimePeriods
 
         self.InitialStates = initial_states
-        self.RelaxBinaries = None
-        self.PTDFoptions = None
+        self.PTDFoptions = dict()
         self.PTDF = None
 
         self.BaseMVA = 1.
@@ -652,7 +670,7 @@ class _BaseVaticModel(ABC):
         self.model = None
         self.solve_time = None
 
-    def _initialize_model(self, ptdf_options, ptdf_matrix_dict) -> gp.Model:
+    def _initialize_model(self, ptdf, ptdf_options) -> gp.Model:
         model = gp.Model(self.model_name)
         model._ptdf_options = self.DEFAULT_PTDF_OPTIONS
 
@@ -661,11 +679,9 @@ class _BaseVaticModel(ABC):
         model._GenerationTimeInStage = {
             'Stage_1': list(), 'Stage_2': self.TimePeriods}
 
-        model._ptdf_options = self._check_ptdf_options(ptdf_options)
-        if ptdf_matrix_dict is not None:
-            model._PTDFs = ptdf_matrix_dict
-        else:
-            model._PTDFs = dict()
+        model._ptdf_options = ptdf_options
+        if ptdf:
+            self.PTDF = ptdf
 
         model._StartupCurve = {g: tuple() for g in self.ThermalGenerators}
         model._ShutdownCurve = {g: tuple() for g in self.ThermalGenerators}
@@ -689,8 +705,8 @@ class _BaseVaticModel(ABC):
 
     @abstractmethod
     def generate(self,
-                 sim_state, relax_binaries: bool, ptdf_options: dict,
-                 ptdf_matrix_dict: dict, objective_hours: int) -> None:
+                 sim_state, relax_binaries: bool, ptdf_options,
+                 ptdf, objective_hours: int) -> None:
         pass
 
     def solve(self, relaxed, mipgap, threads, outputflag):
@@ -701,6 +717,104 @@ class _BaseVaticModel(ABC):
         start_time = time.time()
         self.model.optimize()
         self.solve_time = time.time() - start_time
+
+        return self._parse_model_results()
+
+    def _parse_model_results(self):
+        if not self.model:
+            raise ValueError("Model must be solved before its results "
+                             "can be parsed!")
+
+        rampup_avail_constrs = {'_EnforceMaxAvailableT0RampUpRates',
+                                '_EnforceMaxAvailableTkRampUpRates',
+                                '_AncillaryServiceRampUpLimit',
+                                '_power_limit_from_start',
+                                '_power_limit_from_stop',
+                                '_power_limit_from_startstop',
+                                '_power_limit_from_startstops',
+                                '_max_power_limit_from_starts',
+                                '_EnforceScaledT0NominalRampDownLimits',
+                                '_EnforceScaledTkNominalRampDownLimits',
+                                '_EnforceMaxCapacity',
+                                '_OAVUpperBound',
+                                '_EnforceGenerationLimits'}
+
+        cur_rampup_constrs = [getattr(self.model, constr)
+                              for constr in rampup_avail_constrs
+                              if hasattr(self.model, constr)]
+
+        results = {
+            'power_generated': {
+                (g, t): self.model._PowerGeneratedStartupShutdown[g, t].getValue()
+                for g, t in product(*self.thermal_periods)
+                },
+
+            'commitment': {
+                (g, t): self.model._UnitOn[g, t].x
+                for g, t in product(*self.thermal_periods)
+                },
+
+            'commitment_cost': {
+                (g, t): (self.model._NoLoadCost[g, t].getValue()
+                         + self.model._StartupCost[g, t].x)
+                for g, t in product(*self.thermal_periods)
+                },
+
+            'production_cost': {
+                (g, t): self.model._ProductionCost[g, t].x
+                for g, t in product(*self.thermal_periods)
+                },
+
+            'headroom': {(g, t): 0.
+                         for g, t in product(*self.thermal_periods)},
+
+            }
+
+        for g, t in product(*self.thermal_periods):
+            slack_list = [constr[g, t].slack for constr in cur_rampup_constrs
+                          if (g, t) in constr]
+
+            if slack_list:
+                results['headroom'][g, t] = min(slack_list)
+
+        for g, t in product(*self.renew_periods):
+            results['power_generated'][g, t] = self.model.\
+                _RenewablePowerUsed[g, t].x
+
+        flows = dict()
+        voltage_angles = dict()
+        p_balances = dict()
+        pl_dict = dict()
+
+        for t in self.TimePeriods:
+            pfv, pfv_i, va = self.PTDF.calculate_PFV(
+                self.model._TransmissionBlock[t])
+
+            for i, br in enumerate(self.PTDF.branches_keys):
+                flows[t, br] = pfv[i]
+
+            for i, bs in enumerate(self.PTDF.buses_keys):
+                voltage_angles[t, bs] = va[i]
+
+                if (bs, t) in self.model._LoadGenerateMismatch:
+                    p_balances[bs, t] \
+                        = self.model._LoadGenerateMismatch[bs, t].getValue()
+                else:
+                    p_balances[bs, t] = 0.
+
+                pl_dict[bs, t] = self.model._TransmissionBlock[t]._pl[bs]
+
+        results['flows'] = flows
+        results['voltage_angles'] = voltage_angles
+        results['p_balances'] = p_balances
+        results['pl'] = pl_dict
+        results['PTDF'] = self.PTDF
+
+        results['reserve_shortfall'] = {t: self.model._ReserveShortfall[t].x
+                                        for t in self.TimePeriods}
+        results['total_cost'] = self.model.ObjVal
+
+        return results
 
     def file_non_dispatchable_vars(self, model: gp.Model) -> gp.Model:
         model._RenewablePowerUsed = model.addVars(
@@ -945,6 +1059,16 @@ class _BaseVaticModel(ABC):
 
         parent_model.addConstr(
             (p_expr == 0.0), name=f"eq_p_balance_at_period{block._tm}")
+
+        if not self.PTDF:
+            self.PTDF = ptdf_utils.VirtualPTDFMatrix(
+                self.branches, self.buses, self.ReferenceBus,
+                ptdf_utils.BasePointType.FLATSTART, self.ptdf_options,
+                branches_keys=block._branches_inservice,
+                buses_keys=self.Buses
+                )
+
+        block._PTDF = self.PTDF
 
         return parent_model
 
@@ -1558,8 +1682,8 @@ class VaticRucModel(_BaseVaticModel):
     def generate(self,
                  sim_state,
                  relax_binaries: bool, ptdf_options: dict,
-                 ptdf_matrix_dict: dict, objective_hours: int) -> None:
-        model = self._initialize_model(ptdf_options, ptdf_matrix_dict)
+                 ptdf, objective_hours: int) -> None:
+        model = self._initialize_model(ptdf, ptdf_options)
 
         model = self.garver_3bin_vars(model, relax_binaries)
         model = self.garver_power_vars(model)
@@ -1605,9 +1729,10 @@ class VaticScedModel(_BaseVaticModel):
 
         return LinExpr(linear_coefs, linear_vars)
 
-    def _get_maximum_power_available_above_minimum_lists(m, g, t):
-        linear_vars, linear_coefs = m._get_power_generated_above_minimum_lists(m, g, t)
-        linear_vars.append(m._ReserveProvided[g, t])
+    def _get_maximum_power_available_above_minimum_lists(self, model, g, t):
+        linear_vars, linear_coefs = self._get_maximum_power_available_lists(
+            model, g, t)
+        linear_vars.append(model._ReserveProvided[g, t])
         linear_coefs.append(1.)
 
         return LinExpr(linear_coefs, linear_vars)
@@ -1639,8 +1764,8 @@ class VaticScedModel(_BaseVaticModel):
     def generate(self,
                  sim_state,
                  relax_binaries: bool, ptdf_options: dict,
-                 ptdf_matrix_dict: dict, objective_hours: int) -> None:
-        model = self._initialize_model(ptdf_options, ptdf_matrix_dict)
+                 ptdf: dict, objective_hours: int) -> None:
+        model = self._initialize_model(ptdf_options, ptdf)
 
         model = self.garver_3bin_vars(model, relax_binaries)
         model = self.garver_power_vars(model)
