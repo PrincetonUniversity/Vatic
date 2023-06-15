@@ -39,11 +39,11 @@ def _step_coeff(upper, lower, susd):
     return None
 
 
-class ModelDataError(Exception):
+class VaticModelError(Exception):
     pass
 
 
-class _BaseVaticModel(ABC):
+class BaseVaticModel(ABC):
 
     model_name = "VaticModel"
 
@@ -542,6 +542,7 @@ class _BaseVaticModel(ABC):
 
         self.RenewOutput = renews_data.transpose()
         self.Demand = load_data.transpose()
+        self.time_steps = renews_data.index.to_list()
 
         # set aside a proportion of the total demand as the model's reserve
         # requirement (if any) at each time point
@@ -669,6 +670,7 @@ class _BaseVaticModel(ABC):
         self.StageSet = ['Stage_1', 'Stage_2']
         self.model = None
         self.solve_time = None
+        self.results = None
 
     def _initialize_model(self, ptdf, ptdf_options) -> gp.Model:
         model = gp.Model(self.model_name)
@@ -718,7 +720,7 @@ class _BaseVaticModel(ABC):
         self.model.optimize()
         self.solve_time = time.time() - start_time
 
-        return self._parse_model_results()
+        self.results = self._parse_model_results()
 
     def _parse_model_results(self):
         if not self.model:
@@ -808,13 +810,20 @@ class _BaseVaticModel(ABC):
         results['voltage_angles'] = voltage_angles
         results['p_balances'] = p_balances
         results['pl'] = pl_dict
-        results['PTDF'] = self.PTDF
 
         results['reserve_shortfall'] = {t: self.model._ReserveShortfall[t].x
                                         for t in self.TimePeriods}
         results['total_cost'] = self.model.ObjVal
 
         return results
+
+    @property
+    def flows(self):
+        if not self.results:
+            raise VaticModelError("Cannot retrieve transmission line flows "
+                                 "until model has been generated and solved!")
+
+        return pd.Series(self.results['flows']).unstack()
 
     def file_non_dispatchable_vars(self, model: gp.Model) -> gp.Model:
         model._RenewablePowerUsed = model.addVars(
@@ -1137,8 +1146,26 @@ class _BaseVaticModel(ABC):
 
         return model
 
+    @property
+    def forecastables(self) -> pd.DataFrame:
+        use_gen = self.RenewOutput.copy().transpose()
+        use_load = self.Demand.copy().transpose()
 
-class VaticRucModel(_BaseVaticModel):
+        use_gen.columns = pd.MultiIndex.from_tuples(
+            [('RenewGen', gen) for gen in use_gen.columns],
+            names=('AssetType', 'Asset')
+            )
+        use_load.columns = pd.MultiIndex.from_tuples(
+            [('LoadBus', bus) for bus in use_load.columns],
+            names=('AssetType', 'Asset')
+            )
+
+        fcsts = pd.concat([use_gen, use_load], axis=1)
+        fcsts.index = self.time_steps
+
+        return fcsts
+
+class VaticRucModel(BaseVaticModel):
 
     model_name = "UnitCommitment"
 
@@ -1719,7 +1746,7 @@ class VaticRucModel(_BaseVaticModel):
         self.model = model
 
 
-class VaticScedModel(_BaseVaticModel):
+class VaticScedModel(BaseVaticModel):
     def _get_maximum_power_available_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(
             model, g, t)
