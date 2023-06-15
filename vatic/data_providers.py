@@ -10,9 +10,11 @@ import pandas as pd
 import math
 from typing import Optional
 
-from .model_data import VaticModelData
+from .formulations import VaticRucModel
 from .time_manager import VaticTime
 from .simulation_state import VaticSimulationState
+from .simulation_state_gb import VaticSimulationStateGB
+from .model_data import VaticModelData
 
 
 class ProviderError(Exception):
@@ -65,9 +67,10 @@ class PickleProvider:
             raise ProviderError("The generator and the bus demand datasets "
                                 "have inconsistent time points!")
 
-        self.template = template_data
         self.gen_data = gen_data.sort_index().round(8)
         self.load_data = load_data.sort_index()
+        self.template = template_data
+        self.template['NumTimePeriods'] = ruc_horizon
 
         self._time_period_mins = 60
         self._load_mismatch_cost = load_shed_penalty
@@ -206,9 +209,11 @@ class PickleProvider:
 
         """
         if day < self.first_day:
-            day = self.first_day
+            raise ValueError(f"Cannot get model for date `{day}` "
+                             "before the first day!")
         elif day > self.final_day:
-            day = self.final_day
+            raise ValueError(f"Cannot get model for date `{day}` "
+                             "after the final day!")
 
         # get a model with empty timeseries and the model with initial states
         new_model = self._get_initial_model(num_time_steps,
@@ -331,6 +336,152 @@ class PickleProvider:
 
         return new_model
 
+    def create_ruc(
+            self,
+            time_step: VaticTime,
+            current_state: VaticSimulationState | None = None,
+            copy_first_day: bool = False
+            ) -> VaticRucModel:
+        """Generates a Reliability Unit Commitment model.
+
+        This a merge of Prescient's EgretEngine.create_deterministic_ruc and
+        egret_plugin.create_deterministic_ruc.
+
+        Args
+        ----
+            time_step   Which time point to pull data from.
+            current_state   If given, a simulation state used to get initial
+                            states for the generators, which will otherwise be
+                            pulled from the input datasets.
+
+        """
+        forecast_request_count = 24
+        if not copy_first_day:
+            forecast_request_count = self.ruc_horizon
+
+        start_hour = time_step.when.hour
+        start_day = time_step.when.date()
+        assert (time_step.when.minute == 0)
+        assert (time_step.when.second == 0)
+
+        step_delta = timedelta(minutes=self.data_freq)
+        start_dt = pd.Timestamp(time_step.when, tz='utc')
+        ruc_times = list()
+
+        for step_time in pd.date_range(
+                start_dt, periods=forecast_request_count, freq='H'):
+            step_day = step_time.date()
+
+            # if we cross midnight and we didn't start at midnight, we start
+            # pulling data from the next day
+            if step_day != start_day and start_hour != 0:
+                ruc_times += [step_time]
+
+            elif step_day > self.final_day:
+                ruc_times += [step_time - pd.Timedelta(days=1)]
+            else:
+                ruc_times += [step_time]
+
+        if not all(pd.DatetimeIndex(ruc_times).isin(self.gen_data.index)):
+            raise ProviderError(f"Cannot create model; missing data "
+                                f"in renewable outputs!")
+
+        if not all(pd.DatetimeIndex(ruc_times).isin(self.load_data.index)):
+            raise ProviderError(f"Cannot create model; missing data "
+                                f"in load demands!")
+
+        # get the data for this date from the input datasets
+        use_gen = self.gen_data.loc[ruc_times, 'fcst']
+        use_load = self.load_data.loc[ruc_times, 'fcst']
+
+        # make some near-term forecasts more accurate if necessary
+        if self._ruc_prescience_hour > self._ruc_delay + 1:
+            improved_hour_count = self._ruc_prescience_hour - self._ruc_delay
+            improved_hour_count -= 1
+
+            for fcst_key, fcst_vals in ruc_model.get_forecastables():
+                for t in range(improved_hour_count):
+                    forecast_portion = (self._ruc_delay + t)
+                    forecast_portion /= self._ruc_prescience_hour
+                    actuals_portion = 1 - forecast_portion
+                    actl_val = current_state.get_future_actuals(fcst_key)[t]
+
+                    fcst_vals[t] *= forecast_portion
+                    fcst_vals[t] += actuals_portion * actl_val
+
+        # copy from the first 24 hours to the second 24 hours if necessary
+        if copy_first_day:
+            for t in range(24, self.ruc_horizon):
+                vals[t] = vals[t - 24]
+
+        if current_state is None or current_state.timestep_count == 0:
+            initial_states = {
+                'UnitOnT0State': self.template['UnitOnT0State'],
+                'PowerGeneratedT0': self.template['PowerGeneratedT0']
+                }
+        else:
+            initial_states = None
+
+        ruc_model = VaticRucModel(self.template, use_gen, use_load,
+                                  initial_states, self._reserve_factor)
+
+        # TODO: add more reporting
+        if self._output_ruc_initial_conditions:
+            tgens = dict(ruc_model.elements('generator',
+                                            generator_type='thermal'))
+            gen_label_size = max((len(gen) for gen in tgens), default=0) + 1
+
+            print("\nInitial generator conditions (gen-name t0-unit-on"
+                  " t0-unit-on-state t0-power-generated):")
+
+            for gen, gen_data in tgens.items():
+                print(' '.join([
+                    format(gen, '{}s'.format(gen_label_size)),
+                    format(str(int(gen_data['initial_status'] > 0)), '5s'),
+                    format(gen_data['initial_status'], '7d'),
+                    format(gen_data['initial_p_output'], '12.2f')
+                    ]))
+
+        return ruc_model
+
+    def sim_actuals(self,
+                    start_time: VaticTime, num_steps: int) -> pd.DataFrame:
+        start_dt = pd.Timestamp(start_time.when, tz='utc')
+
+        start_hour = start_time.when.hour
+        start_day = start_time.when.date()
+        use_times = list()
+
+        for step_time in pd.date_range(start_dt, periods=num_steps, freq='H'):
+            step_day = step_time.date()
+
+            # if we cross midnight and we didn't start at midnight, we start
+            # pulling data from the next day
+            if step_day != start_day and start_hour != 0:
+                use_times += [step_time]
+
+            elif step_day > self.final_day:
+                use_times += [step_time - pd.Timedelta(days=1)]
+            else:
+                use_times += [step_time]
+
+        use_gen = self.gen_data.loc[use_times, 'actl']
+        use_load = self.load_data.loc[use_times, 'actl']
+        use_req = pd.DataFrame(self._reserve_factor * use_load.sum(axis=1))
+
+        use_gen.columns = pd.MultiIndex.from_tuples(
+            [('RenewGen', gen) for gen in use_gen.columns],
+            names=('AssetType', 'Asset')
+            )
+        use_load.columns = pd.MultiIndex.from_tuples(
+            [('LoadBus', bus) for bus in use_load.columns],
+            names=('AssetType', 'Asset')
+            )
+        use_req.columns = pd.MultiIndex.from_tuples(
+            [('ReserveReq', 'Load')], names=('AssetType', 'Asset'))
+
+        return pd.concat([use_gen, use_load, use_req], axis=1)
+
     def create_deterministic_ruc(
             self,
             time_step: VaticTime,
@@ -404,6 +555,184 @@ class PickleProvider:
                     ]))
 
         return ruc_model
+
+    def create_sced(self,
+                    time_step: VaticTime,
+                    current_state: VaticSimulationStateGB,
+                    sced_horizon: int) -> VaticModelData:
+        """Generates a Security Constrained Economic Dispatch model.
+
+        This a merge of Prescient's EgretEngine.create_sced_instance and
+        egret_plugin.create_sced_instance.
+
+        Args
+        ----
+            current_state   The simulation state of a power grid which will
+                            be used as the basis for the data included in this
+                            model.
+            sced_horizon    How many time steps this SCED will simulate over.
+
+        """
+
+        #assert current_state.timestep_count >= sced_horizon
+
+        sced_times = [step_time for step_time in pd.date_range(
+                time_step.when, periods=sced_horizon, freq='H', tz='utc')]
+
+        if not all(pd.DatetimeIndex(sced_times).isin(self.gen_data.index)):
+            raise ProviderError(f"Cannot create model; missing data "
+                                f"in renewable outputs!")
+
+        if not all(pd.DatetimeIndex(sced_times).isin(self.load_data.index)):
+            raise ProviderError(f"Cannot create model; missing data "
+                                f"in load demands!")
+
+        # TODO: isn't this an analogue of get_forecastables()?
+        # get the data for this date from the input datasets
+        sced_data = pd.concat([self.gen_data.loc[sced_times, 'actl'],
+                               self.load_data.loc[sced_times, 'actl']], axis=1)
+
+        # add the forecasted load demands and renewable generator outputs, and
+        # adjust them to be closer to the corresponding actual values
+        if self.prescient_sced_forecasts:
+            for k, sced_data in sced_model.get_forecastables():
+                future = current_state.get_future_actuals(k)
+
+                # this error method makes the forecasts equal to the actuals!
+                for t in range(sced_horizon):
+                    sced_data[t] = future[t]
+
+        else:
+            current_actual = current_state.current_actuals
+            forecast = current_state.forecasts.iloc[:sced_horizon]
+
+            # this error method adjusts future forecasts based on how much
+            # the forecast over/underestimated the current actual value
+            sced_data[0] = current_actual
+            current_forecast = forecast[0]
+
+            # find how much the first forecast was off from the actual as
+            # a fraction of the forecast
+            if current_forecast == 0.0:
+                forecast_error_ratio = 0.0
+            else:
+                forecast_error_ratio = current_actual / forecast[0]
+
+            # adjust the remaining forecasts based on the initial error
+            for t in range(1, sced_horizon):
+                sced_data[t] = forecast[t] * forecast_error_ratio
+
+
+        # set aside a proportion of the total demand as the model's reserve
+        # requirement (if any) at each time point
+        for t in range(sced_horizon):
+            sced_model.honor_reserve_factor(self._reserve_factor, t)
+
+        # pull generator commitments from the state of the simulation
+        for gen, gen_data in sced_model.elements(element_type='generator',
+                                                 generator_type='thermal'):
+            gen_commits = [current_state.get_generator_commitment(gen, t)
+                           for t in range(current_state.timestep_count)]
+
+            gen_data['fixed_commitment'] = {
+                'data_type': 'time_series',
+                'values': gen_commits[:sced_horizon]
+                }
+
+            # look as far into the future as we can for startups if the
+            # generator is committed to be off at the end of the model window
+            future_status_time_steps = 0
+            if gen_commits[sced_horizon - 1] == 0:
+                for t in range(sced_horizon, current_state.timestep_count):
+                    if gen_commits[t] == 1:
+                        future_status_time_steps = (t - sced_horizon + 1)
+                        break
+
+            # same but for future shutdowns if the generator is committed to be
+            # on at the end of the model's time steps
+            elif gen_commits[sced_horizon - 1] == 1:
+                for t in range(sced_horizon, current_state.timestep_count):
+                    if gen_commits[t] == 0:
+                        future_status_time_steps = -(t - sced_horizon + 1)
+                        break
+
+            gen_data['future_status'] = current_state.minutes_per_step / 60.
+            gen_data['future_status'] *= future_status_time_steps
+
+        # infer generator startup and shutdown curves
+        if not self._no_startup_shutdown_curves:
+            mins_per_step = current_state.minutes_per_step
+
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                if 'startup_curve' in gen_data:
+                    continue
+
+                ramp_up_rate_sced = gen_data['ramp_up_60min'] * mins_per_step
+                ramp_up_rate_sced /= 60.
+
+                sced_startup_capc = self._calculate_sced_ramp_capacity(
+                    gen_data, ramp_up_rate_sced,
+                    mins_per_step, 'startup_capacity'
+                    )
+
+                gen_data['startup_curve'] = [
+                    round(sced_startup_capc - i * ramp_up_rate_sced, 2)
+                    for i in range(1, int(math.ceil(sced_startup_capc
+                                                    / ramp_up_rate_sced)))
+                    ]
+
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                if 'shutdown_curve' in gen_data:
+                    continue
+
+                ramp_down_rate_sced = (
+                        gen_data['ramp_down_60min'] * mins_per_step / 60.)
+
+                # compute a new shutdown curve if we go from "on" to "off"
+                if (gen_data['initial_status'] > 0
+                        and gen_data['fixed_commitment']['values'][0] == 0):
+                    power_t0 = gen_data['initial_p_output']
+                    # if we end up using a historical curve, it's important
+                    # for the time-horizons to match, particularly since this
+                    # function is also used to create long-horizon look-ahead
+                    # SCEDs for the unit commitment process
+                    self.shutdown_curves[gen, mins_per_step] = [
+                        round(power_t0 - i * ramp_down_rate_sced, 2)
+                        for i in range(
+                            1, int(math.ceil(power_t0 / ramp_down_rate_sced)))
+                        ]
+
+                if (gen, mins_per_step) in self.shutdown_curves:
+                    gen_data['shutdown_curve'] = self.shutdown_curves[
+                        gen, mins_per_step]
+
+                else:
+                    sced_shutdown_capc = self._calculate_sced_ramp_capacity(
+                        gen_data, ramp_down_rate_sced,
+                        mins_per_step, 'shutdown_capacity'
+                        )
+
+                    gen_data['shutdown_curve'] = [
+                        round(sced_shutdown_capc - i * ramp_down_rate_sced, 2)
+                        for i in range(
+                            1, int(math.ceil(sced_shutdown_capc
+                                             / ramp_down_rate_sced))
+                            )
+                        ]
+
+        if not self._enforce_sced_shutdown_ramprate:
+            for gen, gen_data in sced_model.elements(element_type='generator',
+                                                     generator_type='thermal'):
+                # make sure the generator can immediately turn off
+                gen_data['shutdown_capacity'] = max(
+                    gen_data['shutdown_capacity'],
+                    (60. / current_state.minutes_per_step)
+                    * gen_data['initial_p_output'] + 1.
+                    )
+
+        return sced_model
 
     def create_sced_instance(self,
                              current_state: VaticSimulationState,
