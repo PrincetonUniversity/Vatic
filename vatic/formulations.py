@@ -7,6 +7,7 @@ import math
 import pandas as pd
 from abc import ABC, abstractmethod
 from itertools import product
+from typing import Optional
 
 import gurobipy as gp
 from gurobipy import GRB, tupledict, LinExpr, quicksum
@@ -531,10 +532,9 @@ class BaseVaticModel(ABC):
         return new_options
 
     def __init__(self,
-                 grid_template: dict,
-                 renews_data: pd.DataFrame, load_data: pd.DataFrame,
-                 initial_states: dict[str, dict[str, int]],
-                 reserve_factor: float) -> None:
+                 grid_template: dict, renews_data: pd.DataFrame,
+                 load_data: pd.DataFrame, reserve_factor: float,
+                 future_status: Optional[dict[str, int]] = None) -> None:
 
         if not (renews_data.index == load_data.index).all():
             raise ValueError("Renewable generator outputs and load demands "
@@ -543,6 +543,7 @@ class BaseVaticModel(ABC):
         self.RenewOutput = renews_data.transpose()
         self.Demand = load_data.transpose()
         self.time_steps = renews_data.index.to_list()
+        self.future_status = future_status
 
         # set aside a proportion of the total demand as the model's reserve
         # requirement (if any) at each time point
@@ -589,10 +590,8 @@ class BaseVaticModel(ABC):
         self.Demand.columns = self.TimePeriods
         self.RenewOutput.columns = self.TimePeriods
 
-        self.InitialStates = initial_states
         self.PTDFoptions = dict()
         self.PTDF = None
-
         self.BaseMVA = 1.
         self.BaseKV = 1e3
         self.ReferenceBusAngle = 0.
@@ -624,11 +623,10 @@ class BaseVaticModel(ABC):
         self.StartupRampLimit = grid_template['StartupRampLimit']
         self.ShutdownRampLimit = grid_template['ShutdownRampLimit']
 
-        # TODO: do we really need initial_states to be separate?
-        self.UnitOnT0State = initial_states['UnitOnT0State']
+        self.UnitOnT0State = grid_template['UnitOnT0State']
         self.UnitOnT0 = tupledict({
             g: init_st > 0. for g, init_st in self.UnitOnT0State.items()})
-        self.PowerGeneratedT0 = initial_states['PowerGeneratedT0']
+        self.PowerGeneratedT0 = grid_template['PowerGeneratedT0']
 
         (self.PiecewiseGenerationPoints,
             self.PiecewiseGenerationCosts,
@@ -1747,6 +1745,7 @@ class VaticRucModel(BaseVaticModel):
 
 
 class VaticScedModel(BaseVaticModel):
+
     def _get_maximum_power_available_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(
             model, g, t)
@@ -1789,9 +1788,13 @@ class VaticScedModel(BaseVaticModel):
         return model
 
     def generate(self,
-                 sim_state,
                  relax_binaries: bool, ptdf_options: dict,
                  ptdf: dict, objective_hours: int) -> None:
+
+        for gen in self.ThermalGenerators:
+            self.ShutdownRampLimit[gen] = 1. + self.MinPowerOutput[
+                gen, self.InitialTime]
+
         model = self._initialize_model(ptdf_options, ptdf)
 
         model = self.garver_3bin_vars(model, relax_binaries)

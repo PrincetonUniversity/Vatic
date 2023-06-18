@@ -414,16 +414,8 @@ class PickleProvider:
             for t in range(24, self.ruc_horizon):
                 vals[t] = vals[t - 24]
 
-        if current_state is None or current_state.timestep_count == 0:
-            initial_states = {
-                'UnitOnT0State': self.template['UnitOnT0State'],
-                'PowerGeneratedT0': self.template['PowerGeneratedT0']
-                }
-        else:
-            initial_states = None
-
         ruc_model = VaticRucModel(self.template, use_gen, use_load,
-                                  initial_states, self._reserve_factor)
+                                  self._reserve_factor)
 
         # TODO: add more reporting
         if self._output_ruc_initial_conditions:
@@ -635,106 +627,38 @@ class PickleProvider:
                 # adjust the remaining forecasts based on the initial error
                 sced_data.iloc[1:] = fcst_error_ratios * forecasts.iloc[1:]
 
-        return
-
-        # pull generator commitments from the state of the simulation
-        gen_commits = current_state.commitments[:sced_horizon]
-
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window
-        future_status_time_steps = 0
-        if gen_commits[sced_horizon - 1] == 0:
-            for t in range(sced_horizon, current_state.timestep_count):
-                if gen_commits[t] == 1:
-                    future_status_time_steps = (t - sced_horizon + 1)
-                    break
+        horizon_cmts = current_state.commitments.iloc[sced_horizon - 1]
+        future_status_times = {g: 0 for g in horizon_cmts.index}
+        off_gens = horizon_cmts.index[horizon_cmts == 0.]
+        on_gens = horizon_cmts.index[horizon_cmts == 1.]
 
-        # same but for future shutdowns if the generator is committed to be
-        # on at the end of the model's time steps
-        elif gen_commits[sced_horizon - 1] == 1:
-            for t in range(sced_horizon, current_state.timestep_count):
-                if gen_commits[t] == 0:
-                    future_status_time_steps = -(t - sced_horizon + 1)
-                    break
+        for gen in off_gens:
+            future_cmts = (
+                    current_state.commitments.iloc[sced_horizon:][gen] == 1.)
 
-        #gen_data['future_status'] = current_state.minutes_per_step / 60.
-        #gen_data['future_status'] *= future_status_time_steps
-
-        # infer generator startup and shutdown curves
-        if not self._no_startup_shutdown_curves:
-            mins_per_step = current_state.minutes_per_step
-
-            for gen, gen_data in sced_model.elements(element_type='generator',
-                                                     generator_type='thermal'):
-                if 'startup_curve' in gen_data:
-                    continue
-
-                ramp_up_rate_sced = gen_data['ramp_up_60min'] * mins_per_step
-                ramp_up_rate_sced /= 60.
-
-                sced_startup_capc = self._calculate_sced_ramp_capacity(
-                    gen_data, ramp_up_rate_sced,
-                    mins_per_step, 'startup_capacity'
-                    )
-
-                gen_data['startup_curve'] = [
-                    round(sced_startup_capc - i * ramp_up_rate_sced, 2)
-                    for i in range(1, int(math.ceil(sced_startup_capc
-                                                    / ramp_up_rate_sced)))
-                    ]
-
-            for gen, gen_data in sced_model.elements(element_type='generator',
-                                                     generator_type='thermal'):
-                if 'shutdown_curve' in gen_data:
-                    continue
-
-                ramp_down_rate_sced = (
-                        gen_data['ramp_down_60min'] * mins_per_step / 60.)
-
-                # compute a new shutdown curve if we go from "on" to "off"
-                if (gen_data['initial_status'] > 0
-                        and gen_data['fixed_commitment']['values'][0] == 0):
-                    power_t0 = gen_data['initial_p_output']
-                    # if we end up using a historical curve, it's important
-                    # for the time-horizons to match, particularly since this
-                    # function is also used to create long-horizon look-ahead
-                    # SCEDs for the unit commitment process
-                    self.shutdown_curves[gen, mins_per_step] = [
-                        round(power_t0 - i * ramp_down_rate_sced, 2)
-                        for i in range(
-                            1, int(math.ceil(power_t0 / ramp_down_rate_sced)))
-                        ]
-
-                if (gen, mins_per_step) in self.shutdown_curves:
-                    gen_data['shutdown_curve'] = self.shutdown_curves[
-                        gen, mins_per_step]
-
-                else:
-                    sced_shutdown_capc = self._calculate_sced_ramp_capacity(
-                        gen_data, ramp_down_rate_sced,
-                        mins_per_step, 'shutdown_capacity'
+            if future_cmts.any():
+                future_status_times[gen] = (
+                        future_cmts.index[future_cmts].max()
+                        - sced_horizon + 1
                         )
 
-                    gen_data['shutdown_curve'] = [
-                        round(sced_shutdown_capc - i * ramp_down_rate_sced, 2)
-                        for i in range(
-                            1, int(math.ceil(sced_shutdown_capc
-                                             / ramp_down_rate_sced))
-                            )
-                        ]
+        for gen in on_gens:
+            future_cmts = (
+                    current_state.commitments.iloc[sced_horizon:][gen] == 0.)
 
-        sced_model = VaticScedModel(self.template, use_gen, use_load,
-                                    initial_states, self._reserve_factor)
+            if future_cmts.any():
+                future_status_times[gen] = -(
+                        future_cmts.index[future_cmts].max()
+                        - sced_horizon + 1
+                        )
 
-        if not self._enforce_sced_shutdown_ramprate:
-            for gen, gen_data in sced_model.elements(element_type='generator',
-                                                     generator_type='thermal'):
-                # make sure the generator can immediately turn off
-                gen_data['shutdown_capacity'] = max(
-                    gen_data['shutdown_capacity'],
-                    (60. / current_state.minutes_per_step)
-                    * gen_data['initial_p_output'] + 1.
-                    )
+        sced_model = VaticScedModel(
+            self.template, sced_data['RenewGen'], sced_data['LoadBus'],
+            reserve_factor=self._reserve_factor,
+            future_status=future_status_times
+            )
 
         return sced_model
 
