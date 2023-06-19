@@ -7,7 +7,7 @@ import math
 import pandas as pd
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import Optional
+from typing import Optional, Any
 
 import gurobipy as gp
 from gurobipy import GRB, tupledict, LinExpr, quicksum
@@ -202,6 +202,136 @@ class BaseVaticModel(ABC):
             (g, t): self._add_power_generated_startup_shutdown(model, g, t)
             for g, t in product(*self.thermal_periods)
             })
+
+        return model
+
+    def damcikurt_ramping(self, model):
+        # enforce_max_available_ramp_up_rates_rule #
+        t0_upower_constrs = dict()
+        tk_upower_constrs = dict()
+
+        t0_uramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t == self.InitialTime and self.UnitOnT0[g]
+                and self.NominalRampUpLimit[g] < (self.MaxPowerOutput[g, t]
+                                                  - self.PowerGeneratedT0[g]))
+            }
+
+        for g, t in t0_uramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                model, g, t)
+
+            power_vars += [model._UnitOn[g, t], model._UnitStart[g, t]]
+            power_coefs += [-self.NominalRampUpLimit[g]
+                            + self.MinPowerOutput[g, t],
+                            -self.StartupRampLimit[g]
+                            + self.NominalRampUpLimit[g]]
+
+            t0_upower_constrs[g, t] = LinExpr(
+                power_coefs, power_vars) <= self.PowerGeneratedT0[g]
+
+        tk_uramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t > self.InitialTime
+                and self.NominalRampUpLimit[g] < (
+                        self.MaxPowerOutput[g, t]
+                        - self.MinPowerOutput[g, t - 1]
+                ))
+            }
+
+        for g, t in tk_uramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                model, g, t)
+
+            power_vars += [model._UnitOn[g, t], model._UnitStart[g, t]]
+            power_coefs += [-self.NominalRampUpLimit[g]
+                            - self.MinPowerOutput[g, t - 1]
+                            + self.MinPowerOutput[g, t],
+                            -self.StartupRampLimit[g]
+                            + self.MinPowerOutput[g, t - 1]
+                            + self.NominalRampUpLimit[g]]
+
+            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
+                model, g, t - 1, negative=True)
+
+            tk_upower_constrs[g, t] = LinExpr(
+                power_coefs + neg_coefs, power_vars + neg_vars) <= 0.
+
+        model._EnforceMaxAvailableT0RampUpRates = model.addConstrs(
+            constr_genr(t0_upower_constrs),
+            name='enforce_max_available_t0_ramp_up_rates'
+            )
+        model._EnforceMaxAvailableTkRampUpRates = model.addConstrs(
+            constr_genr(tk_upower_constrs),
+            name='enforce_max_available_tk_ramp_up_rates'
+            )
+
+        # enforce_ramp_down_limits_rule #
+        t0_dpower_constrs = dict()
+        tk_dpower_constrs = dict()
+
+        t0_dramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t == self.InitialTime and self.UnitOnT0[g]
+                and (self.NominalRampDownLimit[g] < (
+                            self.PowerGeneratedT0[g]
+                            - self.MinPowerOutput[g, t]
+                    )
+                     or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
+            }
+
+        tk_dramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t > self.InitialTime
+                and (self.NominalRampDownLimit[g] < (
+                            self.MaxPowerOutput[g, t - 1]
+                            - self.MinPowerOutput[g, t]
+                    )))
+
+            }
+
+        for g, t in t0_dramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                model, g, t)
+
+            power_vars += [model._UnitStop[g, t]]
+            power_coefs += [self.ShutdownRampLimit[g]
+                            - self.MinPowerOutput[g, t]
+                            - self.NominalRampDownLimit[g]]
+
+            power_lhs = (self.PowerGeneratedT0[g]
+                         - (self.NominalRampDownLimit[g]
+                            + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
+
+            t0_dpower_constrs[g, t] = LinExpr(
+                power_coefs, power_vars) >= power_lhs
+
+        for g, t in tk_dramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                model, g, t)
+
+            power_vars += [model._UnitOn[g, t - 1], model._UnitStop[g, t]]
+            power_coefs += [self.NominalRampDownLimit[g]
+                            + self.MinPowerOutput[g, t]
+                            - self.MinPowerOutput[g, t - 1],
+                            self.ShutdownRampLimit[g]
+                            - self.MinPowerOutput[g, t]
+                            - self.NominalRampDownLimit[g]]
+
+            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
+                model, g, t - 1, negative=True)
+
+            tk_dpower_constrs[g, t] = LinExpr(
+                power_coefs + neg_coefs, power_vars + neg_vars) >= 0
+
+        model._EnforceScaledT0NominalRampDownLimits = model.addConstrs(
+            constr_genr(t0_dpower_constrs),
+            name='enforce_max_available_t0_ramp_down_rates'
+            )
+        model._EnforceScaledTkNominalRampDownLimits = model.addConstrs(
+            constr_genr(tk_dpower_constrs),
+            name='enforce_max_available_tk_ramp_down_rates'
+            )
 
         return model
 
@@ -409,6 +539,10 @@ class BaseVaticModel(ABC):
     def _get_max_power_available_lists(self, model, g, t):
         return self._get_power_generated_lists(model, g, t)
 
+    @abstractmethod
+    def _get_generation_above_minimum_lists(self, model, g, t, negative=False):
+        pass
+
     def _get_initial_max_power_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_max_power_available_lists(
             model, g, t)
@@ -534,6 +668,7 @@ class BaseVaticModel(ABC):
     def __init__(self,
                  grid_template: dict, renews_data: pd.DataFrame,
                  load_data: pd.DataFrame, reserve_factor: float,
+                 sim_state: Optional[Any] = None,
                  future_status: Optional[dict[str, int]] = None) -> None:
 
         if not (renews_data.index == load_data.index).all():
@@ -595,6 +730,13 @@ class BaseVaticModel(ABC):
         self.BaseMVA = 1.
         self.BaseKV = 1e3
         self.ReferenceBusAngle = 0.
+
+        # easier to do this here than in rajan_takriti due to sim_state
+        self.FixedCommitment = tupledict({
+            (g, t): (None if sim_state is None
+                     else sim_state.get_commitments().loc[g, t])
+            for g, t in product(*self.thermal_periods)
+            })
 
         self.MinPowerOutput = {(g, t): grid_template['MinimumPowerOutput'][g]
                                for g, t in product(*self.thermal_periods)}
@@ -703,9 +845,14 @@ class BaseVaticModel(ABC):
         return (self.ThermalGenerators | self.RenewableGenerators,
                 self.TimePeriods)
 
+    @property
+    def startup_costs_indices(self):
+        return [(g, s, t) for g in self.ThermalGenerators
+                for s in self.StartupCostIndices[g] for t in self.TimePeriods]
+
     @abstractmethod
     def generate(self,
-                 sim_state, relax_binaries: bool, ptdf_options,
+                 relax_binaries: bool, ptdf_options,
                  ptdf, objective_hours: int) -> None:
         pass
 
@@ -831,11 +978,30 @@ class BaseVaticModel(ABC):
 
         return model
 
+    def piecewise_production_costs_rule(self, model, g, t):
+        if (g, t, 0) in self.prod_indices:
+            points = self.PiecewiseGenerationPoints[g]
+            costs = self.PiecewiseGenerationCosts[g]
+
+            linear_coefs = [(costs[i + 1] - costs[i])
+                            / (points[i + 1] - points[i])
+                            for i in range(len(points) - 1)]
+            linear_vars = [model._PiecewiseProduction[g, t, i]
+                           for i in range(len(points) - 1)]
+
+            linear_coefs.append(-1.)
+            linear_vars.append(model._ProductionCost[g, t])
+
+            return LinExpr(linear_coefs, linear_vars) == 0
+
+        else:
+            return model._ProductionCost[g, t] == 0
+
     def rajan_takriti_ut_dt(self, model):
         for g, t in product(*self.thermal_periods):
-            if model._FixedCommitment[g, t] is not None:
-                model._UnitOn[g, t].lb = model._FixedCommitment[g, t]
-                model._UnitOn[g, t].ub = model._FixedCommitment[g, t]
+            if self.FixedCommitment[g, t] is not None:
+                model._UnitOn[g, t].lb = self.FixedCommitment[g, t]
+                model._UnitOn[g, t].ub = self.FixedCommitment[g, t]
 
         for g in self.ThermalGenerators:
             if self.InitTimePeriodsOnline[g] != 0:
@@ -1167,6 +1333,12 @@ class VaticRucModel(BaseVaticModel):
 
     model_name = "UnitCommitment"
 
+    def _get_generation_above_minimum_lists(self, model, g, t, negative=False):
+        linear_vars = [model._PowerGeneratedAboveMinimum[g, t]]
+        linear_coefs = [-1.] if negative else [1.]
+
+        return linear_vars, linear_coefs
+
     def garver_power_avail_vars(self, model):
         model._MaximumPowerAvailableAboveMinimum = model.addVars(
             *self.thermal_periods,
@@ -1363,153 +1535,6 @@ class VaticRucModel(BaseVaticModel):
 
         return model
 
-    def damcikurt_basic_ramping(self, model):
-        # enforce_max_available_ramp_up_rates_rule #
-        t0_upower_constrs = dict()
-        tk_upower_constrs = dict()
-
-        t0_uramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and self.NominalRampUpLimit[g] < (self.MaxPowerOutput[g, t]
-                                                  - self.PowerGeneratedT0[g]))
-            }
-
-        for g, t in t0_uramp_periods:
-            power_vars = [model._MaximumPowerAvailableAboveMinimum[g, t]]
-            power_coefs = [1.]
-
-            power_vars += [model._UnitOn[g, t], model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.NominalRampUpLimit[g]]
-
-            t0_upower_constrs[g, t] = LinExpr(
-                power_coefs, power_vars) <= self.PowerGeneratedT0[g]
-
-        tk_uramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t > self.InitialTime
-                and self.NominalRampUpLimit[g] < (
-                        self.MaxPowerOutput[g, t]
-                        - self.MinPowerOutput[g, t - 1]
-                ))
-            }
-
-        for g, t in tk_uramp_periods:
-            power_vars = [model._MaximumPowerAvailableAboveMinimum[g, t]]
-            power_coefs = [1.]
-
-            power_vars += [model._UnitOn[g, t], model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            - self.MinPowerOutput[g, t - 1]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.MinPowerOutput[g, t - 1]
-                            + self.NominalRampUpLimit[g]]
-
-            power_vars += [model._MaximumPowerAvailableAboveMinimum[g, t - 1]]
-            power_coefs += [-1.]
-
-            tk_upower_constrs[g, t] = LinExpr(power_coefs, power_vars) <= 0.
-
-        model._EnforceMaxAvailableT0RampUpRates = model.addConstrs(
-            constr_genr(t0_upower_constrs),
-            name='enforce_max_available_t0_ramp_up_rates'
-            )
-        model._EnforceMaxAvailableTkRampUpRates = model.addConstrs(
-            constr_genr(tk_upower_constrs),
-            name='enforce_max_available_tk_ramp_up_rates'
-            )
-
-        # enforce_ramp_down_limits_rule #
-        t0_dpower_constrs = dict()
-        tk_dpower_constrs = dict()
-
-        t0_dramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and (self.NominalRampDownLimit[g] < (
-                            self.PowerGeneratedT0[g]
-                            - self.MinPowerOutput[g, t]
-                    )
-                     or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
-            }
-
-        tk_dramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t > self.InitialTime
-                and (self.NominalRampDownLimit[g] < (
-                            self.MaxPowerOutput[g, t - 1]
-                            - self.MinPowerOutput[g, t]
-                    )))
-
-            }
-
-        for g, t in t0_dramp_periods:
-            power_vars = [model._PowerGeneratedAboveMinimum[g, t]]
-            power_coefs = [1.]
-
-            power_vars += [model._UnitStop[g, t]]
-            power_coefs += [self.ShutdownRampLimit[g]
-                            - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
-
-            power_lhs = (self.PowerGeneratedT0[g]
-                         - (self.NominalRampDownLimit[g]
-                            + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
-
-            t0_dpower_constrs[g, t] = LinExpr(
-                power_coefs, power_vars) >= power_lhs
-
-        for g, t in tk_dramp_periods:
-            power_vars = [model._PowerGeneratedAboveMinimum[g, t]]
-            power_coefs = [1.]
-
-            power_vars += [model._UnitOn[g, t - 1], model._UnitStop[g, t]]
-            power_coefs += [self.NominalRampDownLimit[g]
-                            + self.MinPowerOutput[g, t]
-                            - self.MinPowerOutput[g, t - 1],
-                            self.ShutdownRampLimit[g]
-                            - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
-
-            power_vars += [model._MaximumPowerAvailableAboveMinimum[g, t - 1]]
-            power_coefs += [-1.]
-
-            tk_dpower_constrs[g, t] = LinExpr(power_coefs, power_vars) >= 0
-
-        model._EnforceScaledT0NominalRampDownLimits = model.addConstrs(
-            constr_genr(t0_dpower_constrs),
-            name='enforce_max_available_t0_ramp_down_rates'
-            )
-        model._EnforceScaledTkNominalRampDownLimits = model.addConstrs(
-            constr_genr(tk_dpower_constrs),
-            name='enforce_max_available_tk_ramp_down_rates'
-            )
-
-        return model
-
-    def piecewise_production_costs_rule(self, model, g, t):
-        if (g, t, 0) in self.prod_indices:
-            points = self.PiecewiseGenerationPoints[g]
-            costs = self.PiecewiseGenerationCosts[g]
-
-            linear_coefs = [(costs[i + 1] - costs[i])
-                            / (points[i + 1] - points[i])
-                            for i in range(len(points) - 1)]
-            linear_vars = [model._PiecewiseProduction[g, t, i]
-                           for i in range(len(points) - 1)]
-
-            linear_coefs.append(-1.)
-            linear_vars.append(model._ProductionCost[g, t])
-
-            return LinExpr(linear_coefs, linear_vars) == 0
-
-        else:
-            return model._ProductionCost[g, t] == 0
-
     def compute_production_costs_rule(self, model, g, t, avg_power):
         ## piecewise points for power buckets
         piecewise_points = self.PiecewiseGenerationPoints[g]
@@ -1701,7 +1726,6 @@ class VaticRucModel(BaseVaticModel):
         return model
 
     def generate(self,
-                 sim_state,
                  relax_binaries: bool, ptdf_options: dict,
                  ptdf, objective_hours: int) -> None:
         model = self._initialize_model(ptdf, ptdf_options)
@@ -1711,15 +1735,8 @@ class VaticRucModel(BaseVaticModel):
         model = self.garver_power_avail_vars(model)
         model = self.file_non_dispatchable_vars(model)
 
-        model = self.damcikurt_basic_ramping(model)
+        model = self.damcikurt_ramping(model)
         model = self.kow_production_costs_tightened(model)
-
-        # easier to do this here than in rajan_takriti due to sim_state
-        model._FixedCommitment = tupledict({
-            (g, t): None if sim_state is None else sim_state.data.generators[g]
-            for g, t in product(*self.thermal_periods)
-            })
-
         model = self.rajan_takriti_ut_dt(model)
         model = self.kow_startup_costs(model, relax_binaries)
 
@@ -1742,6 +1759,8 @@ class VaticRucModel(BaseVaticModel):
 
 class VaticScedModel(BaseVaticModel):
 
+    model_name = 'EconomicDispatch'
+
     def _get_max_power_available_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(
             model, g, t)
@@ -1751,9 +1770,9 @@ class VaticScedModel(BaseVaticModel):
 
         return linear_vars, linear_coefs
 
-    def _get_power_generated_above_minimum_lists(self, model, g, t):
+    def _get_generation_above_minimum_lists(self, model, g, t, negative=False):
         linear_vars = [model._PowerGeneratedAboveMinimum[g, t]]
-        linear_coefs = [1.]
+        linear_coefs = [-1.] if negative else [1.]
 
         linear_vars.append(model._ReserveProvided[g, t])
         linear_coefs.append(1.)
@@ -1772,7 +1791,7 @@ class VaticScedModel(BaseVaticModel):
             )
 
         model._MaximumPowerAvailableAboveMinimum = {
-            (g, t): self._get_power_generated_above_minimum_lists(model, g, t)
+            (g, t): self._get_generation_above_minimum_lists(model, g, t)
             for g, t in product(*self.thermal_periods)
             }
 
@@ -1831,9 +1850,57 @@ class VaticScedModel(BaseVaticModel):
 
         return model
 
+    def ca_production_costs(self, model):
+        model._PiecewiseProduction = model.addVars(
+            self.prod_indices,
+            lb=0., ub=[self.PiecewiseGenerationPoints[g][i + 1]
+                       - self.PiecewiseGenerationPoints[g][i]
+                       for g, t, i in self.prod_indices],
+            name='PiecewiseProduction'
+            )
+
+        model._PiecewiseProductionSum = model.addConstrs(
+            (self.piecewise_production_sum_rule(model, g, t)
+             for g, t, _ in self.prod_indices), name='PiecewiseProductionSum'
+            )
+
+        model._ProductionCost = model.addVars(
+            *self.thermal_periods, lb=-GRB.INFINITY, ub=GRB.INFINITY,
+            name='ProductionCost'
+            )
+
+        model._ProductionCostConstr = model.addConstrs(
+            (self.piecewise_production_costs_rule(model, g, t)
+             for g, t in product(*self.thermal_periods)),
+            name='ProductionCostConstr'
+            )
+
+        return model
+
+    def mlr_startup_costs(self, model, relax_binaries):
+        vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
+
+        model._delta = model.addVars(self.startup_costs_indices,
+                                     vtype=vtype, name='delta')
+
+        model._delta_eq = model.addConstrs(
+            (LinExpr([1.] * len(self.StartupCostIndices[g]) + [-1],
+                     [model._delta[g, s, t]
+                      for s in self.StartupCostIndices[g]]
+                     + [model._UnitStart[g, t]]) == 0
+
+             for g, t in product(*self.thermal_periods)),
+            name='delta_eq'
+            )
+
+        return model
+
+    def mlr_reserve_constraints(self, model):
+        return model
+
     def generate(self,
                  relax_binaries: bool, ptdf_options: dict,
-                 ptdf: dict, objective_hours: int) -> None:
+                 ptdf, objective_hours: int) -> None:
 
         for gen in self.ThermalGenerators:
             self.ShutdownRampLimit[gen] = 1. + self.MinPowerOutput[
@@ -1848,10 +1915,10 @@ class VaticScedModel(BaseVaticModel):
 
         model = self.mlr_generation_limits(model)
         model = self.damcikurt_ramping(model)
-
         model = self.ca_production_costs(model)
+
         model = self.rajan_takriti_ut_dt(model)
-        model = self.mlr_startup_costs(model)
+        model = self.mlr_startup_costs(model, relax_binaries)
 
         model = self.ptdf_power_flow(model)
         model = self.mlr_reserve_constraints(model)
