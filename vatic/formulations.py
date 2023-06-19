@@ -409,12 +409,12 @@ class BaseVaticModel(ABC):
     def _get_max_power_available_lists(self, model, g, t):
         return self._get_power_generated_lists(model, g, t)
 
-    def _get_maximum_power_available_lists(self, model, g, t):
-        linear_vars, linear_coefs = self._get_power_generated_lists(
+    def _get_initial_max_power_lists(self, model, g, t):
+        linear_vars, linear_coefs = self._get_max_power_available_lists(
             model, g, t)
 
-        linear_vars.append(model._ReserveProvided[g, t])
-        linear_coefs.append(1.)
+        linear_vars.append(model._UnitOn[g, t])
+        linear_coefs.append(-self.MaxPowerOutput[g, t])
 
         return linear_vars, linear_coefs
 
@@ -1196,12 +1196,8 @@ class VaticRucModel(BaseVaticModel):
         power_startstoplimit_constrs = dict()
 
         for g, t in product(*self.thermal_periods):
-            linear_vars, linear_coefs = self._get_max_power_available_lists(
+            linear_vars, linear_coefs = self._get_initial_max_power_lists(
                 model, g, t)
-
-            # _GET_INITIAL_MAXIMUM_POWER_AVAILABLE_UPPERBOUND_LISTS
-            linear_vars += [model._UnitOn[g, t]]
-            linear_coefs += [-self.MaxPowerOutput[g, t]]
 
             # _MLR_GENERATION_LIMITS_UPTIME_1 (tightened) #
             if self.ScaledMinUpTime[g] == 1:
@@ -1746,22 +1742,23 @@ class VaticRucModel(BaseVaticModel):
 
 class VaticScedModel(BaseVaticModel):
 
-    def _get_maximum_power_available_lists(self, model, g, t):
+    def _get_max_power_available_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(
             model, g, t)
 
         linear_vars.append(model._ReserveProvided[g, t])
         linear_coefs.append(1.)
 
-        return LinExpr(linear_coefs, linear_vars)
+        return linear_vars, linear_coefs
 
-    def _get_maximum_power_available_above_minimum_lists(self, model, g, t):
-        linear_vars, linear_coefs = self._get_maximum_power_available_lists(
-            model, g, t)
+    def _get_power_generated_above_minimum_lists(self, model, g, t):
+        linear_vars = [model._PowerGeneratedAboveMinimum[g, t]]
+        linear_coefs = [1.]
+
         linear_vars.append(model._ReserveProvided[g, t])
         linear_coefs.append(1.)
 
-        return LinExpr(linear_coefs, linear_vars)
+        return linear_vars, linear_coefs
 
     def mlr_reserve_vars(self, model):
 
@@ -1774,16 +1771,63 @@ class VaticScedModel(BaseVaticModel):
             name='ReserveProvided'
             )
 
-        model._MaximumPowerAvailable = {
-            (g, t): self._get_maximum_power_available_lists(model, g, t)
+        model._MaximumPowerAvailableAboveMinimum = {
+            (g, t): self._get_power_generated_above_minimum_lists(model, g, t)
             for g, t in product(*self.thermal_periods)
             }
 
-        model._MaximumPowerAvailableAboveMinimum = {
-            (g, t): self._get_maximum_power_available_above_minimum_lists(
+        return model
+
+    def mlr_generation_limits(self, model):
+        power_startlimit_constrs = dict()
+        power_stoplimit_constrs = dict()
+        power_startstoplimit_constrs = dict()
+
+        for g, t in product(*self.thermal_periods):
+            linear_vars, linear_coefs = self._get_initial_max_power_lists(
                 model, g, t)
-            for g, t in product(*self.thermal_periods)
-            }
+
+            start_vars = linear_vars + [model._UnitStart[g, t]]
+            start_coefs = linear_coefs + [self.MaxPowerOutput[g, t]
+                                          - self.StartupRampLimit[g]]
+
+            # _MLR_GENERATION_LIMITS_UPTIME_1 (tightened=False) #
+            if self.ScaledMinUpTime[g] == 1:
+                if t < self.NumTimePeriods:
+                    stop_vars = linear_vars + [model._UnitStop[g, t + 1]]
+                    stop_coefs = linear_coefs + [
+                        self.MaxPowerOutput[g, t] - self.ShutdownRampLimit[g]]
+
+                    power_stoplimit_constrs[g, t] = LinExpr(
+                        stop_coefs, stop_vars) <= 0
+
+                power_startlimit_constrs[g, t] = LinExpr(
+                    start_coefs, start_vars) <= 0
+
+            # _MLR_generation_limits (w/o uptime-1 generators) #
+            else:
+                if t < self.NumTimePeriods:
+                    linear_vars += [model._UnitStop[g, t + 1]]
+                    linear_coefs += [self.MaxPowerOutput[g, t]
+                                     - self.ShutdownRampLimit[g]]
+
+                power_startstoplimit_constrs[g, t] = LinExpr(
+                    linear_coefs, linear_vars) <= 0
+
+        model._power_limit_from_start = model.addConstrs(
+            constr_genr(power_startlimit_constrs),
+            name='_power_limit_from_start_mlr'
+            )
+
+        model._power_limit_from_stop = model.addConstrs(
+            constr_genr(power_stoplimit_constrs),
+            name='_power_limit_from_stop_mlr'
+            )
+
+        model._power_limit_from_startstop = model.addConstrs(
+            constr_genr(power_startstoplimit_constrs),
+            name='_power_limit_from_startstop_mlr'
+            )
 
         return model
 
