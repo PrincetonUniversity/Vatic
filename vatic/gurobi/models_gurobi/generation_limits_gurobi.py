@@ -1,13 +1,8 @@
+import pandas as pd
 from gurobipy import LinExpr, quicksum
 ##LinExpr works faster than quicksum
 
 component_name = 'generation_limits'
-
-def _get_initial_maximum_power_available_upperbound_lists(m,g,t):
-    linear_vars, linear_coefs = m._get_maximum_power_available_lists(m,g,t)
-    linear_vars.append(m._UnitOn[g,t])
-    linear_coefs.append(-m._MaximumPowerOutput[g,t])
-    return linear_vars, linear_coefs
 
 ## generate new time periods by looking forward
 def _get_look_forward_periods(m,g,t,UT_end):
@@ -185,7 +180,9 @@ def _KOW_generation_limits(model):
         for i in range(0, min(time_RU, UT-1, t-m._InitialTime)+1):
             linear_vars.append(Start[g,t-i])
             linear_coefs.append(Pmax - SU[g,t-i] - sum(RU[g,t-j] for j in range(1,i+1)))
+
         return LinExpr(linear_coefs, linear_vars) <= 0
+
         '''
         return m._MaximumPowerAvailable[g,t] <= (m._MaximumPowerOutput[g,t]) *m._UnitOn[g,t] \
                                               - sum((m._MaximumPowerOutput[g,t] - m._ScaledStartupRampLimit[g,t-i] - sum(m._ScaledNominalRampUpLimit[g,t-j] for j in range(1,i+1)))*m._UnitStart[g,t-i] \

@@ -1,5 +1,3 @@
-import numpy as np
-
 #  ___________________________________________________________________________
 #
 #  EGRET: Electrical Grid Research and Engineering Tools
@@ -13,44 +11,66 @@ import numpy as np
 This module contains several helper functions and classes that are useful when
 modifying the data dictionary
 """
-import abc
-import pickle
+
+from abc import ABC, abstractmethod
 import numpy as np
-import scipy.sparse as sp
 import egret.model_library.transmission.tx_calc as tx_calc
 
-from egret.model_library.defn import BasePointType, ApproximationType
 from egret.common.log import logger
 from math import radians
 from pyomo.environ import value
+from enum import Enum
 
 
-class _PTDFManagerBase(abc.ABC):
-    @abc.abstractmethod
+class FlowType(Enum):
+    CURRENT = 1
+    POWER = 2
+
+class CoordinateType(Enum):
+    POLAR = 1
+    RECTANGULAR = 2
+
+class ApproximationType(Enum):
+    BTHETA = 1
+    BTHETA_LOSSES = 2
+    PTDF = 3
+    PTDF_LOSSES = 4
+
+class BasePointType(Enum):
+    FLATSTART = 1
+    SOLUTION = 2
+
+class RelaxationType(Enum):
+    NONE = 1
+    SOC = 2
+
+
+class _PTDFManagerBase(ABC):
+    @abstractmethod
     def get_branch_ptdf_iterator(self, branch_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_branch_ptdf_abs_max(self, branch_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_branch_const(self, branch_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_interface_const(self, interface_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_interface_ptdf_abs_max(self, interface_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_interface_ptdf_iterator(self, interface_name):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def calculate_PFV(self, mb):
         pass
 

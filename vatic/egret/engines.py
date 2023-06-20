@@ -15,12 +15,15 @@ from gurobipy import GRB
 from pyomo.environ import SolverFactory
 
 from .data_providers import PickleProvider
-from .model_data import VaticModelData
+from .formulations import VaticRucModel
 from .simulation_state import VaticSimulationState, VaticStateWithScedOffset
+from .simulation_state_gb import VaticSimulationStateGB, VaticStateWithScedOffsetGB
+
 from .models import UCModel
 from .stats_manager import StatsManager
 from .time_manager import VaticTimeManager, VaticTime
 from .ptdf_manager import VaticPTDFManager
+from .ptdf_manager_gb import VaticPTDFManagerGB
 
 from .main_model_functions_gurobi.solve_model_gurobi import solve_model
 from .models_gurobi import basic_objective
@@ -204,8 +207,12 @@ class Simulator:
 
         self._simulation_state = VaticSimulationState(
             ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
+        self._simulation_state_gb = VaticSimulationStateGB(
+            ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
+
         self._prior_sced_instance = None
         self._ptdf_manager = VaticPTDFManager()
+        self._ptdf_manager_gb = VaticPTDFManagerGB()
 
         self._time_manager = VaticTimeManager(
             self._data_provider.first_day, self._data_provider.final_day,
@@ -224,6 +231,8 @@ class Simulator:
         self.sced_model = UCModel(mipgap, output_solver_logs=verbosity > 1,
                                   symbolic_solver_labels=True,
                                   **self.sced_formulations)
+
+        self.times = [0, 0, 0, 0, 0]
 
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
@@ -267,6 +276,8 @@ class Simulator:
         print("Real-time sim time: {:.2f} seconds".format(
             self.simulation_times['Sim']))
 
+        print(" // ".join([format(t, '.2f') for t in self.times]))
+
         return self._stats_manager.save_output(sim_time)
 
     def initialize_oracle(self) -> None:
@@ -285,19 +296,25 @@ class Simulator:
             sim_actuals = self.create_simulation_actuals(first_step)
 
             with open(self.init_ruc_file, 'rb') as f:
-                ruc = pickle.load(f)
+                ruc, ruc_gb = pickle.load(f)
 
         # ...otherwise, solve the initial RUC
         else:
-            sim_actuals, ruc = self.solve_ruc(first_step)
+            sim_actuals, ruc, ruc_gb = self.solve_ruc(first_step)
 
         # if an initial RUC file has been given and it doesn't already exist
         # then save the solved RUC for future use
         if self.init_ruc_file and not self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'wb') as f:
-                pickle.dump(ruc, f, protocol=-1)
+                pickle.dump((ruc, ruc_gb), f, protocol=-1)
 
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
+
+        self._simulation_state_gb.apply_initial_ruc(
+            ruc_gb, self._data_provider.sim_actuals(
+                first_step, self._data_provider.ruc_horizon)
+            )
+
         self._stats_manager.collect_ruc_solution(first_step, ruc)
 
     def call_planning_oracle(self) -> None:
@@ -401,7 +418,23 @@ class Simulator:
             self,
             time_step: VaticTime,
             sim_state_for_ruc: Optional[VaticSimulationState] = None
-            ) -> tuple[VaticModelData, VaticModelData]:
+            ) -> tuple[VaticRucModel, VaticRucModel]:
+
+        ruc_model_gb = self._data_provider.create_ruc(
+            time_step, sim_state_for_ruc)
+
+        ruc_model_gb.generate(
+            relax_binaries=False,
+            ptdf_options=self._ptdf_manager_gb.ruc_ptdf_options,
+            ptdf=self._ptdf_manager_gb.ptdf_matrix,
+            objective_hours=self._data_provider.ruc_horizon
+            )
+
+        ruc_model_gb.solve(relaxed=False, mipgap=self.mipgap,
+                           threads=self.solver_options['Threads'],
+                           outputflag=0)
+
+        self._ptdf_manager_gb.ptdf_matrix = ruc_model_gb.PTDF
 
         ruc_model_data = self._data_provider.create_deterministic_ruc(
             time_step, sim_state_for_ruc)
@@ -434,6 +467,7 @@ class Simulator:
         #     raise
 
         self._ptdf_manager.update_active(ruc_plan)
+        self._ptdf_manager_gb.update_active(ruc_model_gb)
         # TODO: add the reporting stuff in
         #  egret_plugin._solve_deterministic_ruc
 
@@ -449,12 +483,29 @@ class Simulator:
             print("\nExtracting scenario to simulate")
 
         model.dispose()
+        ruc_model_gb.model.dispose()
 
-        return self.create_simulation_actuals(time_step), ruc_plan
+        return self.create_simulation_actuals(time_step), ruc_plan, ruc_model_gb
 
     def solve_sced(self,
                    hours_in_objective: int,
                    sced_horizon: int) -> VaticModelData:
+
+        sced_model_gb = self._data_provider.create_sced(
+            self._current_timestep, self._simulation_state_gb,
+            sced_horizon=sced_horizon
+            )
+
+        sced_model_gb.generate(
+            relax_binaries=False,
+            ptdf_options=self._ptdf_manager_gb.sced_ptdf_options,
+            ptdf=self._ptdf_manager_gb.ptdf_matrix,
+            objective_hours=hours_in_objective
+            )
+
+        sced_model_gb.solve(relaxed=False, mipgap=self.mipgap,
+                            threads=self.solver_options['Threads'],
+                            outputflag=0)
 
         sced_model_data = self._data_provider.create_sced_instance(
             self._simulation_state, sced_horizon=sced_horizon)
@@ -467,11 +518,14 @@ class Simulator:
         else:
             ptdf_options = self._ptdf_manager.sced_ptdf_options
 
-        model = sced_model_data.create_sced_model(
+        model, *times = sced_model_data.create_sced_model(
             relax_binaries=False, ptdf_options=ptdf_options,
             ptdf_matrix_dict=self._ptdf_manager.PTDF_matrix_dict,
             objective_hours=hours_in_objective,
             )
+
+        for i, val in enumerate(times):
+            self.times[i] += val
 
         # update in case lines were taken out
         sced_results = solve_model(model, relaxed=False, mipgap=self.mipgap,
@@ -625,7 +679,7 @@ class Simulator:
                                         self._simulation_state.ruc_delay)
 
     def create_simulation_actuals(self,
-                                  time_step: VaticTime) -> VaticModelData:
+                                  time_step: VaticTime) -> VaticRucModel:
         """
         merge of EgretEngine.create_simulation_actuals
              and egret_plugin.create_simulation_actuals

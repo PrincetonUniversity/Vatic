@@ -559,7 +559,7 @@ def load_base_params(model: gp.Model,
     def startup_curve_init_rule(m, g):
         startup_curve = thermal_gens[g].get('startup_curve')
 
-        if startup_curve is None:
+        if not startup_curve:
             return ()
 
         min_down_time = int(math.ceil(m._MinimumDownTime[g]
@@ -569,7 +569,7 @@ def load_base_params(model: gp.Model,
             logger.warn(
                 "Truncating startup_curve longer than scaled minimum down "
                 "time {} for generator {}".format(min_down_time, g)
-            )
+                )
 
         return startup_curve[0:min_down_time]
 
@@ -579,7 +579,7 @@ def load_base_params(model: gp.Model,
     def shutdown_curve_init_rule(m, g):
         shutdown_curve = thermal_gens[g].get('shutdown_curve')
 
-        if shutdown_curve is None:
+        if not shutdown_curve:
             return ()
 
         min_down_time = int(math.ceil(m._MinimumDownTime[g]

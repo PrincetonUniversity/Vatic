@@ -945,13 +945,14 @@ class BaseVaticModel(ABC):
         pl_dict = dict()
 
         for t in self.TimePeriods:
-            pfv, pfv_i, va = self.PTDF.calculate_PFV(
-                self.model._TransmissionBlock[t])
+            cur_block = self.model._TransmissionBlock[t]
+            cur_ptdf = cur_block._PTDF
+            pfv, pfv_i, va = cur_ptdf.calculate_PFV(cur_block)
 
-            for i, br in enumerate(self.PTDF.branches_keys):
+            for i, br in enumerate(cur_ptdf.branches_keys):
                 flows[t, br] = pfv[i]
 
-            for i, bs in enumerate(self.PTDF.buses_keys):
+            for i, bs in enumerate(cur_ptdf.buses_keys):
                 voltage_angles[t, bs] = va[i]
 
                 if (bs, t) in self.model._LoadGenerateMismatch:
@@ -1253,6 +1254,9 @@ class BaseVaticModel(ABC):
                 )
 
         block._PTDF = self.PTDF
+
+        if isinstance(block._PTDF, dict):
+            import pdb; pdb.set_trace()
 
         return parent_model
 
@@ -1965,7 +1969,7 @@ class VaticScedModel(BaseVaticModel):
             self.ShutdownRampLimit[gen] = 1. + self.MinPowerOutput[
                 gen, self.InitialTime]
 
-        model = self._initialize_model(ptdf_options, ptdf)
+        model = self._initialize_model(ptdf, ptdf_options)
 
         model = self.garver_3bin_vars(model, relax_binaries)
         model = self.garver_power_vars(model)

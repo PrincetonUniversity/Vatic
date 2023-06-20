@@ -113,7 +113,6 @@ def MLR_startup_costs(model, add_startup_cost_var=True):
     return model
 
 
-
 def KOW_startup_costs(model, add_startup_cost_var=True):
     '''
     Start-up cost formulation "Match" from

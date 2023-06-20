@@ -117,6 +117,8 @@ class VaticPTDFManager:
                     misses += 1
                 self._active_interface_constraints[intrfce] = 0
 
+        print(misses)
+
         if misses == 0:
             self._calls_since_last_miss += 1
 

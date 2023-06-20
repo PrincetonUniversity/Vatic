@@ -165,8 +165,10 @@ def _KOW_production_costs(model, tightened=False):
     _basic_production_costs_vars(model)
 
     def piecewise_production_limits_rule(m, g, t, i):
-        ### these can always be tightened based on SU/SD, regardless of the ramping/aggregation
-        ### since PowerGenerationPiecewisePoints are scaled to MinimumPowerOutput, we need to scale Startup/Shutdown ramps to it as well
+        # these can always be tightened based on SU/SD, regardless of the
+        # ramping/aggregation since PowerGenerationPiecewisePoints are scaled
+        # to MinimumPowerOutput, we need to scale Startup/Shutdown ramps to it
+        # as well
         upper = m._PowerGenerationPiecewisePoints[g, t][i + 1]
         lower = m._PowerGenerationPiecewisePoints[g, t][i]
         SU = m._ScaledStartupRampLimit[g, t]

@@ -13,17 +13,22 @@ generation_limits_w_startup_shutdown = ['MLR_generation_limits',
 def _ramp_up_not_needed(m,g,t):
     if m._generation_limits not in generation_limits_w_startup_shutdown:
         return False
+
     if t == m._InitialTime:
         ## no need for ramping constraints if the generator is off, and
         ## we're enforcing startup/shutdown elsewhere
         if not m._UnitOnT0[g]:
             return True
+
         if m._ScaledNominalRampUpLimit[g,t] >= (m._MaximumPowerOutput[g,t] - m._PowerGeneratedT0[g]):
             ## the generator can get all the way to max at the first time period
             return True
+
         return False
+
     if m._ScaledNominalRampUpLimit[g,t] >= (m._MaximumPowerOutput[g,t] - m._MinimumPowerOutput[g,t-1]):
         return True
+
     return False
 
 def _ramp_down_not_needed(m,g,t):

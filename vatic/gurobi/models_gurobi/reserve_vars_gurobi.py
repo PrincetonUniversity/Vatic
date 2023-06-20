@@ -27,8 +27,8 @@ def check_reserve_requirement(model):
 
 def garver_power_avail_vars(model):
     '''
-    These never appear in Garver's paper, but they are an adaption of the 
-    idea from the Carrion-Arroyo paper for maximum power available 
+    These never appear in Garver's paper, but they are an adaption of the
+    idea from the Carrion-Arroyo paper for maximum power available
     to consider maximum power available over minimum
     '''
 

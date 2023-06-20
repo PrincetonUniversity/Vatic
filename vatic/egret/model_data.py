@@ -129,7 +129,7 @@ class VaticModelData:
         model = gp.Model("UnitCommitment")
 
         # _model_data in model is egret object, while model_data is vatic object
-        model._model_data = self.clone_in_service().to_egret()
+        model._model_data = self.to_egret()
         model._fuel_supply = None
         model._fuel_consumption = None
         model._security_constraints = None
@@ -187,10 +187,17 @@ class VaticModelData:
                          relax_binaries: bool, ptdf_options: dict,
                          ptdf_matrix_dict: dict,
                          objective_hours: int) -> gp.Model:
+        import time
+
         model = gp.Model("EconomicDispatch")
 
         # _model_data in model is egret object, while model_data is vatic object
-        model._model_data = self.clone_in_service().to_egret()
+        t0 = time.time()
+
+        model._model_data = self.to_egret()
+
+        t1 = time.time()
+
         model._fuel_supply = None
         model._fuel_consumption = None
         model._security_constraints = None
@@ -218,6 +225,10 @@ class VaticModelData:
         # Set up parameters
         model = default_params(model, self)
 
+        #test = {g for g, t in model._MaximumPowerOutput}
+
+        #import pdb; pdb.set_trace()
+
         # Set up variables
         model = garver_3bin_vars(model)
         model = garver_power_vars(model)
@@ -227,21 +238,32 @@ class VaticModelData:
         model = MLR_generation_limits(model)
         model = damcikurt_ramping(model)
 
+        t2 = time.time()
+
         model = CA_production_costs(model)
         model = rajan_takriti_UT_DT(model)
         model = MLR_startup_costs(model)
 
         model = storage_services(model)
         model = ancillary_services(model)
+
+        t3 = time.time()
+
         model = ptdf_power_flow(model)
+
+        t4 = time.time()
+
         model = MLR_reserve_constraints(model)
+
 
         # set up objective
         model = basic_objective(model)
         if objective_hours:
             model = self._create_zero_cost_hours(model, objective_hours)
 
-        return model
+        t5 = time.time()
+
+        return model, t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4
 
     @staticmethod
     def _create_zero_cost_hours(model: gp.Model,
