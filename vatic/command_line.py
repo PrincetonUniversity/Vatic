@@ -6,7 +6,7 @@ from pathlib import Path
 from ast import literal_eval
 
 from .data import load_input
-from .engines import Simulator
+from .egret.engines import Simulator as EgretSimulator
 
 
 def run_deterministic():
@@ -180,7 +180,7 @@ def run_deterministic():
     else:
         renew_costs = args.renew_costs
 
-    Simulator(
+    EgretSimulator(
         template_data, gen_data, load_data, out_dir=out_dir,
         start_date=args.start_date, num_days=args.num_days, solver=args.solver,
         solver_options=solver_args, run_lmps=args.lmps, mipgap=args.ruc_mipgap,

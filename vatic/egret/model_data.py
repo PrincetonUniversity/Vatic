@@ -5,32 +5,23 @@ from __future__ import annotations
 import dill as pickle
 from pathlib import Path
 from copy import copy, deepcopy
-from typing import Self, Any, Optional, Iterable, Iterator
-
-import gurobipy as gp
 from egret.data.model_data import ModelData as EgretModel
-import egret.common.lazy_ptdf_utils as lpu
 
-from .models_gurobi import (
-    default_params, garver_3bin_vars, garver_power_vars,
-    garver_power_avail_vars, MLR_reserve_vars, file_non_dispatchable_vars,
-    pan_guan_gentile_KOW_generation_limits, MLR_generation_limits,
-    damcikurt_ramping, KOW_production_costs_tightened, CA_production_costs,
-    rajan_takriti_UT_DT, KOW_startup_costs, MLR_startup_costs,
-    storage_services, ancillary_services, ptdf_power_flow,
-    CA_reserve_constraints, MLR_reserve_constraints, basic_objective
-    )
+from typing import TypeVar, Any, Optional, Union, Iterable, Iterator, Self
+VModelData = TypeVar('VModelData', bound='VaticModelData')
 
 
-class ModelDataError(Exception):
+class ModelError(Exception):
     pass
 
 
-class VaticModelData:
+class VaticModelData(object):
     """Simplified version of egret.data.model_data.ModelData"""
 
-    def __init__(self,
-                 source: Optional[Self | dict | str | Path] = None) -> None:
+    def __init__(
+            self,
+            source: Optional[Union[VModelData, dict, Path, str]] = None
+            ) -> None:
 
         if isinstance(source, dict):
             self._data = deepcopy(source)
@@ -40,7 +31,8 @@ class VaticModelData:
 
         elif isinstance(source, (str, Path)):
             if not Path(source).is_file():
-                raise ModelDataError(f"Missing model input file `{source}`!")
+                raise ModelError(
+                    "Cannot find model input file `{}`!".format(source))
 
             with open(source, 'rb') as f:
                 self._data = pickle.load(f)
@@ -57,7 +49,7 @@ class VaticModelData:
     def __deepcopy__(self, memo):
         return VaticModelData(deepcopy(self._data, memo))
 
-    def clone_in_service(self) -> Self:
+    def clone_in_service(self) -> VModelData:
         """Returns a version of this grid without out-of-service elements."""
 
         new_dict = {'system': self._data['system'], 'elements': dict()}
@@ -88,8 +80,8 @@ class VaticModelData:
 
         """
         if element_type not in self._data['elements']:
-            raise ModelDataError(f"This model does not include the element "
-                                 f"type `{element_type}`!")
+            raise ModelError("This model does not include the element "
+                             "type `{}`!".format(element_type))
 
         for name, elem in self._data['elements'][element_type].items():
             if all(k in elem and elem[k] == v
@@ -107,8 +99,8 @@ class VaticModelData:
 
         """
         if element_type not in self._data['elements']:
-            raise ModelDataError(f"This model does not include the element "
-                                 f"type `{element_type}`!")
+            raise ModelError("This model does not include the element "
+                             "type `{}`!".format(element_type))
 
         attr_dict = {'names': list()}
         for name, elem in self.elements(element_type, **element_args):
@@ -122,208 +114,14 @@ class VaticModelData:
 
         return attr_dict
 
-    def create_ruc_model(self,
-                         relax_binaries: bool, ptdf_options: dict,
-                         ptdf_matrix_dict: dict,
-                         objective_hours: int) -> gp.Model:
-        model = gp.Model("UnitCommitment")
-
-        # _model_data in model is egret object, while model_data is vatic object
-        model._model_data = self.to_egret()
-        model._fuel_supply = None
-        model._fuel_consumption = None
-        model._security_constraints = None
-
-        # Set up attributes under the specific tighten unit commitment model
-        # munge PTDF options if necessary
-        model._power_balance = 'ptdf_power_flow'
-        if model._power_balance == 'ptdf_power_flow':
-            _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
-
-            baseMVA = self.get_system_attr('baseMVA')
-            lpu.check_and_scale_ptdf_options(_ptdf_options, baseMVA)
-
-            model._ptdf_options = _ptdf_options
-
-            if ptdf_matrix_dict is not None:
-                model._PTDFs = ptdf_matrix_dict
-            else:
-                model._PTDFs = {}
-
-        # enforce time 1 ramp rates, relax binaries
-        model._enforce_t1_ramp_rates = True
-        model._relax_binaries = relax_binaries
-
-        # Set up parameters
-        model = default_params(model, self)
-
-        # Set up variables
-        model = garver_3bin_vars(model)
-        model = garver_power_vars(model)
-        model = garver_power_avail_vars(model)
-        model = file_non_dispatchable_vars(model)
-
-        # Set up constraints
-        model = pan_guan_gentile_KOW_generation_limits(model)
-        model = damcikurt_ramping(model)
-
-        model = KOW_production_costs_tightened(model)
-        model = rajan_takriti_UT_DT(model)
-        model = KOW_startup_costs(model)
-
-        model = storage_services(model)
-        model = ancillary_services(model)
-        model = ptdf_power_flow(model)
-        model = CA_reserve_constraints(model)
-
-        # set up objective
-        model = basic_objective(model)
-        if objective_hours:
-            model = self._create_zero_cost_hours(model, objective_hours)
-
-        return model
-
-    def create_sced_model(self,
-                         relax_binaries: bool, ptdf_options: dict,
-                         ptdf_matrix_dict: dict,
-                         objective_hours: int) -> gp.Model:
-        import time
-
-        model = gp.Model("EconomicDispatch")
-
-        # _model_data in model is egret object, while model_data is vatic object
-        t0 = time.time()
-
-        model._model_data = self.to_egret()
-
-        t1 = time.time()
-
-        model._fuel_supply = None
-        model._fuel_consumption = None
-        model._security_constraints = None
-
-        # Set up attributes under the specific tighten unit commitment model
-        # munge PTDF options if necessary
-        model._power_balance = 'ptdf_power_flow'
-        if model._power_balance == 'ptdf_power_flow':
-            _ptdf_options = lpu.populate_default_ptdf_options(ptdf_options)
-
-            baseMVA = self.get_system_attr('baseMVA')
-            lpu.check_and_scale_ptdf_options(_ptdf_options, baseMVA)
-
-            model._ptdf_options = _ptdf_options
-
-            if ptdf_matrix_dict is not None:
-                model._PTDFs = ptdf_matrix_dict
-            else:
-                model._PTDFs = {}
-
-        # enforce time 1 ramp rates, relax binaries
-        model._enforce_t1_ramp_rates = True
-        model._relax_binaries = relax_binaries
-
-        # Set up parameters
-        model = default_params(model, self)
-
-        #test = {g for g, t in model._MaximumPowerOutput}
-
-        #import pdb; pdb.set_trace()
-
-        # Set up variables
-        model = garver_3bin_vars(model)
-        model = garver_power_vars(model)
-        model = MLR_reserve_vars(model)
-        model = file_non_dispatchable_vars(model)
-
-        model = MLR_generation_limits(model)
-        model = damcikurt_ramping(model)
-
-        t2 = time.time()
-
-        model = CA_production_costs(model)
-        model = rajan_takriti_UT_DT(model)
-        model = MLR_startup_costs(model)
-
-        model = storage_services(model)
-        model = ancillary_services(model)
-
-        t3 = time.time()
-
-        model = ptdf_power_flow(model)
-
-        t4 = time.time()
-
-        model = MLR_reserve_constraints(model)
-
-
-        # set up objective
-        model = basic_objective(model)
-        if objective_hours:
-            model = self._create_zero_cost_hours(model, objective_hours)
-
-        t5 = time.time()
-
-        return model, t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4
-
-    @staticmethod
-    def _create_zero_cost_hours(model: gp.Model,
-                                objective_hours: int) -> gp.Model:
-        # Need to Deep Copy of Model Attributes so the Original Attribute
-        # does not get removed
-        zero_cost_hours = model._TimePeriods.copy()
-
-        for i, t in enumerate(model._TimePeriods):
-            if i < objective_hours:
-                zero_cost_hours.remove(t)
-            else:
-                break
-
-        cost_gens = {g for g, _ in model._ProductionCost}
-        for t in zero_cost_hours:
-            for g in cost_gens:
-                model.remove(model._ProductionCostConstr[g, t])
-                model._ProductionCost[g, t].lb = 0.
-                model._ProductionCost[g, t].ub = 0.
-
-            for g in model._DualFuelGenerators:
-                constr = model._DualFuelProductionCost[g, t]
-                constr.rhs = 0
-                constr.sense = '='
-
-            if model._regulation_service:
-                for g in model._AGC_Generators:
-                    constr = model._RegulationCostGeneration[g, t]
-                    constr.rhs = 0
-                    constr.sense = '='
-
-            if model._spinning_reserve:
-                for g in model._ThermalGenerators:
-                    constr = model._SpinningReserveCostGeneration[g, t]
-                    constr.rhs = 0
-                    constr.sense = '='
-
-            if model._non_spinning_reserve:
-                for g in model._ThermalGenerators:
-                    constr = model._NonSpinningReserveCostGeneration[g, t]
-                    constr.rhs = 0
-                    constr.sense = '='
-
-            if model._supplemental_reserve:
-                for g in model.ThermalGenerators:
-                    constr = model._SupplementalReserveCostGeneration[g, t]
-                    constr.rhs = 0
-                    constr.sense = '='
-
-        return model
-
     def get_system_attr(self, attr: str, default: Optional[Any] = None) -> Any:
         if attr in self._data['system']:
             return self._data['system'][attr]
 
         # throw error if the attribute is missing and no default value is given
         elif default is None:
-            raise ModelDataError(f"This model does not include the "
-                                 f"system-level attribute `{attr}`!")
+            raise ModelError("This model does not include the system-level "
+                             "attribute `{}`!".format(attr))
 
         else:
             return default
@@ -375,8 +173,8 @@ class VaticModelData:
         else:
             for element_type in element_types:
                 if element_type not in self._data['elements']:
-                    raise ModelDataError(f"This model does not include the "
-                                         f"element type `{element_type}`!")
+                    raise ModelError("This model does not include the element "
+                                     "type `{}`!".format(element_type))
 
         for element_type in element_types:
             for name, elem in self.elements(element_type, **element_args):
@@ -413,24 +211,23 @@ class VaticModelData:
                             e.g. generator_type='thermal' in_service=False
 
         """
-        for k, elem in other.elements(element_type, **element_args):
-            if k in self._data['elements'][element_type]:
+        for name, elem in other.elements(element_type, **element_args):
+            if name in self._data['elements'][element_type]:
                 if attrs:
                     for attr in attrs:
-                        self._data['elements'][element_type][k][attr] \
+                        self._data['elements'][element_type][name][attr] \
                             = deepcopy(elem[attr])
 
                 else:
-                    self._data['elements'][element_type][k] = deepcopy(elem)
+                    self._data['elements'][element_type][name] = deepcopy(elem)
 
             elif strict_mode:
-                raise ModelDataError(
-                    f"Could not copy from other VaticModelData object which "
-                    f"contains the missing element `{k}`!"
-                    )
+                raise ModelError("Could not copy from other VaticModelData "
+                                 "object which contains the missing "
+                                 "element `{}`!".format(name))
 
     def copy_forecastables(self,
-                           other: Self,
+                           other: VModelData,
                            time_index: int, other_time_index: int) -> None:
         """Replaces forecastable values with those from another model data.
 
@@ -672,8 +469,8 @@ class VaticModelData:
             return gen_dict['commitment']['values'][0] > 0
 
         else:
-            raise ModelDataError(f"Cannot find commitment status "
-                                 f"for generator `{gen}`!")
+            raise ModelError("Cannot find commitment status "
+                             "for generator `{}`!".format(gen))
 
     def was_generator_on(self, gen: str) -> bool:
         return self._data['elements']['generator'][gen]['initial_status'] > 0

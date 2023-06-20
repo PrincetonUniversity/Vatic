@@ -10,11 +10,9 @@ import pandas as pd
 import math
 from typing import Optional
 
-from .formulations import VaticRucModel, VaticScedModel
+from .model_data import VaticModelData
 from .time_manager import VaticTime
 from .simulation_state import VaticSimulationState
-from .simulation_state_gb import VaticSimulationStateGB
-from .model_data import VaticModelData
 
 
 class ProviderError(Exception):
@@ -67,10 +65,9 @@ class PickleProvider:
             raise ProviderError("The generator and the bus demand datasets "
                                 "have inconsistent time points!")
 
+        self.template = template_data
         self.gen_data = gen_data.sort_index().round(8)
         self.load_data = load_data.sort_index()
-        self.template = template_data
-        self.template['NumTimePeriods'] = ruc_horizon
 
         self._time_period_mins = 60
         self._load_mismatch_cost = load_shed_penalty
@@ -209,11 +206,9 @@ class PickleProvider:
 
         """
         if day < self.first_day:
-            raise ValueError(f"Cannot get model for date `{day}` "
-                             "before the first day!")
+            day = self.first_day
         elif day > self.final_day:
-            raise ValueError(f"Cannot get model for date `{day}` "
-                             "after the final day!")
+            day = self.final_day
 
         # get a model with empty timeseries and the model with initial states
         new_model = self._get_initial_model(num_time_steps,
@@ -336,130 +331,6 @@ class PickleProvider:
 
         return new_model
 
-    def create_ruc(
-            self,
-            time_step: VaticTime,
-            current_state: VaticSimulationState | None = None,
-            copy_first_day: bool = False
-            ) -> VaticRucModel:
-        """Generates a Reliability Unit Commitment model.
-
-        This a merge of Prescient's EgretEngine.create_deterministic_ruc and
-        egret_plugin.create_deterministic_ruc.
-
-        Args
-        ----
-            time_step   Which time point to pull data from.
-            current_state   If given, a simulation state used to get initial
-                            states for the generators, which will otherwise be
-                            pulled from the input datasets.
-
-        """
-        forecast_request_count = 24
-        if not copy_first_day:
-            forecast_request_count = self.ruc_horizon
-
-        start_hour = time_step.when.hour
-        start_day = time_step.when.date()
-        assert (time_step.when.minute == 0)
-        assert (time_step.when.second == 0)
-
-        step_delta = timedelta(minutes=self.data_freq)
-        start_dt = pd.Timestamp(time_step.when, tz='utc')
-        ruc_times = list()
-
-        for step_time in pd.date_range(
-                start_dt, periods=forecast_request_count, freq='H'):
-            step_day = step_time.date()
-
-            # if we cross midnight and we didn't start at midnight, we start
-            # pulling data from the next day
-            if step_day != start_day and start_hour != 0:
-                ruc_times += [step_time]
-
-            elif step_day > self.final_day:
-                ruc_times += [step_time - pd.Timedelta(days=1)]
-            else:
-                ruc_times += [step_time]
-
-        if not all(pd.DatetimeIndex(ruc_times).isin(self.gen_data.index)):
-            raise ProviderError(f"Cannot create model; missing data "
-                                f"in renewable outputs!")
-
-        if not all(pd.DatetimeIndex(ruc_times).isin(self.load_data.index)):
-            raise ProviderError(f"Cannot create model; missing data "
-                                f"in load demands!")
-
-        # get the data for this date from the input datasets
-        use_gen = self.gen_data.loc[ruc_times, 'fcst']
-        use_load = self.load_data.loc[ruc_times, 'fcst']
-
-        # make some near-term forecasts more accurate if necessary
-        if self._ruc_prescience_hour > self._ruc_delay + 1:
-            improved_hour_count = self._ruc_prescience_hour - self._ruc_delay
-            improved_hour_count -= 1
-
-            for fcst_key, fcst_vals in ruc_model.get_forecastables():
-                for t in range(improved_hour_count):
-                    forecast_portion = (self._ruc_delay + t)
-                    forecast_portion /= self._ruc_prescience_hour
-                    actuals_portion = 1 - forecast_portion
-                    actl_val = current_state.get_future_actuals(fcst_key)[t]
-
-                    fcst_vals[t] *= forecast_portion
-                    fcst_vals[t] += actuals_portion * actl_val
-
-        # copy from the first 24 hours to the second 24 hours if necessary
-        if copy_first_day:
-            for t in range(24, self.ruc_horizon):
-                vals[t] = vals[t - 24]
-
-        ruc_model = VaticRucModel(self.template, use_gen, use_load,
-                                  self._reserve_factor,
-                                  sim_state=current_state)
-
-        # TODO: add more reporting
-        if self._output_ruc_initial_conditions:
-            tgens = dict(ruc_model.elements('generator',
-                                            generator_type='thermal'))
-            gen_label_size = max((len(gen) for gen in tgens), default=0) + 1
-
-            print("\nInitial generator conditions (gen-name t0-unit-on"
-                  " t0-unit-on-state t0-power-generated):")
-
-            for gen, gen_data in tgens.items():
-                print(' '.join([
-                    format(gen, '{}s'.format(gen_label_size)),
-                    format(str(int(gen_data['initial_status'] > 0)), '5s'),
-                    format(gen_data['initial_status'], '7d'),
-                    format(gen_data['initial_p_output'], '12.2f')
-                    ]))
-
-        return ruc_model
-
-    def sim_actuals(self,
-                    start_time: VaticTime, num_steps: int) -> pd.DataFrame:
-        start_dt = pd.Timestamp(start_time.when, tz='utc')
-
-        start_hour = start_time.when.hour
-        start_day = start_time.when.date()
-        use_times = list()
-
-        for step_time in pd.date_range(start_dt, periods=num_steps, freq='H'):
-            step_day = step_time.date()
-
-            # if we cross midnight and we didn't start at midnight, we start
-            # pulling data from the next day
-            if step_day != start_day and start_hour != 0:
-                use_times += [step_time]
-
-            elif step_day > self.final_day:
-                use_times += [step_time - pd.Timedelta(days=1)]
-            else:
-                use_times += [step_time]
-
-        return self.forecastables(use_actuals=True, time_steps=use_times)
-
     def create_deterministic_ruc(
             self,
             time_step: VaticTime,
@@ -533,125 +404,6 @@ class PickleProvider:
                     ]))
 
         return ruc_model
-
-    def forecastables(
-            self,
-            use_actuals: bool, time_steps: Optional[list[datetime]] = None
-            ) -> pd.DataFrame:
-        """Compare e.g. to formulations.forecastables."""
-
-        if time_steps:
-            if not all(pd.DatetimeIndex(time_steps).isin(
-                    self.gen_data.index)):
-                raise ProviderError("Missing renewables outputs for time "
-                                    f"steps {time_steps[0]}...")
-
-            if not all(pd.DatetimeIndex(time_steps).isin(
-                    self.load_data.index)):
-                raise ProviderError("Missing load demands for time "
-                                    f"steps {time_steps[0]}...")
-
-        if use_actuals:
-            use_gen = self.gen_data.actl
-            use_load = self.load_data.actl
-        else:
-            use_gen = self.gen_data.fcst
-            use_load = self.load_data.fcst
-
-        use_gen.columns = pd.MultiIndex.from_tuples(
-            [('RenewGen', gen) for gen in use_gen.columns],
-            names=('AssetType', 'Asset')
-            )
-        use_load.columns = pd.MultiIndex.from_tuples(
-            [('LoadBus', bus) for bus in use_load.columns],
-            names=('AssetType', 'Asset')
-            )
-
-        fcsts = pd.concat([use_gen, use_load], axis=1)
-        if time_steps:
-            fcsts = fcsts.loc[time_steps]
-
-        return fcsts
-
-    def create_sced(self,
-                    time_step: VaticTime,
-                    current_state: VaticSimulationStateGB,
-                    sced_horizon: int) -> VaticScedModel:
-        """Generates a Security Constrained Economic Dispatch model.
-
-        This a merge of Prescient's EgretEngine.create_sced_instance and
-        egret_plugin.create_sced_instance.
-
-        Args
-        ----
-            current_state   The simulation state of a power grid which will
-                            be used as the basis for the data included in this
-                            model.
-            sced_horizon    How many time steps this SCED will simulate over.
-
-        """
-
-        #assert current_state.timestep_count >= sced_horizon
-
-        sced_times = [step_time for step_time in pd.date_range(
-                time_step.when, periods=sced_horizon, freq='H', tz='utc')]
-
-        # get the data for this date from the input datasets
-        sced_data = self.forecastables(use_actuals=True, time_steps=sced_times)
-
-        # add the forecasted load demands and renewable generator outputs, and
-        # adjust them to be closer to the corresponding actual values
-        if self.prescient_sced_forecasts:
-            for k, sced_data in sced_model.get_forecastables():
-                future = current_state.get_future_actuals(k)
-
-                # this error method makes the forecasts equal to the actuals!
-                for t in range(sced_horizon):
-                    sced_data[t] = future[t]
-
-        else:
-            actuals = current_state.current_actuals
-            forecasts = current_state.forecasts.iloc[:sced_horizon]
-
-            # this error method adjusts future forecasts based on how much
-            # the forecast over/underestimated the current actual value
-            sced_data.iloc[0] = actuals
-
-            # find how much the first forecast was off from the actual as
-            # a fraction of the forecast
-            if len(sced_times) > 1:
-                fcst_error_ratios = pd.Series(
-                    {k: (actuals[k] / cur_fcst if cur_fcst else 0.)
-                     for k, cur_fcst in forecasts.iloc[0].items()
-                     })
-
-                # adjust the remaining forecasts based on the initial error
-                sced_data.iloc[1:] = fcst_error_ratios * forecasts.iloc[1:]
-
-        # look as far into the future as we can for startups if the
-        # generator is committed to be off at the end of the model window
-        horizon_cmts = current_state.timestep_commitments(sced_horizon)
-        future_cmts = current_state.get_commitments(
-            list(range(sced_horizon + 1, self.template['NumTimePeriods'] + 1)))
-        future_status_times = {g: 0 for g in horizon_cmts.index}
-
-        for off_gen, gen_cmts in future_cmts.loc[~horizon_cmts].iterrows():
-            if gen_cmts.any():
-                future_status_times[off_gen] = (gen_cmts[gen_cmts].index.max()
-                                                - sced_horizon + 1)
-
-        for on_gen, gen_cmts in future_cmts.loc[horizon_cmts].iterrows():
-            if (~gen_cmts).any():
-                future_status_times[on_gen] = -(gen_cmts[~gen_cmts].index.max()
-                                                - sced_horizon + 1)
-
-        sced_model = VaticScedModel(
-            self.template, sced_data['RenewGen'], sced_data['LoadBus'],
-            reserve_factor=self._reserve_factor,
-            sim_state=current_state, future_status=future_status_times
-            )
-
-        return sced_model
 
     def create_sced_instance(self,
                              current_state: VaticSimulationState,
