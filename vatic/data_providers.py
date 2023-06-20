@@ -415,7 +415,8 @@ class PickleProvider:
                 vals[t] = vals[t - 24]
 
         ruc_model = VaticRucModel(self.template, use_gen, use_load,
-                                  self._reserve_factor)
+                                  self._reserve_factor,
+                                  sim_state=current_state)
 
         # TODO: add more reporting
         if self._output_ruc_initial_conditions:
@@ -629,35 +630,25 @@ class PickleProvider:
 
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window
-        horizon_cmts = current_state.commitments.iloc[sced_horizon - 1]
+        horizon_cmts = current_state.timestep_commitments(sced_horizon)
+        future_cmts = current_state.get_commitments(
+            list(range(sced_horizon + 1, self.template['NumTimePeriods'] + 1)))
         future_status_times = {g: 0 for g in horizon_cmts.index}
-        off_gens = horizon_cmts.index[horizon_cmts == 0.]
-        on_gens = horizon_cmts.index[horizon_cmts == 1.]
 
-        for gen in off_gens:
-            future_cmts = (
-                    current_state.commitments.iloc[sced_horizon:][gen] == 1.)
+        for off_gen, gen_cmts in future_cmts.loc[~horizon_cmts].iterrows():
+            if gen_cmts.any():
+                future_status_times[off_gen] = (gen_cmts[gen_cmts].index.max()
+                                                - sced_horizon + 1)
 
-            if future_cmts.any():
-                future_status_times[gen] = (
-                        future_cmts.index[future_cmts].max()
-                        - sced_horizon + 1
-                        )
-
-        for gen in on_gens:
-            future_cmts = (
-                    current_state.commitments.iloc[sced_horizon:][gen] == 0.)
-
-            if future_cmts.any():
-                future_status_times[gen] = -(
-                        future_cmts.index[future_cmts].max()
-                        - sced_horizon + 1
-                        )
+        for on_gen, gen_cmts in future_cmts.loc[horizon_cmts].iterrows():
+            if (~gen_cmts).any():
+                future_status_times[on_gen] = -(gen_cmts[~gen_cmts].index.max()
+                                                - sced_horizon + 1)
 
         sced_model = VaticScedModel(
             self.template, sced_data['RenewGen'], sced_data['LoadBus'],
             reserve_factor=self._reserve_factor,
-            future_status=future_status_times
+            sim_state=current_state, future_status=future_status_times
             )
 
         return sced_model

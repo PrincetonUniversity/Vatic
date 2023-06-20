@@ -648,6 +648,17 @@ class BaseVaticModel(ABC):
             ## and no need to do the additional work
         return LinExpr(linear_coefs, linear_vars)
 
+    def _add_reserve_shortfall(self, model):
+        # add_reserve_shortfall (fixed=False) #
+
+        model._ReserveShortfall = model.addVars(
+            self.TimePeriods, lb=0, ub=[self.ReserveReqs[t]
+                                        for t in self.TimePeriods],
+            name='ReserveShortfall'
+            )
+
+        return model
+
     @property
     def ptdf_options(self) -> dict:
         """See egret.common.lazy_ptdf_utils"""
@@ -1703,12 +1714,7 @@ class VaticRucModel(BaseVaticModel):
             )
 
     def CA_reserve_constraints(self, model):
-        # add_reserve_shortfall (fixed=False) #
-        model._ReserveShortfall = model.addVars(
-            self.TimePeriods, lb=0, ub=[self.ReserveReqs[t]
-                                        for t in self.TimePeriods],
-            name='ReserveShortfall'
-            )
+        model = self._add_reserve_shortfall(model)
 
         # ensure there is sufficient maximal power output available to meet
         # both the demand and the spinning reserve requirements in each time
@@ -1893,9 +1899,62 @@ class VaticScedModel(BaseVaticModel):
             name='delta_eq'
             )
 
+        lag_constr_indx = list()
+        lag_constrs = dict()
+
+        for g, s, t in self.startup_costs_indices:
+            if s < len(self.StartupCostIndices[g]) - 1:
+                this_lag = self.StartupCostIndices[g][s]
+                next_lag = self.StartupCostIndices[g][s + 1]
+
+                if next_lag + self.UnitOnT0State[g] < t < next_lag:
+                    model._delta[g, s, t].lb = 0
+                    model._delta[g, s, t].ub = 0
+
+                elif t >= next_lag:
+                    lags = list(range(this_lag, next_lag))
+                    lag_constr_indx.append((g, s, t))
+
+                    lag_constrs[g, s, t] = LinExpr(
+                        [-1.] * len(lags) + [1.],
+                        [model._UnitStop[g, t - l] for l in lags]
+                        + [model._delta[g, s, t]]
+                        ) <= 0
+
+        model._delta_ineq = model.addConstrs(
+            (lag_constrs[g, s, t] for g, s, t in lag_constr_indx),
+            name='delta_ineq'
+            )
+
+        model._StartupCost = model.addVars(*self.thermal_periods,
+                                           name='StartupCost')
+
+        model._ComputeStartupCosts = model.addConstrs(
+            (LinExpr([self.StartupCosts[g][s]
+                      for s in self.StartupCostIndices[g]] + [-1],
+                     [model._delta[g, s, t]
+                      for s in self.StartupCostIndices[g]]
+                     + [model._StartupCost[g, t]]) == 0
+
+             for g, t in product(*self.thermal_periods)),
+            name='ComputeStartupCosts'
+            )
+
         return model
 
     def mlr_reserve_constraints(self, model):
+        model = self._add_reserve_shortfall(model)
+
+        model._EnforceReserveRequirements = model.addConstrs(
+            (LinExpr([1.] * (len(self.ThermalGenerators) + 1),
+                     [model._ReserveProvided[g, t]
+                      for g in self.ThermalGenerators]
+                     + [model._ReserveShortfall[t]]) >= self.ReserveReqs[t]
+
+             for t in self.TimePeriods),
+            name='EnforceReserveRequirements'
+            )
+
         return model
 
     def generate(self,
