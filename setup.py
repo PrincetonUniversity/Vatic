@@ -13,6 +13,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'vatic-det=vatic.command_line:run_deterministic',
+            'vatic-gb=vatic.command_line:run_gurobipy_deterministic'
             ],
         },
 
