@@ -4,11 +4,8 @@
 
 from __future__ import annotations
 
-import math
 import pandas as pd
-import itertools
-from typing import Optional, Iterator, Sequence
-
+from typing import Optional
 from .formulations import RucModel, ScedModel
 
 
@@ -62,27 +59,14 @@ class VaticSimulationState:
         return self._commitments.columns.tolist()
 
     @property
+    def generators(self) -> list[str]:
+        return list(self._init_gen_state.keys())
+
+    @property
     def timestep_count(self) -> int:
         """The number of timesteps we have data for."""
 
         return len(self.times)
-
-    @property
-    def minutes_per_step(self) -> int:
-        """The duration of each time step in minutes."""
-        return self._minutes_per_forecast_step
-
-    def get_initial_generator_state(self, g: str) -> float:
-        """Get the generator's state in the previous time period."""
-        return self._init_gen_state[g]
-
-    def get_initial_power_generated(self, g: str) -> float:
-        """Get how much power was generated in the previous period."""
-        return self._init_power_gen[g]
-
-    def get_initial_state_of_charge(self, s: str) -> float:
-        """Get state of charge in the previous time period."""
-        return self._init_soc[s]
 
     def timestep_commitments(self, t: int) -> pd.Series[bool]:
         """Return commitments for a single time."""
@@ -153,8 +137,7 @@ class VaticSimulationState:
         return self.actuals[k].iloc[1:]
 
     def apply_initial_ruc(self,
-                          ruc: RucModel,
-                          sim_actuals: pd.DataFrame) -> None:
+                          ruc: RucModel, sim_actuals: pd.DataFrame) -> None:
         """This is the first RUC; save initial state."""
 
         self._init_gen_state = ruc.UnitOnT0State
@@ -175,8 +158,7 @@ class VaticSimulationState:
         self.actuals = sim_actuals
 
     def apply_planning_ruc(self,
-                           ruc: RucModel,
-                           sim_actuals: dict) -> None:
+                           ruc: RucModel, sim_actuals: dict) -> None:
         """Incorporate a RUC instance into the current state.
 
         This will save the ruc's forecasts, and for the very first ruc
@@ -204,20 +186,73 @@ class VaticSimulationState:
             self.actuals[k] = self.actuals[k][:self.ruc_delay]
             self.actuals[k] += tuple(new_ruc_vals)
 
-    def apply_sced(self, sced: ScedModel) -> None:
+    def apply_sced(self,
+                   sced: ScedModel, sced_time: Optional[int] = 1) -> None:
         """Merge a sced into the current state, and move to next time period.
 
         This saves the sced's first time period of data as initial state
         information, and advances the current time forward by one time period.
 
         """
-        for gen, status, generated in self.get_generator_states_at_sced_offset(
-                sced, 0):
-            self._init_gen_state[gen] = status
-            self._init_power_gen[gen] = generated
+        if sorted(sced.ThermalGenerators) == self.generators:
+            raise VaticStateError("Incompatible SCED model with a different "
+                                  "set of thermal generators than this state!")
 
-        for store, store_data in sced.elements('storage'):
-            self._init_soc[store] = store_data['state_of_charge']['values'][0]
+        if sced_time not in sced.TimePeriods:
+            raise VaticStateError("Cannot apply the state from time "
+                                  f"{sced_time}; this SCED model only has "
+                                  f"states {sced.TimePeriods}")
+
+        sced_indx = 1 + sced.TimePeriods.index(sced_time)
+
+        for gen, init_state in self._init_gen_state.items():
+            state_duration = abs(init_state)
+            unit_on = init_state > 0
+
+            # March forward, counting how long the state is on or off
+            for t in sced.TimePeriods[:sced_indx]:
+                new_on = int(round(sced.results['commitment'][gen, t])) > 0
+
+                if new_on == unit_on:
+                    state_duration += 1
+                else:
+                    state_duration = 1
+                    unit_on = new_on
+
+                if t == sced_time:
+                    break
+
+            if not unit_on:
+                state_duration = -state_duration
+
+            # Convert duration back into hours
+            # state_duration *= hours_per_period
+
+            # get how much power was generated, within bounds
+            gen_power = sced.results['power_generated'][gen, sced_time]
+            pmin = sced.MinPowerOutput[gen, sced_time]
+            pmax = sced.MaxPowerOutput[gen, sced_time]
+
+            if unit_on == 0:
+                assert gen_power == 0.
+
+            elif (pmin - 1e-5) <= gen_power < pmin:
+                gen_power = pmin
+            elif pmax < gen_power <= (pmax + 1e-5):
+                gen_power = pmax
+
+            elif gen_power < pmin:
+                raise VaticStateError(f"Invalid power generation {gen_power} "
+                                      f"for {gen} which is less than "
+                                      f"pmin={pmin}!")
+
+            elif gen_power > pmax:
+                raise VaticStateError(f"Invalid power generation {gen_power} "
+                                      f"for {gen} which is greater than "
+                                      f"pmin={pmax}!")
+
+            self._init_gen_state[gen] = state_duration
+            self._init_power_gen[gen] = gen_power
 
         # Advance time, dropping data if necessary
         self._simulation_minute += self._sced_frequency
@@ -236,178 +271,3 @@ class VaticSimulationState:
                 self.actuals[k] = self.actuals[k][1:]
 
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
-
-    def get_generator_states_at_sced_offset(
-            self, sced: ScedModel, sced_index: int) -> tuple:
-        # We'll be converting between time periods and hours.
-        # Make the data type of hours_per_period an int if it's an integer
-        # number of hours, float if fractional
-
-        minutes_per_period = sced.get_system_attr('time_period_length_minutes')
-        hours_per_period = (minutes_per_period // 60
-                            if minutes_per_period % 60 == 0
-                            else minutes_per_period / 60)
-
-        for g, g_dict in sced.elements('generator', generator_type='thermal'):
-            ### Get generator state (whether on or off, and for how long) ###
-            init_state = self.get_initial_generator_state(g)
-            # state is in hours, convert to integer number of time periods
-            init_state = round(init_state / hours_per_period)
-            state_duration = abs(init_state)
-            unit_on = init_state > 0
-            g_commit = g_dict['commitment']['values']
-
-            # March forward, counting how long the state is on or off
-            for t in range(0, sced_index + 1):
-                new_on = (int(round(g_commit[t])) > 0)
-                if new_on == unit_on:
-                    state_duration += 1
-                else:
-                    state_duration = 1
-                    unit_on = new_on
-
-            if not unit_on:
-                state_duration = -state_duration
-
-            # Convert duration back into hours
-            state_duration *= hours_per_period
-
-            ### Get how much power was generated, within bounds ###
-            power_generated = g_dict['pg']['values'][sced_index]
-
-            # the validators are rather picky, in that tolerances are not
-            # acceptable. given that the average power generated comes from an
-            # optimization problem solve, the average power generated can wind
-            # up being less than or greater than the bounds by a small epsilon.
-            # touch-up in this case.
-            if isinstance(g_dict['p_min'], dict):
-                min_power_output = g_dict['p_min']['values'][sced_index]
-            else:
-                min_power_output = g_dict['p_min']
-            if isinstance(g_dict['p_max'], dict):
-                max_power_output = g_dict['p_max']['values'][sced_index]
-            else:
-                max_power_output = g_dict['p_max']
-
-            # TBD: Eventually make the 1e-5 an user-settable option.
-            if unit_on == 0:
-                # if the unit is off, then the power generated at
-                # t0 must be greater than or equal to 0 (Egret #219)
-                power_generated = max(power_generated, 0.0)
-            elif math.isclose(min_power_output, power_generated, rel_tol=0,
-                              abs_tol=1e-5):
-                power_generated = min_power_output
-            elif math.isclose(max_power_output, power_generated, rel_tol=0,
-                              abs_tol=1e-5):
-                power_generated = max_power_output
-
-            ### Yield the results for this generator ###
-            yield g, state_duration, power_generated
-
-    @staticmethod
-    def get_storage_socs_at_sced_offset(sced: ScedModel,
-                                        sced_index: int) -> Iterator:
-        for store, store_data in sced.elements('storage'):
-            yield store, store_data['state_of_charge']['values'][sced_index]
-
-
-class VaticStateWithOffset:
-    """Get expected state some number of time steps from the current state.
-
-    The offset state is identical to the state being offset, except that time
-    periods before the offset time are skipped.
-
-    Parameters
-    ----------
-    parent_state        The current state we are using as the reference.
-    offset              The number of time periods to skip in the parent state.
-
-    """
-
-    def __init__(self,
-                 parent_state: VaticSimulationState, offset: int) -> None:
-        self._parent = parent_state
-        self._offset = offset
-
-    @property
-    def timestep_count(self) -> int:
-        """The number of timesteps we have data for."""
-        return len(self._parent.times) - self._offset
-
-    def get_generator_commitment(self, g: str, time_index: int) -> int:
-        """Is the gen committed to be on (1) or off (0) for a time step?"""
-        return self._parent.get_generator_commitment(g,
-                                                     time_index + self._offset)
-
-    def get_current_actuals(self, k: tuple[str, str]) -> float:
-        """Get the current actual value for each forecastable.
-
-        This is the actual value for the current time period (time index 0).
-        Values are returned in the same order as
-        BaseModel.get_forecastables, but instead of returning arrays it
-        returns a single value.
-
-        """
-        return self._parent.get_future_actuals(k)[self._offset]
-
-    def get_forecasts(self, k: tuple[str, str]) -> Sequence[float]:
-        """Get the forecast values for each forecastable.
-
-        This is very similar to BaseModel.get_forecastables(); the
-        function yields an array per forecastable, in the same order as
-        get_forecastables().
-
-        Note that the value at index 0 is the forecast for the current time,
-        not the actual value for the current time.
-
-        """
-        return list(itertools.islice(self._parent.get_forecasts(k),
-                                     self._offset, None))
-
-    def get_future_actuals(self, k: tuple[str, str]) -> Sequence[float]:
-        """Warning: Returns actual values for current time AND FUTURE TIMES.
-
-        Be aware that this function returns information that is not yet known!
-        The function lets you peek into the future.  Future actuals may be used
-        by some (probably unrealistic) algorithm options, such as
-
-        """
-        return list(itertools.islice(self._parent.get_future_actuals(k),
-                                     self._offset, None))
-
-
-class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):
-    """Get the future expected state, using a SCED for the initial state.
-
-    The offset state is identical to the state being offset, except that time
-    periods before the offset time are skipped, and the initial state of
-    generators and storage is provided by a sced instance.  The sced instance
-    is also offset, so that the initial state comes from the Nth time period
-    of the sced.
-
-    Parameters
-    ----------
-    parent_state    The state to project into the future.
-    sced        A sced instance whose state after the offset is used as
-                the initial state here.
-    offset      The # of time periods into the future the state should reflect.
-
-    """
-
-    def __init__(self,
-                 parent_state: VaticSimulationStateGB, sced: ScedModel,
-                 offset: int) -> None:
-        self._init_gen_state = dict()
-        self._init_power_gen = dict()
-        self._init_soc = dict()
-
-        for gen, status, generated in parent_state\
-                .get_generator_states_at_sced_offset(sced, offset - 1):
-            self._init_gen_state[gen] = status
-            self._init_power_gen[gen] = generated
-
-        for store, soc in self.get_storage_socs_at_sced_offset(sced,
-                                                               offset - 1):
-            self._init_soc[store] = soc
-
-        super().__init__(parent_state, offset)
