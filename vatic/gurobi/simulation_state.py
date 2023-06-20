@@ -8,14 +8,15 @@ import math
 import pandas as pd
 import itertools
 from typing import Optional, Iterator, Sequence
-from .formulations import BaseVaticModel
+
+from .formulations import RucModel, ScedModel
 
 
 class VaticStateError(Exception):
     pass
 
 
-class VaticSimulationStateGB:
+class VaticSimulationState:
     """A system state that can be updated with data from RUCs and SCEDs.
 
     Parameters
@@ -135,7 +136,7 @@ class VaticSimulationStateGB:
 
         This is the actual value for the current time period (time index 0).
         Values are returned in the same order as
-        BaseVaticModel.get_forecastables, but instead of returning arrays it
+        BaseModel.get_forecastables, but instead of returning arrays it
         returns a single value.
 
         """
@@ -152,7 +153,7 @@ class VaticSimulationStateGB:
         return self.actuals[k].iloc[1:]
 
     def apply_initial_ruc(self,
-                          ruc: BaseVaticModel,
+                          ruc: RucModel,
                           sim_actuals: pd.DataFrame) -> None:
         """This is the first RUC; save initial state."""
 
@@ -174,8 +175,8 @@ class VaticSimulationStateGB:
         self.actuals = sim_actuals
 
     def apply_planning_ruc(self,
-                           ruc: BaseVaticModel,
-                           sim_actuals: BaseVaticModel) -> None:
+                           ruc: RucModel,
+                           sim_actuals: dict) -> None:
         """Incorporate a RUC instance into the current state.
 
         This will save the ruc's forecasts, and for the very first ruc
@@ -203,7 +204,7 @@ class VaticSimulationStateGB:
             self.actuals[k] = self.actuals[k][:self.ruc_delay]
             self.actuals[k] += tuple(new_ruc_vals)
 
-    def apply_sced(self, sced: BaseVaticModel) -> None:
+    def apply_sced(self, sced: ScedModel) -> None:
         """Merge a sced into the current state, and move to next time period.
 
         This saves the sced's first time period of data as initial state
@@ -237,7 +238,7 @@ class VaticSimulationStateGB:
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
 
     def get_generator_states_at_sced_offset(
-            self, sced: BaseVaticModel, sced_index: int) -> tuple:
+            self, sced: ScedModel, sced_index: int) -> tuple:
         # We'll be converting between time periods and hours.
         # Make the data type of hours_per_period an int if it's an integer
         # number of hours, float if fractional
@@ -304,13 +305,13 @@ class VaticSimulationStateGB:
             yield g, state_duration, power_generated
 
     @staticmethod
-    def get_storage_socs_at_sced_offset(sced: BaseVaticModel,
+    def get_storage_socs_at_sced_offset(sced: ScedModel,
                                         sced_index: int) -> Iterator:
         for store, store_data in sced.elements('storage'):
             yield store, store_data['state_of_charge']['values'][sced_index]
 
 
-class VaticStateWithOffsetGB:
+class VaticStateWithOffset:
     """Get expected state some number of time steps from the current state.
 
     The offset state is identical to the state being offset, except that time
@@ -324,7 +325,7 @@ class VaticStateWithOffsetGB:
     """
 
     def __init__(self,
-                 parent_state: VaticSimulationStateGB, offset: int) -> None:
+                 parent_state: VaticSimulationState, offset: int) -> None:
         self._parent = parent_state
         self._offset = offset
 
@@ -343,7 +344,7 @@ class VaticStateWithOffsetGB:
 
         This is the actual value for the current time period (time index 0).
         Values are returned in the same order as
-        BaseVaticModel.get_forecastables, but instead of returning arrays it
+        BaseModel.get_forecastables, but instead of returning arrays it
         returns a single value.
 
         """
@@ -352,7 +353,7 @@ class VaticStateWithOffsetGB:
     def get_forecasts(self, k: tuple[str, str]) -> Sequence[float]:
         """Get the forecast values for each forecastable.
 
-        This is very similar to BaseVaticModel.get_forecastables(); the
+        This is very similar to BaseModel.get_forecastables(); the
         function yields an array per forecastable, in the same order as
         get_forecastables().
 
@@ -375,8 +376,7 @@ class VaticStateWithOffsetGB:
                                      self._offset, None))
 
 
-class VaticStateWithScedOffsetGB(VaticStateWithOffsetGB,
-                                 VaticSimulationStateGB):
+class VaticStateWithScedOffset(VaticStateWithOffset, VaticSimulationState):
     """Get the future expected state, using a SCED for the initial state.
 
     The offset state is identical to the state being offset, except that time
@@ -395,7 +395,7 @@ class VaticStateWithScedOffsetGB(VaticStateWithOffsetGB,
     """
 
     def __init__(self,
-                 parent_state: VaticSimulationStateGB, sced: BaseVaticModel,
+                 parent_state: VaticSimulationStateGB, sced: ScedModel,
                  offset: int) -> None:
         self._init_gen_state = dict()
         self._init_power_gen = dict()

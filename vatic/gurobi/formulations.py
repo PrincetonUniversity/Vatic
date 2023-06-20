@@ -44,7 +44,7 @@ class VaticModelError(Exception):
     pass
 
 
-class BaseVaticModel(ABC):
+class BaseModel(ABC):
 
     model_name = "VaticModel"
 
@@ -1344,7 +1344,7 @@ class BaseVaticModel(ABC):
 
         return fcsts
 
-class VaticRucModel(BaseVaticModel):
+class RucModel(BaseModel):
 
     model_name = "UnitCommitment"
 
@@ -1767,7 +1767,7 @@ class VaticRucModel(BaseVaticModel):
         self.model = model
 
 
-class VaticScedModel(BaseVaticModel):
+class ScedModel(BaseModel):
 
     model_name = 'EconomicDispatch'
 
