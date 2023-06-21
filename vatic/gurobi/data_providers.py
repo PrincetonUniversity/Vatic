@@ -179,32 +179,13 @@ class PickleProvider:
         start_dt = pd.Timestamp(time_step.when, tz='utc')
         ruc_times = list()
 
-        for step_time in pd.date_range(
-                start_dt, periods=forecast_request_count, freq='H'):
-            step_day = step_time.date()
-
-            # if we cross midnight and we didn't start at midnight, we start
-            # pulling data from the next day
-            if step_day != start_day and start_hour != 0:
-                ruc_times += [step_time]
-
-            elif step_day > self.final_day:
-                ruc_times += [step_time - pd.Timedelta(days=1)]
-            else:
-                ruc_times += [step_time]
-
-        if not all(pd.DatetimeIndex(ruc_times).isin(self.gen_data.index)):
-            raise ProviderError(f"Cannot create model; missing data "
-                                f"in renewable outputs!")
-
-        if not all(pd.DatetimeIndex(ruc_times).isin(self.load_data.index)):
-            raise ProviderError(f"Cannot create model; missing data "
-                                f"in load demands!")
-
         # TODO: use `forecastables()` here the way we do in `create_sced`?
         # get the data for this date from the input datasets
         use_gen = self.gen_data.loc[ruc_times, 'fcst']
         use_load = self.load_data.loc[ruc_times, 'fcst']
+
+        fcsts = self.get_forecastables(use_actuals=False,
+                                       times_requested=self.ruc_horizon)
 
         # make some near-term forecasts more accurate if necessary
         if self._ruc_prescience_hour > self._ruc_delay + 1:
@@ -226,7 +207,8 @@ class PickleProvider:
             for t in range(24, self.ruc_horizon):
                 vals[t] = vals[t - 24]
 
-        ruc_model = RucModel(self.template, use_gen, use_load,
+        ruc_model = RucModel(self.template,
+                             fcsts['RenewGen'], fcsts['LoadBus'],
                              self._reserve_factor,
                              sim_state=current_state)
 
@@ -249,45 +231,10 @@ class PickleProvider:
 
         return ruc_model
 
-    def sim_actuals(self,
-                    start_time: VaticTime, num_steps: int) -> pd.DataFrame:
-        start_dt = pd.Timestamp(start_time.when, tz='utc')
-
-        start_hour = start_time.when.hour
-        start_day = start_time.when.date()
-        use_times = list()
-
-        for step_time in pd.date_range(start_dt, periods=num_steps, freq='H'):
-            step_day = step_time.date()
-
-            # if we cross midnight and we didn't start at midnight, we start
-            # pulling data from the next day
-            if step_day != start_day and start_hour != 0:
-                use_times += [step_time]
-
-            elif step_day > self.final_day:
-                use_times += [step_time - pd.Timedelta(days=1)]
-            else:
-                use_times += [step_time]
-
-        return self.forecastables(use_actuals=True, time_steps=use_times)
-
-    def forecastables(
-            self,
-            use_actuals: bool, time_steps: Optional[list[datetime]] = None
-            ) -> pd.DataFrame:
+    def get_forecastables(self,
+                          use_actuals: bool,
+                          times_requested: int) -> pd.DataFrame:
         """Compare e.g. to formulations.forecastables."""
-
-        if time_steps:
-            if not all(pd.DatetimeIndex(time_steps).isin(
-                    self.gen_data.index)):
-                raise ProviderError("Missing renewables outputs for time "
-                                    f"steps {time_steps[0]}...")
-
-            if not all(pd.DatetimeIndex(time_steps).isin(
-                    self.load_data.index)):
-                raise ProviderError("Missing load demands for time "
-                                    f"steps {time_steps[0]}...")
 
         if use_actuals:
             use_gen = self.gen_data.actl
@@ -295,6 +242,33 @@ class PickleProvider:
         else:
             use_gen = self.gen_data.fcst
             use_load = self.load_data.fcst
+
+        if times_requested <= 24:
+            use_gen = use_gen.iloc[:times_requested]
+            use_load = use_load.iloc[:times_requested]
+
+        else:
+            diurn_gen = use_gen.loc[:,
+                        [gen for gen in self.renewables
+                         if self.template['NondispatchableGeneratorType'][gen]
+                         in {'S', 'H'}]
+                        ]
+            const_gen = use_gen.loc[:,
+                        [gen for gen in self.renewables
+                         if self.template['NondispatchableGeneratorType'][gen]
+                         not in {'S', 'H'}]
+                        ]
+
+            diurn_gen = pd.concat([diurn_gen.iloc[:24, :],
+                                   diurn_gen.iloc[:(times_requested - 24), :]])
+            const_gen = pd.concat([const_gen.iloc[:24, :]]
+                                  + [const_gen.iloc[[23], :]
+                                     for _ in range(times_requested - 24)])
+
+            use_gen = pd.concat([diurn_gen.reset_index(drop=True),
+                                 const_gen.reset_index(drop=True)], axis=1)
+            use_load = pd.concat([use_load.iloc[:24],
+                                  use_load.iloc[:(times_requested - 24)]])
 
         use_gen.columns = pd.MultiIndex.from_tuples(
             [('RenewGen', gen) for gen in use_gen.columns],
@@ -305,11 +279,8 @@ class PickleProvider:
             names=('AssetType', 'Asset')
             )
 
-        fcsts = pd.concat([use_gen, use_load], axis=1)
-        if time_steps:
-            fcsts = fcsts.loc[time_steps]
-
-        return fcsts
+        return pd.concat([use_gen.reset_index(drop=True),
+                          use_load.reset_index(drop=True)], axis=1)
 
     def create_sced(self,
                     time_step: VaticTime, current_state: VaticSimulationState,
@@ -330,11 +301,9 @@ class PickleProvider:
 
         # assert current_state.timestep_count >= sced_horizon
 
-        sced_times = [step_time for step_time in pd.date_range(
-            time_step.when, periods=sced_horizon, freq='H', tz='utc')]
-
         # get the data for this date from the input datasets
-        sced_data = self.forecastables(use_actuals=True, time_steps=sced_times)
+        sced_data = self.get_forecastables(use_actuals=True,
+                                           times_requested=sced_horizon)
 
         # add the forecasted load demands and renewable generator outputs, and
         # adjust them to be closer to the corresponding actual values
@@ -356,14 +325,14 @@ class PickleProvider:
 
             # find how much the first forecast was off from the actual as
             # a fraction of the forecast
-            if len(sced_times) > 1:
+            if sced_horizon > 1:
                 fcst_error_ratios = pd.Series(
                     {k: (actuals[k] / cur_fcst if cur_fcst else 0.)
                      for k, cur_fcst in forecasts.iloc[0].items()
                      })
 
                 # adjust the remaining forecasts based on the initial error
-                sced_data.iloc[1:] = fcst_error_ratios * forecasts.iloc[1:]
+                sced_data.iloc[1:] = fcst_error_ratios.T * forecasts.iloc[1:]
 
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window

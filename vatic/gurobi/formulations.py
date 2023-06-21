@@ -691,14 +691,36 @@ class BaseModel(ABC):
         self.time_steps = renews_data.index.to_list()
         self.future_status = future_status
 
-        # set aside a proportion of the total demand as the model's reserve
-        # requirement (if any) at each time point
-        self.ReserveReqs = reserve_factor * self.Demand.sum(axis=1)
+        self.PTDFoptions = dict()
+        self.PTDF = None
+        self.BaseMVA = 1.
+        self.BaseKV = 1e3
+        self.ReferenceBusAngle = 0.
+
+        self.InitialTime = 1
+        self.mins_per_step = 60
+        self.NumTimePeriods = self.RenewOutput.shape[1]
+        self.TimePeriods = list(range(self.InitialTime,
+                                      self.NumTimePeriods + 1))
 
         self.ThermalGenerators = OrderedSet(
             grid_template['ThermalGenerators'])
         self.RenewableGenerators = OrderedSet(
             grid_template['NondispatchableGenerators'])
+
+        # easier to do this here than in rajan_takriti due to sim_state
+        self.FixedCommitment = tupledict({
+            (g, t): (None if sim_state is None
+                     else sim_state.get_commitments().loc[g, t])
+            for g, t in product(*self.thermal_periods)
+            })
+
+        self.Demand.columns = self.TimePeriods
+        self.RenewOutput.columns = self.TimePeriods
+
+        # set aside a proportion of the total demand as the model's reserve
+        # requirement (if any) at each time point
+        self.ReserveReqs = reserve_factor * self.Demand.sum(axis=1)
 
         self.Buses = OrderedSet(grid_template['Buses'])
         self.TransmissionLines = grid_template['TransmissionLines']
@@ -727,28 +749,6 @@ class BaseModel(ABC):
         self.NondispatchableGeneratorsAtBus = grid_template[
             'NondispatchableGeneratorsAtBus']
 
-        self.InitialTime = 1
-        self.mins_per_step = 60
-        self.NumTimePeriods = self.RenewOutput.shape[1]
-
-        self.TimePeriods = list(range(self.InitialTime,
-                                      self.NumTimePeriods + 1))
-        self.Demand.columns = self.TimePeriods
-        self.RenewOutput.columns = self.TimePeriods
-
-        self.PTDFoptions = dict()
-        self.PTDF = None
-        self.BaseMVA = 1.
-        self.BaseKV = 1e3
-        self.ReferenceBusAngle = 0.
-
-        # easier to do this here than in rajan_takriti due to sim_state
-        self.FixedCommitment = tupledict({
-            (g, t): (None if sim_state is None
-                     else sim_state.get_commitments().loc[g, t])
-            for g, t in product(*self.thermal_periods)
-            })
-
         self.MinPowerOutput = {(g, t): grid_template['MinimumPowerOutput'][g]
                                for g, t in product(*self.thermal_periods)}
         self.MaxPowerOutput = {(g, t): grid_template['MaximumPowerOutput'][g]
@@ -757,7 +757,7 @@ class BaseModel(ABC):
         for g, t in product(*self.renew_periods):
             self.MinPowerOutput[g, t] = 0.
 
-            if g in self.RenewOutput:
+            if g in self.RenewOutput.index:
                 self.MaxPowerOutput[g, t] = self.RenewOutput.loc[g, t]
             else:
                 self.MaxPowerOutput[g, t] = 0.
@@ -927,6 +927,8 @@ class BaseModel(ABC):
                          for g, t in product(*self.thermal_periods)},
 
             }
+
+        pg = pd.Series(results['power_generated']).unstack()
 
         for g, t in product(*self.thermal_periods):
             slack_list = [constr[g, t].slack for constr in cur_rampup_constrs
@@ -1254,9 +1256,6 @@ class BaseModel(ABC):
                 )
 
         block._PTDF = self.PTDF
-
-        if isinstance(block._PTDF, dict):
-            import pdb; pdb.set_trace()
 
         return parent_model
 
