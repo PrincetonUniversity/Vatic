@@ -258,16 +258,11 @@ class VaticSimulationState:
         self._simulation_minute += self._sced_frequency
 
         while self._next_forecast_pop_minute <= self._simulation_minute:
-            for k in self.forecasts:
-                self.forecasts[k] = self.forecasts[k][1:]
-
-            for gen in self._commitments:
-                self._commitments[gen] = self._commitments[gen][1:]
-
+            self.forecasts = self.forecasts.iloc[1:, :]
+            self._commitments = self._commitments.iloc[:, 1:]
+            self._commitments.columns -= 1
             self._next_forecast_pop_minute += self._minutes_per_forecast_step
 
         while self._simulation_minute >= self._next_actuals_pop_minute:
-            for k in self.actuals:
-                self.actuals[k] = self.actuals[k][1:]
-
+            self.actuals = self.actuals.iloc[1:, :]
             self._next_actuals_pop_minute += self._minutes_per_actuals_step

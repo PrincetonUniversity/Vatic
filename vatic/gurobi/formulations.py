@@ -537,13 +537,24 @@ class BaseModel(ABC):
                 [1., self.MinPowerOutput[g, t]])
 
     def _get_max_power_available_lists(self, model, g, t):
-        return self._get_power_generated_lists(model, g, t)
+        return ([model._MaximumPowerAvailableAboveMinimum[g, t],
+                 model._UnitOn[g, t]],
+                [1., self.MinPowerOutput[g, t]])
 
     @abstractmethod
     def _get_generation_above_minimum_lists(self, model, g, t, negative=False):
         pass
 
     def _get_initial_max_power_lists(self, model, g, t):
+        linear_vars, linear_coefs = self._get_power_generated_lists(
+            model, g, t)
+
+        linear_vars.append(model._UnitOn[g, t])
+        linear_coefs.append(-self.MaxPowerOutput[g, t])
+
+        return linear_vars, linear_coefs
+
+    def _get_initial_max_power_available_lists(self, model, g, t):
         linear_vars, linear_coefs = self._get_max_power_available_lists(
             model, g, t)
 
@@ -720,7 +731,7 @@ class BaseModel(ABC):
 
         # set aside a proportion of the total demand as the model's reserve
         # requirement (if any) at each time point
-        self.ReserveReqs = reserve_factor * self.Demand.sum(axis=1)
+        self.ReserveReqs = reserve_factor * self.Demand.sum(axis=0)
 
         self.Buses = OrderedSet(grid_template['Buses'])
         self.TransmissionLines = grid_template['TransmissionLines']
@@ -806,7 +817,7 @@ class BaseModel(ABC):
                        round(max(0,
                                  grid_template['MinimumDownTime'][g]
                                  + self.UnitOnT0State[g]))))
-            if unit_on else 0 for g, unit_on in self.UnitOnT0.items()
+            if not unit_on else 0 for g, unit_on in self.UnitOnT0.items()
             })
 
         self.StartupLags = grid_template['StartupLags']
@@ -925,6 +936,12 @@ class BaseModel(ABC):
 
             'headroom': {(g, t): 0.
                          for g, t in product(*self.thermal_periods)},
+
+            'no_load_cost': {(g, t): self.model._NoLoadCost[g, t].getValue()
+                             for g, t in product(*self.thermal_periods)},
+
+            'startup_cost': {(g, t): self.model._StartupCost[g, t].x
+                             for g, t in product(*self.thermal_periods)},
 
             }
 
@@ -1343,9 +1360,30 @@ class BaseModel(ABC):
 
         return fcsts
 
+
 class RucModel(BaseModel):
 
     model_name = "UnitCommitment"
+
+    def _parse_model_results(self):
+        results = super()._parse_model_results()
+
+        results['reserves_provided'] = {
+            (g, t): self.model._ReserveProvided[g, t].getValue()
+            for g, t in product(*self.thermal_periods)
+            }
+
+        results['power_generated_above_min'] = {
+            (g, t): self.model._PowerGeneratedAboveMinimum[g, t].x
+            for g, t in product(*self.thermal_periods)
+            }
+
+        results['power_avail_above_min'] = {
+            (g, t): self.model._MaximumPowerAvailableAboveMinimum[g, t].x
+            for g, t in product(*self.thermal_periods)
+            }
+
+        return results
 
     def _get_generation_above_minimum_lists(self, model, g, t, negative=False):
         linear_vars = [model._PowerGeneratedAboveMinimum[g, t]]
@@ -1363,7 +1401,7 @@ class RucModel(BaseModel):
             )
 
         model._MaximumPowerAvailable = tupledict({
-            (g, t): (model._PowerGeneratedAboveMinimum[g, t]
+            (g, t): (model._MaximumPowerAvailableAboveMinimum[g, t]
                      + self.MinPowerOutput[g, t] * model._UnitOn[g, t])
             for g, t in product(*self.thermal_periods)
             })
@@ -1374,6 +1412,13 @@ class RucModel(BaseModel):
             for g, t in product(*self.thermal_periods)
             })
 
+        model._EnforceGeneratorOutputLimitsPartB = model.addConstrs(
+            ((model._PowerGeneratedAboveMinimum[g, t]
+              - model._MaximumPowerAvailableAboveMinimum[g, t] <= 0)
+             for g, t in product(*self.thermal_periods)),
+            name='EnforceGeneratorOutputLimitsPartB'
+            )
+
         return model
 
     def pgg_KOW_gen_limits(self, model):
@@ -1382,7 +1427,7 @@ class RucModel(BaseModel):
         power_startstoplimit_constrs = dict()
 
         for g, t in product(*self.thermal_periods):
-            linear_vars, linear_coefs = self._get_initial_max_power_lists(
+            linear_vars, linear_coefs = self._get_initial_max_power_available_lists(
                 model, g, t)
 
             # _MLR_GENERATION_LIMITS_UPTIME_1 (tightened) #
@@ -1465,7 +1510,7 @@ class RucModel(BaseModel):
 
             if (t < self.NumTimePeriods
                     and time_ru > max(0, self.ScaledMinUpTime[g] - 2)):
-                start_vars, start_coefs = self._get_max_power_available_lists(
+                start_vars, start_coefs = self._get_initial_max_power_available_lists(
                     model, g, t)
 
                 start_vars += [model._UnitOn[g, t]]
@@ -1493,7 +1538,7 @@ class RucModel(BaseModel):
                 su_time_limit = self._get_look_back_periods(
                     g, t, self.ScaledMinUpTime[g] - 2 - sd_time_limit)
 
-                start_vars, start_coefs = self._get_power_generated_lists(
+                start_vars, start_coefs = self._get_initial_max_power_available_lists(
                     model, g, t)
 
                 for i in range(sd_time_limit + 1):
@@ -1678,9 +1723,8 @@ class RucModel(BaseModel):
             name='ShutdownMatch'
             )
 
-        model._StartupCost = model.addVars(*self.thermal_periods,
-                                           lb=-GRB.INFINITY, ub=GRB.INFINITY,
-                                           name='StartupCost')
+        model._StartupCost = model.addVars(
+            *self.thermal_periods, lb=0, ub=GRB.INFINITY, name='StartupCost')
 
         model._StartupIndicator = model.addVars(
             model._StartupIndicator_domain, vtype=GRB.BINARY,
@@ -1744,6 +1788,7 @@ class RucModel(BaseModel):
         model = self.garver_power_avail_vars(model)
         model = self.file_non_dispatchable_vars(model)
 
+        model = self.pgg_KOW_gen_limits(model)
         model = self.damcikurt_ramping(model)
         model = self.kow_production_costs_tightened(model)
         model = self.rajan_takriti_ut_dt(model)
@@ -1873,10 +1918,9 @@ class ScedModel(BaseModel):
              for g, t, _ in self.prod_indices), name='PiecewiseProductionSum'
             )
 
-        model._ProductionCost = model.addVars(
-            *self.thermal_periods, lb=-GRB.INFINITY, ub=GRB.INFINITY,
-            name='ProductionCost'
-            )
+        model._ProductionCost = model.addVars(*self.thermal_periods,
+                                              lb=0, ub=GRB.INFINITY,
+                                              name='ProductionCost')
 
         model._ProductionCostConstr = model.addConstrs(
             (self.piecewise_production_costs_rule(model, g, t)
