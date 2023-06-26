@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import bz2
 import dill as pickle
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -70,11 +71,13 @@ class StatsManager:
             ruc         The solved RUC model.
         """
 
-        ruc_stats = {
+        self._ruc_stats[time_step] = {
             'runtime': ruc.solve_time,
-            'fixed_cost': self._dict_to_frame(ruc.results['commitment_cost']),
-            'variable_cost': self._dict_to_frame(
-                ruc.results['production_cost']),
+
+            'fixed_cost': round(sum(ruc.results['commitment_cost'].values()),
+                                self.max_decimals),
+            'variable_cost': round(sum(
+                ruc.results['production_cost'].values()), self.max_decimals),
 
             'generation': self._dict_to_frame(ruc.results['power_generated']),
             'commitments': self._dict_to_frame(ruc.results['commitment']),
@@ -82,8 +85,104 @@ class StatsManager:
             }
 
         if self.verbosity > 0:
-            print("Fixed costs:    %12.2f" % new_ruc_data['fixed_costs'])
-            print("Variable costs: %12.2f" % new_ruc_data['variable_costs'])
-            print("")
+            tot_fixed = self._ruc_stats[time_step]['fixed_cost'].values.sum()
+            tot_var = self._ruc_stats[time_step]['variable_cost'].values.sum()
 
-        self._ruc_stats[time_step] = new_ruc_data
+            print(f"RUC fixed costs:\t{round(tot_fixed, self.max_decimals)}"
+                  f"RUC variable costs:\t{round(tot_var, self.max_decimals)}"
+                  "\n")
+
+    def collect_sced_solution(self,
+                              time_step: VaticTime, sced: ScedModel,
+                              lmp_sced: Optional[ScedModel] = None) -> None:
+        """Gets the key statistics from a solved economic dispatch.
+
+        Args
+        ----
+            time_step   The time in the simulation at which the RUC was solved.
+            sced        The solved security-constrained economic dispatch model.
+
+            lmp_sced    If applicable, an additional economic dispatch that was
+                        solved to get locational marginal prices.
+        """
+
+        self._sced_stats[time_step] = {
+            'runtime': sced.solve_time,
+
+            'total_demand': round(sced.Demand.iloc[:, 0].sum(),
+                                  self.max_decimals),
+
+            'fixed_cost': round(sum(cost for (g, t), cost
+                                    in sced.results['commitment_cost'].items()
+                                    if t == sced.InitialTime),
+                                self.max_decimals),
+
+            'variable_cost': round(
+                sum(cost for (g, t), cost
+                    in sced.results['production_cost'].items()
+                    if t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            'thermal_generation': round(
+                sum(pwr for (g, t), pwr
+                    in sced.results['power_generated'].items()
+                    if g in sced.ThermalGenerators and t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            'renewable_generation': round(
+                sum(pwr for (g, t), pwr
+                    in sced.results['power_generated'].items()
+                    if g in sced.RenewableGenerators
+                    and t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            'load_shedding': round(
+                sum(shed for (b, t), shed
+                    in sced.results['load_shedding'].items()
+                    if t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            'over_generation': round(
+                sum(pwr for (b, t), pwr
+                    in sced.results['over_generation'].items()
+                    if t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            'reserve_shortfall': round(
+                sum(shrt for t, shrt
+                    in sced.results['reserve_shortfall'].items()
+                    if t == sced.InitialTime),
+                self.max_decimals
+                ),
+
+            }
+
+        if lmp_sced:
+            pass
+
+        if self.verbosity > 0:
+            tot_fixed = self._ruc_stats[time_step]['fixed_cost'].values.sum()
+            tot_var = self._ruc_stats[time_step]['variable_cost'].values.sum()
+
+            print(f"SCED fixed costs:\t{round(tot_fixed, self.max_decimals)}"
+                  f"SCED variable costs:\t{round(tot_var, self.max_decimals)}"
+                  "\n")
+
+    def consolidate_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
+        """Creates tables storing outputs of all models this simulation ran."""
+
+        report_dfs = {
+            'hourly_summary': pd.DataFrame({
+                time_step: {'FixedCosts': stats['fixed_cost'],
+                            'VariableCosts': stats['variable_cost'],
+                            'LoadShedding': stats['load_shedding']}
+                for time_step, stats in self._sced_stats.items()
+                }).T,
+            }
+
+        return report_dfs
