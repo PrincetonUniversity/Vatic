@@ -5,6 +5,9 @@
 from __future__ import annotations
 
 import pandas as pd
+import math
+from copy import deepcopy
+import itertools
 from typing import Optional
 from .formulations import RucModel, ScedModel
 
@@ -266,3 +269,60 @@ class VaticSimulationState:
         while self._simulation_minute >= self._next_actuals_pop_minute:
             self.actuals = self.actuals.iloc[1:, :]
             self._next_actuals_pop_minute += self._minutes_per_actuals_step
+
+    def get_state_with_sced_offset(self,
+                                   sced: ScedModel,
+                                   offset: int) -> VaticSimulationState:
+        new_state = deepcopy(self)
+
+        new_state.actuals = new_state.actuals.iloc[offset:, :]
+        new_state.forecasts = new_state.forecasts.iloc[offset:, :]
+        new_state._commitments = new_state._commitments.iloc[:, offset:]
+
+        new_state._commitments.columns = [
+            t - offset for t in new_state._commitments.columns]
+        new_state.actuals.index = new_state._commitments.columns
+        new_state.forecasts.index = new_state._commitments.columns
+
+        for gen, init_state in sced.UnitOnT0State.items():
+            state_duration = abs(init_state)
+            unit_on = init_state > 0
+
+            # march forward, counting how long the state is on or off
+            for new_on in sced.get_commitments(gen):
+                if new_on == unit_on:
+                    state_duration += 1
+                else:
+                    state_duration = 1
+                    unit_on = new_on
+
+            if not unit_on:
+                state_duration *= -1
+
+            # get how much power was generated, within bounds
+            use_t = sced.TimePeriods[offset - 1]
+            pwr_generated = sced.results['power_generated'][gen, use_t]
+            pmin = sced.MinPowerOutput[gen, use_t]
+            pmax = sced.MaxPowerOutput[gen, use_t]
+
+            # the validators are rather picky, in that tolerances are not
+            # acceptable. given that the average power generated comes from an
+            # optimization problem solve, the average power generated can wind
+            # up being less than or greater than the bounds by a small epsilon.
+            # touch-up in this case.
+            # TODO: Eventually make the 1e-5 an user-settable option.
+
+            if unit_on == 0:
+                # if the unit is off, then the power generated at
+                # t0 must be greater than or equal to 0 (Egret #219)
+                pwr_generated = max(pwr_generated, 0.0)
+
+            elif math.isclose(pmin, pwr_generated, rel_tol=0, abs_tol=1e-5):
+                pwr_generated = pmin
+            elif math.isclose(pmax, pwr_generated, rel_tol=0, abs_tol=1e-5):
+                pwr_generated = pmin
+
+            new_state._init_gen_state[gen] = state_duration
+            new_state._init_power_gen[gen] = pwr_generated
+
+        return new_state

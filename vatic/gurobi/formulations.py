@@ -834,6 +834,9 @@ class BaseModel(ABC):
         self.solve_time = None
         self.results = None
 
+    def get_commitments(self, gen: str) -> list[bool]:
+        return [self.FixedCommitment[gen, t] for t in self.TimePeriods]
+
     def _initialize_model(self, ptdf, ptdf_options) -> gp.Model:
         model = gp.Model(self.model_name)
         model._ptdf_options = self.DEFAULT_PTDF_OPTIONS
@@ -939,9 +942,15 @@ class BaseModel(ABC):
 
             'no_load_cost': {(g, t): self.model._NoLoadCost[g, t].getValue()
                              for g, t in product(*self.thermal_periods)},
-
             'startup_cost': {(g, t): self.model._StartupCost[g, t].x
                              for g, t in product(*self.thermal_periods)},
+
+            'load_shedding': {(b, t): self.model._LoadShedding[b, t].x
+                              for b in self.Buses for t in self.TimePeriods},
+            'over_generation': {(b, t): self.model._OverGeneration[b, t].x
+                                for b in self.Buses for t in self.TimePeriods},
+            'reserve_shortfall': {t: self.model._ReserveShortfall[t].x
+                                  for t in self.TimePeriods},
 
             }
 

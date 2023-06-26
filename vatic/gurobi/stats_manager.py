@@ -85,11 +85,10 @@ class StatsManager:
             }
 
         if self.verbosity > 0:
-            tot_fixed = self._ruc_stats[time_step]['fixed_cost'].values.sum()
-            tot_var = self._ruc_stats[time_step]['variable_cost'].values.sum()
-
-            print(f"RUC fixed costs:\t{round(tot_fixed, self.max_decimals)}"
-                  f"RUC variable costs:\t{round(tot_var, self.max_decimals)}"
+            print("RUC fixed costs: "
+                  f"{self._ruc_stats[time_step]['fixed_cost']}"
+                  "\tvariable costs: "
+                  f"{self._ruc_stats[time_step]['variable_cost']}"
                   "\n")
 
     def collect_sced_solution(self,
@@ -166,12 +165,10 @@ class StatsManager:
             pass
 
         if self.verbosity > 0:
-            tot_fixed = self._ruc_stats[time_step]['fixed_cost'].values.sum()
-            tot_var = self._ruc_stats[time_step]['variable_cost'].values.sum()
-
-            print(f"SCED fixed costs:\t{round(tot_fixed, self.max_decimals)}"
-                  f"SCED variable costs:\t{round(tot_var, self.max_decimals)}"
-                  "\n")
+            print("SCED fixed costs: "
+                  f"{self._sced_stats[time_step]['fixed_cost']}"
+                  "\tvariable costs: "
+                  f"{self._sced_stats[time_step]['variable_cost']}")
 
     def consolidate_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
         """Creates tables storing outputs of all models this simulation ran."""
@@ -184,5 +181,7 @@ class StatsManager:
                 for time_step, stats in self._sced_stats.items()
                 }).T,
             }
+
+        import pdb; pdb.set_trace()
 
         return report_dfs

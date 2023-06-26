@@ -8,6 +8,7 @@ import time
 from typing import Optional
 import datetime
 import pandas as pd
+from copy import deepcopy
 
 from .data_providers import PickleProvider
 from .formulations import RucModel, ScedModel
@@ -179,9 +180,7 @@ class Simulator:
         print("Real-time sim time: {:.2f} seconds".format(
             self.simulation_times['Sim']))
 
-        print(" // ".join([format(t, '.2f') for t in self.times]))
-
-        return self._stats_manager.save_output(sim_time)
+        return self._stats_manager.consolidate_output(sim_time)
 
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
@@ -211,8 +210,8 @@ class Simulator:
             with open(self.init_ruc_file, 'wb') as f:
                 pickle.dump(ruc, f, protocol=-1)
 
-        sim_actuals = self._data_provider.sim_actuals(
-            first_step, self._data_provider.ruc_horizon)
+        sim_actuals = self._data_provider.get_forecastables(
+            use_actuals=True, times_requested=self._data_provider.ruc_horizon)
         self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
 
     def call_planning_oracle(self) -> None:
@@ -244,10 +243,10 @@ class Simulator:
         sced_model = self.solve_sced(hours_in_objective=1,
                                      sced_horizon=self.sced_horizon)
 
-        if self.verbosity > 0:
-            print("Solving for LMPs")
-
         if self.run_lmps:
+            if self.verbosity > 0:
+                print("Solving for LMPs")
+
             lmp_sced = self.solve_lmp(hours_in_objective=1,
                                       sced_horizon=self.sced_horizon,
                                       sced_model=sced_model)
@@ -257,10 +256,8 @@ class Simulator:
         self._simulation_state.apply_sced(sced_model)
         self._prior_sced_instance = sced_model
 
-        self._stats_manager.collect_sced_solution(
-            self._current_timestep, sced_model, lmp_sced,
-            pre_quickstart_cache=None
-            )
+        self._stats_manager.collect_sced_solution(self._current_timestep,
+                                                  sced_model, lmp_sced)
 
     def solve_ruc(self,
                   time_step: VaticTime,
@@ -297,3 +294,17 @@ class Simulator:
                          threads=self.solver_options['Threads'], outputflag=0)
 
         return sced_model
+
+    def _get_projected_state(self) -> VaticSimulationState:
+        if self._simulation_state.ruc_delay == 0:
+            proj_state = deepcopy(self._simulation_state)
+
+        else:
+            proj_hours = min(24, self._simulation_state.timestep_count)
+            proj_sced = self.solve_sced(hours_in_objective=proj_hours,
+                                        sced_horizon=proj_hours)
+
+            proj_state = self._simulation_state.get_state_with_sced_offset(
+                sced=proj_sced, offset=self._simulation_state.ruc_delay)
+
+        return proj_state
