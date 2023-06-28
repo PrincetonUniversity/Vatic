@@ -179,38 +179,12 @@ class PickleProvider:
         start_dt = pd.Timestamp(time_step.when, tz='utc')
         ruc_times = list()
 
-        # TODO: use `forecastables()` here the way we do in `create_sced`?
-        # get the data for this date from the input datasets
-        use_gen = self.gen_data.loc[ruc_times, 'fcst']
-        use_load = self.load_data.loc[ruc_times, 'fcst']
-
         fcsts = self.get_forecastables(use_actuals=False,
                                        times_requested=self.ruc_horizon)
 
-        # make some near-term forecasts more accurate if necessary
-        if self._ruc_prescience_hour > self._ruc_delay + 1:
-            improved_hour_count = self._ruc_prescience_hour - self._ruc_delay
-            improved_hour_count -= 1
-
-            for fcst_key, fcst_vals in ruc_model.get_forecastables():
-                for t in range(improved_hour_count):
-                    forecast_portion = (self._ruc_delay + t)
-                    forecast_portion /= self._ruc_prescience_hour
-                    actuals_portion = 1 - forecast_portion
-                    actl_val = current_state.get_future_actuals(fcst_key)[t]
-
-                    fcst_vals[t] *= forecast_portion
-                    fcst_vals[t] += actuals_portion * actl_val
-
-        # copy from the first 24 hours to the second 24 hours if necessary
-        if copy_first_day:
-            for t in range(24, self.ruc_horizon):
-                vals[t] = vals[t - 24]
-
         ruc_model = RucModel(self.template,
                              fcsts['RenewGen'], fcsts['LoadBus'],
-                             self._reserve_factor,
-                             sim_state=current_state)
+                             self._reserve_factor)
 
         # TODO: add more reporting
         if self._output_ruc_initial_conditions:
@@ -336,20 +310,22 @@ class PickleProvider:
 
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window
-        horizon_cmts = current_state.timestep_commitments(sced_horizon)
-        future_cmts = current_state.get_commitments(
-            list(range(sced_horizon + 1, max(current_state.times) + 1)))
-        future_status_times = {g: 0 for g in horizon_cmts.index}
+        future_status_times = {g: 0 for g in current_state.generators}
 
-        for off_gen, gen_cmts in future_cmts.loc[~horizon_cmts].iterrows():
-            if gen_cmts.any():
-                future_status_times[off_gen] = (gen_cmts[gen_cmts].index.max()
-                                                - sced_horizon + 1)
+        if current_state.timestep_count > sced_horizon:
+            horizon_cmts = current_state.timestep_commitments(sced_horizon)
+            future_cmts = current_state.get_commitments(
+                list(range(sced_horizon + 1, max(current_state.times) + 1)))
 
-        for on_gen, gen_cmts in future_cmts.loc[horizon_cmts].iterrows():
-            if (~gen_cmts).any():
-                future_status_times[on_gen] = -(gen_cmts[~gen_cmts].index.max()
-                                                - sced_horizon + 1)
+            for off_gen, gen_cmts in future_cmts.loc[~horizon_cmts].iterrows():
+                if gen_cmts.any():
+                    future_status_times[off_gen] = (
+                            gen_cmts[gen_cmts].index.max() - sced_horizon + 1)
+
+            for on_gen, gen_cmts in future_cmts.loc[horizon_cmts].iterrows():
+                if (~gen_cmts).any():
+                    future_status_times[on_gen] = -(
+                            gen_cmts[~gen_cmts].index.max() - sced_horizon + 1)
 
         sced_model = ScedModel(
             self.template, sced_data['RenewGen'], sced_data['LoadBus'],

@@ -7,6 +7,7 @@ import math
 import pandas as pd
 from abc import ABC, abstractmethod
 from itertools import product
+from copy import copy
 from typing import Optional, Any
 
 import gurobipy as gp
@@ -702,6 +703,12 @@ class BaseModel(ABC):
         self.time_steps = renews_data.index.to_list()
         self.future_status = future_status
 
+        self.gen_costs = {
+            gen: (grid_template['CostPiecewiseValues'][gen][-1]
+                  / grid_template['CostPiecewisePoints'][gen][-1])
+            for gen in grid_template['CostPiecewiseValues']
+            }
+
         self.PTDFoptions = dict()
         self.PTDF = None
         self.BaseMVA = 1.
@@ -766,12 +773,15 @@ class BaseModel(ABC):
                                for g, t in product(*self.thermal_periods)}
 
         for g, t in product(*self.renew_periods):
-            self.MinPowerOutput[g, t] = 0.
-
             if g in self.RenewOutput.index:
                 self.MaxPowerOutput[g, t] = self.RenewOutput.loc[g, t]
             else:
                 self.MaxPowerOutput[g, t] = 0.
+
+            if g in grid_template['NondispatchRenewables']:
+                self.MinPowerOutput[g, t] = copy(self.MaxPowerOutput[g, t])
+            else:
+                self.MinPowerOutput[g, t] = 0.
 
         self.ScaledMinUpTime = tupledict({
             g: min(grid_template['MinimumUpTime'][g], self.NumTimePeriods)
@@ -1207,11 +1217,10 @@ class BaseModel(ABC):
 
         # set up the empty model block for each time period to add constraints
         model._TransmissionBlock = {}
-        block = gp.Model()
-        block._gens_by_bus = {bus: [bus] for bus in self.Buses}
-        parent_model = model
-
         for tm in self.TimePeriods:
+            block = gp.Model()
+
+            block._gens_by_bus = {bus: [bus] for bus in self.Buses}
             block._tm = tm
             block._pg = dict()
 
@@ -1235,14 +1244,12 @@ class BaseModel(ABC):
                                 + out_store - in_store + non_dispatch
                                 + model._LoadGenerateMismatch[b, tm])
 
-            self._ptdf_dcopf_network_model(block, tm, parent_model)
+            self._ptdf_dcopf_network_model(block, tm, parent_model=model)
             model._TransmissionBlock[tm] = block
 
         return model
 
     def _ptdf_dcopf_network_model(self, block, tm, parent_model):
-        model = parent_model
-
         bus_loads = {b: self.Demand.loc[b, tm] for b in self.Buses}
         block._pl = bus_loads
 
@@ -1251,9 +1258,8 @@ class BaseModel(ABC):
             if not self.LineOutOfService[line]
             )
 
-        block._p_nw_tm = model.addVars(self.Buses,
-                                       lb=-GRB.INFINITY, ub=GRB.INFINITY,
-                                       name=f'p_nw_{tm}')
+        block._p_nw_tm = parent_model.addVars(
+            self.Buses, lb=-GRB.INFINITY, ub=GRB.INFINITY, name=f'p_nw_{tm}')
 
         # declare_eq_p_net_withdraw_at_bus  (dc...branches = None) #
         for b in self.Buses:

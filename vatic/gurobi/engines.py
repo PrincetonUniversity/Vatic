@@ -220,16 +220,27 @@ class Simulator:
         This method is adapted from OracleManager.call_planning_oracle.
 
         """
-        projected_state = self._get_projected_state()
+        if self._simulation_state.ruc_delay == 0:
+            proj_state = deepcopy(self._simulation_state)
+
+        else:
+            proj_hours = min(24, self._simulation_state.timestep_count)
+            proj_sced = self.solve_sced(hours_in_objective=proj_hours,
+                                        sced_horizon=proj_hours)
+
+            proj_state = self._simulation_state.get_state_with_sced_offset(
+                sced=proj_sced, offset=self._simulation_state.ruc_delay)
 
         # find out when this unit commitment will come into effect and solve it
         uc_datetime = self._time_manager.get_uc_activation_time(
             self._current_timestep)
-        sim_actuals, ruc = self.solve_ruc(VaticTime(uc_datetime, False, False),
-                                          projected_state)
 
-        self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
+        ruc = self.solve_ruc(VaticTime(uc_datetime, False, False), proj_state)
         self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
+
+        sim_actuals = self._data_provider.get_forecastables(
+            use_actuals=True, times_requested=self._data_provider.ruc_horizon)
+        self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
 
     def call_oracle(self) -> None:
         """Solves the real-time economic dispatch for the current time step.
@@ -294,17 +305,3 @@ class Simulator:
                          threads=self.solver_options['Threads'], outputflag=0)
 
         return sced_model
-
-    def _get_projected_state(self) -> VaticSimulationState:
-        if self._simulation_state.ruc_delay == 0:
-            proj_state = deepcopy(self._simulation_state)
-
-        else:
-            proj_hours = min(24, self._simulation_state.timestep_count)
-            proj_sced = self.solve_sced(hours_in_objective=proj_hours,
-                                        sced_horizon=proj_hours)
-
-            proj_state = self._simulation_state.get_state_with_sced_offset(
-                sced=proj_sced, offset=self._simulation_state.ruc_delay)
-
-        return proj_state

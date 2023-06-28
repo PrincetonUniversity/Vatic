@@ -7,7 +7,6 @@ from __future__ import annotations
 import pandas as pd
 import math
 from copy import deepcopy
-import itertools
 from typing import Optional
 from .formulations import RucModel, ScedModel
 
