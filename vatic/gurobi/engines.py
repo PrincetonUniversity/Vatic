@@ -11,7 +11,7 @@ import pandas as pd
 from copy import deepcopy
 
 from .data_providers import PickleProvider
-from .formulations import RucModel, ScedModel
+from .models import RucModel, ScedModel
 from .simulation_state import VaticSimulationState
 from .ptdf_manager import VaticPTDFManager
 from .stats_manager import StatsManager
