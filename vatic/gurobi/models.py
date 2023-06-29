@@ -64,623 +64,6 @@ class BaseModel(ABC):
                             'active_flow_tol': 50.,
                             'lp_cleanup_phase': True}
 
-    def _piecewise_adjustment_helper(self, points, costs):
-        new_points, new_vals, p_mins = dict(), dict(), dict()
-
-        for g in self.ThermalGenerators:
-            if g not in points:
-                raise ValueError(f"Missing cost curve points for "
-                                 f"thermal generator `{g}`!")
-
-            if g not in costs:
-                raise ValueError(f"Missing cost curve values for "
-                                 f"thermal generator `{g}`!")
-
-            p_min, p_max = (self.MinPowerOutput[g, self.InitialTime],
-                            self.MaxPowerOutput[g, self.InitialTime])
-
-            gen_min = 0.
-            gen_points = []
-            gen_vals = []
-
-            # input_func = _eliminate_piecewise_duplicates(input_func)
-            set_p_min = False
-
-            # NOTE: this implicitly inserts a (0.,0.)
-            #       into every cost array
-            prior_output, prior_cost = 0., 0.
-
-            for output, cost in zip(points[g], costs[g]):
-                ## catch this case
-                if math.isclose(output, p_min) and math.isclose(output, p_max):
-                    gen_points.append(0.)
-                    gen_vals.append(0.)
-                    gen_min = cost
-
-                    break
-
-                ## output < p_min
-                elif _much_less_than(output, p_min):
-                    pass
-
-                ## p_min == output
-                elif math.isclose(output, p_min):
-                    assert set_p_min is False
-                    gen_points.append(0.)
-                    gen_vals.append(0.)
-                    gen_min = cost
-                    set_p_min = True
-
-                ## p_min < output
-                elif (_much_less_than(p_min, output)
-                      and _much_less_than(output, p_max)):
-                    if not set_p_min:
-                        gen_points.append(0.)
-                        gen_vals.append(0.)
-
-                        price = (cost - prior_cost) / (output - prior_output)
-                        gen_min = (p_min - prior_output) * price + prior_cost
-
-                        gen_points.append(output - p_min)
-                        gen_vals.append((output - p_min) * price)
-                        set_p_min = True
-
-                    else:
-                        gen_points.append(output - p_min)
-                        gen_vals.append(cost - gen_min)
-
-                elif math.isclose(output, p_max) or _much_less_than(p_max, output):
-                    if not set_p_min:
-                        gen_points.append(0.)
-                        gen_vals.append(0.)
-
-                        price = (cost - prior_cost) / (output - prior_output)
-                        gen_min = (p_min - prior_output) * price + prior_cost
-                        gen_points.append(p_max - p_min)
-
-                        if math.isclose(output, p_max):
-                            gen_vals.append(cost - gen_min)
-                        else:
-                            gen_vals.append((p_max - p_min) * price)
-
-                        set_p_min = True
-
-                    else:
-                        gen_points.append(p_max - p_min)
-
-                        if math.isclose(output, p_max):
-                            gen_vals.append(cost - gen_min)
-                        else:
-                            price = (cost - prior_cost) / (output - prior_output)
-                            gen_vals.append((p_max - prior_output)
-                                            * price + prior_cost - gen_min)
-
-                    break
-
-                else:
-                    raise ValueError(
-                        "Unexpected case in _piecewise_adjustment_helper, "
-                        "p_min={}, p_max={}, output={}".format(
-                            p_min, p_max, output)
-                        )
-
-                prior_output, prior_cost = output, cost
-
-            new_points[g] = gen_points
-            new_vals[g] = gen_vals
-            p_mins[g] = gen_min
-
-        return new_points, new_vals, p_mins
-
-    def garver_3bin_vars(self, relax_binaries):
-        vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
-
-        self.model._UnitOn = self.model.addVars(
-            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitOn')
-        self.model._UnitStart = self.model.addVars(
-            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitStart')
-        self.model._UnitStop = self.model.addVars(
-            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitStop')
-
-    def garver_power_vars(self):
-        self.model._PowerGeneratedAboveMinimum = self.model.addVars(
-            *self.thermal_periods,
-            lb=0, ub={(g, t): (self.MaxPowerOutput[g, t]
-                               - self.MinPowerOutput[g, t])
-                      for g, t in product(*self.thermal_periods)},
-            name='PowerGeneratedAboveMinimum'
-            )
-
-        self.model._PowerGenerated = tupledict({
-            (g, t): (self.model._PowerGeneratedAboveMinimum[g, t]
-                     + self.MinPowerOutput[g, t] * self.model._UnitOn[g, t])
-            for g, t in product(*self.thermal_periods)
-            })
-
-        self.model._PowerGeneratedStartupShutdown = tupledict({
-            (g, t): self._add_power_generated_startup_shutdown(
-                g, t)
-            for g, t in product(*self.thermal_periods)
-            })
-
-    def damcikurt_ramping(self):
-        # enforce_max_available_ramp_up_rates_rule #
-        t0_upower_constrs = dict()
-        tk_upower_constrs = dict()
-
-        t0_uramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and self.NominalRampUpLimit[g] < (self.MaxPowerOutput[g, t]
-                                                  - self.PowerGeneratedT0[g]))
-            }
-
-        for g, t in t0_uramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
-
-            power_vars += [self.model._UnitOn[g, t], self.model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.NominalRampUpLimit[g]]
-
-            t0_upower_constrs[g, t] = LinExpr(
-                power_coefs, power_vars) <= self.PowerGeneratedT0[g]
-
-        tk_uramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t > self.InitialTime
-                and self.NominalRampUpLimit[g] < (
-                        self.MaxPowerOutput[g, t]
-                        - self.MinPowerOutput[g, t - 1]
-                ))
-            }
-
-        for g, t in tk_uramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
-
-            power_vars += [self.model._UnitOn[g, t],
-                           self.model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            - self.MinPowerOutput[g, t - 1]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.MinPowerOutput[g, t - 1]
-                            + self.NominalRampUpLimit[g]]
-
-            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
-                g, t - 1, negative=True)
-
-            tk_upower_constrs[g, t] = LinExpr(
-                power_coefs + neg_coefs, power_vars + neg_vars) <= 0.
-
-        self.model._EnforceMaxAvailableT0RampUpRates = self.model.addConstrs(
-            constr_genr(t0_upower_constrs),
-            name='enforce_max_available_t0_ramp_up_rates'
-            )
-        self.model._EnforceMaxAvailableTkRampUpRates = self.model.addConstrs(
-            constr_genr(tk_upower_constrs),
-            name='enforce_max_available_tk_ramp_up_rates'
-            )
-
-        # enforce_ramp_down_limits_rule #
-        t0_dpower_constrs = dict()
-        tk_dpower_constrs = dict()
-
-        t0_dramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and (self.NominalRampDownLimit[g] < (
-                            self.PowerGeneratedT0[g]
-                            - self.MinPowerOutput[g, t]
-                    )
-                     or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
-            }
-
-        tk_dramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t > self.InitialTime
-                and (self.NominalRampDownLimit[g] < (
-                            self.MaxPowerOutput[g, t - 1]
-                            - self.MinPowerOutput[g, t]
-                    )))
-
-            }
-
-        for g, t in t0_dramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
-
-            power_vars += [self.model._UnitStop[g, t]]
-            power_coefs += [self.ShutdownRampLimit[g]
-                            - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
-
-            power_lhs = (self.PowerGeneratedT0[g]
-                         - (self.NominalRampDownLimit[g]
-                            + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
-
-            t0_dpower_constrs[g, t] = LinExpr(
-                power_coefs, power_vars) >= power_lhs
-
-        for g, t in tk_dramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
-
-            power_vars += [self.model._UnitOn[g, t - 1], self.model._UnitStop[g, t]]
-            power_coefs += [self.NominalRampDownLimit[g]
-                            + self.MinPowerOutput[g, t]
-                            - self.MinPowerOutput[g, t - 1],
-                            self.ShutdownRampLimit[g]
-                            - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
-
-            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
-                g, t - 1, negative=True)
-
-            tk_dpower_constrs[g, t] = LinExpr(
-                power_coefs + neg_coefs, power_vars + neg_vars) >= 0
-
-        self.model._EnforceScaledT0NominalRampDownLimits = self.model.addConstrs(
-            constr_genr(t0_dpower_constrs),
-            name='enforce_max_available_t0_ramp_down_rates'
-            )
-        self.model._EnforceScaledTkNominalRampDownLimits = self.model.addConstrs(
-            constr_genr(tk_dpower_constrs),
-            name='enforce_max_available_tk_ramp_down_rates'
-            )
-
-    def piecewise_production_sum_rule(self, g, t):
-        linear_vars = [
-            self.model._PiecewiseProduction[g, t, i]
-            for i in range(len(self.PiecewiseGenerationPoints[g]) - 1)
-            ]
-
-        linear_coefs = [1.] * len(linear_vars)
-        linear_vars.append(self.model._PowerGeneratedAboveMinimum[g, t])
-        linear_coefs.append(-1.)
-
-        return LinExpr(linear_coefs, linear_vars) == 0
-
-    def piecewise_production_limits_rule(self, g, t, i, tightened=True):
-        # these can always be tightened based on SU/SD, regardless of the
-        # ramping/aggregation
-        # since PowerGenerationPiecewisePoints are scaled to
-        # MinimumPowerOutput, we need to scale Startup/Shutdown ramps
-        # to it as well
-
-        upper = self.PiecewiseGenerationPoints[g][i + 1]
-        lower = self.PiecewiseGenerationPoints[g][i]
-        SU = self.StartupRampLimit[g]
-        minP = self.MinPowerOutput[g, t]
-        su_step = _step_coeff(upper, lower, SU - minP)
-
-        if t < self.NumTimePeriods:
-            SD = self.ShutdownRampLimit[g]
-            UT = self.ScaledMinUpTime[g]
-            sd_step = _step_coeff(upper, lower, SD - minP)
-
-            if UT > 1:
-                linear_vars = [self.model._PiecewiseProduction[g, t, i],
-                               self.model._UnitOn[g, t],
-                               self.model._UnitStart[g, t],
-                               self.model._UnitStop[g, t + 1]]
-                linear_coefs = [-1., (upper - lower), -su_step, -sd_step]
-
-                return LinExpr(linear_coefs, linear_vars) >= 0
-
-            # MinimumUpTime[g] <= 1
-            else:
-                linear_vars = [self.model._PiecewiseProduction[g, t, i],
-                               self.model._UnitOn[g, t],
-                               self.model._UnitStart[g, t], ]
-                linear_coefs = [-1., (upper - lower), -su_step, ]
-
-                if tightened:
-                    coef = -max(sd_step - su_step, 0)
-
-                    if coef != 0:
-                        linear_vars.append(self.model._UnitStop[g, t + 1])
-                        linear_coefs.append(coef)
-
-                return LinExpr(linear_coefs, linear_vars) >= 0
-
-        # t >= value(m.NumTimePeriods)
-        else:
-            linear_vars = [self.model._PiecewiseProduction[g, t, i],
-                           self.model._UnitOn[g, t],
-                           self.model._UnitStart[g, t], ]
-            linear_coefs = [-1., (upper - lower), -su_step, ]
-
-            return LinExpr(linear_coefs, linear_vars) >= 0
-
-    def piecewise_production_limits_rule2(self, g, t, i, tightened=True):
-        ### these can always be tightened based on SU/SD, regardless of the
-        # ramping/aggregation
-        ### since PowerGenerationPiecewisePoints are scaled to
-        # MinimumPowerOutput, we need to scale Startup/Shutdown ramps
-        # to it as well
-        UT = self.ScaledMinUpTime[g]
-
-        if UT <= 1 and t < self.NumTimePeriods:
-            upper = self.PiecewiseGenerationPoints[g][i + 1]
-            lower = self.PiecewiseGenerationPoints[g][i]
-            SD = self.ShutdownRampLimit[g]
-            minP = self.MinPowerOutput[g, t]
-
-            sd_step = _step_coeff(upper, lower, SD - minP)
-            linear_vars = [self.model._PiecewiseProduction[g, t, i],
-                           self.model._UnitOn[g, t],
-                           self.model._UnitStop[g, t + 1], ]
-            linear_coefs = [-1., (upper - lower), -sd_step, ]
-
-            if tightened:
-                SU = self.StartupRampLimit[g]
-                su_step = _step_coeff(upper, lower, SU - minP)
-                coef = -max(su_step - sd_step, 0)
-
-                if coef != 0:
-                    linear_vars.append(self.model._UnitStart[g, t])
-                    linear_coefs.append(coef)
-
-            return LinExpr(linear_coefs, linear_vars) >= 0
-
-        ## MinimumUpTime[g] > 1 or we added it in the
-        # t == value(m.NumTimePeriods) clause above
-        else:
-            return None
-
-    def uptime_rule(self, g, t):
-        linear_vars = [self.model._UnitStart[g, tk]
-                       for tk in range(t - self.ScaledMinUpTime[g] + 1, t + 1)]
-        linear_coefs = [1.] * len(linear_vars)
-
-        linear_vars += [self.model._UnitOn[g, t]]
-        linear_coefs += [-1]
-
-        return LinExpr(linear_coefs, linear_vars) <= 0
-
-    def downtime_rule(self, g, t):
-        linear_vars = [self.model._UnitStop[g, tk]
-                       for tk in range(t - self.ScaledMinDownTime[g] + 1,
-                                       t + 1)]
-        linear_coefs = [1.] * len(linear_vars)
-
-        linear_vars += [self.model._UnitOn[g, t]]
-        linear_coefs += [-1]
-
-        return LinExpr(linear_coefs, linear_vars) <= 1
-
-    def logical_rule(self, g, t):
-        if t == self.InitialTime:
-            linear_vars = [self.model._UnitOn[g, t],
-                           self.model._UnitStart[g, t],
-                           self.model._UnitStop[g, t]]
-            linear_coefs = [1., -1., 1.]
-
-            return LinExpr(linear_coefs, linear_vars) <= self.UnitOnT0[g]
-
-        else:
-            linear_vars = [self.model._UnitOn[g, t],
-                           self.model._UnitOn[g, t - 1],
-                           self.model._UnitStart[g, t],
-                           self.model._UnitStop[g, t]]
-            linear_coefs = [1., -1, -1., 1.]
-
-            return LinExpr(linear_coefs, linear_vars) == 0
-
-    def get_hot_startup_pairs(self, g):
-        ## for speed, if we don't have different startups
-
-        if len(self.StartupLags[g]) <= 1:
-            return []
-
-        first_lag = self.StartupLags[g][0]
-        last_lag = self.StartupLags[g][-1]
-        init_time = self.TimePeriods[0]
-        after_last_time = self.TimePeriods[-1] + 1
-
-        for t_prime in self.model._ValidShutdownTimePeriods[g]:
-            t_first = first_lag + t_prime
-            t_last = last_lag + t_prime
-
-            if t_first < init_time:
-                t_first = init_time
-
-            if t_last > after_last_time:
-                t_last = after_last_time
-
-            for t in range(t_first, t_last):
-                yield t_prime, t
-
-    def shutdown_match_rule(self, begin_times, g, t):
-        init_time = self.TimePeriods[0]
-
-        linear_vars = [self.model._StartupIndicator[g, t, t_p]
-                       for t_p in begin_times[g, t]]
-        linear_coefs = [1.] * len(linear_vars)
-
-        if t < init_time:
-            return LinExpr(linear_coefs, linear_vars) <= 1
-
-        else:
-            linear_vars.append(self.model._UnitStop[g, t])
-            linear_coefs.append(-1.)
-
-            return LinExpr(linear_coefs, linear_vars) <= 0
-
-    def compute_startup_cost_rule(self, g, t):
-        startup_lags = self.StartupLags[g]
-        startup_costs = self.StartupCosts[g]
-        last_startup_cost = startup_costs[-1]
-
-        linear_vars = [self.model._StartupCost[g, t], self.model._UnitStart[g, t]]
-        linear_coefs = [-1., last_startup_cost]
-
-        for tp in self.model._ShutdownsByStartups[g, t]:
-            for s in self.StartupCostIndices[g]:
-                this_lag = startup_lags[s]
-                next_lag = startup_lags[s + 1]
-
-                if this_lag <= t - tp < next_lag:
-                    linear_vars.append(self.model._StartupIndicator[g, tp, t])
-                    linear_coefs.append(startup_costs[s] - last_startup_cost)
-
-                    break
-
-        return LinExpr(linear_coefs, linear_vars) == 0
-
-    def _get_power_generated_lists(self, g, t):
-        return ([self.model._PowerGeneratedAboveMinimum[g, t], self.model._UnitOn[g, t]],
-                [1., self.MinPowerOutput[g, t]])
-
-    def _get_max_power_available_lists(self, g, t):
-        return ([self.model._MaximumPowerAvailableAboveMinimum[g, t],
-                 self.model._UnitOn[g, t]],
-                [1., self.MinPowerOutput[g, t]])
-
-    @abstractmethod
-    def _get_generation_above_minimum_lists(self, g, t, negative=False):
-        pass
-
-    def _get_initial_max_power_lists(self, g, t):
-        linear_vars, linear_coefs = self._get_power_generated_lists(g, t)
-        linear_vars.append(self.model._UnitOn[g, t])
-        linear_coefs.append(-self.MaxPowerOutput[g, t])
-
-        return linear_vars, linear_coefs
-
-    def _get_initial_max_power_available_lists(self, g, t):
-        linear_vars, linear_coefs = self._get_max_power_available_lists(g, t)
-        linear_vars.append(self.model._UnitOn[g, t])
-        linear_coefs.append(-self.MaxPowerOutput[g, t])
-
-        return linear_vars, linear_coefs
-
-    def _get_look_back_periods(self, g, t, ut_end):
-        p_max_gt = self.MaxPowerOutput[g, t]
-        ramping_tot = 0
-
-        end = (t - self.InitialTime if ut_end is None
-               else min(ut_end, t - self.InitialTime))
-
-        if end <= 0:
-            return end
-
-        for i in range(1, end + 1):
-            startup_gi = self.StartupRampLimit[g]
-            ramping_tot += self.NominalRampUpLimit[g]
-
-            if startup_gi + ramping_tot >= p_max_gt:
-                ## the prior index what the correct one
-                return i - 1
-
-        # then we can go to the end
-        return i
-
-    def _get_look_forward_periods(self, g, t, ut_end):
-        p_max_gt = self.MaxPowerOutput[g, t]
-        ramping_tot = 0
-
-        end = (self.NumTimePeriods - t - 1 if ut_end is None
-               else min(ut_end, self.NumTimePeriods - t - 1))
-
-        if end <= 0:
-            return end
-
-        for i in range(1, end + 1):
-            shutdown_gi = self.ShutdownRampLimit[g]
-            ramping_tot += self.NominalRampDownLimit[g]
-
-            if shutdown_gi + ramping_tot >= p_max_gt:
-                ## the prior index what the correct one
-                return i - 1
-
-        ## then we can go to the end
-        return i
-
-    def _add_power_generated_startup_shutdown(self, g, t):
-        linear_vars = [self.model._PowerGeneratedAboveMinimum[g, t],
-                       self.model._UnitOn[g, t]]
-        linear_coefs = [1., self.MinPowerOutput[g, t]]
-
-        # first, discover if we have startup/shutdown
-        # curves in the self.model
-        self.model_has_startup_shutdown_curves = False
-        for s in self.model._StartupCurve.values():
-            if len(s) > 0:
-                self.model_has_startup_shutdown_curves = True
-                break
-
-        if not self.model_has_startup_shutdown_curves:
-            for s in self.model._ShutdownCurve.values():
-                if len(s) > 0:
-                    self.model_has_startup_shutdown_curves = True
-                    break
-
-        if self.model_has_startup_shutdown_curves:
-            # check the status vars to see if we're compatible
-            # with startup/shutdown curves
-            if self.model._status_vars not in ['garver_2bin_vars', 'garver_3bin_vars', 'garver_3bin_relaxed_stop_vars',
-                                          'ALS_state_transition_vars']:
-                raise RuntimeError(
-                    f"Status variable formulation {self.model._status_vars} is not compatible with startup or shutdown curves")
-
-            startup_curve = self.model._StartupCurve[g]
-            shutdown_curve = self.model._ShutdownCurve[g]
-            time_periods_before_startup = self.model._TimePeriodsBeforeStartup[g]
-            time_periods_since_shutdown = self.model._TimePeriodsSinceShutdown[g]
-
-            future_startup_past_shutdown_production = 0.
-            future_startup_power_index = time_periods_before_startup + self.model._NumTimePeriods - t
-            if future_startup_power_index <= len(startup_curve) - 1:
-                future_startup_past_shutdown_production += startup_curve[future_startup_power_index]
-
-            past_shutdown_power_index = time_periods_since_shutdown + t
-            if past_shutdown_power_index <= len(shutdown_curve) - 1:
-                future_startup_past_shutdown_production += shutdown_curve[past_shutdown_power_index]
-
-            linear_vars, linear_coefs = self.model._get_power_generated_lists(self.model, g, t)
-            for startup_idx in range(1, min(len(startup_curve), self.model._NumTimePeriods + 1 - t)):
-                linear_vars.append(self.model._UnitStart[g, t + startup_idx])
-                linear_coefs.append(startup_curve[startup_idx])
-            for shutdown_idx in range(1, min(len(shutdown_curve), t + 1)):
-                linear_vars.append(self.model._UnitStop[g, t - shutdown_idx + 1])
-                linear_coefs.append(shutdown_curve[shutdown_idx])
-            return LinExpr(linear_coefs, linear_vars) + future_startup_past_shutdown_production
-
-            ## if we're here, then we can use 1-bin self.models
-            ## and no need to do the additional work
-        return LinExpr(linear_coefs, linear_vars)
-
-    def _add_reserve_shortfall(self):
-        # add_reserve_shortfall (fixed=False) #
-
-        self.model._ReserveShortfall = self.model.addVars(
-            self.TimePeriods, lb=0, ub=[self.ReserveReqs[t]
-                                        for t in self.TimePeriods],
-            name='ReserveShortfall'
-            )
-
-    @property
-    def ptdf_options(self) -> dict:
-        """See egret.common.lazy_ptdf_utils"""
-        new_options = dict()
-
-        for ptdf_k, default_val in self.DEFAULT_PTDF_OPTIONS.items():
-            if ptdf_k in self.PTDFoptions:
-                new_options[ptdf_k] = self.PTDFoptions[ptdf_k]
-            else:
-                new_options[ptdf_k] = default_val
-
-        new_options['abs_ptdf_tol'] /= self.BaseMVA
-        new_options['abs_flow_tol'] /= self.BaseMVA
-        new_options['active_flow_tol'] /= self.BaseMVA
-
-        return new_options
-
     def __init__(self,
                  grid_template: dict, renews_data: pd.DataFrame,
                  load_data: pd.DataFrame, reserve_factor: float,
@@ -919,7 +302,7 @@ class BaseModel(ABC):
 
         results = {
             'power_generated': {
-                (g, t): self.model._PowerGeneratedStartupShutdown[g, t].getValue()
+                (g, t): self.model._PowerGenerated[g, t].getValue()
                 for g, t in product(*self.thermal_periods)
                 },
 
@@ -1013,6 +396,652 @@ class BaseModel(ABC):
                 )
 
         return pd.Series(self.results['flows']).unstack()
+
+    def is_generator_on(self, gen: str) -> bool:
+        return self.FixedCommitment[gen, self.InitialTime]
+
+    def was_generator_on(self, gen: str) -> bool:
+        return self.UnitOnT0[gen]
+
+    @property
+    def system_price(self):
+        tot_demand = self.Demand[self.InitialTime].sum()
+
+        if tot_demand > 0:
+            tot_costs = sum(
+                v for (g, t), v in self.results['commitment_cost'].items()
+                if t == self.InitialTime
+                )
+
+            tot_costs += sum(
+                v for (g, t), v in self.results['production_cost'].items()
+                if t == self.InitialTime
+                )
+
+            price = tot_costs / tot_demand
+        else:
+            price = 0.
+
+        return price
+
+    @property
+    def headrooms(self) -> dict[str, float]:
+        return {gen: self.results['reserves_provided'][gen, self.InitialTime]
+                for gen in self.ThermalGenerators}
+
+    def _piecewise_adjustment_helper(self, points, costs):
+        new_points, new_vals, p_mins = dict(), dict(), dict()
+
+        for g in self.ThermalGenerators:
+            if g not in points:
+                raise ValueError(f"Missing cost curve points for "
+                                 f"thermal generator `{g}`!")
+
+            if g not in costs:
+                raise ValueError(f"Missing cost curve values for "
+                                 f"thermal generator `{g}`!")
+
+            p_min, p_max = (self.MinPowerOutput[g, self.InitialTime],
+                            self.MaxPowerOutput[g, self.InitialTime])
+
+            gen_min = 0.
+            gen_points = []
+            gen_vals = []
+
+            # input_func = _eliminate_piecewise_duplicates(input_func)
+            set_p_min = False
+
+            # NOTE: this implicitly inserts a (0.,0.)
+            #       into every cost array
+            prior_output, prior_cost = 0., 0.
+
+            for output, cost in zip(points[g], costs[g]):
+                ## catch this case
+                if math.isclose(output, p_min) and math.isclose(output, p_max):
+                    gen_points.append(0.)
+                    gen_vals.append(0.)
+                    gen_min = cost
+
+                    break
+
+                ## output < p_min
+                elif _much_less_than(output, p_min):
+                    pass
+
+                ## p_min == output
+                elif math.isclose(output, p_min):
+                    assert set_p_min is False
+                    gen_points.append(0.)
+                    gen_vals.append(0.)
+                    gen_min = cost
+                    set_p_min = True
+
+                ## p_min < output
+                elif (_much_less_than(p_min, output)
+                      and _much_less_than(output, p_max)):
+                    if not set_p_min:
+                        gen_points.append(0.)
+                        gen_vals.append(0.)
+
+                        price = (cost - prior_cost) / (output - prior_output)
+                        gen_min = (p_min - prior_output) * price + prior_cost
+
+                        gen_points.append(output - p_min)
+                        gen_vals.append((output - p_min) * price)
+                        set_p_min = True
+
+                    else:
+                        gen_points.append(output - p_min)
+                        gen_vals.append(cost - gen_min)
+
+                elif math.isclose(output, p_max) or _much_less_than(p_max, output):
+                    if not set_p_min:
+                        gen_points.append(0.)
+                        gen_vals.append(0.)
+
+                        price = (cost - prior_cost) / (output - prior_output)
+                        gen_min = (p_min - prior_output) * price + prior_cost
+                        gen_points.append(p_max - p_min)
+
+                        if math.isclose(output, p_max):
+                            gen_vals.append(cost - gen_min)
+                        else:
+                            gen_vals.append((p_max - p_min) * price)
+
+                        set_p_min = True
+
+                    else:
+                        gen_points.append(p_max - p_min)
+
+                        if math.isclose(output, p_max):
+                            gen_vals.append(cost - gen_min)
+                        else:
+                            price = (cost - prior_cost) / (output - prior_output)
+                            gen_vals.append((p_max - prior_output)
+                                            * price + prior_cost - gen_min)
+
+                    break
+
+                else:
+                    raise ValueError(
+                        "Unexpected case in _piecewise_adjustment_helper, "
+                        "p_min={}, p_max={}, output={}".format(
+                            p_min, p_max, output)
+                        )
+
+                prior_output, prior_cost = output, cost
+
+            new_points[g] = gen_points
+            new_vals[g] = gen_vals
+            p_mins[g] = gen_min
+
+        return new_points, new_vals, p_mins
+
+    def garver_3bin_vars(self, relax_binaries):
+        vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
+
+        self.model._UnitOn = self.model.addVars(
+            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitOn')
+        self.model._UnitStart = self.model.addVars(
+            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitStart')
+        self.model._UnitStop = self.model.addVars(
+            *self.thermal_periods, lb=0, ub=1, vtype=vtype, name='UnitStop')
+
+    def garver_power_vars(self):
+        self.model._PowerGeneratedAboveMinimum = self.model.addVars(
+            *self.thermal_periods,
+            lb=0, ub={(g, t): (self.MaxPowerOutput[g, t]
+                               - self.MinPowerOutput[g, t])
+                      for g, t in product(*self.thermal_periods)},
+            name='PowerGeneratedAboveMinimum'
+            )
+
+        self.model._PowerGenerated = tupledict({
+            (g, t): (self.model._PowerGeneratedAboveMinimum[g, t]
+                     + self.MinPowerOutput[g, t] * self.model._UnitOn[g, t])
+            for g, t in product(*self.thermal_periods)
+            })
+
+        self.model._PowerGeneratedStartupShutdown = tupledict({
+            (g, t): self._add_power_generated_startup_shutdown(
+                g, t)
+            for g, t in product(*self.thermal_periods)
+            })
+
+    def damcikurt_ramping(self):
+        # enforce_max_available_ramp_up_rates_rule #
+        t0_upower_constrs = dict()
+        tk_upower_constrs = dict()
+
+        t0_uramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t == self.InitialTime and self.UnitOnT0[g]
+                and self.NominalRampUpLimit[g] < (self.MaxPowerOutput[g, t]
+                                                  - self.PowerGeneratedT0[g]))
+            }
+
+        for g, t in t0_uramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                g, t)
+
+            power_vars += [self.model._UnitOn[g, t],
+                           self.model._UnitStart[g, t]]
+            power_coefs += [-self.NominalRampUpLimit[g]
+                            + self.MinPowerOutput[g, t],
+                            -self.StartupRampLimit[g]
+                            + self.NominalRampUpLimit[g]]
+
+            t0_upower_constrs[g, t] = LinExpr(
+                power_coefs, power_vars) <= self.PowerGeneratedT0[g]
+
+        tk_uramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t > self.InitialTime
+                and self.NominalRampUpLimit[g] < (
+                        self.MaxPowerOutput[g, t]
+                        - self.MinPowerOutput[g, t - 1]
+                ))
+            }
+
+        for g, t in tk_uramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                g, t)
+
+            power_vars += [self.model._UnitOn[g, t],
+                           self.model._UnitStart[g, t]]
+            power_coefs += [-self.NominalRampUpLimit[g]
+                            - self.MinPowerOutput[g, t - 1]
+                            + self.MinPowerOutput[g, t],
+                            -self.StartupRampLimit[g]
+                            + self.MinPowerOutput[g, t - 1]
+                            + self.NominalRampUpLimit[g]]
+
+            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
+                g, t - 1, negative=True)
+
+            tk_upower_constrs[g, t] = LinExpr(
+                power_coefs + neg_coefs, power_vars + neg_vars) <= 0.
+
+        self.model._EnforceMaxAvailableT0RampUpRates = self.model.addConstrs(
+            constr_genr(t0_upower_constrs),
+            name='enforce_max_available_t0_ramp_up_rates'
+            )
+        self.model._EnforceMaxAvailableTkRampUpRates = self.model.addConstrs(
+            constr_genr(tk_upower_constrs),
+            name='enforce_max_available_tk_ramp_up_rates'
+            )
+
+        # enforce_ramp_down_limits_rule #
+        t0_dpower_constrs = dict()
+        tk_dpower_constrs = dict()
+
+        t0_dramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t == self.InitialTime and self.UnitOnT0[g]
+                and (self.NominalRampDownLimit[g] < (
+                            self.PowerGeneratedT0[g]
+                            - self.MinPowerOutput[g, t]
+                    )
+                     or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
+            }
+
+        tk_dramp_periods = {
+            (g, t) for g, t in product(*self.thermal_periods)
+            if (t > self.InitialTime
+                and (self.NominalRampDownLimit[g] < (
+                            self.MaxPowerOutput[g, t - 1]
+                            - self.MinPowerOutput[g, t]
+                    )))
+
+            }
+
+        for g, t in t0_dramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                g, t)
+
+            power_vars += [self.model._UnitStop[g, t]]
+            power_coefs += [self.ShutdownRampLimit[g]
+                            - self.MinPowerOutput[g, t]
+                            - self.NominalRampDownLimit[g]]
+
+            power_lhs = (self.PowerGeneratedT0[g]
+                         - (self.NominalRampDownLimit[g]
+                            + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
+
+            t0_dpower_constrs[g, t] = LinExpr(
+                power_coefs, power_vars) >= power_lhs
+
+        for g, t in tk_dramp_periods:
+            power_vars, power_coefs = self._get_generation_above_minimum_lists(
+                g, t)
+
+            power_vars += [self.model._UnitOn[g, t - 1],
+                           self.model._UnitStop[g, t]]
+            power_coefs += [self.NominalRampDownLimit[g]
+                            + self.MinPowerOutput[g, t]
+                            - self.MinPowerOutput[g, t - 1],
+                            self.ShutdownRampLimit[g]
+                            - self.MinPowerOutput[g, t]
+                            - self.NominalRampDownLimit[g]]
+
+            neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
+                g, t - 1, negative=True)
+
+            tk_dpower_constrs[g, t] = LinExpr(
+                power_coefs + neg_coefs, power_vars + neg_vars) >= 0
+
+        self.model._EnforceScaledT0RampDownLimits = self.model.addConstrs(
+            constr_genr(t0_dpower_constrs),
+            name='enforce_max_available_t0_ramp_down_rates'
+            )
+        self.model._EnforceScaledTkRampDownLimits = self.model.addConstrs(
+            constr_genr(tk_dpower_constrs),
+            name='enforce_max_available_tk_ramp_down_rates'
+            )
+
+    def piecewise_production_sum_rule(self, g, t):
+        linear_vars = [
+            self.model._PiecewiseProduction[g, t, i]
+            for i in range(len(self.PiecewiseGenerationPoints[g]) - 1)
+            ]
+
+        linear_coefs = [1.] * len(linear_vars)
+        linear_vars.append(self.model._PowerGeneratedAboveMinimum[g, t])
+        linear_coefs.append(-1.)
+
+        return LinExpr(linear_coefs, linear_vars) == 0
+
+    def piecewise_production_limits_rule(self, g, t, i, tightened=True):
+        # these can always be tightened based on SU/SD, regardless of the
+        # ramping/aggregation
+        # since PowerGenerationPiecewisePoints are scaled to
+        # MinimumPowerOutput, we need to scale Startup/Shutdown ramps
+        # to it as well
+
+        upper = self.PiecewiseGenerationPoints[g][i + 1]
+        lower = self.PiecewiseGenerationPoints[g][i]
+        SU = self.StartupRampLimit[g]
+        minP = self.MinPowerOutput[g, t]
+        su_step = _step_coeff(upper, lower, SU - minP)
+
+        if t < self.NumTimePeriods:
+            SD = self.ShutdownRampLimit[g]
+            UT = self.ScaledMinUpTime[g]
+            sd_step = _step_coeff(upper, lower, SD - minP)
+
+            if UT > 1:
+                linear_vars = [self.model._PiecewiseProduction[g, t, i],
+                               self.model._UnitOn[g, t],
+                               self.model._UnitStart[g, t],
+                               self.model._UnitStop[g, t + 1]]
+                linear_coefs = [-1., (upper - lower), -su_step, -sd_step]
+
+                return LinExpr(linear_coefs, linear_vars) >= 0
+
+            # MinimumUpTime[g] <= 1
+            else:
+                linear_vars = [self.model._PiecewiseProduction[g, t, i],
+                               self.model._UnitOn[g, t],
+                               self.model._UnitStart[g, t], ]
+                linear_coefs = [-1., (upper - lower), -su_step, ]
+
+                if tightened:
+                    coef = -max(sd_step - su_step, 0)
+
+                    if coef != 0:
+                        linear_vars.append(self.model._UnitStop[g, t + 1])
+                        linear_coefs.append(coef)
+
+                return LinExpr(linear_coefs, linear_vars) >= 0
+
+        # t >= value(m.NumTimePeriods)
+        else:
+            linear_vars = [self.model._PiecewiseProduction[g, t, i],
+                           self.model._UnitOn[g, t],
+                           self.model._UnitStart[g, t], ]
+            linear_coefs = [-1., (upper - lower), -su_step, ]
+
+            return LinExpr(linear_coefs, linear_vars) >= 0
+
+    def piecewise_production_limits_rule2(self, g, t, i, tightened=True):
+        ### these can always be tightened based on SU/SD, regardless of the
+        # ramping/aggregation
+        ### since PowerGenerationPiecewisePoints are scaled to
+        # MinimumPowerOutput, we need to scale Startup/Shutdown ramps
+        # to it as well
+        UT = self.ScaledMinUpTime[g]
+
+        if UT <= 1 and t < self.NumTimePeriods:
+            upper = self.PiecewiseGenerationPoints[g][i + 1]
+            lower = self.PiecewiseGenerationPoints[g][i]
+            SD = self.ShutdownRampLimit[g]
+            minP = self.MinPowerOutput[g, t]
+
+            sd_step = _step_coeff(upper, lower, SD - minP)
+            linear_vars = [self.model._PiecewiseProduction[g, t, i],
+                           self.model._UnitOn[g, t],
+                           self.model._UnitStop[g, t + 1], ]
+            linear_coefs = [-1., (upper - lower), -sd_step, ]
+
+            if tightened:
+                SU = self.StartupRampLimit[g]
+                su_step = _step_coeff(upper, lower, SU - minP)
+                coef = -max(su_step - sd_step, 0)
+
+                if coef != 0:
+                    linear_vars.append(self.model._UnitStart[g, t])
+                    linear_coefs.append(coef)
+
+            return LinExpr(linear_coefs, linear_vars) >= 0
+
+        ## MinimumUpTime[g] > 1 or we added it in the
+        # t == value(m.NumTimePeriods) clause above
+        else:
+            return None
+
+    def uptime_rule(self, g, t):
+        linear_vars = [self.model._UnitStart[g, tk]
+                       for tk in range(t - self.ScaledMinUpTime[g] + 1, t + 1)]
+        linear_coefs = [1.] * len(linear_vars)
+
+        linear_vars += [self.model._UnitOn[g, t]]
+        linear_coefs += [-1]
+
+        return LinExpr(linear_coefs, linear_vars) <= 0
+
+    def downtime_rule(self, g, t):
+        linear_vars = [self.model._UnitStop[g, tk]
+                       for tk in range(t - self.ScaledMinDownTime[g] + 1,
+                                       t + 1)]
+        linear_coefs = [1.] * len(linear_vars)
+
+        linear_vars += [self.model._UnitOn[g, t]]
+        linear_coefs += [-1]
+
+        return LinExpr(linear_coefs, linear_vars) <= 1
+
+    def logical_rule(self, g, t):
+        if t == self.InitialTime:
+            linear_vars = [self.model._UnitOn[g, t],
+                           self.model._UnitStart[g, t],
+                           self.model._UnitStop[g, t]]
+            linear_coefs = [1., -1., 1.]
+
+            return LinExpr(linear_coefs, linear_vars) <= self.UnitOnT0[g]
+
+        else:
+            linear_vars = [self.model._UnitOn[g, t],
+                           self.model._UnitOn[g, t - 1],
+                           self.model._UnitStart[g, t],
+                           self.model._UnitStop[g, t]]
+            linear_coefs = [1., -1, -1., 1.]
+
+            return LinExpr(linear_coefs, linear_vars) == 0
+
+    def get_hot_startup_pairs(self, g):
+        ## for speed, if we don't have different startups
+
+        if len(self.StartupLags[g]) <= 1:
+            return []
+
+        first_lag = self.StartupLags[g][0]
+        last_lag = self.StartupLags[g][-1]
+        init_time = self.TimePeriods[0]
+        after_last_time = self.TimePeriods[-1] + 1
+
+        for t_prime in self.model._ValidShutdownTimePeriods[g]:
+            t_first = first_lag + t_prime
+            t_last = last_lag + t_prime
+
+            if t_first < init_time:
+                t_first = init_time
+
+            if t_last > after_last_time:
+                t_last = after_last_time
+
+            for t in range(t_first, t_last):
+                yield t_prime, t
+
+    def shutdown_match_rule(self, begin_times, g, t):
+        init_time = self.TimePeriods[0]
+
+        linear_vars = [self.model._StartupIndicator[g, t, t_p]
+                       for t_p in begin_times[g, t]]
+        linear_coefs = [1.] * len(linear_vars)
+
+        if t < init_time:
+            return LinExpr(linear_coefs, linear_vars) <= 1
+
+        else:
+            linear_vars.append(self.model._UnitStop[g, t])
+            linear_coefs.append(-1.)
+
+            return LinExpr(linear_coefs, linear_vars) <= 0
+
+    def compute_startup_cost_rule(self, g, t):
+        startup_lags = self.StartupLags[g]
+        startup_costs = self.StartupCosts[g]
+        last_startup_cost = startup_costs[-1]
+
+        linear_vars = [self.model._StartupCost[g, t], self.model._UnitStart[g, t]]
+        linear_coefs = [-1., last_startup_cost]
+
+        for tp in self.model._ShutdownsByStartups[g, t]:
+            for s in self.StartupCostIndices[g]:
+                this_lag = startup_lags[s]
+                next_lag = startup_lags[s + 1]
+
+                if this_lag <= t - tp < next_lag:
+                    linear_vars.append(self.model._StartupIndicator[g, tp, t])
+                    linear_coefs.append(startup_costs[s] - last_startup_cost)
+
+                    break
+
+        return LinExpr(linear_coefs, linear_vars) == 0
+
+    def _get_power_generated_lists(self, g, t):
+        return ([self.model._PowerGeneratedAboveMinimum[g, t],
+                 self.model._UnitOn[g, t]],
+                [1., self.MinPowerOutput[g, t]])
+
+    def _get_max_power_available_lists(self, g, t):
+        return ([self.model._MaximumPowerAvailableAboveMinimum[g, t],
+                 self.model._UnitOn[g, t]],
+                [1., self.MinPowerOutput[g, t]])
+
+    @abstractmethod
+    def _get_generation_above_minimum_lists(self, g, t, negative=False):
+        pass
+
+    def _get_initial_max_power_available_lists(self, g, t):
+        linear_vars, linear_coefs = self._get_max_power_available_lists(g, t)
+        linear_vars.append(self.model._UnitOn[g, t])
+        linear_coefs.append(-self.MaxPowerOutput[g, t])
+
+        return linear_vars, linear_coefs
+
+    def _get_look_back_periods(self, g, t, ut_end):
+        p_max_gt = self.MaxPowerOutput[g, t]
+        ramping_tot = 0
+
+        end = (t - self.InitialTime if ut_end is None
+               else min(ut_end, t - self.InitialTime))
+
+        if end <= 0:
+            return end
+
+        for i in range(1, end + 1):
+            startup_gi = self.StartupRampLimit[g]
+            ramping_tot += self.NominalRampUpLimit[g]
+
+            if startup_gi + ramping_tot >= p_max_gt:
+                ## the prior index what the correct one
+                return i - 1
+
+        # then we can go to the end
+        return i
+
+    def _get_look_forward_periods(self, g, t, ut_end):
+        p_max_gt = self.MaxPowerOutput[g, t]
+        ramping_tot = 0
+
+        end = (self.NumTimePeriods - t - 1 if ut_end is None
+               else min(ut_end, self.NumTimePeriods - t - 1))
+
+        if end <= 0:
+            return end
+
+        for i in range(1, end + 1):
+            shutdown_gi = self.ShutdownRampLimit[g]
+            ramping_tot += self.NominalRampDownLimit[g]
+
+            if shutdown_gi + ramping_tot >= p_max_gt:
+                ## the prior index what the correct one
+                return i - 1
+
+        ## then we can go to the end
+        return i
+
+    def _add_power_generated_startup_shutdown(self, g, t):
+        linear_vars, linear_coefs = self._get_power_generated_lists(g, t)
+
+        linear_vars.append(self.model._UnitOn[g, t])
+        linear_coefs.append(1.)
+
+        # first, discover if we have startup/shutdown
+        # curves in the self.model
+        self.model_has_startup_shutdown_curves = False
+        for s in self.model._StartupCurve.values():
+            if len(s) > 0:
+                self.model_has_startup_shutdown_curves = True
+                break
+
+        if not self.model_has_startup_shutdown_curves:
+            for s in self.model._ShutdownCurve.values():
+                if len(s) > 0:
+                    self.model_has_startup_shutdown_curves = True
+                    break
+
+        if self.model_has_startup_shutdown_curves:
+            # check the status vars to see if we're compatible
+            # with startup/shutdown curves
+            if self.model._status_vars not in ['garver_2bin_vars', 'garver_3bin_vars', 'garver_3bin_relaxed_stop_vars',
+                                          'ALS_state_transition_vars']:
+                raise RuntimeError(
+                    f"Status variable formulation {self.model._status_vars} is not compatible with startup or shutdown curves")
+
+            startup_curve = self.model._StartupCurve[g]
+            shutdown_curve = self.model._ShutdownCurve[g]
+            time_periods_before_startup = self.model._TimePeriodsBeforeStartup[g]
+            time_periods_since_shutdown = self.model._TimePeriodsSinceShutdown[g]
+
+            future_startup_past_shutdown_production = 0.
+            future_startup_power_index = time_periods_before_startup + self.model._NumTimePeriods - t
+            if future_startup_power_index <= len(startup_curve) - 1:
+                future_startup_past_shutdown_production += startup_curve[future_startup_power_index]
+
+            past_shutdown_power_index = time_periods_since_shutdown + t
+            if past_shutdown_power_index <= len(shutdown_curve) - 1:
+                future_startup_past_shutdown_production += shutdown_curve[past_shutdown_power_index]
+
+            linear_vars, linear_coefs = self.model._get_power_generated_lists(self.model, g, t)
+            for startup_idx in range(1, min(len(startup_curve), self.model._NumTimePeriods + 1 - t)):
+                linear_vars.append(self.model._UnitStart[g, t + startup_idx])
+                linear_coefs.append(startup_curve[startup_idx])
+            for shutdown_idx in range(1, min(len(shutdown_curve), t + 1)):
+                linear_vars.append(self.model._UnitStop[g, t - shutdown_idx + 1])
+                linear_coefs.append(shutdown_curve[shutdown_idx])
+            return LinExpr(linear_coefs, linear_vars) + future_startup_past_shutdown_production
+
+            ## if we're here, then we can use 1-bin self.models
+            ## and no need to do the additional work
+        return LinExpr(linear_coefs, linear_vars)
+
+    def _add_reserve_shortfall(self):
+        # add_reserve_shortfall (fixed=False) #
+
+        self.model._ReserveShortfall = self.model.addVars(
+            self.TimePeriods, lb=0, ub=[self.ReserveReqs[t]
+                                        for t in self.TimePeriods],
+            name='ReserveShortfall'
+            )
+
+    @property
+    def ptdf_options(self) -> dict:
+        """See egret.common.lazy_ptdf_utils"""
+        new_options = dict()
+
+        for ptdf_k, default_val in self.DEFAULT_PTDF_OPTIONS.items():
+            if ptdf_k in self.PTDFoptions:
+                new_options[ptdf_k] = self.PTDFoptions[ptdf_k]
+            else:
+                new_options[ptdf_k] = default_val
+
+        new_options['abs_ptdf_tol'] /= self.BaseMVA
+        new_options['abs_flow_tol'] /= self.BaseMVA
+        new_options['active_flow_tol'] /= self.BaseMVA
+
+        return new_options
 
     def file_non_dispatchable_vars(self):
         self.model._RenewablePowerUsed = self.model.addVars(
@@ -1568,8 +1597,8 @@ class RucModel(BaseModel):
                             )
 
                         if coef != 0:
-                            start_vars += [
-                                self.model._UnitStart[g, t - su_time_limit - 1]]
+                            start_vars += [self.model._UnitStart[
+                                               g, t - su_time_limit - 1]]
                             start_coefs += [coef]
 
                 gener_startstops_constrs[g, t] = LinExpr(
@@ -1747,7 +1776,7 @@ class RucModel(BaseModel):
             + self.ReserveReqs[t]
             )
 
-    def CA_reserve_constraints(self):
+    def ca_reserve_constraints(self):
         self._add_reserve_shortfall()
 
         # ensure there is sufficient maximal power output available to meet
@@ -1786,7 +1815,7 @@ class RucModel(BaseModel):
             )
 
         self.ptdf_power_flow()
-        self.CA_reserve_constraints()
+        self.ca_reserve_constraints()
 
         # set up objective
         self.add_objective()
@@ -1798,6 +1827,27 @@ class RucModel(BaseModel):
 class ScedModel(BaseModel):
 
     model_name = 'EconomicDispatch'
+
+    def _parse_model_results(self):
+        results = super()._parse_model_results()
+
+        results['reserves_provided'] = {
+            (g, t): self.model._ReserveProvided[g, t].x
+            for g, t in product(*self.thermal_periods)
+            }
+
+        results['power_generated_above_min'] = {
+            (g, t): self.model._PowerGeneratedAboveMinimum[g, t].x
+            for g, t in product(*self.thermal_periods)
+            }
+
+        results['power_avail_above_min'] = {
+            (g, t): self.model._MaximumPowerAvailableAboveMinimum[
+                g, t].getValue()
+            for g, t in product(*self.thermal_periods)
+            }
+
+        return results
 
     def _get_max_power_available_lists(self, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(g, t)
@@ -1813,7 +1863,7 @@ class ScedModel(BaseModel):
         linear_vars.append(self.model._ReserveProvided[g, t])
         linear_coefs.append(1.)
 
-        return linear_vars, linear_coefs
+        return linear_coefs, linear_vars
 
     def mlr_reserve_vars(self):
         # amount of power produced by each generator above minimum,
@@ -1826,10 +1876,9 @@ class ScedModel(BaseModel):
             )
 
         self.model._MaximumPowerAvailableAboveMinimum = {
-            (g, t): self._get_generation_above_minimum_lists(g, t)
+            (g, t): LinExpr(*self._get_generation_above_minimum_lists(g, t))
             for g, t in product(*self.thermal_periods)
             }
-
 
     def mlr_generation_limits(self):
         power_startlimit_constrs = dict()
@@ -1837,7 +1886,7 @@ class ScedModel(BaseModel):
         power_startstoplimit_constrs = dict()
 
         for g, t in product(*self.thermal_periods):
-            linear_vars, linear_coefs = self._get_initial_max_power_lists(g, t)
+            linear_vars, linear_coefs = self._get_initial_max_power_available_lists(g, t)
             start_vars = linear_vars + [self.model._UnitStart[g, t]]
             start_coefs = linear_coefs + [self.MaxPowerOutput[g, t]
                                           - self.StartupRampLimit[g]]
