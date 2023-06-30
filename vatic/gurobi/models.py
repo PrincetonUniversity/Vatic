@@ -7,7 +7,7 @@ import math
 import pandas as pd
 from abc import ABC, abstractmethod
 from itertools import product
-from copy import copy
+from copy import copy, deepcopy
 from typing import Optional, Any
 
 import gurobipy as gp
@@ -173,10 +173,16 @@ class BaseModel(ABC):
         self.StartupRampLimit = grid_template['StartupRampLimit']
         self.ShutdownRampLimit = grid_template['ShutdownRampLimit']
 
-        self.UnitOnT0State = grid_template['UnitOnT0State']
+        if sim_state:
+            self.UnitOnT0State, self.PowerGeneratedT0 = deepcopy(
+                sim_state.init_states)
+
+        else:
+            self.UnitOnT0State = grid_template['UnitOnT0State']
+            self.PowerGeneratedT0 = grid_template['PowerGeneratedT0']
+
         self.UnitOnT0 = tupledict({
             g: init_st > 0. for g, init_st in self.UnitOnT0State.items()})
-        self.PowerGeneratedT0 = grid_template['PowerGeneratedT0']
 
         (self.PiecewiseGenerationPoints,
             self.PiecewiseGenerationCosts,
@@ -330,16 +336,21 @@ class BaseModel(ABC):
             'startup_cost': {(g, t): self.model._StartupCost[g, t].x
                              for g, t in product(*self.thermal_periods)},
 
-            'load_shedding': {(b, t): self.model._LoadShedding[b, t].x
+            'load_shedding': {(b, t): (self.model._LoadShedding[b, t].x
+                                       if (b, t) in self.model._LoadShedding
+                                       else 0.)
                               for b in self.Buses for t in self.TimePeriods},
-            'over_generation': {(b, t): self.model._OverGeneration[b, t].x
-                                for b in self.Buses for t in self.TimePeriods},
+
+            'over_generation': {
+                (b, t): (self.model._OverGeneration[b, t].x
+                         if (b, t) in self.model._OverGeneration else 0.)
+                for b in self.Buses for t in self.TimePeriods
+                },
+
             'reserve_shortfall': {t: self.model._ReserveShortfall[t].x
                                   for t in self.TimePeriods},
 
             }
-
-        pg = pd.Series(results['power_generated']).unstack()
 
         for g, t in product(*self.thermal_periods):
             slack_list = [constr[g, t].slack for constr in cur_rampup_constrs
@@ -370,7 +381,7 @@ class BaseModel(ABC):
 
                 if (bs, t) in self.model._LoadGenerateMismatch:
                     p_balances[bs, t] \
-                        = self.model._LoadGenerateMismatch[bs, t].getValue()
+                        = self.model._LoadGenerateMismatch[bs, t]
                 else:
                     p_balances[bs, t] = 0.
 
@@ -581,15 +592,14 @@ class BaseModel(ABC):
             }
 
         for g, t in t0_uramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
+            power_vars = [self.model._MaximumPowerAvailableAboveMinimum[g, t],
+                          self.model._UnitOn[g, t],
+                          self.model._UnitStart[g, t]]
 
-            power_vars += [self.model._UnitOn[g, t],
-                           self.model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.NominalRampUpLimit[g]]
+            power_coefs = [
+                1., -self.NominalRampUpLimit[g] + self.MinPowerOutput[g, t],
+                -self.StartupRampLimit[g] + self.NominalRampUpLimit[g]
+                ]
 
             t0_upower_constrs[g, t] = LinExpr(
                 power_coefs, power_vars) <= self.PowerGeneratedT0[g]
@@ -604,17 +614,16 @@ class BaseModel(ABC):
             }
 
         for g, t in tk_uramp_periods:
-            power_vars, power_coefs = self._get_generation_above_minimum_lists(
-                g, t)
+            power_vars = [self.model._MaximumPowerAvailableAboveMinimum[g, t],
+                          self.model._UnitOn[g, t],
+                          self.model._UnitStart[g, t]]
 
-            power_vars += [self.model._UnitOn[g, t],
-                           self.model._UnitStart[g, t]]
-            power_coefs += [-self.NominalRampUpLimit[g]
-                            - self.MinPowerOutput[g, t - 1]
-                            + self.MinPowerOutput[g, t],
-                            -self.StartupRampLimit[g]
-                            + self.MinPowerOutput[g, t - 1]
-                            + self.NominalRampUpLimit[g]]
+            power_coefs = [
+                1., -self.NominalRampUpLimit[g] - self.MinPowerOutput[g, t - 1]
+                    + self.MinPowerOutput[g, t],
+                - self.StartupRampLimit[g] + self.MinPowerOutput[g, t - 1]
+                + self.NominalRampUpLimit[g]
+                ]
 
             neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
                 g, t - 1, negative=True)
@@ -805,7 +814,7 @@ class BaseModel(ABC):
         linear_coefs = [1.] * len(linear_vars)
 
         linear_vars += [self.model._UnitOn[g, t]]
-        linear_coefs += [-1]
+        linear_coefs += [-1.]
 
         return LinExpr(linear_coefs, linear_vars) <= 0
 
@@ -816,7 +825,7 @@ class BaseModel(ABC):
         linear_coefs = [1.] * len(linear_vars)
 
         linear_vars += [self.model._UnitOn[g, t]]
-        linear_coefs += [-1]
+        linear_coefs += [1.]
 
         return LinExpr(linear_coefs, linear_vars) <= 1
 
@@ -827,7 +836,7 @@ class BaseModel(ABC):
                            self.model._UnitStop[g, t]]
             linear_coefs = [1., -1., 1.]
 
-            return LinExpr(linear_coefs, linear_vars) <= self.UnitOnT0[g]
+            return LinExpr(linear_coefs, linear_vars) == self.UnitOnT0[g]
 
         else:
             linear_vars = [self.model._UnitOn[g, t],
@@ -964,9 +973,6 @@ class BaseModel(ABC):
 
     def _add_power_generated_startup_shutdown(self, g, t):
         linear_vars, linear_coefs = self._get_power_generated_lists(g, t)
-
-        linear_vars.append(self.model._UnitOn[g, t])
-        linear_coefs.append(1.)
 
         # first, discover if we have startup/shutdown
         # curves in the self.model
@@ -1150,14 +1156,10 @@ class BaseModel(ABC):
                 if max_injections > 0:
                     over_gen_maxes[b, t] = max_injections
                     over_gen_times_per_bus[b].append(t)
-                else:
-                    over_gen_maxes[b, t] = GRB.INFINITY
 
                 if max_withdrawls > 0:
                     load_shed_maxes[b, t] = max_withdrawls
                     load_shed_times_per_bus[b].append(t)
-                else:
-                    load_shed_maxes[b, t] = GRB.INFINITY
 
         self.model._OverGenerationBusTimes = list(over_gen_maxes.keys())
         self.model._LoadSheddingBusTimes = list(load_shed_maxes.keys())
@@ -1176,38 +1178,11 @@ class BaseModel(ABC):
             name='LoadShedding'
             )
 
-        # the following constraints are necessarily, at least in the case of
-        # CPLEX 12.4, to prevent the appearance of load generation mismatch
-        # component values in the range of *negative* e-5. what these small
-        # negative values do is to cause the optimal objective to be a very
-        # large negative, due to obviously large penalty values for under or
-        # over-generation. JPW would call this a heuristic at this point, but
-        # it does seem to work broadly. we tried a single global constraint,
-        # across all buses, but that failed to correct the problem, and caused
-        # the solve times to explode.
-
-        for b in self.Buses:
-            if load_shed_times_per_bus[b]:
-                linear_vars = list(self.model._LoadShedding[b, t]
-                                   for t in load_shed_times_per_bus[b])
-                linear_coefs = [1.] * len(linear_vars)
-
-                self.model.addConstr(LinExpr(linear_coefs, linear_vars) >= 0,
-                                name=f"PosLoadGenerateMismatchTolerance[{b}]")
-
-            if over_gen_times_per_bus[b]:
-                linear_vars = list(self.model._OverGeneration[b, t]
-                                   for t in over_gen_times_per_bus[b])
-                linear_coefs = [1.] * len(linear_vars)
-
-                self.model.addConstr(LinExpr(linear_coefs, linear_vars) >= 0,
-                                name=f"NegLoadGenerateMismatchTolerance[{b}]")
-
         #####################################################
         # load "shedding" can be both positive and negative #
         #####################################################
-        self.model._LoadGenerateMismatch = {(b, t): 0. for b in self.Buses
-                                       for t in self.TimePeriods}
+        self.model._LoadGenerateMismatch = {
+            (b, t): 0. for b in self.Buses for t in self.TimePeriods}
 
         for b, t in self.model._LoadSheddingBusTimes:
             self.model._LoadGenerateMismatch[b, t] += self.model._LoadShedding[b, t]
@@ -1219,12 +1194,16 @@ class BaseModel(ABC):
             self.model._LoadMismatchCost[t] = 0.
 
         for b, t in self.model._LoadSheddingBusTimes:
-            self.model._LoadMismatchCost[t] += (self.model._LoadMismatchPenalty
-                                           * self.model._LoadShedding[b, t])
+            self.model._LoadMismatchCost[t] += (
+                    self.model._LoadMismatchPenalty
+                    * self.model._LoadShedding[b, t]
+                    )
 
         for b, t in self.model._OverGenerationBusTimes:
-            self.model._LoadMismatchCost[t] += (self.model._LoadMismatchPenalty
-                                           * self.model._OverGeneration[b, t])
+            self.model._LoadMismatchCost[t] += (
+                    self.model._LoadMismatchPenalty
+                    * self.model._OverGeneration[b, t]
+                    )
 
         # for interface violation costs at a time step
         self.model._BranchViolationCost = {t: 0 for t in self.TimePeriods}
@@ -1264,11 +1243,11 @@ class BaseModel(ABC):
                                 + out_store - in_store + non_dispatch
                                 + self.model._LoadGenerateMismatch[b, tm])
 
-            self._ptdf_dcopf_network_model(block, tm)
-            self.model._TransmissionBlock[tm] = block
+            self.model._TransmissionBlock[tm] = self._ptdf_dcopf_network_model(
+                block, tm)
 
     def _ptdf_dcopf_network_model(self, block, tm):
-        bus_loads = {b: self.Demand.loc[b, tm] for b in self.Buses}
+        bus_loads = {bus: self.Demand.loc[bus, tm] for bus in self.Buses}
         block._pl = bus_loads
 
         block._branches_inservice = tuple(
@@ -1280,19 +1259,19 @@ class BaseModel(ABC):
             self.Buses, lb=-GRB.INFINITY, ub=GRB.INFINITY, name=f'p_nw_{tm}')
 
         # declare_eq_p_net_withdraw_at_bus  (dc...branches = None) #
-        for b in self.Buses:
+        for bus in self.Buses:
             self.model.addConstr(
-                (block._p_nw_tm[b] == (
-                        (block._pl[b] if bus_loads[b] != 0.0 else 0.0)
+                (block._p_nw_tm[bus] == (
+                        (block._pl[bus] if bus_loads[bus] != 0.0 else 0.0)
                         - quicksum(block._pg[g]
-                                   for g in block._gens_by_bus[b]))),
-                name=f"_eq_p_net_withdraw_at_bus[{b}]_at_period[{block._tm}]"
+                                   for g in block._gens_by_bus[bus]))),
+                name=f"_eq_p_net_withdraw_at_bus[{bus}]_at_period[{block._tm}]"
                 )
 
-        p_expr = quicksum(block._pg[g] for b in self.Buses
-                          for g in block._gens_by_bus[b])
-        p_expr -= quicksum(block._pl[b] for b in self.Buses
-                           if bus_loads[b] is not None)
+        p_expr = quicksum(block._pg[g] for bus in self.Buses
+                          for g in block._gens_by_bus[bus])
+        p_expr -= quicksum(block._pl[bus] for bus in self.Buses
+                           if bus_loads[bus] is not None)
 
         self.model.addConstr((p_expr == 0.0),
                              name=f"eq_p_balance_at_period{block._tm}")
@@ -1306,6 +1285,9 @@ class BaseModel(ABC):
                 )
 
         block._PTDF = self.PTDF
+        block.update()
+
+        return block
 
     def add_objective(self):
         self.model._NoLoadCost = tupledict({
@@ -1863,7 +1845,7 @@ class ScedModel(BaseModel):
         linear_vars.append(self.model._ReserveProvided[g, t])
         linear_coefs.append(1.)
 
-        return linear_coefs, linear_vars
+        return linear_vars, linear_coefs
 
     def mlr_reserve_vars(self):
         # amount of power produced by each generator above minimum,
@@ -1876,7 +1858,8 @@ class ScedModel(BaseModel):
             )
 
         self.model._MaximumPowerAvailableAboveMinimum = {
-            (g, t): LinExpr(*self._get_generation_above_minimum_lists(g, t))
+            (g, t): LinExpr(
+                *self._get_generation_above_minimum_lists(g, t)[::-1])
             for g, t in product(*self.thermal_periods)
             }
 
@@ -1996,8 +1979,8 @@ class ScedModel(BaseModel):
             name='delta_ineq'
             )
 
-        self.model._StartupCost = self.model.addVars(*self.thermal_periods,
-                                           name='StartupCost')
+        self.model._StartupCost = self.model.addVars(
+            *self.thermal_periods, name='StartupCost')
 
         self.model._ComputeStartupCosts = self.model.addConstrs(
             (LinExpr([self.StartupCosts[g][s]

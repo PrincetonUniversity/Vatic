@@ -136,3 +136,10 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
 
  - `--last-conditions-file` If given, the final states of the thermal generators will be saved to use as initial states
                             for another simulation run (see `init-conditions-file` above).
+
+
+## Using a gurobipy implementation ##
+
+Installing Vatic also installs the command `vatic-gb`, which has the same interface as `vatic-det` but without the
+`--solver` argument. We recommend using this tool if you have access to the gurobi solver, as the underlying simulation
+engine here has been implemented at a speed of up to 10x faster than the `vatic-det` version.
