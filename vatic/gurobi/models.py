@@ -13,7 +13,7 @@ from typing import Optional, Any
 import gurobipy as gp
 from gurobipy import GRB, tupledict, LinExpr, quicksum
 from ordered_set import OrderedSet
-from .models_gurobi import ptdf_utils_gurobi as ptdf_utils
+from .ptdf_utils import VirtualPTDFMatrix, BasePointType
 
 
 def _much_less_than(v1, v2):
@@ -370,7 +370,7 @@ class BaseModel(ABC):
 
         for t in self.TimePeriods:
             cur_block = self.model._TransmissionBlock[t]
-            cur_ptdf = cur_block._PTDF
+            cur_ptdf = cur_block['PTDF']
             pfv, pfv_i, va = cur_ptdf.calculate_PFV(cur_block)
 
             for i, br in enumerate(cur_ptdf.branches_keys):
@@ -385,7 +385,7 @@ class BaseModel(ABC):
                 else:
                     p_balances[bs, t] = 0.
 
-                pl_dict[bs, t] = self.model._TransmissionBlock[t]._pl[bs]
+                pl_dict[bs, t] = self.model._TransmissionBlock[t]['pl'][bs]
 
         results['flows'] = flows
         results['voltage_angles'] = voltage_angles
@@ -585,24 +585,23 @@ class BaseModel(ABC):
         tk_upower_constrs = dict()
 
         t0_uramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and self.NominalRampUpLimit[g] < (self.MaxPowerOutput[g, t]
-                                                  - self.PowerGeneratedT0[g]))
+            (g, self.InitialTime) for g in self.ThermalGenerators
+            if (self.UnitOnT0[g]
+                and self.NominalRampUpLimit[g] < (
+                        self.MaxPowerOutput[g, self.InitialTime]
+                        - self.PowerGeneratedT0[g]
+                        ))
             }
 
         for g, t in t0_uramp_periods:
-            power_vars = [self.model._MaximumPowerAvailableAboveMinimum[g, t],
-                          self.model._UnitOn[g, t],
-                          self.model._UnitStart[g, t]]
+            pvars, pcoefs = self._get_initial_max_power_available_lists(g, t)
 
-            power_coefs = [
-                1., -self.NominalRampUpLimit[g] + self.MinPowerOutput[g, t],
-                -self.StartupRampLimit[g] + self.NominalRampUpLimit[g]
-                ]
+            pvars += [self.model._UnitOn[g, t], self.model._UnitStart[g, t]]
+            pcoefs += [-self.NominalRampUpLimit[g] + self.MinPowerOutput[g, t],
+                       -self.StartupRampLimit[g] + self.NominalRampUpLimit[g]]
 
             t0_upower_constrs[g, t] = LinExpr(
-                power_coefs, power_vars) <= self.PowerGeneratedT0[g]
+                pcoefs, pvars) <= self.PowerGeneratedT0[g]
 
         tk_uramp_periods = {
             (g, t) for g, t in product(*self.thermal_periods)
@@ -614,22 +613,21 @@ class BaseModel(ABC):
             }
 
         for g, t in tk_uramp_periods:
-            power_vars = [self.model._MaximumPowerAvailableAboveMinimum[g, t],
-                          self.model._UnitOn[g, t],
-                          self.model._UnitStart[g, t]]
+            pvars, pcoefs = self._get_initial_max_power_available_lists(g, t)
 
-            power_coefs = [
-                1., -self.NominalRampUpLimit[g] - self.MinPowerOutput[g, t - 1]
-                    + self.MinPowerOutput[g, t],
-                - self.StartupRampLimit[g] + self.MinPowerOutput[g, t - 1]
-                + self.NominalRampUpLimit[g]
+            pvars += [self.model._UnitOn[g, t], self.model._UnitStart[g, t]]
+            pcoefs += [
+                -self.NominalRampUpLimit[g]
+                - self.MinPowerOutput[g, t - 1] + self.MinPowerOutput[g, t],
+                - self.StartupRampLimit[g]
+                + self.MinPowerOutput[g, t - 1] + self.NominalRampUpLimit[g]
                 ]
 
             neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
                 g, t - 1, negative=True)
 
             tk_upower_constrs[g, t] = LinExpr(
-                power_coefs + neg_coefs, power_vars + neg_vars) <= 0.
+                pcoefs + neg_coefs, pvars + neg_vars) <= 0.
 
         self.model._EnforceMaxAvailableT0RampUpRates = self.model.addConstrs(
             constr_genr(t0_upower_constrs),
@@ -645,12 +643,11 @@ class BaseModel(ABC):
         tk_dpower_constrs = dict()
 
         t0_dramp_periods = {
-            (g, t) for g, t in product(*self.thermal_periods)
-            if (t == self.InitialTime and self.UnitOnT0[g]
-                and (self.NominalRampDownLimit[g] < (
-                            self.PowerGeneratedT0[g]
-                            - self.MinPowerOutput[g, t]
-                    )
+            (g, self.InitialTime) for g in self.ThermalGenerators
+            if (self.UnitOnT0[g]
+                and (self.NominalRampDownLimit[g]
+                     < (self.PowerGeneratedT0[g]
+                        - self.MinPowerOutput[g, self.InitialTime])
                      or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
             }
 
@@ -1214,14 +1211,17 @@ class BaseModel(ABC):
         # for contingency violation costs at a time step
         self.model._ContingencyViolationCost = {t: 0 for t in self.TimePeriods}
 
-        # set up the empty self.model block for each time period to add constraints
-        self.model._TransmissionBlock = {}
-        for tm in self.TimePeriods:
-            block = gp.Model()
+        self.model._p_nw = self.model.addVars(
+            self.Buses, self.TimePeriods,
+            lb=-GRB.INFINITY, ub=GRB.INFINITY, name='p_nw'
+            )
 
-            block._gens_by_bus = {bus: [bus] for bus in self.Buses}
-            block._tm = tm
-            block._pg = dict()
+        # set up the empty self.model block for each time period to add constraints
+        self.model._TransmissionBlock = dict()
+        for tm in self.TimePeriods:
+            block = {'tm': tm,
+                     'gens_by_bus': {bus: [bus] for bus in self.Buses},
+                     'pg': dict()}
 
             for b in self.Buses:
                 start_shut = quicksum(
@@ -1239,55 +1239,50 @@ class BaseModel(ABC):
                     for g in self.NondispatchableGeneratorsAtBus[b]
                     )
 
-                block._pg[b] = (start_shut
-                                + out_store - in_store + non_dispatch
-                                + self.model._LoadGenerateMismatch[b, tm])
+                block['pg'][b] = (start_shut + non_dispatch
+                                  + out_store - in_store
+                                  + self.model._LoadGenerateMismatch[b, tm])
 
-            self.model._TransmissionBlock[tm] = self._ptdf_dcopf_network_model(
-                block, tm)
+            # _PTDF_DCOPF_NETWORK_MODEL
+            bus_loads = {bus: self.Demand.loc[bus, tm] for bus in self.Buses}
+            block['pl'] = bus_loads
 
-    def _ptdf_dcopf_network_model(self, block, tm):
-        bus_loads = {bus: self.Demand.loc[bus, tm] for bus in self.Buses}
-        block._pl = bus_loads
-
-        block._branches_inservice = tuple(
-            line for line in self.TransmissionLines
-            if not self.LineOutOfService[line]
-            )
-
-        block._p_nw_tm = self.model.addVars(
-            self.Buses, lb=-GRB.INFINITY, ub=GRB.INFINITY, name=f'p_nw_{tm}')
-
-        # declare_eq_p_net_withdraw_at_bus  (dc...branches = None) #
-        for bus in self.Buses:
-            self.model.addConstr(
-                (block._p_nw_tm[bus] == (
-                        (block._pl[bus] if bus_loads[bus] != 0.0 else 0.0)
-                        - quicksum(block._pg[g]
-                                   for g in block._gens_by_bus[bus]))),
-                name=f"_eq_p_net_withdraw_at_bus[{bus}]_at_period[{block._tm}]"
+            block['branches_in_service'] = tuple(
+                line for line in self.TransmissionLines
+                if not self.LineOutOfService[line]
                 )
 
-        p_expr = quicksum(block._pg[g] for bus in self.Buses
-                          for g in block._gens_by_bus[bus])
-        p_expr -= quicksum(block._pl[bus] for bus in self.Buses
-                           if bus_loads[bus] is not None)
+            # declare_eq_p_net_withdraw_at_bus  (dc...branches = None) #
+            for bus in self.Buses:
+                self.model.addConstr(
+                    (self.model._p_nw[bus, tm] == (
+                            (block['pl'][bus] if bus_loads[bus] != 0.0
+                             else 0.0)
+                            - quicksum(block['pg'][g]
+                                       for g in block['gens_by_bus'][bus]))),
 
-        self.model.addConstr((p_expr == 0.0),
-                             name=f"eq_p_balance_at_period{block._tm}")
+                    name=f"_eq_p_net_withdraw_at_bus[{bus}]_at_period[{tm}]"
+                    )
 
-        if not self.PTDF:
-            self.PTDF = ptdf_utils.VirtualPTDFMatrix(
-                self.branches, self.buses, self.ReferenceBus,
-                ptdf_utils.BasePointType.FLATSTART, self.ptdf_options,
-                branches_keys=block._branches_inservice,
-                buses_keys=self.Buses
-                )
+            p_expr = quicksum(block['pg'][bus_name] for bus_name in self.Buses
+                              if len(block['gens_by_bus'][bus_name]) != 0)
+            p_expr -= quicksum(block['pl'][bus] for bus in self.Buses
+                               if bus_loads[bus] is not None)
 
-        block._PTDF = self.PTDF
-        block.update()
+            self.model.addConstr((p_expr == 0.0),
+                                 name=f"eq_p_balance_at_period{tm}")
 
-        return block
+            if not self.PTDF:
+                self.PTDF = VirtualPTDFMatrix(
+                    self.branches, self.buses, self.ReferenceBus,
+                    BasePointType.FLATSTART, self.ptdf_options,
+                    branches_keys=block['branches_in_service'],
+                    buses_keys=self.Buses
+                    )
+
+            block['PTDF'] = self.PTDF
+            block['p_nw'] = {b: self.model._p_nw[b, tm] for b in self.Buses}
+            self.model._TransmissionBlock[tm] = block
 
     def add_objective(self):
         self.model._NoLoadCost = tupledict({
@@ -1666,10 +1661,10 @@ class RucModel(BaseModel):
         vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
 
         self.model._ValidShutdownTimePeriods = {
-            g: ([] if len(self.StartupLags[g]) <= 1
+            g: (list() if len(self.StartupLags[g]) <= 1
                 else self.TimePeriods if self.UnitOnT0State[g] >= 0
-            else self.TimePeriods + [self.TimePeriods[0]
-                                     + int(self.UnitOnT0State[g])])
+                else self.TimePeriods + [self.InitialTime
+                                         + int(self.UnitOnT0State[g])])
             for g in self.ThermalGenerators
             }
 
@@ -1725,11 +1720,6 @@ class RucModel(BaseModel):
 
         self.model._StartupCost = self.model.addVars(
             *self.thermal_periods, lb=0, ub=GRB.INFINITY, name='StartupCost')
-
-        self.model._StartupIndicator = self.model.addVars(
-            self.model._StartupIndicator_domain, vtype=GRB.BINARY,
-            name='StartupIndicator'
-            )
 
         self.model._ComputeStartupCosts = self.model.addConstrs(
             (self.compute_startup_cost_rule(g, t)
@@ -1804,6 +1794,8 @@ class RucModel(BaseModel):
         self._add_zero_cost_hours(objective_hours)
 
         self.model.update()
+
+        self.model.write("gurobi.lp")
 
 
 class ScedModel(BaseModel):
