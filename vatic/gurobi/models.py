@@ -13,7 +13,9 @@ from typing import Optional, Any
 import gurobipy as gp
 from gurobipy import GRB, tupledict, LinExpr, quicksum
 from ordered_set import OrderedSet
-from .ptdf_utils import VirtualPTDFMatrix, BasePointType
+from .ptdf_utils import (VirtualPTDFMatrix, BasePointType,
+                         _MaximalViolationsStore, _LazyViolations,
+                         add_violations)
 
 
 def _much_less_than(v1, v2):
@@ -78,6 +80,7 @@ class BaseModel(ABC):
         self.Demand = load_data.transpose()
         self.time_steps = renews_data.index.to_list()
         self.future_status = future_status
+        self.verbose = 0
 
         self.gen_costs = {
             gen: (grid_template['CostPiecewiseValues'][gen][-1]
@@ -279,8 +282,95 @@ class BaseModel(ABC):
 
         start_time = time.time()
         self.model.optimize()
-        self.solve_time = time.time() - start_time
+        duals = False
 
+        # _lazy_ptdf_uc_solve_loop
+        for i in range(100):
+            flows = {}
+            viol_num = {}
+            mon_viol_num = {}
+            viol_lazy = {}
+
+            # check_violations
+            for t, mb in self.model._TransmissionBlock.items():
+                pfv, pfv_i, va = self.PTDF.calculate_PFV(mb, masked=True)
+
+                viols_store = _MaximalViolationsStore(
+                    max_viol_add=5, baseMVA=self.BaseMVA, time=t,
+                    prepend_str='[MIP phase] '
+                    )
+
+                if self.PTDF.branches_keys_masked:
+                    viols_store.check_and_add_violations(
+                        'branch', pfv, self.PTDF.lazy_branch_limits,
+                        self.PTDF.enforced_branch_limits,
+                        -self.PTDF.lazy_branch_limits,
+                        -self.PTDF.enforced_branch_limits, mb['idx_monitored'],
+                        self.PTDF.branches_keys_masked
+                        )
+
+                viol_num[t] = viols_store.total_violations
+                mon_viol_num[t] = viols_store.monitored_violations
+                flows[t] = {'PFV': pfv, 'PFV_I': pfv_i}
+
+                viol_lazy[t] = _LazyViolations(
+                    branch_lazy_violations=set(
+                        viols_store.get_violations_named('branch')),
+                    interface_lazy_violations=set(
+                        viols_store.get_violations_named('interface')),
+                    contingency_lazy_violations=set(
+                        viols_store.get_violations_named('contingency'))
+                    )
+
+            total_viol_num = sum(viol_num.values())
+            total_mon_viol_num = sum(mon_viol_num.values())
+
+            # this flag is for if we found violations **and** every
+            # violation is in the model
+            all_viol_in_model = total_viol_num > 0
+            all_viol_in_model &= total_viol_num == total_mon_viol_num
+
+            # this flag is for if we're going to terminate this iteration,
+            # either because there are no violations in this solution
+            # **or** because every violation is already in the model
+            terminate_this_iter = (total_viol_num == 0) or all_viol_in_model
+
+            iter_status_str = f"[MIP phase] iteration {i},"\
+                              f" found {total_viol_num} violation(s)"
+
+            if total_mon_viol_num:
+                iter_status_str += f", {total_mon_viol_num} of "\
+                                   "which are already monitored"
+
+            if self.verbose:
+                print(iter_status_str)
+
+            if terminate_this_iter:
+                if duals:
+                    solver.add_duals()
+
+                break
+
+            # lazy_ptdf_violation_adder
+            total_flow_constr_added = 0
+            for t in self.TimePeriods:
+                mb = self.model._TransmissionBlock[t]
+
+                add_violations(self.model, viol_lazy[t], flows[t], mb,
+                               self.ptdf_options, self.PTDF, time=t)
+
+                total_flow_constr_added += len(viol_lazy[t])
+
+            if self.verbose:
+                print(f"[MIP phase] iteration {i}, added "
+                      f"{total_flow_constr_added} flow constraint(s)")
+
+            results = _lazy_ptdf_solve(
+                m, solver, persistent_solver, symbolic_solver_labels,
+                solver_tee, vars_to_load_time_periods, solve_method_options
+                )
+
+        self.solve_time = time.time() - start_time
         self.results = self._parse_model_results()
 
     def _parse_model_results(self):
@@ -1221,7 +1311,7 @@ class BaseModel(ABC):
         for tm in self.TimePeriods:
             block = {'tm': tm,
                      'gens_by_bus': {bus: [bus] for bus in self.Buses},
-                     'pg': dict()}
+                     'pg': dict(), 'idx_monitored': list()}
 
             for b in self.Buses:
                 start_shut = quicksum(

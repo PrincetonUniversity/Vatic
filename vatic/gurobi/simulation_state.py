@@ -8,7 +8,7 @@ import pandas as pd
 import math
 from copy import deepcopy
 from typing import Optional
-from .formulations import RucModel, ScedModel
+from .models import RucModel, ScedModel
 
 
 class VaticStateError(Exception):
@@ -69,6 +69,10 @@ class VaticSimulationState:
         """The number of timesteps we have data for."""
 
         return len(self.times)
+
+    @property
+    def init_states(self) -> tuple[dict[str, int], dict[str, float]]:
+        return self._init_gen_state, self._init_power_gen
 
     def timestep_commitments(self, t: int) -> pd.Series[bool]:
         """Return commitments for a single time."""
@@ -142,8 +146,8 @@ class VaticSimulationState:
                           ruc: RucModel, sim_actuals: pd.DataFrame) -> None:
         """This is the first RUC; save initial state."""
 
-        self._init_gen_state = ruc.UnitOnT0State
-        self._init_power_gen = ruc.PowerGeneratedT0
+        self._init_gen_state = deepcopy(ruc.UnitOnT0State)
+        self._init_power_gen = deepcopy(ruc.PowerGeneratedT0)
         self._commitments = pd.Series(ruc.results['commitment']).unstack()
 
         # usually assumed to be empty
@@ -220,9 +224,6 @@ class VaticSimulationState:
                 else:
                     state_duration = 1
                     unit_on = new_on
-
-                if t == sced_time:
-                    break
 
             if not unit_on:
                 state_duration = -state_duration
