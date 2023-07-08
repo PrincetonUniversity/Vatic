@@ -1,8 +1,9 @@
 
 from abc import ABC, abstractmethod
+import math
 import numpy as np
 import egret.model_library.transmission.tx_calc as tx_calc
-from egret.common.log import logger
+from gurobipy import quicksum
 from pyomo.environ import value
 from enum import Enum
 from typing import Sized
@@ -239,6 +240,8 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
                                                         self.branches_keys)
 
     def _get_filtered_lines(self, ptdf_options):
+        self.branch_limits_array_masked = self.branch_limits_array
+
         if ptdf_options['branch_kv_threshold'] is None:
             ## Nothing to do
             self.branch_mask = np.arange(len(self.branch_limits_array))
@@ -246,7 +249,6 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
             self.branchname_to_index_masked_map = self._branchname_to_index_map
             self.B_dA_masked = self.B_dA
             self.phase_shift_flow_adjuster_array_masked = self.phase_shift_flow_adjuster_array
-            self.branch_limits_array_masked = self.branch_limits_array
             self.contingency_limits_array_masked = self.contingency_limits_array
 
             return None
@@ -512,7 +514,7 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
 
         return PF_delta
 
-    def _calculate_PFV(self, mb, masked):
+    def calculate_PFV(self, mb, masked):
         NWV = np.fromiter((mb['p_nw'][b].x for b in self.buses_keys_no_ref),
                           float, count=len(self.buses_keys_no_ref))
         NWV += self.phi_adjust_array.T
@@ -544,50 +546,6 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
             VA = -self._insert_reference_bus(VA.T[0], 0.)
 
         return PFV.A[0], PFV_I.A[0], VA
-
-    def calculate_masked_PFV(self, mb):
-        '''
-        Calculate a vector of partial real power
-        flows indexed by branches_masked_keys, a vector
-        of interface flows indexed by interface_keys,
-        and a vector of bus voltage angles indexed
-        by buses_keys, for given ConcreteModel or
-        Block with populated p_nw variable.
-
-        Parameters
-        ----------
-        mb : Pyomo ConcreteModel or Block with p_nw attribute
-             indexed by buses
-
-        Returns
-        -------
-        tuple: PFV, PFV_I, VA. np.arrays for partial
-               real power flow, interface flow, voltage
-               angles.
-        '''
-        return self._calculate_PFV(mb, masked=True)
-
-    def calculate_PFV(self, mb):
-        '''
-        Calculate a vector of real power branch
-        flows indexed by branches_keys, a vector
-        of interface flows indexed by interface_keys,
-        and a vector of bus voltage angles indexed
-        by buses_keys, for given ConcreteModel or
-        Block with populated p_nw variable.
-
-        Parameters
-        ----------
-        mb : Pyomo ConcreteModel or Block with p_nw attribute
-             indexed by buses
-
-        Returns
-        -------
-        tuple: (PFV, PFV_I, VA). np.arrays for
-               real power flow, interface flow, voltage
-               angles.
-        '''
-        return self._calculate_PFV(mb, masked=False)
 
     def calculate_LMP(self, LMPC_Constrs, LMPI_Constrs, LMPE_Constrs):
         '''
@@ -807,15 +765,17 @@ class _MaximalViolationsStore:
             self._add_violation( name, other_name, viol_indices[idx], val )
             viol_indices.pop(idx)
 
-    def check_and_add_violations(self, name, flow_array, flow_variable,
-                upper_lazy_limits, upper_enforced_limits,
-                lower_lazy_limits, lower_enforced_limits,
-                monitored_indices, index_names, outer_name=None, PFV=None):
+    def check_and_add_violations(self,
+                                 name, flow_array, upper_lazy_limits,
+                                 upper_enforced_limits, lower_lazy_limits,
+                                 lower_enforced_limits, monitored_indices,
+                                 index_names, outer_name=None, PFV=None):
 
         if outer_name:
             # contingencies are named by cn, branch_idx, reduce to
             # branch_idx for this function
-            monitored_indices = set(idx[1] for idx in monitored_indices if idx[0] == outer_name)
+            monitored_indices = set(idx[1] for idx in monitored_indices
+                                    if idx[0] == outer_name)
 
         ## check upper bound
         upper_viol_lazy_array = flow_array - upper_lazy_limits
@@ -823,21 +783,26 @@ class _MaximalViolationsStore:
         ## get the indices of the violation
         ## here filter by least violation in violations_store
         ## in the limit, this will become 0 eventually --
-        upper_viol_lazy_idx = np.nonzero(upper_viol_lazy_array > self.min_flow_violation())[0]
+        upper_viol_lazy_idx = np.nonzero(upper_viol_lazy_array
+                                         > self.min_flow_violation())[0]
+        upper_viol_array = (flow_array[upper_viol_lazy_idx]
+                            - upper_enforced_limits[upper_viol_lazy_idx])
 
-        upper_viol_array = flow_array[upper_viol_lazy_idx] - upper_enforced_limits[upper_viol_lazy_idx]
-        self._calculate_total_and_monitored_violations(upper_viol_array, upper_viol_lazy_idx, monitored_indices,
-                                                        flow_variable, flow_array, index_names, upper_enforced_limits,
-                                                        name, outer_name, PFV)
+        self._calculate_total_and_monitored_violations(
+            upper_viol_array, upper_viol_lazy_idx, monitored_indices,
+            flow_array, index_names, upper_enforced_limits, outer_name, PFV
+            )
 
         ## viol_lazy_idx will hold the lines we're adding
         ## this iteration -- don't want to add lines
         ## that are already in the monitored set
 
         # eliminate lines in the monitored set
-        upper_viol_lazy_idx = list(set(upper_viol_lazy_idx).difference(monitored_indices))
+        upper_viol_lazy_idx = list(set(upper_viol_lazy_idx).difference(
+            monitored_indices))
 
-        self._add_violations( name, outer_name, upper_viol_lazy_array, upper_viol_lazy_idx )
+        self._add_violations(name, outer_name, upper_viol_lazy_array,
+                             upper_viol_lazy_idx)
 
         ## check lower bound
         lower_viol_lazy_array = lower_lazy_limits - flow_array
@@ -845,27 +810,32 @@ class _MaximalViolationsStore:
         ## get the indices of the violation
         ## here filter by least violation in violations_store
         ## in the limit, this will become 0 eventually --
-        lower_viol_lazy_idx = np.nonzero(lower_viol_lazy_array > self.min_flow_violation())[0]
+        lower_viol_lazy_idx = np.nonzero(lower_viol_lazy_array
+                                         > self.min_flow_violation())[0]
+        lower_viol_array = (lower_enforced_limits[lower_viol_lazy_idx]
+                            - flow_array[lower_viol_lazy_idx])
 
-        lower_viol_array =  lower_enforced_limits[lower_viol_lazy_idx] - flow_array[lower_viol_lazy_idx]
-        self._calculate_total_and_monitored_violations(lower_viol_array, lower_viol_lazy_idx, monitored_indices,
-                                                        flow_variable, flow_array, index_names, lower_enforced_limits,
-                                                        name, outer_name, PFV)
+        self._calculate_total_and_monitored_violations(
+            lower_viol_array, lower_viol_lazy_idx, monitored_indices,
+            flow_array, index_names, lower_enforced_limits, outer_name, PFV
+            )
 
         ## viol_lazy_idx will hold the lines we're adding
         ## this iteration -- don't want to add lines
         ## that are already in the monitored set
 
         # eliminate lines in the monitored set
-        lower_viol_lazy_idx = list(set(lower_viol_lazy_idx).difference(monitored_indices))
+        lower_viol_lazy_idx = list(set(lower_viol_lazy_idx).difference(
+            monitored_indices))
 
-        self._add_violations( name, outer_name, lower_viol_lazy_array, lower_viol_lazy_idx )
+        self._add_violations(name, outer_name, lower_viol_lazy_array,
+                             lower_viol_lazy_idx)
 
 
     def _calculate_total_and_monitored_violations(
             self,
-            viol_array, viol_lazy_idx, monitored_indices, flow_variable,
-            flow_array, index_names, limits, name, outer_name, other_flows
+            viol_array, viol_lazy_idx, monitored_indices,
+            flow_array, index_names, limits, outer_name, other_flows
             ):
 
         ## viol_idx_idx will be indexed by viol_lazy_idx
@@ -878,67 +848,45 @@ class _MaximalViolationsStore:
         self.monitored_violations += len(viol_in_mb)
 
         for i in viol_in_mb:
-            element_name = index_names[i]
             thermal_limit = limits[i]
             flow = flow_array[i]
 
             if outer_name:
-                element_name = (outer_name, element_name)
                 thermal_limit += other_flows[i]
                 flow += other_flows[i]
 
-            logger.info(self.prepend_str
-                        +_generate_flow_viol_warning(flow_variable, name,
-                                                     element_name, flow,
-                                                     thermal_limit,
-                                                     self.baseMVA, self.time))
 
-        ## useful debugging code
-        if logger.level <= logging.DEBUG:
-            for i in monitored_indices:
-                element_name = index_names[i]
-                thermal_limit = limits[i]
-                flow = flow_array[i]
+def add_violations(model, lazy_violations, mb, ptdf_options, PTDF, time):
 
-                if outer_name:
-                    element_name = (outer_name, element_name)
-                    thermal_limit += other_flows[i]
-                    flow += other_flows[i]
-                    print(f'contingency: {element_name[0]}, branch: {element_name[1]}')
-                    print(f'delta: {flow_array[i]}')
-                    print(f'base : {other_flows[i]}')
-                    print(f'flow : {flow_array[i]+other_flows[i]}')
-                    print(f'model: {pyo.value(flow_variable[element_name])}')
+    ## static information between runs
+    baseMVA = 1
+    rel_ptdf_tol = ptdf_options['rel_ptdf_tol']
+    abs_ptdf_tol = ptdf_options['abs_ptdf_tol']
 
-                    if not math.isclose(pyo.value(flow_variable[element_name]), flow_array[i]+other_flows[i]):
-                        print(f'contingency: {element_name[0]}, branch_idx: {i}')
-                        diff = pyo.value(flow_variable[element_name]) - (flow_array[i]+other_flows[i])
-                        print(f'ABSOLUTE DIFFERENCE: { abs(diff) }')
-                        flow_variable[element_name].pprint()
-                        raise Exception()
+    for i in lazy_violations.branch_lazy_violations:
+        branch = PTDF.branches_keys_masked[i]
 
-                    print('')
+        if mb['pf'][branch] is None:
+            const = PTDF.get_branch_const(branch)
+            max_coef = PTDF.get_branch_ptdf_abs_max(branch)
+            ptdf_tol = max(abs_ptdf_tol, rel_ptdf_tol * max_coef)
 
-                else:
-                    print(f'{name}: {element_name}')
-                    print(f'flow : {flow_array[i]}')
-                    print(f'model: {pyo.value(flow_variable[element_name])}')
-                    print('')
+            ## if model.p_nw is Var, we can use LinearExpression
+            ## to build these dense constraints much faster
+            coef_list = []
+            var_list = []
 
+            for bus_name, coef in PTDF.get_branch_ptdf_iterator(branch):
+                if abs(coef) >= ptdf_tol:
+                    coef_list.append(coef)
+                    var_list.append(model._p_nw[bus_name, time])
 
-## to hold the indicies of the violations
-## in the model or block
-def add_monitored_flow_tracker(mb):
-    mb._idx_monitored = list()
-    mb._interfaces_monitored = list()
-    mb._contingencies_monitored = list()
+            mb['pf'][branch] = const + quicksum(
+                coef * var for coef, var in zip(coef_list, var_list))
 
-    # add these if there are no slacks
-    # so we don't have to check later
-    # for these attributes
-    if not hasattr(mb, 'pf_slack_pos'):
-        mb.pf_slack_pos = pyo.Var([], dense=False)
-    if not hasattr(mb, 'pfi_slack_pos'):
-        mb.pfi_slack_pos = pyo.Var([], dense=False)
-    if not hasattr(mb, 'pfc_slack_pos'):
-        mb.pfc_slack_pos = pyo.Var([], dense=False)
+        model.addConstr((-model._ThermalLimits[branch] <= mb['pf'][branch]),
+                        name=f'thermal-lowerlimit_{time}{branch}')
+        model.addConstr((mb['pf'][branch] <= model._ThermalLimits[branch]),
+                        name=f'thermal-upperlimit_{time}{branch}')
+
+        mb['idx_monitored'].append(i)
