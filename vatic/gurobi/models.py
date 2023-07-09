@@ -251,6 +251,14 @@ class BaseModel(ABC):
         self.model._LoadMismatchPenalty = 1e4
         self.model._ReserveShortfallPenalty = 1e3
 
+        self.model._ThermalLimits = {br: bdict['rating_long_term']
+                                     for br, bdict in self.branches.items()}
+
+    @property
+    def binary_variables(self):
+        return [self.model._UnitOn,
+                self.model._UnitStart, self.model._UnitStop]
+
     @property
     def thermal_periods(self):
         return self.ThermalGenerators, self.TimePeriods
@@ -269,23 +277,30 @@ class BaseModel(ABC):
         return [(g, s, t) for g in self.ThermalGenerators
                 for s in self.StartupCostIndices[g] for t in self.TimePeriods]
 
+    def relax_binaries(self) -> None:
+        for varray in self.binary_variables:
+            for var in varray.values():
+                var.setAttr('vtype', 'C')
+
+        self.model.update()
+
+    def enforce_binaries(self) -> None:
+        for varray in self.binary_variables:
+            for var in varray.values():
+                var.setAttr('vtype', 'B')
+
+        self.model.update()
+
     @abstractmethod
     def generate(self,
                  relax_binaries: bool, ptdf_options,
                  ptdf, objective_hours: int) -> None:
         pass
 
-    def solve(self, relaxed, mipgap, threads, outputflag):
-        self.model.Params.OutputFlag = outputflag
-        self.model.Params.MIPGap = mipgap
-        self.model.Params.Threads = threads
-
-        start_time = time.time()
-        self.model.optimize()
+    def _lazy_ptdf_uc_solve_loop(self, iters=100) -> None:
         duals = False
 
-        # _lazy_ptdf_uc_solve_loop
-        for i in range(100):
+        for i in range(iters):
             flows = {}
             viol_num = {}
             mon_viol_num = {}
@@ -354,10 +369,8 @@ class BaseModel(ABC):
             # lazy_ptdf_violation_adder
             total_flow_constr_added = 0
             for t in self.TimePeriods:
-                mb = self.model._TransmissionBlock[t]
-
-                add_violations(self.model, viol_lazy[t], flows[t], mb,
-                               self.ptdf_options, self.PTDF, time=t)
+                self.model = add_violations(self.model, t, viol_lazy[t],
+                                            self.ptdf_options, self.PTDF)
 
                 total_flow_constr_added += len(viol_lazy[t])
 
@@ -365,10 +378,23 @@ class BaseModel(ABC):
                 print(f"[MIP phase] iteration {i}, added "
                       f"{total_flow_constr_added} flow constraint(s)")
 
-            results = _lazy_ptdf_solve(
-                m, solver, persistent_solver, symbolic_solver_labels,
-                solver_tee, vars_to_load_time_periods, solve_method_options
-                )
+            self.model.update()
+            self.model.optimize()
+
+    def solve(self, relaxed, mipgap, threads, outputflag):
+        self.model.Params.OutputFlag = outputflag
+        self.model.Params.MIPGap = mipgap
+        self.model.Params.Threads = threads
+
+        start_time = time.time()
+
+        self.relax_binaries()
+        self.model.optimize()
+        self._lazy_ptdf_uc_solve_loop()
+
+        self.enforce_binaries()
+        self.model.optimize()
+        self._lazy_ptdf_uc_solve_loop()
 
         self.solve_time = time.time() - start_time
         self.results = self._parse_model_results()
@@ -1344,7 +1370,7 @@ class BaseModel(ABC):
 
             # declare_eq_p_net_withdraw_at_bus  (dc...branches = None) #
             for bus in self.Buses:
-                self.model.addConstr(
+                block[f'eq_withdraw_{bus}'] = self.model.addConstr(
                     (self.model._p_nw[bus, tm] == (
                             (block['pl'][bus] if bus_loads[bus] != 0.0
                              else 0.0)
@@ -1359,8 +1385,8 @@ class BaseModel(ABC):
             p_expr -= quicksum(block['pl'][bus] for bus in self.Buses
                                if bus_loads[bus] is not None)
 
-            self.model.addConstr((p_expr == 0.0),
-                                 name=f"eq_p_balance_at_period{tm}")
+            block['eq_balance'] = self.model.addConstr(
+                (p_expr == 0.0), name=f"eq_p_balance_at_period{tm}")
 
             if not self.PTDF:
                 self.PTDF = VirtualPTDFMatrix(
@@ -1372,6 +1398,8 @@ class BaseModel(ABC):
 
             block['PTDF'] = self.PTDF
             block['p_nw'] = {b: self.model._p_nw[b, tm] for b in self.Buses}
+            block['pf'] = {branch: None for branch in self.branches}
+
             self.model._TransmissionBlock[tm] = block
 
     def add_objective(self):
@@ -1397,15 +1425,15 @@ class BaseModel(ABC):
             }
 
         self.model._GenerationStageCost = {
-            st: sum(sum(self.model._ProductionCost[g, t]
+            st: (sum(sum(self.model._ProductionCost[g, t]
                         for g in self.ThermalGenerators)
                     for t in self.model._GenerationTimeInStage[st])
-                + sum(self.model._LoadMismatchCost[t]
+                 + sum(self.model._LoadMismatchCost[t]
                       for t in self.model._GenerationTimeInStage[st])
-                + sum(self.model._ReserveShortfallCost[t]
+                 + sum(self.model._ReserveShortfallCost[t]
                       for t in self.model._GenerationTimeInStage[st])
-                + sum(self.model._StorageCost[s, t] for s in self.Storage
-                      for t in self.model._GenerationTimeInStage[st])
+                 + sum(self.model._StorageCost[s, t] for s in self.Storage
+                       for t in self.model._GenerationTimeInStage[st]))
             for st in self.StageSet
             }
 
@@ -1414,7 +1442,7 @@ class BaseModel(ABC):
                                  for st in self.StageSet}
 
         self.model.setObjective(quicksum(self.model._StageCost[st]
-                                    for st in self.StageSet),
+                                         for st in self.StageSet),
                                 GRB.MINIMIZE)
 
     def _add_zero_cost_hours(self, objective_hours):
@@ -1854,6 +1882,10 @@ class RucModel(BaseModel):
             name='EnforceReserveRequirements'
             )
 
+    @property
+    def binary_variables(self):
+        return super().binary_variables + [self.model._StartupIndicator]
+
     def generate(self,
                  relax_binaries: bool, ptdf_options: dict,
                  ptdf, objective_hours: int) -> None:
@@ -2008,9 +2040,10 @@ class ScedModel(BaseModel):
              for g, t, _ in self.prod_indices), name='PiecewiseProductionSum'
             )
 
-        self.model._ProductionCost = self.model.addVars(*self.thermal_periods,
-                                              lb=0, ub=GRB.INFINITY,
-                                              name='ProductionCost')
+        self.model._ProductionCost = self.model.addVars(
+            *self.thermal_periods, lb=0, ub=GRB.INFINITY,
+            name='ProductionCost'
+            )
 
         self.model._ProductionCostConstr = self.model.addConstrs(
             (self.piecewise_production_costs_rule(g, t)
@@ -2088,6 +2121,10 @@ class ScedModel(BaseModel):
              for t in self.TimePeriods),
             name='EnforceReserveRequirements'
             )
+
+    @property
+    def binary_variables(self):
+        return super().binary_variables + [self.model._delta]
 
     def generate(self,
                  relax_binaries: bool, ptdf_options: dict,

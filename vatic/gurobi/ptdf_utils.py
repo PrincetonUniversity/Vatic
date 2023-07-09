@@ -514,11 +514,11 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
 
         return PF_delta
 
-    def calculate_PFV(self, mb, masked):
-        NWV = np.fromiter((mb['p_nw'][b].x for b in self.buses_keys_no_ref),
-                          float, count=len(self.buses_keys_no_ref))
-        NWV += self.phi_adjust_array.T
+    def calculate_PFV(self, mb, masked=False):
+        p_nws = tuple(mb['p_nw'][b].x for b in self.buses_keys_no_ref)
 
+        NWV = np.fromiter(p_nws, float, count=len(self.buses_keys_no_ref))
+        NWV += self.phi_adjust_array.T
         VA = self.MLU.solve(NWV.A[0])
 
         # shape VA explicitly as a column vector
@@ -856,12 +856,13 @@ class _MaximalViolationsStore:
                 flow += other_flows[i]
 
 
-def add_violations(model, lazy_violations, mb, ptdf_options, PTDF, time):
+def add_violations(model, time, lazy_violations, ptdf_options, PTDF):
 
     ## static information between runs
     baseMVA = 1
     rel_ptdf_tol = ptdf_options['rel_ptdf_tol']
     abs_ptdf_tol = ptdf_options['abs_ptdf_tol']
+    mb = model._TransmissionBlock[time]
 
     for i in lazy_violations.branch_lazy_violations:
         branch = PTDF.branches_keys_masked[i]
@@ -890,3 +891,5 @@ def add_violations(model, lazy_violations, mb, ptdf_options, PTDF, time):
                         name=f'thermal-upperlimit_{time}{branch}')
 
         mb['idx_monitored'].append(i)
+
+    return model
