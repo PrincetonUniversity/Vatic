@@ -134,9 +134,11 @@ class Simulator:
             self._sced_frequency_minutes
             )
 
-        self._stats_manager = StatsManager(out_dir, output_detail, verbosity,
-                                           output_max_decimals, create_plots,
-                                           save_to_csv, last_conditions_file)
+        self._stats_manager = StatsManager(
+            out_dir, output_detail, verbosity, output_max_decimals,
+            create_plots, save_to_csv, template_data['UnitOnT0State'],
+            last_conditions_file
+            )
 
     def simulate(self) -> dict[str, pd.DataFrame]:
         """Top-level runner of a simulation's alternating RUCs and SCEDs.
@@ -180,7 +182,7 @@ class Simulator:
         print("Real-time sim time: {:.2f} seconds".format(
             self.simulation_times['Sim']))
 
-        return self._stats_manager.consolidate_output(sim_time)
+        return self._stats_manager.save_output(sim_time)
 
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
@@ -274,6 +276,7 @@ class Simulator:
                   time_step: VaticTime,
                   sim_state: Optional[VaticSimulationState] = None) -> RucModel:
         ruc_model = self._data_provider.create_ruc(time_step, sim_state)
+        self._ptdf_manager.mark_active(ruc_model)
 
         ruc_model.generate(relax_binaries=False,
                            ptdf=self._ptdf_manager.ptdf_matrix,
@@ -294,14 +297,18 @@ class Simulator:
         sced_model = self._data_provider.create_sced(self._current_timestep,
                                                      self._simulation_state,
                                                      sced_horizon=sced_horizon)
+        self._ptdf_manager.mark_active(sced_model)
 
         sced_model.generate(relax_binaries=False,
                             ptdf=self._ptdf_manager.ptdf_matrix,
                             ptdf_options=self._ptdf_manager.sced_ptdf_options,
                             objective_hours=hours_in_objective)
+
         self._hours_in_objective = hours_in_objective
+        self._ptdf_manager.ptdf_matrix = sced_model.PTDF
 
         sced_model.solve(relaxed=False, mipgap=self.mipgap,
                          threads=self.solver_options['Threads'], outputflag=0)
+        self._ptdf_manager.update_active(sced_model)
 
         return sced_model

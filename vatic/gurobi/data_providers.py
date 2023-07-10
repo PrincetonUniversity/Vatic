@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 import dill as pickle
-import pandas as pd
+from copy import deepcopy
 from typing import Optional
+
+import numpy as np
+import pandas as pd
 
 from ..egret.time_manager import VaticTime
 from .simulation_state import VaticSimulationState
-from .formulations import RucModel, ScedModel
+from .models import RucModel, ScedModel
 
 
 class ProviderError(Exception):
@@ -211,27 +214,24 @@ class PickleProvider:
         """Compare e.g. to formulations.forecastables."""
 
         if use_actuals:
-            use_gen = self.gen_data.actl
-            use_load = self.load_data.actl
+            use_gen = self.gen_data['actl'].copy()
+            use_load = self.load_data['actl'].copy()
         else:
-            use_gen = self.gen_data.fcst
-            use_load = self.load_data.fcst
+            use_gen = self.gen_data['fcst'].copy()
+            use_load = self.load_data['fcst'].copy()
 
         if times_requested <= 24:
             use_gen = use_gen.iloc[:times_requested]
             use_load = use_load.iloc[:times_requested]
 
         else:
-            diurn_gen = use_gen.loc[:,
-                        [gen for gen in self.renewables
-                         if self.template['NondispatchableGeneratorType'][gen]
-                         in {'S', 'H'}]
-                        ]
-            const_gen = use_gen.loc[:,
-                        [gen for gen in self.renewables
-                         if self.template['NondispatchableGeneratorType'][gen]
-                         not in {'S', 'H'}]
-                        ]
+            diurn_stat = np.array([
+                self.template['NondispatchableGeneratorType'][gen]
+                in {'S', 'H'} for gen in self.renewables
+                ])
+
+            diurn_gen = use_gen.loc[:, diurn_stat]
+            const_gen = use_gen.loc[:, ~diurn_stat]
 
             diurn_gen = pd.concat([diurn_gen.iloc[:24, :],
                                    diurn_gen.iloc[:(times_requested - 24), :]])
@@ -275,27 +275,26 @@ class PickleProvider:
 
         # assert current_state.timestep_count >= sced_horizon
 
-        # get the data for this date from the input datasets
-        sced_data = self.get_forecastables(use_actuals=True,
-                                           times_requested=sced_horizon)
-
         # add the forecasted load demands and renewable generator outputs, and
         # adjust them to be closer to the corresponding actual values
         if self.prescient_sced_forecasts:
-            for k, sced_data in sced_model.get_forecastables():
+
+            # get the data for this date from the input datasets
+            sced_data = self.get_forecastables(use_actuals=True,
+                                               times_requested=sced_horizon)
+
+            for k, sced_data in sced_data:
                 future = current_state.get_future_actuals(k)
 
                 # this error method makes the forecasts equal to the actuals!
                 for t in range(sced_horizon):
                     sced_data[t] = future[t]
 
+        # this error method adjusts future forecasts based on how much
+        # the forecast over/underestimated the current actual value
         else:
             actuals = current_state.current_actuals
             forecasts = current_state.forecasts.iloc[:sced_horizon]
-
-            # this error method adjusts future forecasts based on how much
-            # the forecast over/underestimated the current actual value
-            sced_data.iloc[0] = actuals
 
             # find how much the first forecast was off from the actual as
             # a fraction of the forecast
@@ -306,7 +305,10 @@ class PickleProvider:
                      })
 
                 # adjust the remaining forecasts based on the initial error
-                sced_data.iloc[1:] = fcst_error_ratios.T * forecasts.iloc[1:]
+                sced_data = pd.concat(
+                    [actuals.to_frame().T,
+                     fcst_error_ratios.T * forecasts.iloc[1:]]
+                    )
 
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window
@@ -327,8 +329,14 @@ class PickleProvider:
                     future_status_times[on_gen] = -(
                             gen_cmts[~gen_cmts].index.max() - sced_horizon + 1)
 
+        template_data = deepcopy(self.template)
+        template_data['ShutdownRampLimit'] = {
+            gen: 1. + pmin
+            for gen, pmin in self.template['MinimumPowerOutput'].items()
+            }
+
         sced_model = ScedModel(
-            self.template, sced_data['RenewGen'], sced_data['LoadBus'],
+            template_data, sced_data['RenewGen'], sced_data['LoadBus'],
             reserve_factor=self._reserve_factor,
             sim_state=current_state, future_status=future_status_times
             )

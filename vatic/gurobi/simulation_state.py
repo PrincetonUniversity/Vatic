@@ -257,18 +257,11 @@ class VaticSimulationState:
             self._init_gen_state[gen] = state_duration
             self._init_power_gen[gen] = gen_power
 
-        # Advance time, dropping data if necessary
-        self._simulation_minute += self._sced_frequency
-
-        while self._next_forecast_pop_minute <= self._simulation_minute:
-            self.forecasts = self.forecasts.iloc[1:, :]
-            self._commitments = self._commitments.iloc[:, 1:]
-            self._commitments.columns -= 1
-            self._next_forecast_pop_minute += self._minutes_per_forecast_step
-
-        while self._simulation_minute >= self._next_actuals_pop_minute:
-            self.actuals = self.actuals.iloc[1:, :]
-            self._next_actuals_pop_minute += self._minutes_per_actuals_step
+        # advance time, dropping data if necessary
+        self.forecasts = self.forecasts.iloc[1:, :]
+        self._commitments = self._commitments.iloc[:, 1:]
+        self._commitments.columns -= 1
+        self.actuals = self.actuals.iloc[1:, :]
 
     def get_state_with_sced_offset(self,
                                    sced: ScedModel,
