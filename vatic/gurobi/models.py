@@ -162,6 +162,17 @@ class BaseModel(ABC):
             else:
                 self.MinPowerOutput[g, t] = 0.
 
+        if sim_state:
+            self.UnitOnT0State, self.PowerGeneratedT0 = deepcopy(
+                sim_state.init_states)
+
+        else:
+            self.UnitOnT0State = grid_template['UnitOnT0State']
+            self.PowerGeneratedT0 = grid_template['PowerGeneratedT0']
+
+        self.UnitOnT0 = tupledict({
+            g: init_st > 0. for g, init_st in self.UnitOnT0State.items()})
+
         self.ScaledMinUpTime = tupledict({
             g: min(grid_template['MinimumUpTime'][g], self.NumTimePeriods)
             for g in self.ThermalGenerators
@@ -173,19 +184,42 @@ class BaseModel(ABC):
 
         self.NominalRampUpLimit = grid_template['NominalRampUpLimit']
         self.NominalRampDownLimit = grid_template['NominalRampDownLimit']
+        self.ScaledRampDownLimit = dict()
+
+        for g, t in product(*self.thermal_periods):
+            if t == self.InitialTime:
+                param = max(self.PowerGeneratedT0[g],
+                            self.MaxPowerOutput[g, t])
+            else:
+                param = self.MaxPowerOutput[g, t - 1]
+
+            self.ScaledRampDownLimit[g, t] = min(param,
+                                                 self.NominalRampDownLimit[g])
+
         self.StartupRampLimit = grid_template['StartupRampLimit']
         self.ShutdownRampLimit = grid_template['ShutdownRampLimit']
+        self.ScaledShutdownRampLimit = dict()
+        self.ScaledShutdownRampLimitT0 = dict()
 
-        if sim_state:
-            self.UnitOnT0State, self.PowerGeneratedT0 = deepcopy(
-                sim_state.init_states)
+        for g, limit in self.ShutdownRampLimit.items():
+            temp = limit - self.MinPowerOutput[g, self.InitialTime]
 
-        else:
-            self.UnitOnT0State = grid_template['UnitOnT0State']
-            self.PowerGeneratedT0 = grid_template['PowerGeneratedT0']
+            if temp > (self.MaxPowerOutput[g, self.InitialTime]
+                       - self.MinPowerOutput[g, self.InitialTime]):
+                self.ScaledShutdownRampLimit[g] = self.MaxPowerOutput[
+                    g, self.InitialTime]
 
-        self.UnitOnT0 = tupledict({
-            g: init_st > 0. for g, init_st in self.UnitOnT0State.items()})
+            else:
+                self.ScaledShutdownRampLimit[g] = temp + self.MinPowerOutput[
+                    g, self.InitialTime]
+
+            if temp > (self.PowerGeneratedT0[g]
+                       - self.MinPowerOutput[g, self.InitialTime]):
+                self.ScaledShutdownRampLimitT0[g] = self.PowerGeneratedT0[g]
+
+            else:
+                self.ScaledShutdownRampLimitT0[g] = temp + self.MinPowerOutput[
+                    g, self.InitialTime]
 
         (self.PiecewiseGenerationPoints,
             self.PiecewiseGenerationCosts,
@@ -387,17 +421,28 @@ class BaseModel(ABC):
         self.model.Params.Threads = threads
 
         start_time = time.time()
+        self.model.optimize()
 
+        if self.model.Status != 2:
+            self._solve_careful()
+
+        self.solve_time = time.time() - start_time
+        self.results = self._parse_model_results()
+
+    def _solve_careful(self):
         self.relax_binaries()
         self.model.optimize()
+
+        if self.model.Status != 2:
+            print("infeasible model, exiting!")
+            self.model.computeIIS()
+            self.model.write('model.ilp')
+
         self._lazy_ptdf_uc_solve_loop()
 
         self.enforce_binaries()
         self.model.optimize()
         self._lazy_ptdf_uc_solve_loop()
-
-        self.solve_time = time.time() - start_time
-        self.results = self._parse_model_results()
 
     def _parse_model_results(self):
         if not self.model:
@@ -761,16 +806,17 @@ class BaseModel(ABC):
         t0_dramp_periods = {
             (g, self.InitialTime) for g in self.ThermalGenerators
             if (self.UnitOnT0[g]
-                and (self.NominalRampDownLimit[g]
+                and (self.ScaledRampDownLimit[g, self.InitialTime]
                      < (self.PowerGeneratedT0[g]
                         - self.MinPowerOutput[g, self.InitialTime])
-                     or self.ShutdownRampLimit[g] < self.PowerGeneratedT0[g]))
+                     or self.ScaledShutdownRampLimit[g]
+                     < self.PowerGeneratedT0[g]))
             }
 
         tk_dramp_periods = {
             (g, t) for g, t in product(*self.thermal_periods)
             if (t > self.InitialTime
-                and (self.NominalRampDownLimit[g] < (
+                and (self.ScaledRampDownLimit[g, t] < (
                             self.MaxPowerOutput[g, t - 1]
                             - self.MinPowerOutput[g, t]
                     )))
@@ -782,13 +828,16 @@ class BaseModel(ABC):
                 g, t)
 
             power_vars += [self.model._UnitStop[g, t]]
-            power_coefs += [self.ShutdownRampLimit[g]
+            power_coefs += [self.ScaledShutdownRampLimitT0[g]
                             - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
+                            - self.ScaledRampDownLimit[g, t]]
 
             power_lhs = (self.PowerGeneratedT0[g]
-                         - (self.NominalRampDownLimit[g]
+                         - (self.ScaledRampDownLimit[g, t]
                             + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
+
+            #if g == '55153_NaturalGasFiredCombinedCycle_CTG3':
+            #    import pdb; pdb.set_trace()
 
             t0_dpower_constrs[g, t] = LinExpr(
                 power_coefs, power_vars) >= power_lhs
@@ -799,12 +848,12 @@ class BaseModel(ABC):
 
             power_vars += [self.model._UnitOn[g, t - 1],
                            self.model._UnitStop[g, t]]
-            power_coefs += [self.NominalRampDownLimit[g]
+            power_coefs += [self.ScaledRampDownLimit[g, t]
                             + self.MinPowerOutput[g, t]
                             - self.MinPowerOutput[g, t - 1],
-                            self.ShutdownRampLimit[g]
+                            self.ScaledShutdownRampLimit[g]
                             - self.MinPowerOutput[g, t]
-                            - self.NominalRampDownLimit[g]]
+                            - self.ScaledRampDownLimit[g, t]]
 
             neg_vars, neg_coefs = self._get_generation_above_minimum_lists(
                 g, t - 1, negative=True)
@@ -847,7 +896,7 @@ class BaseModel(ABC):
         su_step = _step_coeff(upper, lower, SU - minP)
 
         if t < self.NumTimePeriods:
-            SD = self.ShutdownRampLimit[g]
+            SD = self.ScaledShutdownRampLimit[g]
             UT = self.ScaledMinUpTime[g]
             sd_step = _step_coeff(upper, lower, SD - minP)
 
@@ -896,7 +945,7 @@ class BaseModel(ABC):
         if UT <= 1 and t < self.NumTimePeriods:
             upper = self.PiecewiseGenerationPoints[g][i + 1]
             lower = self.PiecewiseGenerationPoints[g][i]
-            SD = self.ShutdownRampLimit[g]
+            SD = self.ScaledShutdownRampLimit[g]
             minP = self.MinPowerOutput[g, t]
 
             sd_step = _step_coeff(upper, lower, SD - minP)
@@ -1031,9 +1080,11 @@ class BaseModel(ABC):
                  self.model._UnitOn[g, t]],
                 [1., self.MinPowerOutput[g, t]])
 
-    @abstractmethod
     def _get_generation_above_minimum_lists(self, g, t, negative=False):
-        pass
+        linear_vars = [self.model._PowerGeneratedAboveMinimum[g, t]]
+        linear_coefs = [-1.] if negative else [1.]
+
+        return linear_vars, linear_coefs
 
     def _get_initial_max_power_available_lists(self, g, t):
         linear_vars, linear_coefs = self._get_max_power_available_lists(g, t)
@@ -1074,8 +1125,8 @@ class BaseModel(ABC):
             return end
 
         for i in range(1, end + 1):
-            shutdown_gi = self.ShutdownRampLimit[g]
-            ramping_tot += self.NominalRampDownLimit[g]
+            shutdown_gi = self.ScaledShutdownRampLimit[g]
+            ramping_tot += self.ScaledRampDownLimit[g, t]
 
             if shutdown_gi + ramping_tot >= p_max_gt:
                 ## the prior index what the correct one
@@ -1506,12 +1557,6 @@ class RucModel(BaseModel):
 
         return results
 
-    def _get_generation_above_minimum_lists(self, g, t, negative=False):
-        linear_vars = [self.model._PowerGeneratedAboveMinimum[g, t]]
-        linear_coefs = [-1.] if negative else [1.]
-
-        return linear_vars, linear_coefs
-
     def garver_power_avail_vars(self):
         self.model._MaximumPowerAvailableAboveMinimum = self.model.addVars(
             *self.thermal_periods,
@@ -1557,7 +1602,7 @@ class RucModel(BaseModel):
 
                 if t < self.NumTimePeriods:
                     startramp_coef = (self.StartupRampLimit[g]
-                                      - self.ShutdownRampLimit[g])
+                                      - self.ScaledShutdownRampLimit[g])
 
                     if startramp_coef > 0:
                         start_vars += [self.model._UnitStop[g, t + 1]]
@@ -1565,9 +1610,11 @@ class RucModel(BaseModel):
 
                     stop_vars = linear_vars + [self.model._UnitStop[g, t + 1]]
                     stop_coefs = linear_coefs + [
-                        self.MaxPowerOutput[g, t] - self.ShutdownRampLimit[g]]
+                        self.MaxPowerOutput[g, t]
+                        - self.ScaledShutdownRampLimit[g]
+                        ]
 
-                    stopramp_coef = (self.ShutdownRampLimit[g]
+                    stopramp_coef = (self.ScaledShutdownRampLimit[g]
                                      - self.StartupRampLimit[g])
 
                     if stopramp_coef > 0:
@@ -1597,7 +1644,7 @@ class RucModel(BaseModel):
                 if t < self.NumTimePeriods:
                     linear_vars += [self.model._UnitStop[g, t + 1]]
                     linear_coefs += [self.MaxPowerOutput[g, t]
-                                     - self.ShutdownRampLimit[g]]
+                                     - self.ScaledShutdownRampLimit[g]]
 
                 power_startstoplimit_constrs[g, t] = LinExpr(
                     linear_coefs, linear_vars) <= 0
@@ -1662,8 +1709,8 @@ class RucModel(BaseModel):
                     start_vars += [self.model._UnitStop[g, t + i + 1]]
                     start_coefs += [
                         self.MaxPowerOutput[g, t]
-                        - self.ShutdownRampLimit[g]
-                        - sum(self.NominalRampDownLimit[g]
+                        - self.ScaledShutdownRampLimit[g]
+                        - sum(self.ScaledRampDownLimit[g, t]
                               for j in range(1, i + 1))
                         ]
 
@@ -1681,8 +1728,8 @@ class RucModel(BaseModel):
                     if (t - su_time_limit - 1) >= self.InitialTime:
                         coef = max(
                             0, self.MaxPowerOutput[g, t]
-                               - self.ShutdownRampLimit[g]
-                               - sum(self.NominalRampDownLimit[g]
+                               - self.ScaledShutdownRampLimit[g]
+                               - sum(self.ScaledRampDownLimit[g, t]
                                      for j in range(1, sd_time_limit + 1))
 
                                - (self.MaxPowerOutput[g, t]
@@ -1952,15 +1999,6 @@ class ScedModel(BaseModel):
 
         return linear_vars, linear_coefs
 
-    def _get_generation_above_minimum_lists(self, g, t, negative=False):
-        linear_vars = [self.model._PowerGeneratedAboveMinimum[g, t]]
-        linear_coefs = [-1.] if negative else [1.]
-
-        linear_vars.append(self.model._ReserveProvided[g, t])
-        linear_coefs.append(1.)
-
-        return linear_vars, linear_coefs
-
     def mlr_reserve_vars(self):
         # amount of power produced by each generator above minimum,
         # at each time period. variable for reserves offered
@@ -1993,7 +2031,9 @@ class ScedModel(BaseModel):
                 if t < self.NumTimePeriods:
                     stop_vars = linear_vars + [self.model._UnitStop[g, t + 1]]
                     stop_coefs = linear_coefs + [
-                        self.MaxPowerOutput[g, t] - self.ShutdownRampLimit[g]]
+                        self.MaxPowerOutput[g, t]
+                        - self.ScaledShutdownRampLimit[g]
+                        ]
 
                     power_stoplimit_constrs[g, t] = LinExpr(
                         stop_coefs, stop_vars) <= 0
@@ -2004,12 +2044,12 @@ class ScedModel(BaseModel):
             # _MLR_generation_limits (w/o uptime-1 generators) #
             else:
                 if t < self.NumTimePeriods:
-                    linear_vars += [self.model._UnitStop[g, t + 1]]
-                    linear_coefs += [self.MaxPowerOutput[g, t]
-                                     - self.ShutdownRampLimit[g]]
+                    start_vars += [self.model._UnitStop[g, t + 1]]
+                    start_coefs += [self.MaxPowerOutput[g, t]
+                                    - self.ScaledShutdownRampLimit[g]]
 
                 power_startstoplimit_constrs[g, t] = LinExpr(
-                    linear_coefs, linear_vars) <= 0
+                    start_coefs, start_vars) <= 0
 
         self.model._power_limit_from_start = self.model.addConstrs(
             constr_genr(power_startlimit_constrs),
@@ -2129,11 +2169,6 @@ class ScedModel(BaseModel):
     def generate(self,
                  relax_binaries: bool, ptdf_options: dict,
                  ptdf, objective_hours: int) -> None:
-
-        for gen in self.ThermalGenerators:
-            self.ShutdownRampLimit[gen] = 1. + self.MinPowerOutput[
-                gen, self.InitialTime]
-
         self._initialize_model(ptdf, ptdf_options)
 
         self.garver_3bin_vars(relax_binaries)
@@ -2147,6 +2182,12 @@ class ScedModel(BaseModel):
 
         self.rajan_takriti_ut_dt()
         self.mlr_startup_costs(relax_binaries)
+
+        # _3bin_logic can just be written out here
+        self.model._Logical = self.model.addConstrs(
+            (self.logical_rule(g, t)
+             for g, t in product(*self.thermal_periods))
+            )
 
         self.ptdf_power_flow()
         self.mlr_reserve_constraints()
