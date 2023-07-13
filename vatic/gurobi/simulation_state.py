@@ -177,20 +177,19 @@ class VaticSimulationState:
         offset.
         """
 
-        # Now save all generator commitments
-        # Keep the first "ruc_delay" commitments from the prior ruc
-        for gen, gen_data in ruc.elements('generator',
-                                          generator_type='thermal'):
-            self._commitments[gen] = self._commitments[gen][:self.ruc_delay]
-            self._commitments[gen] += tuple(gen_data['commitment']['values'])
+        self._commitments = pd.concat(
+            [self._commitments.iloc[:, :self.ruc_delay],
+             pd.Series(ruc.results['commitment']).unstack()], axis=1
+            )
 
-        for k, new_ruc_vals in ruc.get_forecastables():
-            self.forecasts[k] = self.forecasts[k][:self.ruc_delay]
-            self.forecasts[k] += tuple(new_ruc_vals)
+        self.actuals = pd.concat([self.actuals.iloc[:self.ruc_delay, :],
+                                  sim_actuals])
+        self.forecasts = pd.concat([self.forecasts.iloc[:self.ruc_delay, :],
+                                    ruc.forecastables])
 
-        for k, new_ruc_vals in sim_actuals.get_forecastables():
-            self.actuals[k] = self.actuals[k][:self.ruc_delay]
-            self.actuals[k] += tuple(new_ruc_vals)
+        self._commitments = self._commitments.T.reset_index(drop=True).T
+        self.actuals = self.actuals.reset_index(drop=True)
+        self.forecasts = self.forecasts.reset_index(drop=True)
 
     def apply_sced(self,
                    sced: ScedModel, sced_time: Optional[int] = 1) -> None:

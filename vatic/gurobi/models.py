@@ -437,6 +437,7 @@ class BaseModel(ABC):
             print("infeasible model, exiting!")
             self.model.computeIIS()
             self.model.write('model.ilp')
+            exit(1)
 
         self._lazy_ptdf_uc_solve_loop()
 
@@ -835,9 +836,6 @@ class BaseModel(ABC):
             power_lhs = (self.PowerGeneratedT0[g]
                          - (self.ScaledRampDownLimit[g, t]
                             + self.MinPowerOutput[g, t]) * self.UnitOnT0[g])
-
-            #if g == '55153_NaturalGasFiredCombinedCycle_CTG3':
-            #    import pdb; pdb.set_trace()
 
             t0_dpower_constrs[g, t] = LinExpr(
                 power_coefs, power_vars) >= power_lhs
@@ -1241,8 +1239,8 @@ class BaseModel(ABC):
     def rajan_takriti_ut_dt(self):
         for g, t in product(*self.thermal_periods):
             if self.FixedCommitment[g, t] is not None:
-                self.model._UnitOn[g, t].lb = self.FixedCommitment[g, t]
-                self.model._UnitOn[g, t].ub = self.FixedCommitment[g, t]
+                self.model._UnitOn[g, t].lb = int(self.FixedCommitment[g, t])
+                self.model._UnitOn[g, t].ub = int(self.FixedCommitment[g, t])
 
         for g in self.ThermalGenerators:
             if self.InitTimePeriodsOnline[g] != 0:
@@ -1662,98 +1660,6 @@ class RucModel(BaseModel):
         self.model._power_limit_from_startstop = self.model.addConstrs(
             constr_genr(power_startstoplimit_constrs),
             name='_power_limit_from_start_stop_pan_guan_gentile'
-            )
-
-    def kow_gen_limits(self):
-        gener_starts_constrs = dict()
-        gener_startstops_constrs = dict()
-
-        # max_power_limit_from_starts_rule #
-        for g, t in product(*self.thermal_periods):
-            time_ru = self._get_look_back_periods(g, t, None)
-
-            if (t < self.NumTimePeriods
-                    and time_ru > max(0, self.ScaledMinUpTime[g] - 2)):
-                start_vars, start_coefs = self._get_initial_max_power_available_lists(
-                    g, t)
-
-                start_vars += [self.model._UnitOn[g, t]]
-                start_coefs += [-self.MaxPowerOutput[g, t]]
-
-                for i in range(min(time_ru, self.ScaledMinUpTime[g] - 1,
-                                   t - self.InitialTime) + 1):
-                    start_vars += [self.model._UnitStart[g, t - i]]
-                    start_coefs += [
-                        self.MaxPowerOutput[g, t]
-                        - self.StartupRampLimit[g]
-                        - sum(self.NominalRampUpLimit[g]
-                              for j in range(1, i + 1))
-                        ]
-
-                gener_starts_constrs[g, t] = LinExpr(
-                    start_coefs, start_vars) <= 0
-
-        # power_limit_from_start_stops_rule #
-        for g, t in product(*self.thermal_periods):
-            sd_time_limit = self._get_look_forward_periods(
-                g, t, self.ScaledMinUpTime[g] - 1)
-
-            if sd_time_limit > 0:
-                su_time_limit = self._get_look_back_periods(
-                    g, t, self.ScaledMinUpTime[g] - 2 - sd_time_limit)
-
-                start_vars, start_coefs = self._get_initial_max_power_available_lists(
-                    g, t)
-
-                for i in range(sd_time_limit + 1):
-                    start_vars += [self.model._UnitStop[g, t + i + 1]]
-                    start_coefs += [
-                        self.MaxPowerOutput[g, t]
-                        - self.ScaledShutdownRampLimit[g]
-                        - sum(self.ScaledRampDownLimit[g, t]
-                              for j in range(1, i + 1))
-                        ]
-
-                for i in range(su_time_limit + 1):
-                    start_vars += [self.model._UnitStart[g, t - i]]
-                    start_coefs += [
-                        self.MaxPowerOutput[g, t]
-                        - self.StartupRampLimit[g]
-                        - sum(self.NominalRampUpLimit[g]
-                              for j in range(1, i + 1))
-                        ]
-
-                if self.ScaledMinUpTime[g] < (max(0, su_time_limit)
-                                              + max(0, sd_time_limit) + 2):
-                    if (t - su_time_limit - 1) >= self.InitialTime:
-                        coef = max(
-                            0, self.MaxPowerOutput[g, t]
-                               - self.ScaledShutdownRampLimit[g]
-                               - sum(self.ScaledRampDownLimit[g, t]
-                                     for j in range(1, sd_time_limit + 1))
-
-                               - (self.MaxPowerOutput[g, t]
-                                  - self.StartupRampLimit[g]
-                                  - sum(self.NominalRampUpLimit[g]
-                                        for j in range(1, su_time_limit + 2)))
-                            )
-
-                        if coef != 0:
-                            start_vars += [self.model._UnitStart[
-                                               g, t - su_time_limit - 1]]
-                            start_coefs += [coef]
-
-                gener_startstops_constrs[g, t] = LinExpr(
-                    start_coefs, start_vars) <= 0
-
-        self.model._max_power_limit_from_starts = self.model.addConstrs(
-            constr_genr(gener_starts_constrs),
-            name='_max_power_limit_from_starts'
-            )
-
-        self.model._max_power_limit_from_start_stop = self.model.addConstrs(
-            constr_genr(gener_startstops_constrs),
-            name='_power_limit_from_start_stop_KOW'
             )
 
     def compute_production_costs_rule(self, g, t, avg_power):
