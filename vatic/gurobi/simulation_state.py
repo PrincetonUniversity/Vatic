@@ -143,15 +143,15 @@ class VaticSimulationState:
         return self.actuals[k].iloc[1:]
 
     def apply_initial_ruc(self,
-                          ruc: RucModel, sim_actuals: pd.DataFrame) -> None:
+                          ruc_data: dict, sim_actuals: pd.DataFrame) -> None:
         """This is the first RUC; save initial state."""
 
-        self._init_gen_state = deepcopy(ruc.UnitOnT0State)
-        self._init_power_gen = deepcopy(ruc.PowerGeneratedT0)
-        self._commitments = pd.Series(ruc.results['commitment']).unstack()
+        self._init_gen_state = deepcopy(ruc_data['UnitOnT0State'])
+        self._init_power_gen = deepcopy(ruc_data['PowerGeneratedT0'])
+        self._commitments = pd.Series(ruc_data['commitment']).unstack()
 
         # usually assumed to be empty
-        for store, store_data in ruc.Storage:
+        for store, store_data in ruc_data['storage'].items():
             self._init_soc[store] = store_data['initial_state_of_charge']
 
         # hard-code these for now
@@ -160,7 +160,7 @@ class VaticSimulationState:
         self._minutes_per_actuals_step = 60
         self._next_actuals_pop_minute = 60
 
-        self.forecasts = ruc.forecastables
+        self.forecasts = ruc_data['forecastables']
         self.actuals = sim_actuals
 
     def apply_planning_ruc(self,
@@ -187,9 +187,10 @@ class VaticSimulationState:
         self.forecasts = pd.concat([self.forecasts.iloc[:self.ruc_delay, :],
                                     ruc.forecastables])
 
-        self._commitments = self._commitments.T.reset_index(drop=True).T
-        self.actuals = self.actuals.reset_index(drop=True)
-        self.forecasts = self.forecasts.reset_index(drop=True)
+        new_times = [i + 1 for i in range(ruc.NumTimePeriods + self.ruc_delay)]
+        self._commitments.columns = new_times
+        self.actuals.index = new_times
+        self.forecasts.index = new_times
 
     def apply_sced(self,
                    sced: ScedModel, sced_time: Optional[int] = 1) -> None:

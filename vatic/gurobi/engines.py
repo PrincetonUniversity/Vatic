@@ -198,23 +198,23 @@ class Simulator:
         # pre-solved RUC from it...
         if self.init_ruc_file and self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'rb') as f:
-                ruc = pickle.load(f)
+                ruc_data = pickle.load(f)
 
         # ...otherwise, solve the initial RUC
         else:
-            ruc = self.solve_ruc(first_step)
+            ruc_data = self.solve_ruc(first_step).results
 
-        self._stats_manager.collect_ruc_solution(first_step, ruc)
+        self._stats_manager.collect_ruc_solution(first_step, ruc_data)
 
         # if an initial RUC file has been given and it doesn't already exist
         # then save the solved RUC for future use
         if self.init_ruc_file and not self.init_ruc_file.exists():
             with open(self.init_ruc_file, 'wb') as f:
-                pickle.dump(ruc, f, protocol=-1)
+                pickle.dump(ruc_data, f, protocol=-1)
 
         sim_actuals = self._data_provider.get_forecastables(
             use_actuals=True, times_requested=self._data_provider.ruc_horizon)
-        self._simulation_state.apply_initial_ruc(ruc, sim_actuals)
+        self._simulation_state.apply_initial_ruc(ruc_data, sim_actuals)
 
     def call_planning_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's next day.
@@ -272,9 +272,11 @@ class Simulator:
         self._stats_manager.collect_sced_solution(self._current_timestep,
                                                   sced_model, lmp_sced)
 
-    def solve_ruc(self,
-                  time_step: VaticTime,
-                  sim_state: Optional[VaticSimulationState] = None) -> RucModel:
+    def solve_ruc(
+            self,
+            time_step: VaticTime,
+            sim_state: Optional[VaticSimulationState] = None
+            ) -> RucModel:
         ruc_model = self._data_provider.create_ruc(time_step, sim_state)
         self._ptdf_manager.mark_active(ruc_model)
 

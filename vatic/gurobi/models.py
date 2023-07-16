@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import time
 import math
+from copy import copy, deepcopy
 import pandas as pd
 from abc import ABC, abstractmethod
 from itertools import product
-from copy import copy, deepcopy
 from typing import Optional, Any
 
 import gurobipy as gp
@@ -79,7 +79,6 @@ class BaseModel(ABC):
         self.RenewOutput = renews_data.transpose()
         self.Demand = load_data.transpose()
         self.time_steps = renews_data.index.to_list()
-        self.future_status = future_status
         self.verbose = 0
 
         self.gen_costs = {
@@ -111,6 +110,9 @@ class BaseModel(ABC):
                      else sim_state.get_commitments().loc[g, t])
             for g, t in product(*self.thermal_periods)
             })
+
+        self.future_status = (future_status if future_status
+                              else {g: 0 for g in self.ThermalGenerators})
 
         self.Demand.columns = self.TimePeriods
         self.RenewOutput.columns = self.TimePeriods
@@ -423,8 +425,16 @@ class BaseModel(ABC):
         start_time = time.time()
         self.model.optimize()
 
-        if self.model.Status != 2:
-            self._solve_careful()
+        # if we can already solve the model without the transmission
+        # constraints, proceed with adding the constraints and re-solving
+        if self.model.Status == 2:
+            self._lazy_ptdf_uc_solve_loop()
+
+        # otherwise we need to try some more relaxations first
+        else:
+            self.model.computeIIS()
+            self.model.write('model.ilp')
+            raise VaticModelError("infeasible model, exiting!")
 
         self.solve_time = time.time() - start_time
         self.results = self._parse_model_results()
@@ -469,6 +479,8 @@ class BaseModel(ABC):
                               if hasattr(self.model, constr)]
 
         results = {
+            'solve_time': self.solve_time,
+
             'power_generated': {
                 (g, t): self.model._PowerGenerated[g, t].getValue()
                 for g, t in product(*self.thermal_periods)
@@ -539,15 +551,14 @@ class BaseModel(ABC):
                 flows[t, br] = pfv[i]
 
             for i, bs in enumerate(cur_ptdf.buses_keys):
+                pl_dict[bs, t] = self.model._TransmissionBlock[t]['pl'][bs]
                 voltage_angles[t, bs] = va[i]
 
-                if (bs, t) in self.model._LoadGenerateMismatch:
-                    p_balances[bs, t] \
-                        = self.model._LoadGenerateMismatch[bs, t]
+                if isinstance(self.model._LoadGenerateMismatch[bs, t], float):
+                    p_balances[bs, t] = self.model._LoadGenerateMismatch[bs, t]
                 else:
-                    p_balances[bs, t] = 0.
-
-                pl_dict[bs, t] = self.model._TransmissionBlock[t]['pl'][bs]
+                    p_balances[bs, t] = self.model._LoadGenerateMismatch[
+                        bs, t].getValue()
 
         results['flows'] = flows
         results['voltage_angles'] = voltage_angles
@@ -557,6 +568,13 @@ class BaseModel(ABC):
         results['reserve_shortfall'] = {t: self.model._ReserveShortfall[t].x
                                         for t in self.TimePeriods}
         results['total_cost'] = self.model.ObjVal
+
+        results['gen_costs'] = self.gen_costs
+        results['forecastables'] = self.forecastables
+        results['UnitOnT0State'] = self.UnitOnT0State
+        results['PowerGeneratedT0'] = self.PowerGeneratedT0
+
+        results['storage'] = dict()
 
         return results
 
@@ -729,6 +747,18 @@ class BaseModel(ABC):
             name='PowerGeneratedAboveMinimum'
             )
 
+        # so that we can turn off the generator in the future as planned in
+        # the commitment, we make sure we can get to Pmin by that time
+        for g, future in self.future_status.items():
+            if future < 0:
+                max_rampdown = -(future + 1) * self.NominalRampDownLimit[g]
+                cur_max = (self.MaxPowerOutput[g, self.NumTimePeriods]
+                           - self.MinPowerOutput[g, self.NumTimePeriods])
+
+                if max_rampdown < cur_max:
+                    self.model._PowerGeneratedAboveMinimum[
+                        g, self.NumTimePeriods].ub = max_rampdown
+
         self.model._PowerGenerated = tupledict({
             (g, t): (self.model._PowerGeneratedAboveMinimum[g, t]
                      + self.MinPowerOutput[g, t] * self.model._UnitOn[g, t])
@@ -756,7 +786,7 @@ class BaseModel(ABC):
             }
 
         for g, t in t0_uramp_periods:
-            pvars, pcoefs = self._get_initial_max_power_available_lists(g, t)
+            pvars, pcoefs = self._get_max_power_available_above_min_lists(g, t)
 
             pvars += [self.model._UnitOn[g, t], self.model._UnitStart[g, t]]
             pcoefs += [-self.NominalRampUpLimit[g] + self.MinPowerOutput[g, t],
@@ -767,15 +797,16 @@ class BaseModel(ABC):
 
         tk_uramp_periods = {
             (g, t) for g, t in product(*self.thermal_periods)
-            if (t > self.InitialTime
-                and self.NominalRampUpLimit[g] < (
+            if t > self.InitialTime and (
+                    self.NominalRampUpLimit[g] < (
                         self.MaxPowerOutput[g, t]
                         - self.MinPowerOutput[g, t - 1]
-                ))
+                        )
+                    )
             }
 
         for g, t in tk_uramp_periods:
-            pvars, pcoefs = self._get_initial_max_power_available_lists(g, t)
+            pvars, pcoefs = self._get_max_power_available_above_min_lists(g, t)
 
             pvars += [self.model._UnitOn[g, t], self.model._UnitStart[g, t]]
             pcoefs += [
@@ -1072,6 +1103,9 @@ class BaseModel(ABC):
         return ([self.model._PowerGeneratedAboveMinimum[g, t],
                  self.model._UnitOn[g, t]],
                 [1., self.MinPowerOutput[g, t]])
+
+    def _get_max_power_available_above_min_lists(self, g, t):
+        return [self.model._MaximumPowerAvailableAboveMinimum[g, t]], [1.]
 
     def _get_max_power_available_lists(self, g, t):
         return ([self.model._MaximumPowerAvailableAboveMinimum[g, t],
@@ -1904,6 +1938,11 @@ class ScedModel(BaseModel):
         linear_coefs.append(1.)
 
         return linear_vars, linear_coefs
+
+    def _get_max_power_available_above_min_lists(self, g, t):
+        return ([self.model._PowerGeneratedAboveMinimum[g, t],
+                 self.model._ReserveProvided[g, t]],
+                [1., 1.])
 
     def mlr_reserve_vars(self):
         # amount of power produced by each generator above minimum,
