@@ -310,6 +310,9 @@ class PickleProvider:
                      fcst_error_ratios.T * forecasts.iloc[1:]]
                     )
 
+            else:
+                sced_data = actuals.to_frame().T
+
         # look as far into the future as we can for startups if the
         # generator is committed to be off at the end of the model window
         future_status_times = {g: 0 for g in current_state.generators}
@@ -322,12 +325,12 @@ class PickleProvider:
             for off_gen, gen_cmts in future_cmts.loc[~horizon_cmts].iterrows():
                 if gen_cmts.any():
                     future_status_times[off_gen] = (
-                            gen_cmts[gen_cmts].index.max() - sced_horizon + 1)
+                            gen_cmts[gen_cmts].index.min() - sced_horizon)
 
             for on_gen, gen_cmts in future_cmts.loc[horizon_cmts].iterrows():
                 if (~gen_cmts).any():
                     future_status_times[on_gen] = -(
-                            gen_cmts[~gen_cmts].index.max() - sced_horizon + 1)
+                            gen_cmts[~gen_cmts].index.min() - sced_horizon)
 
         template_data = deepcopy(self.template)
         template_data['ShutdownRampLimit'] = {

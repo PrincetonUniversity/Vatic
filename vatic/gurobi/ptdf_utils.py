@@ -547,61 +547,43 @@ class VirtualPTDFMatrix(_PTDFManagerBase):
 
         return PFV.A[0], PFV_I.A[0], VA
 
-    def calculate_LMP(self, LMPC_Constrs, LMPI_Constrs, LMPE_Constrs):
+    def calculate_LMP(self, sced, t):
         '''
         Calculate a vector of locational marginal prices
         indexed by buses_keys.
 
         Parameters
-        ---
-        LMPC_Constr, LMPI_Constr, LMPE_Constr: Model Constraints Related to
-        different parts of lmp prices
-
+        ----------
+        mb : Pyomo ConcreteModel or Block with
+             ineq_pf_branch_thermal_bounds constraint and
+             ineq_pf_interface_bounds constraint (if there are
+             interfaces).
+        dual : Dual mapping return by a pyomo solver (usually
+               ConcreteModel.dual
+        bus_balance_constr : the bus-balance constraint for reading
+                             the energy component of LMP
 
         Returns
         -------
         LMP : np.array of LMPs indexed by buses_keys
         '''
         ## NOTE: unmonitored lines cannot contribute to LMPC
-        if LMPC_Constrs:
-            PFD = np.fromiter((LMPC_Constrs[0][bn].Pi + LMPC_Constrs[1][bn].Pi
-                              for i, bn in enumerate(self.branches_keys_masked)),
-                float, count=len(self.branches_keys_masked))
-        else:
-            PFD = np.fromiter((0 for i, bn in enumerate(self.branches_keys_masked)),
-                float, count=len(self.branches_keys_masked))
 
-        ## interface constributes to LMP
-        if LMPI_Constrs:
-            PFID = np.fromiter((LMPI_Constrs[0][i_n].Pi + LMPI_Constrs[1][i_n].Pi
-                              for i, i_n in enumerate(self.interface_keys)),
-                float, count=len(self.interface_keys))
-        else:
-            PFID = np.fromiter((0 for i, i_n in enumerate(self.interface_keys)),
-                float, count=len(self.interface_keys))
+        pfd_constrs = [
+            (sced.model.getConstrByName(f'thermal-lowerlimit_{t}{bn}'),
+             sced.model.getConstrByName(f'thermal-upperlimit_{t}{bn}'))
+            for bn in self.branches_keys_masked
+            ]
 
-        B_PFD = -self.B_dA_masked.T @ PFD
-        I_PFD = -self.B_dA_I.T @ PFID
+        pfd = [constr[0].pi + constr[1].pi if constr[0] else 0.
+               for constr in pfd_constrs]
+        b_pfd = -self.B_dA_masked.T @ pfd
 
-        LMPC = self.MLU.solve(B_PFD, trans='T')
-        LMPI = self.MLU.solve(I_PFD, trans='T')
+        lmpc = self.MLU.solve(b_pfd, trans='T')
+        lmpe = sced.model._TransmissionBlock[t]['eq_balance'].pi
+        lmp = self._insert_reference_bus(lmpc + lmpe, lmpe)
 
-        # Find shadow price corresponds to constraints
-        LMPE = LMPE_Constrs.Pi
-
-        if self.contingencies:
-            LMPCC = np.zeros_like(LMPC)
-
-            for (cn, bn), constr in mb.ineq_pf_contingency_branch_thermal_bounds.items():
-                dual_value = value(dual[constr])
-
-                if dual_value != 0.:
-                    LMPCC += (-dual_value) * self._contingency_rows[cn, bn]
-
-            LMP = LMPE + LMPC + LMPI + LMPCC
-        else:
-            LMP = LMPE + LMPC + LMPI
-        return self._insert_reference_bus(LMP, LMPE)
+        return dict(zip(self._buses.keys(), lmp))
 
     def calculate_monitored_contingency_flows(self, mb):
         NWV = np.fromiter((value(mb.p_nw[b]) for b in self.buses_keys_no_ref),

@@ -255,22 +255,13 @@ class Simulator:
 
         sced_model = self.solve_sced(hours_in_objective=1,
                                      sced_horizon=self.sced_horizon)
-
-        if self.run_lmps:
-            if self.verbosity > 0:
-                print("Solving for LMPs")
-
-            lmp_sced = self.solve_lmp(hours_in_objective=1,
-                                      sced_horizon=self.sced_horizon,
-                                      sced_model=sced_model)
-        else:
-            lmp_sced = None
+        lmps = self.solve_lmp(sced_model) if self.run_lmps else None
 
         self._simulation_state.apply_sced(sced_model)
         self._prior_sced_instance = sced_model
 
         self._stats_manager.collect_sced_solution(self._current_timestep,
-                                                  sced_model, lmp_sced)
+                                                  sced_model, lmps)
 
     def solve_ruc(
             self,
@@ -314,3 +305,16 @@ class Simulator:
         self._ptdf_manager.update_active(sced_model)
 
         return sced_model
+
+    def solve_lmp(self, sced: ScedModel) -> dict:
+
+        # often we want to avoid having the reserve requirement shortfall make
+        # any impact on the prices whatsoever
+        sced.model._ReserveShortfallPenalty = 0
+        sced.relax_binaries()
+        sced.add_objective()
+
+        sced.solve(relaxed=True, mipgap=self.mipgap,
+                   threads=self.solver_options['Threads'], outputflag=0)
+
+        return sced.model._TransmissionBlock[1]['PTDF'].calculate_LMP(sced, 1)
