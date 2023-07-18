@@ -397,9 +397,6 @@ class BaseModel(ABC):
                 print(iter_status_str)
 
             if terminate_this_iter:
-                if duals:
-                    solver.add_duals()
-
                 break
 
             # lazy_ptdf_violation_adder
@@ -430,7 +427,6 @@ class BaseModel(ABC):
         if self.model.Status == 2:
             self._lazy_ptdf_uc_solve_loop()
 
-        # otherwise we need to try some more relaxations first
         else:
             self.model.computeIIS()
             self.model.write('model.ilp')

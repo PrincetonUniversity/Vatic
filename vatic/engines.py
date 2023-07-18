@@ -236,9 +236,10 @@ class Simulator:
         # find out when this unit commitment will come into effect and solve it
         uc_datetime = self._time_manager.get_uc_activation_time(
             self._current_timestep)
-
         ruc = self.solve_ruc(VaticTime(uc_datetime, False, False), proj_state)
-        self._stats_manager.collect_ruc_solution(self._current_timestep, ruc)
+
+        self._stats_manager.collect_ruc_solution(self._current_timestep,
+                                                 ruc.results)
 
         sim_actuals = self._data_provider.get_forecastables(
             use_actuals=True, times_requested=self._data_provider.ruc_horizon)

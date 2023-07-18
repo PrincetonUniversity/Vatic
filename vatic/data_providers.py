@@ -338,6 +338,8 @@ class PickleProvider:
             for gen, pmin in self.template['MinimumPowerOutput'].items()
             }
 
+        print(f"FUTURE: {future_status_times['50150_NaturalGasFiredCombinedCycle_GEN9']}")
+
         sced_model = ScedModel(
             template_data, sced_data['RenewGen'], sced_data['LoadBus'],
             reserve_factor=self._reserve_factor,

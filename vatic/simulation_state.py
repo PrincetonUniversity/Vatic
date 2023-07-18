@@ -164,7 +164,7 @@ class VaticSimulationState:
         self.actuals = sim_actuals
 
     def apply_planning_ruc(self,
-                           ruc: RucModel, sim_actuals: dict) -> None:
+                           ruc: RucModel, sim_actuals: pd.DataFrame) -> None:
         """Incorporate a RUC instance into the current state.
 
         This will save the ruc's forecasts, and for the very first ruc

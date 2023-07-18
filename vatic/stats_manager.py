@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import bz2
 import dill as pickle
+from gurobipy import LinExpr
 from typing import Optional
 
 import numpy as np
@@ -63,8 +64,7 @@ class StatsManager:
         return pd.Series(stats).unstack().round(self.max_decimals)
 
     def collect_ruc_solution(self,
-                             time_step: VaticTime,
-                             ruc: RucModel) -> None:
+                             time_step: VaticTime, ruc_data: dict) -> None:
         """Gets the key statistics from a solved reliability unit commitment.
 
         Args
@@ -74,18 +74,18 @@ class StatsManager:
         """
 
         self._ruc_stats[time_step] = {
-            'runtime': ruc.solve_time,
+            'runtime': ruc_data['solve_time'],
 
-            'fixed_cost': round(sum(ruc.results['commitment_cost'].values()),
+            'fixed_cost': round(sum(ruc_data['commitment_cost'].values()),
                                 self.max_decimals),
             'variable_cost': round(sum(
-                ruc.results['production_cost'].values()), self.max_decimals),
+                ruc_data['production_cost'].values()), self.max_decimals),
 
-            'generation': self._dict_to_frame(ruc.results['power_generated']),
-            'commitments': self._dict_to_frame(ruc.results['commitment']),
-            'reserves': self._dict_to_frame(ruc.results['reserves_provided']),
+            'generation': self._dict_to_frame(ruc_data['power_generated']),
+            'commitments': self._dict_to_frame(ruc_data['commitment']),
+            'reserves': self._dict_to_frame(ruc_data['reserves_provided']),
 
-            'costs': pd.Series(ruc.gen_costs),
+            'costs': pd.Series(ruc_data['gen_costs']),
             }
 
         if self.verbosity > 0:
@@ -97,7 +97,7 @@ class StatsManager:
 
     def collect_sced_solution(self,
                               time_step: VaticTime, sced: ScedModel,
-                              lmp_sced: Optional[ScedModel] = None) -> None:
+                              lmps: dict | None) -> None:
         """Gets the key statistics from a solved economic dispatch.
 
         Args
@@ -199,7 +199,8 @@ class StatsManager:
                 sced.flows.loc[t1], self.max_decimals),
 
             'observed_bus_mismatches': pd.Series({
-                gen: v for (gen, t), v in sced.results['p_balances'].items()
+                gen: v.getValue() if isinstance(v, LinExpr) else v
+                for (gen, t), v in sced.results['p_balances'].items()
                 if t == t1
                 }).round(self.max_decimals),
 
@@ -209,11 +210,20 @@ class StatsManager:
                 for gen in sced.ThermalGenerators}).round(self.max_decimals)
             }
 
-        if lmp_sced:
-            pass
+        g = '50150_NaturalGasFiredCombinedCycle_GEN9'
+        print(f"ON: {sced.model._UnitOn[g, 1].x}\t"
+              f"START: {sced.model._UnitStart[g, 1].x}\t"
+              f"STOP: {sced.model._UnitStop[g, 1].x}\t"
+              f"GEN: {sced.model._PowerGeneratedAboveMinimum[g, 1].x}")
+
+        if lmps:
+            self._sced_stats[time_step]['observed_bus_LMPs'] = pd.Series(lmps)
+        else:
+            self._sced_stats[time_step]['observed_bus_LMPs'] = pd.Series({
+                b: np.nan for b in sced.Buses})
 
         if self.verbosity > 0:
-            print("SCED fixed costs: "
+            print(f"{time_step.when.strftime('%F (%I%p)')}  SCED fixed costs: "
                   f"{self._sced_stats[time_step]['fixed_costs']}"
                   "\tvariable costs: "
                   f"{self._sced_stats[time_step]['variable_costs']}")
@@ -255,6 +265,8 @@ class StatsManager:
                 ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
 
+        print(report_dfs['hourly_summary'].sum().round().astype(int))
+
         return report_dfs
 
     def save_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
@@ -281,7 +293,8 @@ class StatsManager:
             tgen_gby = report_dfs['thermal_detail'].groupby('Generator')
 
             # get the final output for each generator
-            final_dispatch = tgen_gby.apply(lambda x: round(x['Dispatch'][-1], 2))
+            final_dispatch = tgen_gby.apply(
+                lambda x: round(x['Dispatch'][-1], 2))
 
             # get the final on/off state for each generator
             final_bool = tgen_gby.apply(
