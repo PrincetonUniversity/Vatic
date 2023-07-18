@@ -289,7 +289,7 @@ class UCModel:
             model_data = self.pyo_instance.model_data
 
             # if this is a MIP, iterate a few times with just the LP relaxation
-            if not relaxed and lp_iter_limit > 0:
+            if not relaxed and lp_iter_limit > 0 and False:
                 lpu.uc_instance_binary_relaxer(self.pyo_instance, None)
 
                 self.pyo_instance, results_init, use_solver = _solve_model(
@@ -369,7 +369,7 @@ class UCModel:
 
             iter_limit = self.pyo_instance._ptdf_options['iteration_limit']
 
-            if relaxed and lp_warmstart_iter_limit > 0:
+            if relaxed and lp_warmstart_iter_limit > 0 and False:
                 lp_termin_cond, results, lp_iters = _lazy_ptdf_uc_solve_loop(
                     self.pyo_instance, model_data, use_solver, timelimit=None,
                     solver_tee=self.output_solver_logs,

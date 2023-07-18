@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='Vatic',
-    version='0.5.1-a2',
+    version='0.5.2-a0',
     description='lightweight PJM power grid simulation engine and interface',
 
     author='Michal Radoslaw Grzadkowski, Alice Fang',
@@ -13,7 +13,6 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'vatic-det=vatic.command_line:run_deterministic',
-            'vatic-gb=vatic.command_line:run_gurobipy_deterministic'
             ],
         },
 

@@ -15,7 +15,7 @@ from .models import RucModel, ScedModel
 from .simulation_state import VaticSimulationState
 from .ptdf_manager import VaticPTDFManager
 from .stats_manager import StatsManager
-from ..egret.time_manager import VaticTimeManager, VaticTime
+from .time_manager import VaticTimeManager, VaticTime
 
 
 class Simulator:

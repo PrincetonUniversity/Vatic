@@ -11,7 +11,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from ..egret.time_manager import VaticTime
+from .time_manager import VaticTime
 from .simulation_state import VaticSimulationState
 from .models import RucModel, ScedModel
 
@@ -337,8 +337,6 @@ class PickleProvider:
             gen: 1. + pmin
             for gen, pmin in self.template['MinimumPowerOutput'].items()
             }
-
-        print(f"FUTURE: {future_status_times['50150_NaturalGasFiredCombinedCycle_GEN9']}")
 
         sced_model = ScedModel(
             template_data, sced_data['RenewGen'], sced_data['LoadBus'],

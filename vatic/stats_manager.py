@@ -12,7 +12,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from ..egret.time_manager import VaticTime
+from .time_manager import VaticTime
 from .models import RucModel, ScedModel
 
 
@@ -210,12 +210,6 @@ class StatsManager:
                 for gen in sced.ThermalGenerators}).round(self.max_decimals)
             }
 
-        g = '50150_NaturalGasFiredCombinedCycle_GEN9'
-        print(f"ON: {sced.model._UnitOn[g, 1].x}\t"
-              f"START: {sced.model._UnitStart[g, 1].x}\t"
-              f"STOP: {sced.model._UnitStop[g, 1].x}\t"
-              f"GEN: {sced.model._PowerGeneratedAboveMinimum[g, 1].x}")
-
         if lmps:
             self._sced_stats[time_step]['observed_bus_LMPs'] = pd.Series(lmps)
         else:
@@ -264,8 +258,6 @@ class StatsManager:
                 for gen, gen_state in stats['observed_thermal_states'].items()
                 ]).drop('Minute', axis=1).set_index(
                 ['Date', 'Hour', 'Generator'], verify_integrity=True)
-
-        print(report_dfs['hourly_summary'].sum().round().astype(int))
 
         return report_dfs
 
