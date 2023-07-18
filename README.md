@@ -14,10 +14,14 @@ optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid form
 [Egret](https://github.com/grid-parity-exchange/Egret).
 
 
-## Installing Vatic ##
+## Installing Vatic_Gurobipy ##
+
+The Vatic_Gurobipy builds and solves the model using Gurobi instead of Pyomo, which leads to around 8X
+speed up of implementation.
 
 After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of
 the following from command line:
+
 ```git clone https://github.com/PrincetonUniversity/Vatic.git --branch vatic_gurobipy --single-branch```
 
 ```git clone git@github.com:PrincetonUniversity/Vatic.git --branch vatic_gurobipy --single-branch```
