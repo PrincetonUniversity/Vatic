@@ -1,0 +1,8 @@
+numpy>1.21
+pandas
+scipy
+dill
+matplotlib
+pyomo>=6
+gurobipy
+gridx-egret@ git+https://github.com/shrivats-pu/Egret.git

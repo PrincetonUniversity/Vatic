@@ -1,0 +1,3 @@
+[submodule "vatic/data/grids/RTS-GMLC"]
+	path = vatic/data/grids/RTS-GMLC
+	url = https://github.com/GridMod/RTS-GMLC.git

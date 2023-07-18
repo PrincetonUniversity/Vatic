@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>construct_models_gurobi.power_balance_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transmission_gurobi.html">transmission_gurobi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">construct_models_gurobi.power_balance_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for construct_models_gurobi.power_balance_gurobi</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Add systemwise power balance variables and constraints to impose the constraints</span>
+<span class="sd">on supply-demand mismatch at each bus level and impose the power flow constraints</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">vatic.models_gurobi.src.construct_models_gurobi.ptdf_utils_gurobi</span> <span class="k">as</span> <span class="nn">ptdf_utils</span>
+<span class="kn">from</span> <span class="nn">.power_vars_gurobi</span> <span class="kn">import</span> <span class="n">_add_reactive_power_vars</span>
+<span class="kn">from</span> <span class="nn">.generation_limits_gurobi</span> <span class="kn">import</span> <span class="n">_add_reactive_limits</span>
+<span class="kn">from</span> <span class="nn">.lazy_ptdf_utils_part_gurobi</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">add_monitored_flow_tracker</span><span class="p">,</span>
+    <span class="n">add_initial_monitored_branches</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">vatic.models_gurobi.src.transmission_gurobi.bus</span> <span class="k">as</span> <span class="nn">libbus</span>
+<span class="kn">import</span> <span class="nn">vatic.models_gurobi.src.transmission_gurobi.branch</span> <span class="k">as</span> <span class="nn">libbranch</span>
+
+<span class="kn">from</span> <span class="nn">egret.model_library.defn</span> <span class="kn">import</span> <span class="n">BasePointType</span><span class="p">,</span> <span class="n">ApproximationType</span>
+
+<span class="kn">from</span> <span class="nn">gurobipy</span> <span class="kn">import</span> <span class="n">tupledict</span><span class="p">,</span> <span class="n">LinExpr</span><span class="p">,</span> <span class="n">GRB</span><span class="p">,</span> <span class="n">quicksum</span><span class="p">,</span> <span class="n">Model</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="ptdf_power_flow"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.power_balance_gurobi.ptdf_power_flow">[docs]</a><span class="k">def</span> <span class="nf">ptdf_power_flow</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">slacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add constraints to impose the upper bounds on supply-demand mismatch and</span>
+<span class="sd">    ensure the power flow balance&quot;&quot;&quot;</span>
+    <span class="n">_add_egret_power_flow</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">_ptdf_dcopf_network_model</span><span class="p">,</span> <span class="n">reactive_power</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">slacks</span><span class="o">=</span><span class="n">slacks</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<span class="k">def</span> <span class="nf">_add_egret_power_flow</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">network_model_builder</span><span class="p">,</span> <span class="n">reactive_power</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines generic interface for tramsmission models&quot;&quot;&quot;</span>
+    <span class="c1"># save flag for objective</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_reactive_power</span> <span class="o">=</span> <span class="n">reactive_power</span>
+
+    <span class="n">system_load_mismatch</span> <span class="o">=</span> <span class="n">network_model_builder</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">_copperplate_approx_network_model</span><span class="p">,</span>
+        <span class="n">_copperplate_relax_network_model</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">slacks</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">system_load_mismatch</span><span class="p">:</span>
+            <span class="n">_add_system_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_add_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">system_load_mismatch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;_add_blank_system_load_mismatch() is not defined in Egret&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_add_blank_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">_add_hvdc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reactive_power</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">system_load_mismatch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Need to implement system mismatch for reactive power&quot;</span>
+            <span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">_add_reactive_power_vars</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">_add_reactive_limits</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slacks</span><span class="p">:</span>
+            <span class="n">_add_q_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_add_blank_q_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="c1"># for interface violation costs at a time step</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_BranchViolationCost</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+
+    <span class="c1"># for interface violation costs at a time step</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_InterfaceViolationCost</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+
+    <span class="c1"># for contingency violation costs at a time step</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_ContingencyViolationCost</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+
+    <span class="c1"># set up the empty model block for each time period to add constraints</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_TransmissionBlock</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_gens_by_bus</span> <span class="o">=</span> <span class="p">{</span><span class="n">bus</span><span class="p">:</span> <span class="p">[</span><span class="n">bus</span><span class="p">]</span> <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">}</span>
+    <span class="n">parent_model</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="k">for</span> <span class="n">tm</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">:</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">_tm</span> <span class="o">=</span> <span class="n">tm</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">_pg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bus</span><span class="p">:</span> <span class="n">_get_pg_expr_rule</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">bus</span><span class="p">)</span> <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">reactive_power</span><span class="p">:</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">_qg</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">bus</span><span class="p">:</span> <span class="n">_get_qg_expr_rule</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">bus</span><span class="p">)</span> <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span>
+            <span class="p">}</span>
+        <span class="n">network_model_builder</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">parent_model</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TransmissionBlock</span><span class="p">[</span><span class="n">tm</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span>
+
+
+<span class="k">def</span> <span class="nf">_get_pg_expr_rule</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">bus</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+            <span class="n">quicksum</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_PowerGeneratedStartupShutdown</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ThermalGeneratorsAtBus</span><span class="p">[</span><span class="n">bus</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="n">quicksum</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_PowerOutputStorage</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StorageAtBus</span><span class="p">[</span><span class="n">bus</span><span class="p">])</span>
+            <span class="o">-</span> <span class="n">quicksum</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_PowerInputStorage</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StorageAtBus</span><span class="p">[</span><span class="n">bus</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">quicksum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_NondispatchablePowerUsed</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_NondispatchableGeneratorsAtBus</span><span class="p">[</span><span class="n">bus</span><span class="p">]</span>
+    <span class="p">)</span>
+            <span class="o">+</span> <span class="n">quicksum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_HVDCLinePower</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_HVDCLinesTo</span><span class="p">[</span><span class="n">bus</span><span class="p">])</span>
+            <span class="o">-</span> <span class="n">quicksum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_HVDCLinePower</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_HVDCLinesFrom</span><span class="p">[</span><span class="n">bus</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span><span class="p">[</span><span class="n">bus</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_qg_expr_rule</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">bus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;helper defining reacative power injection at a bus&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_ReactivePowerGenerated</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ThermalGeneratorsAtBus</span><span class="p">[</span><span class="n">bus</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">_LoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">bus</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_hvdc</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">dc_line_power_bounds_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">_HVDCLineOutOfService</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="n">m</span><span class="o">.</span><span class="n">_HVDCThermalLimit</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">m</span><span class="o">.</span><span class="n">_HVDCThermalLimit</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+    <span class="n">lbs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ubs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_HVDCLines</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">:</span>
+            <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">dc_line_power_bounds_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="n">lbs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+            <span class="n">ubs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ub</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_HVDCLinePower</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_HVDCLines</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="n">lbs</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">ubs</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HVDCLinePower&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_q_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate ana add supply and demand mismatch&quot;&quot;&quot;</span>
+    <span class="c1">#</span>
+    <span class="c1"># load &quot;shedding&quot; can be both positive and negative #</span>
+    <span class="c1">#</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=-</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LoadGenerateMismatchReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_posLoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;posLoadGenerateMismatchReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>  <span class="c1"># load shedding</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_negLoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;negLoadGenerateMismatchReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>  <span class="c1"># over generation</span>
+
+    <span class="k">def</span> <span class="nf">define_pos_neg_load_generate_mismatch_rule_reactive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">_LoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_DefinePosNegLoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">define_pos_neg_load_generate_mismatch_rule_reactive</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;DefinePosNegLoadGenerateMismatchReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent</span>
+    <span class="c1"># the appearance of load generation mismatch component values in the range of *negative* e-5.</span>
+    <span class="c1"># what these small negative values do is to cause the optimal objective to be a very large negative,</span>
+    <span class="c1"># due to obviously large penalty values for under or over-generation. JPW would call this a heuristic</span>
+    <span class="c1"># at this point, but it does seem to work broadly. we tried a single global constraint, across all</span>
+    <span class="c1"># buses, but that failed to correct the problem, and caused the solve times to explode.</span>
+
+    <span class="k">def</span> <span class="nf">pos_load_generate_mismatch_tolerance_rule_reactive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriods</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">&gt;=</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_PosLoadGenerateMismatchToleranceReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">pos_load_generate_mismatch_tolerance_rule_reactive</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;PosLoadGenerateMismatchToleranceReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">neg_load_generate_mismatch_tolerance_rule_reactive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriods</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">&gt;=</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_NegLoadGenerateMismatchToleranceReactive</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">neg_load_generate_mismatch_tolerance_rule_reactive</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NegLoadGenerateMismatchToleranceReactive&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_q_load_mismatch_cost_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_LoadMismatchPenaltyReactive</span>
+                <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span>
+                <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatchReactive</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_Buses</span>
+        <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCostReactive</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">t</span><span class="p">:</span> <span class="n">compute_q_load_mismatch_cost_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_add_blank_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_posLoadGenerateMismatch</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_negLoadGenerateMismatch</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_add_blank_q_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_posLoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_negLoadGenerateMismatchReactive</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">(</span>
+        <span class="p">{(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCostReactive</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_add_system_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c1">#</span>
+    <span class="c1"># load &quot;shedding&quot; can be both positive and negative #</span>
+    <span class="c1">#</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_posLoadGenerateMismatch</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;posLoadGenerateMismatch&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># load shedding</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_negLoadGenerateMismatch</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;negLoadGenerateMismatch&quot;</span><span class="p">,</span>
+    <span class="p">)</span>  <span class="c1"># over generation</span>
+
+    <span class="c1"># for interfacing with the rest of the model code</span>
+    <span class="k">def</span> <span class="nf">define_pos_neg_load_generate_mismatch_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">_ReferenceBus</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatch</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatch</span><span class="p">[</span>
+                <span class="n">t</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch_atT</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">:</span>
+            <span class="n">mismatch</span> <span class="o">=</span> <span class="n">define_pos_neg_load_generate_mismatch_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span><span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="n">mismatch</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">mismatch</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch_atT</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span>
+
+    <span class="c1"># the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent</span>
+    <span class="c1"># the appearance of load generation mismatch component values in the range of *negative* e-5.</span>
+    <span class="c1"># what these small negative values do is to cause the optimal objective to be a very large negative,</span>
+    <span class="c1"># due to obviously large penalty values for under or over-generation. JPW would call this a heuristic</span>
+    <span class="c1"># at this point, but it does seem to work broadly. we tried a single global constraint, across all</span>
+    <span class="c1"># buses, but that failed to correct the problem, and caused the solve times to explode.</span>
+
+    <span class="k">def</span> <span class="nf">pos_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatch</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_PosLoadGenerateMismatchTolerance</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span>
+        <span class="n">pos_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">model</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;PosLoadGenerateMismatchTolerance&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">neg_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatch</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_NegLoadGenerateMismatchTolerance</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span>
+        <span class="n">neg_load_generate_mismatch_tolerance_rule</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NegLoadGenerateMismatchTolerance&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_load_mismatch_cost_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">_posLoadGenerateMismatch</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span>
+            <span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">_negLoadGenerateMismatch</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span>
+        <span class="p">]</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span>
+                           <span class="n">m</span><span class="o">.</span><span class="n">_LoadMismatchPenalty</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span>
+                       <span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">t</span><span class="p">:</span> <span class="n">compute_load_mismatch_cost_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_add_load_mismatch</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">over_gen_times_per_bus</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="nb">list</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">}</span>
+    <span class="n">load_shed_times_per_bus</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="nb">list</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">}</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_OverGeneration</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadShedding</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">over_gen_maxes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">load_shed_maxes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">:</span>
+        <span class="c1"># storage, for now, does not</span>
+        <span class="c1"># have time-vary parameters</span>
+        <span class="n">storage_max_injections</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">storage_max_withdraws</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_StorageAtBus</span><span class="p">[</span><span class="n">b</span><span class="p">]:</span>
+            <span class="n">storage_max_injections</span> <span class="o">+=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MaximumPowerOutputStorage</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="n">storage_max_withdraws</span> <span class="o">+=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MaximumPowerInputStorage</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">:</span>
+            <span class="n">max_injections</span> <span class="o">=</span> <span class="n">storage_max_injections</span>
+            <span class="n">max_withdrawls</span> <span class="o">=</span> <span class="n">storage_max_withdraws</span>
+
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGeneratorsAtBus</span><span class="p">[</span><span class="n">b</span><span class="p">]:</span>
+                <span class="n">p_max</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MaximumPowerOutput</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="n">p_min</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MinimumPowerOutput</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">p_max</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">max_injections</span> <span class="o">+=</span> <span class="n">p_max</span>
+                <span class="k">if</span> <span class="n">p_min</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">max_withdrawls</span> <span class="o">+=</span> <span class="o">-</span><span class="n">p_min</span>
+
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_NondispatchableGeneratorsAtBus</span><span class="p">[</span><span class="n">b</span><span class="p">]:</span>
+                <span class="n">p_max</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MaxNondispatchablePower</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+                <span class="n">p_min</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_MinNondispatchablePower</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">p_max</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">max_injections</span> <span class="o">+=</span> <span class="n">p_max</span>
+                <span class="k">if</span> <span class="n">p_min</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">max_withdrawls</span> <span class="o">+=</span> <span class="o">-</span><span class="n">p_min</span>
+
+            <span class="n">load</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_Demand</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">load</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">max_withdrawls</span> <span class="o">+=</span> <span class="n">load</span>
+            <span class="k">elif</span> <span class="n">load</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">max_injections</span> <span class="o">+=</span> <span class="o">-</span><span class="n">load</span>
+
+            <span class="k">if</span> <span class="n">max_injections</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_OverGeneration</span><span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span>
+                    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">ub</span><span class="o">=</span><span class="n">max_injections</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OverGeneration[</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">over_gen_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="n">over_gen_maxes</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_injections</span>
+
+            <span class="k">if</span> <span class="n">max_withdrawls</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_LoadShedding</span><span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span>
+                    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">ub</span><span class="o">=</span><span class="n">max_withdrawls</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LoadShedding[</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">load_shed_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="n">load_shed_maxes</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_withdrawls</span>
+
+    <span class="c1"># the following constraints are necessarily, at least in the case of CPLEX 12.4, to prevent</span>
+    <span class="c1"># the appearance of load generation mismatch component values in the range of *negative* e-5.</span>
+    <span class="c1"># what these small negative values do is to cause the optimal objective to be a very large negative,</span>
+    <span class="c1"># due to obviously large penalty values for under or over-generation. JPW would call this a heuristic</span>
+    <span class="c1"># at this point, but it does seem to work broadly. we tried a single global constraint, across all</span>
+    <span class="c1"># buses, but that failed to correct the problem, and caused the solve times to explode.</span>
+
+    <span class="k">def</span> <span class="nf">pos_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">load_shed_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]:</span>
+            <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_LoadShedding</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">load_shed_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">:</span>
+        <span class="n">const</span> <span class="o">=</span> <span class="n">pos_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bus</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">const</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span>
+                <span class="n">const</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;PosLoadGenerateMismatchTolerance[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bus</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">neg_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">over_gen_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]:</span>
+            <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_OverGeneration</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">over_gen_times_per_bus</span><span class="p">[</span><span class="n">b</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">:</span>
+        <span class="n">const</span> <span class="o">=</span> <span class="n">neg_load_generate_mismatch_tolerance_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bus</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">const</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span>
+                <span class="n">const</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NegLoadGenerateMismatchTolerance[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bus</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1">#</span>
+    <span class="c1"># load &quot;shedding&quot; can be both positive and negative #</span>
+    <span class="c1">#</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span> <span class="o">=</span> <span class="n">tupledict</span><span class="p">()</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_OverGenerationBusTimes</span> <span class="o">=</span> <span class="n">over_gen_maxes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_LoadSheddingBusTimes</span> <span class="o">=</span> <span class="n">load_shed_maxes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_Buses</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_LoadSheddingBusTimes</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="n">model</span><span class="o">.</span><span class="n">_LoadShedding</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchPenalty</span>
+                <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span>
+                <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">_LoadShedding</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_OverGenerationBusTimes</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadGenerateMismatch</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">-=</span> <span class="n">model</span><span class="o">.</span><span class="n">_OverGeneration</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchCost</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_LoadMismatchPenalty</span>
+                <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span>
+                <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">_OverGeneration</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_copperplate_network_model</span><span class="p">(</span>
+        <span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">relax_balance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent_model</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+    <span class="p">(</span>
+        <span class="n">m</span><span class="p">,</span>
+        <span class="n">gens_by_bus</span><span class="p">,</span>
+        <span class="n">bus_p_loads</span><span class="p">,</span>
+        <span class="n">bus_gs_fixed_shunts</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">_setup_egret_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">parent_model</span><span class="p">)</span>
+
+    <span class="c1"># declare the p balance</span>
+    <span class="n">libbus</span><span class="o">.</span><span class="n">declare_eq_p_balance_ed</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+        <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+        <span class="n">index_set</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">bus_p_loads</span><span class="o">=</span><span class="n">bus_p_loads</span><span class="p">,</span>
+        <span class="n">gens_by_bus</span><span class="o">=</span><span class="n">gens_by_bus</span><span class="p">,</span>
+        <span class="n">bus_gs_fixed_shunts</span><span class="o">=</span><span class="n">bus_gs_fixed_shunts</span><span class="p">,</span>
+        <span class="n">relax_balance</span><span class="o">=</span><span class="n">relax_balance</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_copperplate_relax_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">):</span>
+    <span class="n">_copperplate_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">relax_balance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_copperplate_approx_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">):</span>
+    <span class="n">_copperplate_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">relax_balance</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_branch_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+    <span class="c1"># declare the branch slack variables</span>
+    <span class="c1"># they have a sparse index set</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_pf_slack_pos</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_BranchesWithSlack</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pf_slack_pos&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_pf_slack_neg</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_BranchesWithSlack</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pf_slack_neg&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_interface_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+    <span class="c1"># declare the interface slack variables</span>
+    <span class="c1"># they have a sparse index set</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_pfi_slack_pos</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_InterfacesWithSlack</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pfi_slack_pos&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_pfi_slac_neg</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_InterfacesWithSlack</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pfi_slack_neg&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_contingency_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+    <span class="c1"># declare the interface slack variables</span>
+    <span class="c1"># they have a sparse index set</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_pfc_slack_pos</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_Contingencies</span><span class="p">,</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_TransmissionLines</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pfc_slack_pos&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_pfc_slack_neg</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_Contingencies</span><span class="p">,</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_TransmissionLines</span><span class="p">,</span>
+        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pfc_slack_neg&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_egret_network_topology</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tm</span><span class="p">):</span>
+    <span class="n">buses</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_buses</span>
+    <span class="n">branches</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_branches</span>
+    <span class="n">interfaces</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_interfaces</span>
+    <span class="n">contingencies</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_contingencies</span>
+
+    <span class="n">branches_in_service</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TransmissionLines</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">_LineOutOfService</span><span class="p">[</span><span class="n">l</span><span class="p">,</span> <span class="n">tm</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># this will serve as a key into our dict of PTDF matricies,</span>
+    <span class="c1"># so that we can avoid recalculating them each time step</span>
+    <span class="c1"># with the same network topology</span>
+    <span class="n">branches_out_service</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TransmissionLines</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">_LineOutOfService</span><span class="p">[</span><span class="n">l</span><span class="p">,</span> <span class="n">tm</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">buses</span><span class="p">,</span>
+        <span class="n">branches</span><span class="p">,</span>
+        <span class="n">branches_in_service</span><span class="p">,</span>
+        <span class="n">branches_out_service</span><span class="p">,</span>
+        <span class="n">interfaces</span><span class="p">,</span>
+        <span class="n">contingencies</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_egret_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">parent_model</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">parent_model</span>
+
+    <span class="c1"># this is not the &quot;real&quot; gens by bus, but the</span>
+    <span class="c1"># index of net injections from the UC model</span>
+    <span class="n">gens_by_bus</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">_gens_by_bus</span>
+
+    <span class="c1"># declare (and fix) the loads at the buses</span>
+    <span class="n">bus_p_loads</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">_Demand</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">tm</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_Buses</span><span class="p">}</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_pl</span> <span class="o">=</span> <span class="n">bus_p_loads</span>
+
+    <span class="n">bus_gs_fixed_shunts</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_bus_gs_fixed_shunts</span>
+
+    <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">gens_by_bus</span><span class="p">,</span> <span class="n">bus_p_loads</span><span class="p">,</span> <span class="n">bus_gs_fixed_shunts</span>
+
+
+<span class="k">def</span> <span class="nf">_ptdf_dcopf_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">parent_model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># m is our main model, the parent of block</span>
+    <span class="p">(</span>
+        <span class="n">m</span><span class="p">,</span>
+        <span class="n">gens_by_bus</span><span class="p">,</span>
+        <span class="n">bus_p_loads</span><span class="p">,</span>
+        <span class="n">bus_gs_fixed_shunts</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">_setup_egret_network_model</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tm</span><span class="p">,</span> <span class="n">parent_model</span><span class="p">)</span>
+
+    <span class="p">(</span>
+        <span class="n">buses</span><span class="p">,</span>
+        <span class="n">branches</span><span class="p">,</span>
+        <span class="n">branches_in_service</span><span class="p">,</span>
+        <span class="n">branches_out_service</span><span class="p">,</span>
+        <span class="n">interfaces</span><span class="p">,</span>
+        <span class="n">contingencies</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">_setup_egret_network_topology</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">tm</span><span class="p">)</span>
+
+    <span class="n">ptdf_options</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ptdf_options</span>
+
+    <span class="n">block</span><span class="o">.</span><span class="n">_p_nw_tm</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span> <span class="n">lb</span><span class="o">=-</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;p_nw_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tm</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># libbus.declare_var_p_nw(block, m._Buses)</span>
+
+    <span class="c1"># declare net withdraw expression for use in PTDF power flows</span>
+    <span class="n">libbus</span><span class="o">.</span><span class="n">declare_eq_p_net_withdraw_at_bus</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+        <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+        <span class="n">index_set</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">bus_p_loads</span><span class="o">=</span><span class="n">bus_p_loads</span><span class="p">,</span>
+        <span class="n">gens_by_bus</span><span class="o">=</span><span class="n">gens_by_bus</span><span class="p">,</span>
+        <span class="n">bus_gs_fixed_shunts</span><span class="o">=</span><span class="n">bus_gs_fixed_shunts</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># declare the p balance</span>
+    <span class="n">libbus</span><span class="o">.</span><span class="n">declare_eq_p_balance_ed</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+        <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+        <span class="n">index_set</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_Buses</span><span class="p">,</span>
+        <span class="n">bus_p_loads</span><span class="o">=</span><span class="n">bus_p_loads</span><span class="p">,</span>
+        <span class="n">gens_by_bus</span><span class="o">=</span><span class="n">gens_by_bus</span><span class="p">,</span>
+        <span class="n">bus_gs_fixed_shunts</span><span class="o">=</span><span class="n">bus_gs_fixed_shunts</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># add &quot;blank&quot; power flow expressions</span>
+    <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_expr_pf</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+        <span class="n">index_set</span><span class="o">=</span><span class="n">branches_in_service</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># add &quot;blank&quot; power flow expressions</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_branches_inservice</span> <span class="o">=</span> <span class="n">branches_in_service</span>
+
+    <span class="n">_setup_branch_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+
+    <span class="c1"># interface setup</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_interfae_keys</span> <span class="o">=</span> <span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">_setup_interface_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+
+    <span class="c1"># contingency setup</span>
+    <span class="c1"># NOTE: important that this not be dense, we&#39;ll add elements</span>
+    <span class="c1">#       as we find violations</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_contingency_set</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_Contingencies</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TransmissionLines</span>
+    <span class="p">]</span>
+    <span class="c1"># block._pfc = Expression(block._contingency_set)</span>
+    <span class="n">_setup_contingency_slacks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+
+    <span class="c1"># Get the PTDF matrix from cache, from file, or create a new one</span>
+    <span class="c1"># m._PTDFs set in uc_model_generator</span>
+    <span class="k">if</span> <span class="n">branches_out_service</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_PTDFs</span><span class="p">:</span>
+        <span class="n">buses_idx</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">buses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="n">reference_bus</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ReferenceBus</span>
+
+        <span class="c1"># NOTE: For now, just use a flat-start for unit commitment</span>
+        <span class="n">PTDF</span> <span class="o">=</span> <span class="n">ptdf_utils</span><span class="o">.</span><span class="n">VirtualPTDFMatrix</span><span class="p">(</span>
+            <span class="n">branches</span><span class="p">,</span>
+            <span class="n">buses</span><span class="p">,</span>
+            <span class="n">reference_bus</span><span class="p">,</span>
+            <span class="n">BasePointType</span><span class="o">.</span><span class="n">FLATSTART</span><span class="p">,</span>
+            <span class="n">ptdf_options</span><span class="p">,</span>
+            <span class="n">contingencies</span><span class="o">=</span><span class="n">contingencies</span><span class="p">,</span>
+            <span class="n">branches_keys</span><span class="o">=</span><span class="n">branches_in_service</span><span class="p">,</span>
+            <span class="n">buses_keys</span><span class="o">=</span><span class="n">buses_idx</span><span class="p">,</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="n">interfaces</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">m</span><span class="o">.</span><span class="n">_PTDFs</span><span class="p">[</span><span class="n">branches_out_service</span><span class="p">]</span> <span class="o">=</span> <span class="n">PTDF</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">PTDF</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_PTDFs</span><span class="p">[</span><span class="n">branches_out_service</span><span class="p">]</span>
+
+    <span class="c1"># attach the current PTDF object to this block</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">_PTDF</span> <span class="o">=</span> <span class="n">PTDF</span>
+    <span class="n">rel_ptdf_tol</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ptdf_options</span><span class="p">[</span><span class="s2">&quot;rel_ptdf_tol&quot;</span><span class="p">]</span>
+    <span class="n">abs_ptdf_tol</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ptdf_options</span><span class="p">[</span><span class="s2">&quot;abs_ptdf_tol&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;lazy&quot;</span><span class="p">]:</span>
+        <span class="c1"># add &quot;blank&quot; real power flow limits</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_ineq_p_branch_thermal_bounds</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">branches_in_service</span><span class="p">,</span>
+            <span class="n">branches</span><span class="o">=</span><span class="n">branches</span><span class="p">,</span>
+            <span class="n">p_thermal_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">approximation_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">slack_cost_expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_BranchViolationCost</span><span class="p">[</span><span class="n">tm</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># declare the &quot;blank&quot; interface flow limits</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_ineq_p_interface_bounds</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="n">interfaces</span><span class="p">,</span>
+            <span class="n">approximation_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">slack_cost_expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_InterfaceViolationCost</span><span class="p">[</span><span class="n">tm</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># declare the &quot;blank&quot; interface flow limits</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_ineq_p_contingency_branch_thermal_bounds</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">block</span><span class="o">.</span><span class="n">_contingency_set</span><span class="p">,</span>
+            <span class="n">pc_thermal_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">approximation_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">slack_cost_expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_ContingencyViolationCost</span><span class="p">[</span><span class="n">tm</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># add helpers for tracking monitored branches</span>
+        <span class="n">add_monitored_flow_tracker</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+        <span class="c1"># add initial branches to monitored set</span>
+        <span class="n">add_initial_monitored_branches</span><span class="p">(</span>
+            <span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">branches</span><span class="p">,</span>
+            <span class="n">branches_in_service</span><span class="p">,</span>
+            <span class="n">ptdf_options</span><span class="p">,</span>
+            <span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">tm</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># # add initial interfaces to monitored set</span>
+        <span class="c1"># lpu.add_initial_monitored_interfaces(block, interfaces, ptdf_options,</span>
+        <span class="c1">#                                      PTDF)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># add all the dense constraints</span>
+        <span class="k">if</span> <span class="n">contingencies</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Contingency constraints only supported in lazy mode&quot;</span>
+            <span class="p">)</span>
+        <span class="n">p_max</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">branches</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;rating_long_term&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">branches_in_service</span>
+        <span class="p">}</span>
+
+        <span class="c1"># declare the branch power flow approximation constraints</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_eq_branch_power_ptdf_approx</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">branches_in_service</span><span class="p">,</span>
+            <span class="n">PTDF</span><span class="o">=</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">abs_ptdf_tol</span><span class="o">=</span><span class="n">abs_ptdf_tol</span><span class="p">,</span>
+            <span class="n">rel_ptdf_tol</span><span class="o">=</span><span class="n">rel_ptdf_tol</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># declare the real power flow limits</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_ineq_p_branch_thermal_bounds</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">branches_in_service</span><span class="p">,</span>
+            <span class="n">branches</span><span class="o">=</span><span class="n">branches</span><span class="p">,</span>
+            <span class="n">p_thermal_limits</span><span class="o">=</span><span class="n">p_max</span><span class="p">,</span>
+            <span class="n">approximation_type</span><span class="o">=</span><span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">slack_cost_expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_BranchViolationCost</span><span class="p">[</span><span class="n">tm</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># declare the branch power flow approximation constraints</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_eq_interface_power_ptdf_approx</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+            <span class="n">PTDF</span><span class="o">=</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">abs_ptdf_tol</span><span class="o">=</span><span class="n">abs_ptdf_tol</span><span class="p">,</span>
+            <span class="n">rel_ptdf_tol</span><span class="o">=</span><span class="n">rel_ptdf_tol</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># declare the interface flow limits</span>
+        <span class="n">libbranch</span><span class="o">.</span><span class="n">declare_ineq_p_interface_bounds</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">block</span><span class="p">,</span>
+            <span class="n">parent_model</span><span class="o">=</span><span class="n">parent_model</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">tm</span><span class="p">,</span>
+            <span class="n">index_set</span><span class="o">=</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="n">interfaces</span><span class="p">,</span>
+            <span class="n">approximation_type</span><span class="o">=</span><span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">slacks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">slack_cost_expr</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">_InterfaceViolationCost</span><span class="p">[</span><span class="n">tm</span><span class="p">],</span>
+        <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

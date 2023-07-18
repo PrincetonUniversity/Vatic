@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>construct_models_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="transmission_gurobi" href="transmission_gurobi.html" />
+    <link rel="prev" title="main_model_functions_gurobi" href="main_model_functions_gurobi.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">construct_models_gurobi</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#functions-to-add-variables-and-constraints-to-the-models">Functions to Add Variables and Constraints to the Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.params_gurobi">params_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.params_gurobi.default_params"><code class="docutils literal notranslate"><span class="pre">default_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.params_gurobi.load_base_params"><code class="docutils literal notranslate"><span class="pre">load_base_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.params_gurobi.renew_cost_params"><code class="docutils literal notranslate"><span class="pre">renew_cost_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.power_vars_gurobi">power_vars_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.power_vars_gurobi.garver_power_vars"><code class="docutils literal notranslate"><span class="pre">garver_power_vars()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.reserve_vars_gurobi">reserve_vars_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.reserve_vars_gurobi.MLR_reserve_vars"><code class="docutils literal notranslate"><span class="pre">MLR_reserve_vars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.reserve_vars_gurobi.check_reserve_requirement"><code class="docutils literal notranslate"><span class="pre">check_reserve_requirement()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.reserve_vars_gurobi.garver_power_avail_vars"><code class="docutils literal notranslate"><span class="pre">garver_power_avail_vars()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.non_dispatchable_vars_gurobi">non_dispatchable_vars_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.non_dispatchable_vars_gurobi.file_non_dispatchable_vars"><code class="docutils literal notranslate"><span class="pre">file_non_dispatchable_vars()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.generation_limits_gurobi">generation_limits_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.generation_limits_gurobi.MLR_generation_limits"><code class="docutils literal notranslate"><span class="pre">MLR_generation_limits()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.generation_limits_gurobi.pan_guan_gentile_KOW_generation_limits"><code class="docutils literal notranslate"><span class="pre">pan_guan_gentile_KOW_generation_limits()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.ramping_limits_gurobi">ramping_limits_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.ramping_limits_gurobi.damcikurt_ramping"><code class="docutils literal notranslate"><span class="pre">damcikurt_ramping()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.production_costs_gurobi">production_costs_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.production_costs_gurobi.CA_production_costs"><code class="docutils literal notranslate"><span class="pre">CA_production_costs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.production_costs_gurobi.KOW_production_costs_tightened"><code class="docutils literal notranslate"><span class="pre">KOW_production_costs_tightened()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.uptime_downtime_gurobi">uptime_downtime_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.uptime_downtime_gurobi.rajan_takriti_UT_DT"><code class="docutils literal notranslate"><span class="pre">rajan_takriti_UT_DT()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.startup_costs_gurobi">startup_costs_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.startup_costs_gurobi.KOW_startup_costs"><code class="docutils literal notranslate"><span class="pre">KOW_startup_costs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.startup_costs_gurobi.MLR_startup_costs"><code class="docutils literal notranslate"><span class="pre">MLR_startup_costs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.services_gurobi">services_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.services_gurobi.ancillary_services"><code class="docutils literal notranslate"><span class="pre">ancillary_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.services_gurobi.storage_services"><code class="docutils literal notranslate"><span class="pre">storage_services()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.power_balance_gurobi">power_balance_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.power_balance_gurobi.ptdf_power_flow"><code class="docutils literal notranslate"><span class="pre">ptdf_power_flow()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.reserve_requirement_gurobi">reserve_requirement_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.reserve_requirement_gurobi.CA_reserve_constraints"><code class="docutils literal notranslate"><span class="pre">CA_reserve_constraints()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.reserve_requirement_gurobi.MLR_reserve_constraints"><code class="docutils literal notranslate"><span class="pre">MLR_reserve_constraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-construct_models_gurobi.objective_gurobi">objective_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#construct_models_gurobi.objective_gurobi.basic_objective"><code class="docutils literal notranslate"><span class="pre">basic_objective()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transmission_gurobi.html">transmission_gurobi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">construct_models_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/construct_models_gurobi.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="construct-models-gurobi">
+<h1>construct_models_gurobi<a class="headerlink" href="#construct-models-gurobi" title="Permalink to this heading"></a></h1>
+<section id="functions-to-add-variables-and-constraints-to-the-models">
+<h2>Functions to Add Variables and Constraints to the Models<a class="headerlink" href="#functions-to-add-variables-and-constraints-to-the-models" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-construct_models_gurobi.params_gurobi">
+<span id="params-gurobi-py"></span><h2>params_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.params_gurobi" title="Permalink to this heading"></a></h2>
+<p>Load and validate input of grid data to gurobi models</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.params_gurobi.default_params">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.params_gurobi.</span></span><span class="sig-name descname"><span class="pre">default_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VaticModelData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/params_gurobi.html#default_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.params_gurobi.default_params" title="Permalink to this definition"></a></dt>
+<dd><p>Call main function to load grid data into parameters of gurobi model
+without renewable costs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.params_gurobi.load_base_params">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.params_gurobi.</span></span><span class="sig-name descname"><span class="pre">load_base_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VaticModelData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">renew_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/params_gurobi.html#load_base_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.params_gurobi.load_base_params" title="Permalink to this definition"></a></dt>
+<dd><p>Main Function to Load grid data into parameters of gurobi model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.params_gurobi.renew_cost_params">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.params_gurobi.</span></span><span class="sig-name descname"><span class="pre">renew_cost_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VaticModelData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/params_gurobi.html#renew_cost_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.params_gurobi.renew_cost_params" title="Permalink to this definition"></a></dt>
+<dd><p>Call main function to load grid data into parameters of gurobi model
+with renewable costs</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.power_vars_gurobi">
+<span id="power-vars-gurobi-py"></span><h2>power_vars_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.power_vars_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add power generated and reactive power generated variables</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.power_vars_gurobi.garver_power_vars">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.power_vars_gurobi.</span></span><span class="sig-name descname"><span class="pre">garver_power_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/power_vars_gurobi.html#garver_power_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.power_vars_gurobi.garver_power_vars" title="Permalink to this definition"></a></dt>
+<dd><p>Add PowerGeneratedAboveMinimum variables,
+the main variable representing generator output.</p>
+<p>Originally proposed in L. L. Garver. Power generation scheduling by integer programming-development
+of theory. Power Apparatus and Systems, Part III. Transactions of the
+American Institute of Electrical Engineers, 81(3): 730–734, April 1962. ISSN
+0097-2460.</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.reserve_vars_gurobi">
+<span id="reserve-vars-gurobi-py"></span><h2>reserve_vars_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.reserve_vars_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add maximum power available above minimum variables, reserve provided variables,
+and generator output limits constraints</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.reserve_vars_gurobi.MLR_reserve_vars">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.reserve_vars_gurobi.</span></span><span class="sig-name descname"><span class="pre">MLR_reserve_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/reserve_vars_gurobi.html#MLR_reserve_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.reserve_vars_gurobi.MLR_reserve_vars" title="Permalink to this definition"></a></dt>
+<dd><p>Add reserves provided variables as in
+G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+formulation for the thermal unit commitment problem. IEEE Transactions on
+Power Systems, 28(4):4897–4908, 2013.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.reserve_vars_gurobi.check_reserve_requirement">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.reserve_vars_gurobi.</span></span><span class="sig-name descname"><span class="pre">check_reserve_requirement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/construct_models_gurobi/reserve_vars_gurobi.html#check_reserve_requirement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.reserve_vars_gurobi.check_reserve_requirement" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.reserve_vars_gurobi.garver_power_avail_vars">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.reserve_vars_gurobi.</span></span><span class="sig-name descname"><span class="pre">garver_power_avail_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/reserve_vars_gurobi.html#garver_power_avail_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.reserve_vars_gurobi.garver_power_avail_vars" title="Permalink to this definition"></a></dt>
+<dd><p>Add MaximumPowerAvailableAboveMinimum variables based on the
+adaption of the idea from the Carrion-Arroyo paper for maximum power available
+to consider maximum power available over minimum</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.non_dispatchable_vars_gurobi">
+<span id="non-dispatchable-vars-gurobi-py"></span><h2>non_dispatchable_vars_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.non_dispatchable_vars_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add non dispatchabe power used variables</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.non_dispatchable_vars_gurobi.file_non_dispatchable_vars">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.non_dispatchable_vars_gurobi.</span></span><span class="sig-name descname"><span class="pre">file_non_dispatchable_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/non_dispatchable_vars_gurobi.html#file_non_dispatchable_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.non_dispatchable_vars_gurobi.file_non_dispatchable_vars" title="Permalink to this definition"></a></dt>
+<dd><p>Add non dispatchable power variables</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.generation_limits_gurobi">
+<span id="generation-limits-gurobi-py"></span><h2>generation_limits_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.generation_limits_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add generatoin limit constraints</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.generation_limits_gurobi.MLR_generation_limits">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.generation_limits_gurobi.</span></span><span class="sig-name descname"><span class="pre">MLR_generation_limits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/generation_limits_gurobi.html#MLR_generation_limits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.generation_limits_gurobi.MLR_generation_limits" title="Permalink to this definition"></a></dt>
+<dd><p>Add MLR generation limits based on
+Equations (9)–(11) from G. Morales-Espana, J. M. Latorre, and A. Ramos.
+Tight and compact MILP formulation for the thermal unit commitment problem.
+IEEE Transactions on Power Systems, 28(4):4897–4908, 2013.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.generation_limits_gurobi.pan_guan_gentile_KOW_generation_limits">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.generation_limits_gurobi.</span></span><span class="sig-name descname"><span class="pre">pan_guan_gentile_KOW_generation_limits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/generation_limits_gurobi.html#pan_guan_gentile_KOW_generation_limits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.generation_limits_gurobi.pan_guan_gentile_KOW_generation_limits" title="Permalink to this definition"></a></dt>
+<dd><p>Add pan_guan_gentile_generation_limits plus the generalized upper bound
+limits introduced in the text equations (32)–(34)</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.ramping_limits_gurobi">
+<span id="ramping-limits-gurobi-py"></span><h2>ramping_limits_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.ramping_limits_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add ramping up and down limits</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.ramping_limits_gurobi.damcikurt_ramping">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.ramping_limits_gurobi.</span></span><span class="sig-name descname"><span class="pre">damcikurt_ramping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/ramping_limits_gurobi.html#damcikurt_ramping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.ramping_limits_gurobi.damcikurt_ramping" title="Permalink to this definition"></a></dt>
+<dd><p>Add ramping limits based on Equations (3) and (18) from
+Pelin Damci-Kurt, Simge Kucukyavuz, Deepak Rajan, and Alper Atamturk. A
+polyhedral study of production ramping. Mathematical Programming,
+158(1-2):175–205, 2016.</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.production_costs_gurobi">
+<span id="production-costs-gurobi-py"></span><h2>production_costs_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.production_costs_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add production cost constraints, piecewise production variables, and
+production cost variables</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.production_costs_gurobi.CA_production_costs">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.production_costs_gurobi.</span></span><span class="sig-name descname"><span class="pre">CA_production_costs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/production_costs_gurobi.html#CA_production_costs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.production_costs_gurobi.CA_production_costs" title="Permalink to this definition"></a></dt>
+<dd><p>Add production costs constraints with additional variables for each
+piecewise linear segment based on equations (7)–(11) in
+M. Carrion and J. M. Arroyo. A computationally efficient mixed-integer
+linear formulation for the thermal unit commitment problem. IEEE
+Transactions on Power Systems, 21(3):1371–1378, Aug 2006. ISSN 0885-8950.
+doi: 10.1109/TPWRS.2006.876672.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.production_costs_gurobi.KOW_production_costs_tightened">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.production_costs_gurobi.</span></span><span class="sig-name descname"><span class="pre">KOW_production_costs_tightened</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/construct_models_gurobi/production_costs_gurobi.html#KOW_production_costs_tightened"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.production_costs_gurobi.KOW_production_costs_tightened" title="Permalink to this definition"></a></dt>
+<dd><p>Add production costs constraints based on
+Ben Knueven, Jim Ostrowski, and Jean-Paul Watson. Exploiting identical
+generators in unit commitment. IEEE Transactions on Power Systems,
+33(4), 2018. Equations (19d)–(19h) with some tightening for when SU != SD</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.uptime_downtime_gurobi">
+<span id="uptime-downtime-gurobi-py"></span><h2>uptime_downtime_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.uptime_downtime_gurobi" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.uptime_downtime_gurobi.rajan_takriti_UT_DT">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.uptime_downtime_gurobi.</span></span><span class="sig-name descname"><span class="pre">rajan_takriti_UT_DT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/uptime_downtime_gurobi.html#rajan_takriti_UT_DT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.uptime_downtime_gurobi.rajan_takriti_UT_DT" title="Permalink to this definition"></a></dt>
+<dd><p>Uptime/downtime constraints (3) and (4) from</p>
+<p>D. Rajan and S. Takriti. Minimum up/down polytopes of the unit commitment
+problem with start-up costs. IBM Res. Rep, 2005.</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.startup_costs_gurobi">
+<span id="startup-costs-gurobi-py"></span><h2>startup_costs_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.startup_costs_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add startup costs constraints and the related variables</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.startup_costs_gurobi.KOW_startup_costs">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.startup_costs_gurobi.</span></span><span class="sig-name descname"><span class="pre">KOW_startup_costs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_startup_cost_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/startup_costs_gurobi.html#KOW_startup_costs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.startup_costs_gurobi.KOW_startup_costs" title="Permalink to this definition"></a></dt>
+<dd><p>Add start up cost constaints based on
+Ben Knueven, Jim Ostrowski, and Jean-Paul Watson. A novel matching
+formulation for startup costs in unit commitment, 2017.
+URL <a class="reference external" href="http://www.optimization-online.org/DB_FILE/2017/03/5897.pdf">http://www.optimization-online.org/DB_FILE/2017/03/5897.pdf</a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.startup_costs_gurobi.MLR_startup_costs">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.startup_costs_gurobi.</span></span><span class="sig-name descname"><span class="pre">MLR_startup_costs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_startup_cost_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/startup_costs_gurobi.html#MLR_startup_costs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.startup_costs_gurobi.MLR_startup_costs" title="Permalink to this definition"></a></dt>
+<dd><p>Add startup cost constraints based on equations (2)–(3) from
+G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+formulation for the thermal unit commitment problem. IEEE Transactions on
+Power Systems, 28(4):4897–4908, 2013.</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.services_gurobi">
+<span id="services-gurobi-py"></span><h2>services_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.services_gurobi" title="Permalink to this heading"></a></h2>
+<p>Pseudo functions to add storage services and ancillary services in the future</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.services_gurobi.ancillary_services">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.services_gurobi.</span></span><span class="sig-name descname"><span class="pre">ancillary_services</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/services_gurobi.html#ancillary_services"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.services_gurobi.ancillary_services" title="Permalink to this definition"></a></dt>
+<dd><p>Add ancillary services: regulation, spinning reserve, nonspinning reserve, operational reserve, flexible ramp</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.services_gurobi.storage_services">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.services_gurobi.</span></span><span class="sig-name descname"><span class="pre">storage_services</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/services_gurobi.html#storage_services"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.services_gurobi.storage_services" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.power_balance_gurobi">
+<span id="power-balance-gurobi-py"></span><h2>power_balance_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.power_balance_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add systemwise power balance variables and constraints to impose the constraints
+on supply-demand mismatch at each bus level and impose the power flow constraints</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.power_balance_gurobi.ptdf_power_flow">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.power_balance_gurobi.</span></span><span class="sig-name descname"><span class="pre">ptdf_power_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/power_balance_gurobi.html#ptdf_power_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.power_balance_gurobi.ptdf_power_flow" title="Permalink to this definition"></a></dt>
+<dd><p>Add constraints to impose the upper bounds on supply-demand mismatch and
+ensure the power flow balance</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.reserve_requirement_gurobi">
+<span id="reserve-requirement-gurobi-py"></span><h2>reserve_requirement_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.reserve_requirement_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add reserve constraints and reserve shortfall variables</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.reserve_requirement_gurobi.CA_reserve_constraints">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.reserve_requirement_gurobi.</span></span><span class="sig-name descname"><span class="pre">CA_reserve_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/reserve_requirement_gurobi.html#CA_reserve_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.reserve_requirement_gurobi.CA_reserve_constraints" title="Permalink to this definition"></a></dt>
+<dd><p>Add reserve constraints with slacks given by equation (3) in
+Carrion, M. and Arroyo, J. (2006) A Computationally Efficient Mixed-Integer
+Liner Formulation for the Thermal Unit Commitment Problem. IEEE Transactions
+on Power Systems, Vol. 21, No. 3, Aug 2006.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.reserve_requirement_gurobi.MLR_reserve_constraints">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.reserve_requirement_gurobi.</span></span><span class="sig-name descname"><span class="pre">MLR_reserve_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/reserve_requirement_gurobi.html#MLR_reserve_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.reserve_requirement_gurobi.MLR_reserve_constraints" title="Permalink to this definition"></a></dt>
+<dd><p>Add reserve constraints with slacks given by equation (5) in
+G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP
+formulation for the thermal unit commitment problem. IEEE Transactions on
+Power Systems, 28(4):4897–4908, 2013.</p>
+</dd></dl>
+
+</section>
+<section id="module-construct_models_gurobi.objective_gurobi">
+<span id="objective-gurobi-py"></span><h2>objective_gurobi.py<a class="headerlink" href="#module-construct_models_gurobi.objective_gurobi" title="Permalink to this heading"></a></h2>
+<p>Add the total cost objective</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="construct_models_gurobi.objective_gurobi.basic_objective">
+<span class="sig-prename descclassname"><span class="pre">construct_models_gurobi.objective_gurobi.</span></span><span class="sig-name descname"><span class="pre">basic_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/construct_models_gurobi/objective_gurobi.html#basic_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#construct_models_gurobi.objective_gurobi.basic_objective" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the total cost objective</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="main_model_functions_gurobi.html" class="btn btn-neutral float-left" title="main_model_functions_gurobi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="transmission_gurobi.html" class="btn btn-neutral float-right" title="transmission_gurobi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

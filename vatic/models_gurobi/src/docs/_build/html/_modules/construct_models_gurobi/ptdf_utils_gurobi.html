@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>construct_models_gurobi.ptdf_utils_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transmission_gurobi.html">transmission_gurobi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">construct_models_gurobi.ptdf_utils_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for construct_models_gurobi.ptdf_utils_gurobi</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions and classes that are useful when</span>
+<span class="sd">modifying the data dictionary</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">egret.model_library.transmission.tx_calc</span> <span class="k">as</span> <span class="nn">tx_calc</span>
+
+<span class="kn">from</span> <span class="nn">egret.model_library.defn</span> <span class="kn">import</span> <span class="n">ApproximationType</span>
+<span class="kn">from</span> <span class="nn">egret.common.log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">radians</span>
+
+
+<span class="k">class</span> <span class="nc">_PTDFManagerBase</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_branch_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_branch_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_branch_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_interface_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_interface_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_interface_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_PFV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="VirtualPTDFMatrix"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix">[docs]</a><span class="k">class</span> <span class="nc">VirtualPTDFMatrix</span><span class="p">(</span><span class="n">_PTDFManagerBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class which *looks like* a PTDF matrix, but doesn&#39;t</span>
+<span class="sd">    actually calculate/store a PTDF matrix. Keeps a factorization</span>
+<span class="sd">    of A^T B_d A instead (or A^T J in internal parlance) and</span>
+<span class="sd">    computes flows and needed PTDF rows on-the-fly.</span>
+
+<span class="sd">    Already calculated PTDF rows are cached for easy retreval on</span>
+<span class="sd">    subsequent calls</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">branches</span><span class="p">,</span>
+            <span class="n">buses</span><span class="p">,</span>
+            <span class="n">reference_bus</span><span class="p">,</span>
+            <span class="n">base_point</span><span class="p">,</span>
+            <span class="n">ptdf_options</span><span class="p">,</span>
+            <span class="n">branches_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">buses_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">contingencies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new VirtualPTDFMatrix object to provide</span>
+<span class="sd">        some useful methods for interfacing with Gurobipy models</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        branches (dict) :</span>
+<span class="sd">            dictionary of branches and their attributes</span>
+<span class="sd">        buses (dict) :</span>
+<span class="sd">            dictionary of buses and their attributes</span>
+<span class="sd">        reference_bus (str) :</span>
+<span class="sd">            name of reference bus</span>
+<span class="sd">        base_point (egret.model_library.defn.BasePointType) :</span>
+<span class="sd">            whether or not to linearize around a given AC solution</span>
+<span class="sd">        ptdf_options (dict) :</span>
+<span class="sd">            dictionary of ptdf_options (see</span>
+<span class="sd">            vatic.models_gurobi.src.construct_models_gurobi.lazy_ptdf_utils_part_gurobi.populate_default_ptdf_options)</span>
+<span class="sd">        branches_keys (list, tuple, etc) (optional) :</span>
+<span class="sd">            When indexing into numpy/scipy arrays, the branches will be</span>
+<span class="sd">            indexed by this list. E.g., the name at position i will be</span>
+<span class="sd">            the i th entry in branch matrices/arrays</span>
+<span class="sd">        buses_keys (list, tuple, etc) (optional) :</span>
+<span class="sd">            Similar to branches_keys, though the reference bus will be</span>
+<span class="sd">            eliminated. (Uses buses_keys_no_ref for direct indexing)</span>
+<span class="sd">        interfaces (dict) (optional) :</span>
+<span class="sd">            dictionary of interfaces and their attributes</span>
+<span class="sd">        contingencies (dict) (optional) :</span>
+<span class="sd">            dictionary of contingencies and their attributes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span> <span class="o">=</span> <span class="n">branches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span> <span class="o">=</span> <span class="n">buses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span> <span class="o">=</span> <span class="n">reference_bus</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span> <span class="o">=</span> <span class="n">base_point</span>
+        <span class="k">if</span> <span class="n">branches_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">branches</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">branches_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">buses_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">buses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">buses_keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">branch_n</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">branch_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bus_n</span><span class="p">:</span> <span class="n">j</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">bus_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># the PTDF factorization code eliminates the reference bus from the associated</span>
+        <span class="c1"># matrices, so we need to handle that fact smoothly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">bus</span> <span class="k">for</span> <span class="n">bus</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span> <span class="k">if</span> <span class="n">bus</span> <span class="o">!=</span> <span class="n">reference_bus</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">branches</span><span class="p">[</span><span class="n">branch</span><span class="p">][</span><span class="s2">&quot;rating_long_term&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span>
+            <span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">interfaces</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">interfaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interfaces</span> <span class="o">=</span> <span class="n">interfaces</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_interface_limits</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">contingencies</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">contingencies</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contingencies</span> <span class="o">=</span> <span class="n">contingencies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_contingency_limits</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span> <span class="o">=</span> <span class="n">base_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ptdf_factorization</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_lazy_limits</span><span class="p">(</span><span class="n">ptdf_options</span><span class="p">)</span>
+
+        <span class="c1"># we&#39;ll cache the PTDF rows</span>
+        <span class="c1"># we&#39;ve calculated thus far</span>
+        <span class="c1"># to prevent doing extra work</span>
+        <span class="c1"># (esp. important for UC)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ptdf_rows</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interface_rows</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1"># dense array write buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bus_sensi_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ptdf_factorization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calculating PTDF Matrix Factorization&quot;</span><span class="p">)</span>
+        <span class="p">(</span>
+            <span class="n">MLU</span><span class="p">,</span>
+            <span class="n">B_dA</span><span class="p">,</span>
+            <span class="n">ref_bus_mask</span><span class="p">,</span>
+            <span class="n">contingency_compensators</span><span class="p">,</span>
+            <span class="n">B_dA_I</span><span class="p">,</span>
+            <span class="n">I</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_ptdf_factorization</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span><span class="p">,</span>
+            <span class="n">contingencies</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contingencies</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+            <span class="n">mapping_branch_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">,</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">interfaces</span><span class="p">,</span>
+            <span class="n">index_set_interface</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span> <span class="o">=</span> <span class="n">MLU</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span> <span class="o">=</span> <span class="n">B_dA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_bus_mask</span> <span class="o">=</span> <span class="n">ref_bus_mask</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contingency_compensators</span> <span class="o">=</span> <span class="n">contingency_compensators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_I</span> <span class="o">=</span> <span class="n">B_dA_I</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phase_shift_flow_adjuster</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phi_adjust</span><span class="p">(</span><span class="n">ref_bus_mask</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_interface</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">I</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_interface_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i_n</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">_interface_limit_iter</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">inf</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">:</span>
+                <span class="n">interface</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfaces</span><span class="p">[</span><span class="n">i_n</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">limit</span> <span class="ow">in</span> <span class="n">interface</span> <span class="ow">and</span> <span class="n">interface</span><span class="p">[</span><span class="n">limit</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">interface</span><span class="p">[</span><span class="n">limit</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">inf</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="n">_interface_limit_iter</span><span class="p">(</span><span class="s2">&quot;maximum_limit&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="n">_interface_limit_iter</span><span class="p">(</span><span class="s2">&quot;minimum_limit&quot;</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_contingency_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingencies</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">_contingency_limit_iter</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">bn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">:</span>
+                    <span class="n">branch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s2">&quot;rating_emergency&quot;</span> <span class="ow">in</span> <span class="n">branch</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;rating_emergency&quot;</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+                <span class="n">_contingency_limit_iter</span><span class="p">(),</span> <span class="nb">float</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">)</span>  <span class="c1"># create an empty array for slicing on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phi_adjust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_bus_mask</span><span class="p">):</span>
+        <span class="n">phi_adjust_array</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_phi_adjust</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span> <span class="o">=</span> <span class="n">phi_adjust_array</span><span class="p">[</span><span class="n">ref_bus_mask</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phase_shift_flow_adjuster</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_phase_shift_flow_adjuster</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_filtered_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptdf_options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;branch_kv_threshold&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_masked</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array_masked</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">branches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span>
+        <span class="n">buses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span>
+        <span class="n">branch_mask</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">one</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;kv_threshold_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;one&quot;</span>
+        <span class="n">kv_limit</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;branch_kv_threshold&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">):</span>
+            <span class="n">branch</span> <span class="o">=</span> <span class="n">branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span>
+            <span class="n">fb</span> <span class="o">=</span> <span class="n">buses</span><span class="p">[</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;from_bus&quot;</span><span class="p">]]</span>
+
+            <span class="n">fbt</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># NOTE: this warning will be printed only once if we just check the from_bus</span>
+            <span class="k">if</span> <span class="s2">&quot;base_kv&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fb</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;WARNING: did not find &#39;base_kv&#39; for bus </span><span class="si">{}</span><span class="s2">, considering it large for the purposes of filtering&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;from_bus&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">fb</span><span class="p">[</span><span class="s2">&quot;base_kv&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">kv_limit</span><span class="p">:</span>
+                <span class="n">fbt</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">fbt</span> <span class="ow">and</span> <span class="n">one</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">buses</span><span class="p">[</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;to_bus&quot;</span><span class="p">]]</span>
+            <span class="n">tbt</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;base_kv&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tb</span><span class="p">)</span> <span class="ow">or</span> <span class="n">tb</span><span class="p">[</span><span class="s2">&quot;base_kv&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">kv_limit</span><span class="p">:</span>
+                <span class="n">tbt</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">fbt</span> <span class="ow">and</span> <span class="n">tbt</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">one</span> <span class="ow">and</span> <span class="n">tbt</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">branch_mask</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bn</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_masked</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array</span><span class="p">[</span>
+            <span class="n">branch_mask</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_set_lazy_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptdf_options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;lazy&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_filtered_lines</span><span class="p">(</span><span class="n">ptdf_options</span><span class="p">)</span>
+            <span class="c1"># add / reset the relative limits based on the current options</span>
+            <span class="n">branch_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span>
+            <span class="n">interface_max_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_max_limits</span>
+            <span class="n">interface_min_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_min_limits</span>
+            <span class="n">contingency_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingency_limits_array_masked</span>
+            <span class="n">rel_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;rel_flow_tol&quot;</span><span class="p">]</span>
+            <span class="n">abs_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;abs_flow_tol&quot;</span><span class="p">]</span>
+            <span class="n">lazy_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;lazy_rel_flow_tol&quot;</span><span class="p">]</span>
+
+            <span class="c1"># only enforce the relative and absolute, within tollerance</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_branch_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">branch_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">rel_flow_tol</span><span class="p">),</span>
+                <span class="n">branch_limits</span> <span class="o">+</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_contingency_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">contingency_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">rel_flow_tol</span><span class="p">),</span>
+                <span class="n">contingency_limits</span> <span class="o">+</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># make sure the lazy limits are a superset of the enforce limits</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_branch_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">branch_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">lazy_flow_tol</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_branch_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_contingency_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">contingency_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">lazy_flow_tol</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_contingency_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">abs_max_limits_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">interface_max_limits</span><span class="p">)</span>
+            <span class="n">abs_min_limits_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">interface_min_limits</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">rel_flow_tol</span> <span class="o">*</span> <span class="n">abs_max_limits_i</span><span class="p">,</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">rel_flow_tol</span> <span class="o">*</span> <span class="n">abs_min_limits_i</span><span class="p">,</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">lazy_flow_tol</span> <span class="o">*</span> <span class="n">abs_max_limits_i</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_max_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">lazy_flow_tol</span> <span class="o">*</span> <span class="n">abs_min_limits_i</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_min_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_ptdf_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">branch_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ptdf_rows</span><span class="p">:</span>
+            <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ptdf_rows</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># calculate row</span>
+            <span class="n">branch_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+            <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span><span class="p">[</span><span class="n">branch_idx</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bus_sensi_buffer</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">trans</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ptdf_rows</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">PTDF_row</span>
+        <span class="k">return</span> <span class="n">PTDF_row</span>
+
+    <span class="k">def</span> <span class="nf">_get_contingency_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span><span class="p">:</span>
+            <span class="n">cont_PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span><span class="p">[</span>
+                <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: should we be using post-compensation if the PTDF row is already calculated?</span>
+            <span class="n">branch_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+            <span class="n">cc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingency_compensators</span><span class="p">[</span><span class="n">contingency_name</span><span class="p">]</span>
+            <span class="n">hatF</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">U</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span><span class="p">[</span><span class="n">branch_idx</span><span class="p">]</span> <span class="o">@</span> <span class="n">cc</span><span class="o">.</span><span class="n">Pc</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">(</span>
+                    <span class="n">out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bus_sensi_buffer</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s2">&quot;T&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">delF</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">Wbar</span> <span class="o">*</span> <span class="p">((</span><span class="o">-</span><span class="n">cc</span><span class="o">.</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">cc</span><span class="o">.</span><span class="n">W</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">hatF</span><span class="p">))</span>
+            <span class="n">cont_PTDF_row</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">Pr</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">cc</span><span class="o">.</span><span class="n">L</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">hatF</span> <span class="o">+</span> <span class="n">delF</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">)</span>
+            <span class="c1"># print(f&quot;contingency row: {cont_PTDF_row}&quot;)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span><span class="p">[</span>
+                <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">cont_PTDF_row</span>
+        <span class="k">return</span> <span class="n">cont_PTDF_row</span>
+
+    <span class="k">def</span> <span class="nf">_get_interface_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">interface_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_rows</span><span class="p">:</span>
+            <span class="n">I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_rows</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">interface_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+            <span class="n">I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_I</span><span class="p">[</span><span class="n">interface_idx</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bus_sensi_buffer</span><span class="p">)[</span>
+                    <span class="mi">0</span>
+                <span class="p">],</span>
+                <span class="n">trans</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_interface_rows</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">I_row</span>
+        <span class="k">return</span> <span class="n">I_row</span>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_branch_ptdf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_branch_ptdf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns a (bus_name, coefficient) iterator for a given branch_name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ptdf_row</span><span class="p">(</span><span class="n">branch_name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_branch_ptdf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_branch_ptdf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the maximum of the absolute value for any coefficent</span>
+<span class="sd">        in branch_name&#39;s ptdf row</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ptdf_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ptdf_row</span><span class="p">(</span><span class="n">branch_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ptdf_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_branch_const"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_branch_const">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the constant coefficient for branch_name &#39;s</span>
+<span class="sd">        power flow equation (given bus net withdrawls)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ptdf_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ptdf_row</span><span class="p">(</span><span class="n">branch_name</span><span class="p">)</span>
+        <span class="n">branch_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="n">phi_adj</span> <span class="o">=</span> <span class="n">ptdf_row</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span>
+        <span class="c1"># phi adj   +     phase shift</span>
+        <span class="k">return</span> <span class="n">phi_adj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span><span class="p">[</span><span class="n">branch_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_contingency_branch_ptdf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_contingency_branch_ptdf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_contingency_branch_ptdf_iterator</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns a (bus_name, coefficient) iterator for a given branch_name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_contingency_row</span><span class="p">(</span><span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_contingency_branch_ptdf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_contingency_branch_ptdf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_contingency_branch_ptdf_abs_max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the maximum of the absolute value for any coefficent</span>
+<span class="sd">        in branch_name&#39;s ptdf row</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ptdf_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_contingency_row</span><span class="p">(</span><span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ptdf_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_contingency_branch_const"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_contingency_branch_const">[docs]</a>    <span class="k">def</span> <span class="nf">get_contingency_branch_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns the constant coefficient for branch_name &#39;s</span>
+<span class="sd">        power flow equation (given bus net withdrawls)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ptdf_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_contingency_row</span><span class="p">(</span><span class="n">contingency_name</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">)</span>
+        <span class="n">branch_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+
+        <span class="n">phi_compensator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingency_compensators</span><span class="p">[</span>
+            <span class="n">contingency_name</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">phi_compensator</span>
+
+        <span class="n">phi_adj</span> <span class="o">=</span> <span class="n">ptdf_row</span> <span class="o">@</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span> <span class="o">+</span> <span class="n">phi_compensator</span><span class="p">)</span>
+        <span class="c1"># phi adj   +     phase shift</span>
+        <span class="k">return</span> <span class="n">phi_adj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span><span class="p">[</span><span class="n">branch_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_interface_const"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_interface_const">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the constant coefficient for interface_names &#39;s</span>
+<span class="sd">        power flow equation (given bus net withdrawls)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_interface_row</span><span class="p">(</span><span class="n">interface_name</span><span class="p">)</span>
+        <span class="n">i_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+        <span class="n">phi_adj</span> <span class="o">=</span> <span class="n">I_row</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span>
+        <span class="c1"># phi adj   +     phase shift</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="n">phi_adj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_interface</span><span class="p">[</span><span class="n">i_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_interface_ptdf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_interface_ptdf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the maximum of the absolute value for any coefficent</span>
+<span class="sd">        in branch_name&#39;s PTDF row</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_interface_row</span><span class="p">(</span><span class="n">interface_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.get_interface_ptdf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.get_interface_ptdf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a (bus_name, coefficient) iterator for a given interface_name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_interface_row</span><span class="p">(</span><span class="n">interface_name</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_insert_reference_bus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bus_array</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+            <span class="n">bus_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span><span class="p">],</span> <span class="n">val</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_PFV_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">VA</span><span class="p">,</span> <span class="n">masked</span><span class="p">):</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingency_compensators</span><span class="p">[</span><span class="n">cn</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">masked</span><span class="p">:</span>
+            <span class="c1"># fix VA</span>
+            <span class="n">VA</span> <span class="o">=</span> <span class="o">-</span><span class="n">VA</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_bus_mask</span><span class="p">]</span>
+
+        <span class="c1"># if a phase shifter is taken out, we have</span>
+        <span class="c1"># to do a bit more work</span>
+        <span class="n">VA_comp</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">VA_compensator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">VA_comp</span><span class="p">:</span>
+            <span class="n">VA0</span> <span class="o">=</span> <span class="n">VA</span> <span class="o">+</span> <span class="n">comp</span><span class="o">.</span><span class="n">VA_compensator</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">VA0</span> <span class="o">=</span> <span class="n">VA</span>
+
+        <span class="n">VA_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">((</span><span class="n">comp</span><span class="o">.</span><span class="n">M</span> <span class="o">*</span> <span class="p">((</span><span class="o">-</span><span class="n">comp</span><span class="o">.</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">M</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">VA0</span><span class="p">))))</span>
+        <span class="k">if</span> <span class="n">VA_comp</span><span class="p">:</span>
+            <span class="n">VA_delta</span> <span class="o">+=</span> <span class="n">comp</span><span class="o">.</span><span class="n">VA_compensator</span>
+
+        <span class="k">if</span> <span class="n">masked</span><span class="p">:</span>
+            <span class="n">PF_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_masked</span> <span class="o">@</span> <span class="n">VA_delta</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">PF_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span> <span class="o">@</span> <span class="n">VA_delta</span>
+        <span class="c1"># print(f&#39;PF_delta: {PF_delta}&#39;)</span>
+
+        <span class="c1"># zero-out the flow on this line, if we&#39;re monitoring it</span>
+        <span class="k">if</span> <span class="n">masked</span> <span class="ow">and</span> <span class="n">comp</span><span class="o">.</span><span class="n">branch_out</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span><span class="p">:</span>
+            <span class="n">branch_out_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span><span class="p">[</span>
+                <span class="n">comp</span><span class="o">.</span><span class="n">branch_out</span>
+            <span class="p">]</span>
+            <span class="n">PF_delta</span><span class="p">[</span><span class="n">branch_out_idx</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">PFV</span><span class="p">[</span><span class="n">branch_out_idx</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">masked</span><span class="p">:</span>
+            <span class="n">branch_out_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">comp</span><span class="o">.</span><span class="n">branch_out</span><span class="p">]</span>
+            <span class="n">PF_delta</span><span class="p">[</span><span class="n">branch_out_idx</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">PFV</span><span class="p">[</span><span class="n">branch_out_idx</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">PF_delta</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_PFV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">,</span> <span class="n">masked</span><span class="p">):</span>
+        <span class="n">NWV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">mb</span><span class="o">.</span><span class="n">_p_nw_tm</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">NWV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="n">VA</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">NWV</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># shape VA explicitly as a column vector</span>
+        <span class="c1"># (needed for some 0-dim arrays)</span>
+        <span class="n">VA</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">VA</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">masked</span><span class="p">:</span>
+            <span class="n">PFV</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_masked</span> <span class="o">@</span> <span class="n">VA</span>
+            <span class="n">PFV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_masked</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">PFV</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA</span> <span class="o">@</span> <span class="n">VA</span>
+            <span class="n">PFV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array</span>
+
+        <span class="n">PFV_I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_dA_I</span> <span class="o">@</span> <span class="n">VA</span>
+        <span class="n">PFV_I</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_flow_adjuster_array_interface</span>
+
+        <span class="c1"># make back to row-looking vectors</span>
+        <span class="n">PFV</span> <span class="o">=</span> <span class="n">PFV</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">PFV_I</span> <span class="o">=</span> <span class="n">PFV_I</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># VA is reversed in sign</span>
+        <span class="k">if</span> <span class="n">masked</span><span class="p">:</span>
+            <span class="n">VA</span> <span class="o">=</span> <span class="n">VA</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">VA</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_insert_reference_bus</span><span class="p">(</span><span class="n">VA</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">PFV</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">PFV_I</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">VA</span>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_masked_PFV"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_masked_PFV">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_masked_PFV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate a vector of partial real power</span>
+<span class="sd">        flows indexed by branches_masked_keys, a vector</span>
+<span class="sd">        of interface flows indexed by interface_keys,</span>
+<span class="sd">        and a vector of bus voltage angles indexed</span>
+<span class="sd">        by buses_keys, for given ConcreteModel or</span>
+<span class="sd">        Block with populated p_nw variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mb : Pyomo ConcreteModel or Block with p_nw attribute</span>
+<span class="sd">             indexed by buses</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple: PFV, PFV_I, VA. np.arrays for partial</span>
+<span class="sd">               real power flow, interface flow, voltage</span>
+<span class="sd">               angles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_PFV</span><span class="p">(</span><span class="n">mb</span><span class="p">,</span> <span class="n">masked</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_PFV"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_PFV">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_PFV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate a vector of real power branch</span>
+<span class="sd">        flows indexed by branches_keys, a vector</span>
+<span class="sd">        of interface flows indexed by interface_keys,</span>
+<span class="sd">        and a vector of bus voltage angles indexed</span>
+<span class="sd">        by buses_keys, for given ConcreteModel or</span>
+<span class="sd">        Block with populated p_nw variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mb : Gurobipy Model with p_nw attribute indexed by buses</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple: (PFV, PFV_I, VA). np.arrays for</span>
+<span class="sd">               real power flow, interface flow, voltage</span>
+<span class="sd">               angles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_PFV</span><span class="p">(</span><span class="n">mb</span><span class="p">,</span> <span class="n">masked</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_LMP"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_LMP">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_LMP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">LMPC_Constrs</span><span class="p">,</span> <span class="n">LMPI_Constrs</span><span class="p">,</span> <span class="n">LMPE_Constrs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate a vector of locational marginal prices</span>
+<span class="sd">        indexed by buses_keys.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---</span>
+<span class="sd">        LMPC_Constrs, LMPI_Constrs, LMPE_Constrs: Model Constraints Related to</span>
+<span class="sd">        different parts of lmp prices</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        LMP : np.array of LMPs indexed by buses_keys</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># NOTE: unmonitored lines cannot contribute to LMPC</span>
+        <span class="n">PFD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">LMPC_Constrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">LMPC_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">b_n</span> <span class="ow">in</span> <span class="n">LMPC_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">PFD</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                                <span class="n">LMPC_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">b_n</span><span class="p">]</span><span class="o">.</span><span class="n">Pi</span> <span class="o">+</span> <span class="n">LMPC_Constrs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span>
+                            <span class="n">b_n</span><span class="p">]</span><span class="o">.</span><span class="n">Pi</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># interface constributes to LMP</span>
+        <span class="n">PFID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">LMPI_Constrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">LMPI_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="n">LMPI_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">PFID</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                                <span class="n">LMPI_Constrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i_n</span><span class="p">]</span><span class="o">.</span><span class="n">Pi</span> <span class="o">+</span> <span class="n">LMPI_Constrs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span>
+                            <span class="n">i_n</span><span class="p">]</span><span class="o">.</span><span class="n">Pi</span>
+                        <span class="p">)</span>
+
+        <span class="n">B_PFD</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">B_dA_masked</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">PFD</span>
+        <span class="n">I_PFD</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">B_dA_I</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">PFID</span>
+
+        <span class="n">LMPC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">B_PFD</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+        <span class="n">LMPI</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLU</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">I_PFD</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Find shadow price corresponds to constraints</span>
+        <span class="n">LMPE</span> <span class="o">=</span> <span class="n">LMPE_Constrs</span><span class="o">.</span><span class="n">Pi</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contingencies</span><span class="p">:</span>
+            <span class="n">LMPCC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">LMPC</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span>
+                        <span class="n">cn</span><span class="p">,</span>
+                        <span class="n">bn</span><span class="p">,</span>
+                <span class="p">),</span> <span class="n">constr</span> <span class="ow">in</span> <span class="n">mb</span><span class="o">.</span><span class="n">ineq_pf_contingency_branch_thermal_bounds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">dual_value</span> <span class="o">=</span> <span class="n">constr</span><span class="o">.</span><span class="n">Pi</span>
+                <span class="k">if</span> <span class="n">dual_value</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+                    <span class="n">LMPCC</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="n">dual_value</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span><span class="p">[</span><span class="n">cn</span><span class="p">,</span> <span class="n">bn</span><span class="p">]</span>
+
+            <span class="n">LMP</span> <span class="o">=</span> <span class="n">LMPE</span> <span class="o">+</span> <span class="n">LMPC</span> <span class="o">+</span> <span class="n">LMPI</span> <span class="o">+</span> <span class="n">LMPCC</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">LMP</span> <span class="o">=</span> <span class="n">LMPE</span> <span class="o">+</span> <span class="n">LMPC</span> <span class="o">+</span> <span class="n">LMPI</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_insert_reference_bus</span><span class="p">(</span><span class="n">LMP</span><span class="p">,</span> <span class="n">LMPE</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_monitored_contingency_flows"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_monitored_contingency_flows">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_monitored_contingency_flows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">):</span>
+        <span class="n">NWV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">mb</span><span class="o">.</span><span class="n">p_nw</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">X</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys_no_ref</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">NWV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">NWV</span> <span class="o">=</span> <span class="n">NWV</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">flows_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mb</span><span class="o">.</span><span class="n">ineq_pf_contingency_branch_thermal_bounds</span><span class="p">:</span>
+            <span class="n">flows_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contingency_rows</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">@</span> <span class="n">NWV</span>
+
+        <span class="k">return</span> <span class="n">flows_dict</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_masked_PFV_delta"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_masked_PFV_delta">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_masked_PFV_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">VA</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate a vector of partial real power</span>
+<span class="sd">        flows indexed by branches_masked_keys, for given</span>
+<span class="sd">        contingency cn, for given base-case real</span>
+<span class="sd">        power flow and voltage angles given by</span>
+<span class="sd">        calculate_masked_PFV</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cn  : contingency name to calculate PFV_delta for</span>
+<span class="sd">        PFV : vector of flows returned from calculate_masked_PFV</span>
+<span class="sd">        VA  : vector of voltage angles returned from calculate_masked_PFV</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PFV_delta: np.arrays for partial contingency flow differences,</span>
+<span class="sd">                 such that PFV + PFV_delta is the contingeny flow</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_PFV_delta</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">VA</span><span class="p">,</span> <span class="n">masked</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualPTDFMatrix.calculate_PFV_delta"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.VirtualPTDFMatrix.calculate_PFV_delta">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_PFV_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">VA</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate a vector of real power</span>
+<span class="sd">        flows indexed by branches_keys, for given</span>
+<span class="sd">        contingency cn, for given base-case real</span>
+<span class="sd">        power flow and voltage angles given by</span>
+<span class="sd">        calculate_PFV</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cn  : contingency name to calculate PFV_delta for</span>
+<span class="sd">        PFV : vector of flows returned from calculate_PFV</span>
+<span class="sd">        VA  : vector of voltage angles returned from calculate_PFV</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        PFV_delta: np.arrays for partial contingency flow differences,</span>
+<span class="sd">                 such that PFV + PFV_delta is the contingeny flow</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_PFV_delta</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">VA</span><span class="p">,</span> <span class="n">masked</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PTDFMatrix"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix">[docs]</a><span class="k">class</span> <span class="nc">PTDFMatrix</span><span class="p">(</span><span class="n">_PTDFManagerBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is a helper</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">branches</span><span class="p">,</span>
+            <span class="n">buses</span><span class="p">,</span>
+            <span class="n">reference_bus</span><span class="p">,</span>
+            <span class="n">base_point</span><span class="p">,</span>
+            <span class="n">ptdf_options</span><span class="p">,</span>
+            <span class="n">branches_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">buses_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">interfaces</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new PTDFMatrix object to provide</span>
+<span class="sd">        some useful methods for interfacing with Gurobipy models</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span> <span class="o">=</span> <span class="n">branches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span> <span class="o">=</span> <span class="n">buses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span> <span class="o">=</span> <span class="n">reference_bus</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span> <span class="o">=</span> <span class="n">base_point</span>
+        <span class="k">if</span> <span class="n">branches_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">branches</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">branches_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">buses_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">buses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">buses_keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">branch_n</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">branch_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bus_n</span><span class="p">:</span> <span class="n">j</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">bus_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">branches</span><span class="p">[</span><span class="n">branch</span><span class="p">][</span><span class="s2">&quot;rating_long_term&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span>
+            <span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span> <span class="o">=</span> <span class="n">base_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">interfaces</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">interfaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ptdf_interface</span><span class="p">(</span><span class="n">interfaces</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_lazy_limits</span><span class="p">(</span><span class="n">ptdf_options</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calculating PTDF Matrix&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ptdf</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phi_adjust</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phase_shift</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ptdf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        do the PTDF calculation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># calculate and store the PTDF matrix</span>
+
+        <span class="n">PTDFM</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_ptdf</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span> <span class="o">=</span> <span class="n">PTDFM</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ptdf_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interfaces</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I_const</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_interface_sensitivities</span><span class="p">(</span>
+            <span class="n">interfaces</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I_const</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i_n</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">_interface_limit_iter</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">inf</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">:</span>
+                <span class="n">interface</span> <span class="o">=</span> <span class="n">interfaces</span><span class="p">[</span><span class="n">i_n</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">limit</span> <span class="ow">in</span> <span class="n">interface</span> <span class="ow">and</span> <span class="n">interface</span><span class="p">[</span><span class="n">limit</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">interface</span><span class="p">[</span><span class="n">limit</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">inf</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="n">_interface_limit_iter</span><span class="p">(</span><span class="s2">&quot;maximum_limit&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="n">_interface_limit_iter</span><span class="p">(</span><span class="s2">&quot;minimum_limit&quot;</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interface_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phi_from_phi_to</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_phi_constant</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phi_adjust</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">phi_from</span><span class="p">,</span> <span class="n">phi_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phi_from_phi_to</span><span class="p">()</span>
+
+        <span class="c1"># hold onto these for line outages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phi_from</span> <span class="o">=</span> <span class="n">phi_from</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phi_to</span> <span class="o">=</span> <span class="n">phi_to</span>
+
+        <span class="n">phi_adjust_array</span> <span class="o">=</span> <span class="n">phi_from</span> <span class="o">-</span> <span class="n">phi_to</span>
+
+        <span class="c1"># sum across the rows to get the total impact, and convert</span>
+        <span class="c1"># to dense for fast operations later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span> <span class="o">=</span> <span class="n">phi_adjust_array</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phase_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">phase_shift_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="o">-</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;reactance&quot;</span><span class="p">])</span>
+                <span class="o">*</span> <span class="p">(</span>
+                        <span class="n">radians</span><span class="p">(</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_phase_shift&quot;</span><span class="p">])</span>
+                        <span class="o">/</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_tap_ratio&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;branch_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;transformer&quot;</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+                <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span> <span class="k">for</span> <span class="n">bn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span> <span class="o">=</span> <span class="n">phase_shift_array</span>
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_get_filtered_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptdf_options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;branch_kv_threshold&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Nothing to do</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span>
+            <span class="k">return</span>
+
+        <span class="n">branches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span>
+        <span class="n">buses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span>
+        <span class="n">branch_mask</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">one</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;kv_threshold_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;one&quot;</span>
+        <span class="n">kv_limit</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;branch_kv_threshold&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">):</span>
+            <span class="n">branch</span> <span class="o">=</span> <span class="n">branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span>
+            <span class="n">fb</span> <span class="o">=</span> <span class="n">buses</span><span class="p">[</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;from_bus&quot;</span><span class="p">]]</span>
+
+            <span class="n">fbt</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># NOTE: this warning will be printed only once if we just check the from_bus</span>
+            <span class="k">if</span> <span class="s2">&quot;base_kv&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fb</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;WARNING: did not find &#39;base_kv&#39; for bus </span><span class="si">{}</span><span class="s2">, considering it large for the purposes of filtering&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;from_bus&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">fb</span><span class="p">[</span><span class="s2">&quot;base_kv&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">kv_limit</span><span class="p">:</span>
+                <span class="n">fbt</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">fbt</span> <span class="ow">and</span> <span class="n">one</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">buses</span><span class="p">[</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;to_bus&quot;</span><span class="p">]]</span>
+            <span class="n">tbt</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;base_kv&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tb</span><span class="p">)</span> <span class="ow">or</span> <span class="n">tb</span><span class="p">[</span><span class="s2">&quot;base_kv&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">kv_limit</span><span class="p">:</span>
+                <span class="n">tbt</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">fbt</span> <span class="ow">and</span> <span class="n">tbt</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">one</span> <span class="ow">and</span> <span class="n">tbt</span><span class="p">:</span>
+                <span class="n">branch_mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">branch_mask</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_mask</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branchname_to_index_masked_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">bn</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys_masked</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array</span><span class="p">[</span><span class="n">branch_mask</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_set_lazy_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptdf_options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;lazy&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_filtered_lines</span><span class="p">(</span><span class="n">ptdf_options</span><span class="p">)</span>
+            <span class="c1"># add / reset the relative limits based on the current options</span>
+            <span class="n">branch_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">branch_limits_array_masked</span>
+            <span class="n">interface_max_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_max_limits</span>
+            <span class="n">interface_min_limits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_min_limits</span>
+            <span class="n">rel_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;rel_flow_tol&quot;</span><span class="p">]</span>
+            <span class="n">abs_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;abs_flow_tol&quot;</span><span class="p">]</span>
+            <span class="n">lazy_flow_tol</span> <span class="o">=</span> <span class="n">ptdf_options</span><span class="p">[</span><span class="s2">&quot;lazy_rel_flow_tol&quot;</span><span class="p">]</span>
+
+            <span class="c1"># only enforce the relative and absolute, within tollerance</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_branch_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">branch_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">rel_flow_tol</span><span class="p">),</span>
+                <span class="n">branch_limits</span> <span class="o">+</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># make sure the lazy limits are a superset of the enforce limits</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_branch_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">branch_limits</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">lazy_flow_tol</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_branch_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">abs_max_limits_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">interface_max_limits</span><span class="p">)</span>
+            <span class="n">abs_min_limits_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">interface_min_limits</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">rel_flow_tol</span> <span class="o">*</span> <span class="n">abs_max_limits_i</span><span class="p">,</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">rel_flow_tol</span> <span class="o">*</span> <span class="n">abs_min_limits_i</span><span class="p">,</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">abs_flow_tol</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_interface_max_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">interface_max_limits</span> <span class="o">+</span> <span class="n">lazy_flow_tol</span> <span class="o">*</span> <span class="n">abs_max_limits_i</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_max_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">lazy_interface_min_limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                <span class="n">interface_min_limits</span> <span class="o">-</span> <span class="n">lazy_flow_tol</span> <span class="o">*</span> <span class="n">abs_min_limits_i</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enforced_interface_min_limits</span><span class="p">,</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="PTDFMatrix.get_branch_ptdf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_branch_ptdf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span> <span class="n">PTDF_row</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_branch_ptdf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_branch_ptdf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">PTDF_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_branch_phase_shift"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_branch_phase_shift">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_phase_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_branch_phi_adj"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_branch_phi_adj">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_phi_adj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">PTDF_row</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_branch_const"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_branch_const">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="c1"># phi adj                        +     phase shift</span>
+        <span class="k">return</span> <span class="p">(</span>
+                <span class="n">PTDF_row</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span><span class="p">)</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_interface_const"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_interface_const">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I_const</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_interface_ptdf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_interface_ptdf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_ptdf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">PTDF_I_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.get_interface_ptdf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.get_interface_ptdf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_interface_ptdf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfacename_to_index_map</span><span class="p">[</span><span class="n">interface_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">PTDF_I_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span> <span class="n">PTDF_I_row</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.bus_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.bus_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">bus_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span></div>
+
+<div class="viewcode-block" id="PTDFMatrix.calculate_PFV"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFMatrix.calculate_PFV">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_PFV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mb</span><span class="p">):</span>
+        <span class="n">NWV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">mb</span><span class="o">.</span><span class="n">p_nw</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">X</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">NWV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_adjust_array</span>
+
+        <span class="n">PFV</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_masked</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">NWV</span><span class="p">)</span>
+        <span class="n">PFV</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array_masked</span>
+
+        <span class="n">PFV_I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">NWV</span><span class="p">)</span>
+        <span class="n">PFV_I</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM_I_const</span>
+
+        <span class="k">return</span> <span class="n">PFV</span><span class="p">,</span> <span class="n">PFV_I</span></div></div>
+
+
+<div class="viewcode-block" id="PTDFLossesMatrix"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix">[docs]</a><span class="k">class</span> <span class="nc">PTDFLossesMatrix</span><span class="p">(</span><span class="n">PTDFMatrix</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calculating PTDF Matrix&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ptdf</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phi_adjust</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phi_loss_constant</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_phase_shift</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_losses_phase_shift</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ptdf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ptdf_r</span><span class="p">,</span> <span class="n">ldf</span><span class="p">,</span> <span class="n">ldf_c</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_ptdf_ldf</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buses</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reference_bus</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_point</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span> <span class="o">=</span> <span class="n">ptdf_r</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LDF</span> <span class="o">=</span> <span class="n">ldf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LDF_C</span> <span class="o">=</span> <span class="n">ldf_c</span>
+
+        <span class="c1"># protect the arrays using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PTDFM</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LDF</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LDF_C</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phi_from_phi_to</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_phi_constant</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF_LOSSES</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phi_loss_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">phi_loss_from</span><span class="p">,</span> <span class="n">phi_loss_to</span> <span class="o">=</span> <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_phi_loss_constant</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span>
+            <span class="n">ApproximationType</span><span class="o">.</span><span class="n">PTDF_LOSSES</span><span class="p">,</span>
+            <span class="n">mapping_bus_to_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># hold onto these for line outages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phi_loss_from</span> <span class="o">=</span> <span class="n">phi_loss_from</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phi_loss_to</span> <span class="o">=</span> <span class="n">phi_loss_to</span>
+
+        <span class="c1"># sum the across the columns, which are indexed by branch</span>
+        <span class="n">phi_losses_adjust_array</span> <span class="o">=</span> <span class="n">phi_loss_from</span> <span class="o">-</span> <span class="n">phi_loss_to</span>
+
+        <span class="c1"># sum across the rows to get the total impact, and convert</span>
+        <span class="c1"># to dense for fast operations later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_losses_adjust_array</span> <span class="o">=</span> <span class="n">phi_losses_adjust_array</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">A</span><span class="p">[</span>
+            <span class="mi">0</span>
+        <span class="p">]</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_losses_adjust_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_phase_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">phase_shift_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_susceptance</span><span class="p">(</span><span class="n">branch</span><span class="p">)</span>
+                <span class="o">*</span> <span class="p">(</span>
+                        <span class="n">radians</span><span class="p">(</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_phase_shift&quot;</span><span class="p">])</span>
+                        <span class="o">/</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_tap_ratio&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;branch_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;transformer&quot;</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+                <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span> <span class="k">for</span> <span class="n">bn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span> <span class="o">=</span> <span class="n">phase_shift_array</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_shift_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_losses_phase_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">losses_phase_shift_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">(</span>
+                        <span class="n">tx_calc</span><span class="o">.</span><span class="n">calculate_conductance</span><span class="p">(</span><span class="n">branch</span><span class="p">)</span>
+                        <span class="o">/</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_tap_ratio&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="o">*</span> <span class="n">radians</span><span class="p">(</span><span class="n">branch</span><span class="p">[</span><span class="s2">&quot;transformer_phase_shift&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="k">if</span> <span class="n">branch</span><span class="p">[</span><span class="s2">&quot;branch_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;transformer&quot;</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+                <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_branches</span><span class="p">[</span><span class="n">bn</span><span class="p">]</span> <span class="k">for</span> <span class="n">bn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">branches_keys</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">losses_phase_shift_array</span> <span class="o">=</span> <span class="n">losses_phase_shift_array</span>
+
+        <span class="c1"># protect the array using numpy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">losses_phase_shift_array</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_branch_ldf_iterator"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_branch_ldf_iterator">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ldf_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">losses_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LDF</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">yield from</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buses_keys</span><span class="p">,</span> <span class="n">losses_row</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_branch_ldf_abs_max"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_branch_ldf_abs_max">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ldf_abs_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">losses_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LDF</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">losses_row</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_branch_ldf_c"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_branch_ldf_c">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_ldf_c</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">LDF_C</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]]</span></div>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_branch_losses_phase_shift"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_branch_losses_phase_shift">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_losses_phase_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses_phase_shift_array</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_bus_phi_losses_adj"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_bus_phi_losses_adj">[docs]</a>    <span class="k">def</span> <span class="nf">get_bus_phi_losses_adj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bus_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_losses_adjust_array</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_busname_to_index_map</span><span class="p">[</span><span class="n">bus_name</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="PTDFLossesMatrix.get_branch_phi_losses_adj"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.ptdf_utils_gurobi.PTDFLossesMatrix.get_branch_phi_losses_adj">[docs]</a>    <span class="k">def</span> <span class="nf">get_branch_phi_losses_adj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+        <span class="n">row_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_branchname_to_index_map</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span>
+        <span class="c1"># get the row slice</span>
+        <span class="n">losses_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LDF</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">losses_row</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi_losses_adjust_array</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+name: CI-test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  ref:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+          submodules: 'recursive'
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+
+      - name: ref-run
+        shell: bash -l {0}
+
+        run: |
+          cd $GITHUB_WORKSPACE
+          git submodule update --init
+
+          conda create --name vatic-env --file vatic/tests/spec-file_linux.txt
+          conda activate vatic-env
+          pip install .
+
+          sh vatic/tests/check_rts.sh
+          echo tests finished successfully!
+
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+          submodules: 'recursive'
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+
+      - name: test-run
+        shell: bash -l {0}
+
+        run: |
+          cd $GITHUB_WORKSPACE
+          git submodule update --init
+
+          conda create --name vatic-env -c conda-forge \
+                        python=${{ matrix.python-version }} \
+                        numpy pandas scipy dill matplotlib pyomo coincbc
+
+          conda activate vatic-env
+          pip install .
+
+          vatic-det RTS-GMLC 2020-07-20 2 \
+                      --solver cbc --threads 2 --ruc-mipgap=0.01 \
+                      --reserve-factor=0.10 --sced-horizon=2 --output-detail 2 
+
+          echo tests finished successfully!

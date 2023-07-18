@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>main_model_functions_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="construct_models_gurobi" href="construct_models_gurobi.html" />
+    <link rel="prev" title="Welcome to Vatic-Gurobipy’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">main_model_functions_gurobi</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#main-functions-to-generate-and-solve-models">Main Functions to Generate and Solve Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-main_model_functions_gurobi.generate_model_gurobi">generate_model_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main_model_functions_gurobi.generate_model_gurobi.generate_model"><code class="docutils literal notranslate"><span class="pre">generate_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-main_model_functions_gurobi.solve_model_gurobi">solve_model_gurobi.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main_model_functions_gurobi.solve_model_gurobi.solve_model"><code class="docutils literal notranslate"><span class="pre">solve_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transmission_gurobi.html">transmission_gurobi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">main_model_functions_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/main_model_functions_gurobi.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="main-model-functions-gurobi">
+<h1>main_model_functions_gurobi<a class="headerlink" href="#main-model-functions-gurobi" title="Permalink to this heading"></a></h1>
+<section id="main-functions-to-generate-and-solve-models">
+<h2>Main Functions to Generate and Solve Models<a class="headerlink" href="#main-functions-to-generate-and-solve-models" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-main_model_functions_gurobi.generate_model_gurobi">
+<span id="generate-model-gurobi-py"></span><h2>generate_model_gurobi.py<a class="headerlink" href="#module-main_model_functions_gurobi.generate_model_gurobi" title="Permalink to this heading"></a></h2>
+<p>Construct unit commitment or economic dispatch models</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="main_model_functions_gurobi.generate_model_gurobi.generate_model">
+<span class="sig-prename descclassname"><span class="pre">main_model_functions_gurobi.generate_model_gurobi.</span></span><span class="sig-name descname"><span class="pre">generate_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VaticModelData</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relax_binaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ptdf_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ptdf_matrix_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Model</span></span></span><a class="reference internal" href="_modules/main_model_functions_gurobi/generate_model_gurobi.html#generate_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main_model_functions_gurobi.generate_model_gurobi.generate_model" title="Permalink to this definition"></a></dt>
+<dd><p>Generate the gurobi model of unit commitment or economic dispatch</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>model_name: str</dt><dd><p>UnitCommitment or EconomicDispatch</p>
+</dd>
+<dt>model_data: VaticModelData</dt><dd><p>Data storing all the grid informaiton</p>
+</dd>
+<dt>relax_binaries: bool</dt><dd><p>True to relax all binary variables in the model</p>
+</dd>
+<dt>ptdf_options: dict</dt><dd><p>Dictonary of options for ptdf transmission model</p>
+</dd>
+<dt>ptdf_matrix_dict: dict</dt><dd><p>Dictionary of ptdf_utils.PTDFMatrix objects for use in
+model construction</p>
+</dd>
+<dt>objective_hours: int</dt><dd><p>Number of hours looking forward when planning</p>
+</dd>
+<dt>save_model_file_path: str</dt><dd><p>The file path where the output model lp file would be saved</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h3>
+<p>gurobipy.Model</p>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-main_model_functions_gurobi.solve_model_gurobi">
+<span id="solve-model-gurobi-py"></span><h2>solve_model_gurobi.py<a class="headerlink" href="#module-main_model_functions_gurobi.solve_model_gurobi" title="Permalink to this heading"></a></h2>
+<p>Solve unit commitment or economic dispatch models</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="main_model_functions_gurobi.solve_model_gurobi.solve_model">
+<span class="sig-prename descclassname"><span class="pre">main_model_functions_gurobi.solve_model_gurobi.</span></span><span class="sig-name descname"><span class="pre">solve_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relaxed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mipgap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputflag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">VaticModelData</span></span></span><a class="reference internal" href="_modules/main_model_functions_gurobi/solve_model_gurobi.html#solve_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main_model_functions_gurobi.solve_model_gurobi.solve_model" title="Permalink to this definition"></a></dt>
+<dd><p>Solve the gurobi model of unit commitment or economic dispatch
+and save results in VaticModelData</p>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>model: gurobipy.Model</dt><dd><p>Gurobi model of unitCommitment or economic dispatch</p>
+</dd>
+<dt>relaxed: bool</dt><dd><p>True to relax all binary variables in the model</p>
+</dd>
+<dt>mipgap: float</dt><dd><p>The relative gap used to terminate the solver</p>
+</dd>
+<dt>threads: int</dt><dd><p>The number of threads used for parallelization</p>
+</dd>
+<dt>outputflag: int</dt><dd><p>1 to print the solver output in the console</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<p>VaticModelData</p>
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Vatic-Gurobipy’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="construct_models_gurobi.html" class="btn btn-neutral float-right" title="construct_models_gurobi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

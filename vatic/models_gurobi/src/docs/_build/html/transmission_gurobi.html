@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>transmission_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="construct_models_gurobi" href="construct_models_gurobi.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">transmission_gurobi</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#functions-to-add-variables-and-constraints-at-system-level">Functions to Add Variables and Constraints at System Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-transmission_gurobi.branch">branch.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_eq_branch_power_ptdf_approx"><code class="docutils literal notranslate"><span class="pre">declare_eq_branch_power_ptdf_approx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_eq_interface_power_ptdf_approx"><code class="docutils literal notranslate"><span class="pre">declare_eq_interface_power_ptdf_approx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_expr_pf"><code class="docutils literal notranslate"><span class="pre">declare_expr_pf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_ineq_p_branch_thermal_bounds"><code class="docutils literal notranslate"><span class="pre">declare_ineq_p_branch_thermal_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_ineq_p_contingency_branch_thermal_bounds"><code class="docutils literal notranslate"><span class="pre">declare_ineq_p_contingency_branch_thermal_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_ineq_p_interface_bounds"><code class="docutils literal notranslate"><span class="pre">declare_ineq_p_interface_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.declare_ineq_s_branch_thermal_limit"><code class="docutils literal notranslate"><span class="pre">declare_ineq_s_branch_thermal_limit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.generate_thermal_bounds"><code class="docutils literal notranslate"><span class="pre">generate_thermal_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.get_power_flow_expr_ptdf_approx"><code class="docutils literal notranslate"><span class="pre">get_power_flow_expr_ptdf_approx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.branch.get_power_flow_interface_expr_ptdf"><code class="docutils literal notranslate"><span class="pre">get_power_flow_interface_expr_ptdf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-transmission_gurobi.bus">bus.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.bus.declare_eq_p_balance_ed"><code class="docutils literal notranslate"><span class="pre">declare_eq_p_balance_ed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transmission_gurobi.bus.declare_eq_p_net_withdraw_at_bus"><code class="docutils literal notranslate"><span class="pre">declare_eq_p_net_withdraw_at_bus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">transmission_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/transmission_gurobi.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="transmission-gurobi">
+<h1>transmission_gurobi<a class="headerlink" href="#transmission-gurobi" title="Permalink to this heading"></a></h1>
+<section id="functions-to-add-variables-and-constraints-at-system-level">
+<h2>Functions to Add Variables and Constraints at System Level<a class="headerlink" href="#functions-to-add-variables-and-constraints-at-system-level" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-transmission_gurobi.branch">
+<span id="branch-py"></span><h2>branch.py<a class="headerlink" href="#module-transmission_gurobi.branch" title="Permalink to this heading"></a></h2>
+<p>Declarations for the modelling components
+typically used for transmission lines</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_eq_branch_power_ptdf_approx">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_eq_branch_power_ptdf_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PTDF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_eq_branch_power_ptdf_approx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_eq_branch_power_ptdf_approx" title="Permalink to this definition"></a></dt>
+<dd><p>Create the equality constraints or expressions for power (from PTDF
+approximation) at the branch level</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_eq_interface_power_ptdf_approx">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_eq_interface_power_ptdf_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PTDF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_eq_interface_power_ptdf_approx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_eq_interface_power_ptdf_approx" title="Permalink to this definition"></a></dt>
+<dd><p>Create equality constraints or expressions for power (from PTDF
+approximation) at the interface level</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_expr_pf">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_expr_pf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_expr_pf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_expr_pf" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_ineq_p_branch_thermal_bounds">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_ineq_p_branch_thermal_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_thermal_limits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ApproximationType.BTHETA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slack_cost_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_ineq_p_branch_thermal_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_ineq_p_branch_thermal_bounds" title="Permalink to this definition"></a></dt>
+<dd><p>Create an inequality constraint for the branch thermal limits
+based on the power variables or expressions at the branch level</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_ineq_p_contingency_branch_thermal_bounds">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_ineq_p_contingency_branch_thermal_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pc_thermal_limits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ApproximationType.PTDF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slack_cost_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_ineq_p_contingency_branch_thermal_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_ineq_p_contingency_branch_thermal_bounds" title="Permalink to this definition"></a></dt>
+<dd><p>Create an inequality constraint for the branch thermal limits
+based on the power variables or expressions att he contigency level</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_ineq_p_interface_bounds">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_ineq_p_interface_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interfaces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ApproximationType.BTHETA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slack_cost_expr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_ineq_p_interface_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_ineq_p_interface_bounds" title="Permalink to this definition"></a></dt>
+<dd><p>Create the inequality constraints for the interface limits
+based on the power variables or expressions at the interface level</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.declare_ineq_s_branch_thermal_limit">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">declare_ineq_s_branch_thermal_limit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_thermal_limits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FlowType.POWER</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#declare_ineq_s_branch_thermal_limit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.declare_ineq_s_branch_thermal_limit" title="Permalink to this definition"></a></dt>
+<dd><p>Create the inequality constraints for the branch thermal limits
+based on the power variables.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.generate_thermal_bounds">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">generate_thermal_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">llimit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ulimit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neg_slack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_slack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#generate_thermal_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.generate_thermal_bounds" title="Permalink to this definition"></a></dt>
+<dd><p>Create a constraint for thermal limits on a line given the power flow
+expression or variable pf, a lower limit llimit, a uppder limit ulimit,
+and the negative slack variable, neg_slack, (None if not needed) and
+positive slack variable, pos_slack, (None if not needed) added to this
+constraint.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.get_power_flow_expr_ptdf_approx">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">get_power_flow_expr_ptdf_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PTDF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#get_power_flow_expr_ptdf_approx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.get_power_flow_expr_ptdf_approx" title="Permalink to this definition"></a></dt>
+<dd><p>Create a gurobipy power flow expression from PTDF matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.branch.get_power_flow_interface_expr_ptdf">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.branch.</span></span><span class="sig-name descname"><span class="pre">get_power_flow_interface_expr_ptdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PTDF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_ptdf_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/branch.html#get_power_flow_interface_expr_ptdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.branch.get_power_flow_interface_expr_ptdf" title="Permalink to this definition"></a></dt>
+<dd><p>Create a gurobipy power flow expression from PTDF matrix for an interface</p>
+</dd></dl>
+
+</section>
+<section id="module-transmission_gurobi.bus">
+<span id="bus-py"></span><h2>bus.py<a class="headerlink" href="#module-transmission_gurobi.bus" title="Permalink to this heading"></a></h2>
+<p>Declarations for the modeling components
+typically used for buses (including loads and shunts)</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.bus.declare_eq_p_balance_ed">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.bus.</span></span><span class="sig-name descname"><span class="pre">declare_eq_p_balance_ed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bus_p_loads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gens_by_bus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bus_gs_fixed_shunts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/bus.html#declare_eq_p_balance_ed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.bus.declare_eq_p_balance_ed" title="Permalink to this definition"></a></dt>
+<dd><p>Create the equality constraints for the real power balance
+at a bus using the variables for real power flows, respectively.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="transmission_gurobi.bus.declare_eq_p_net_withdraw_at_bus">
+<span class="sig-prename descclassname"><span class="pre">transmission_gurobi.bus.</span></span><span class="sig-name descname"><span class="pre">declare_eq_p_net_withdraw_at_bus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bus_p_loads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gens_by_bus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bus_gs_fixed_shunts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc_inlet_branches_by_bus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc_outlet_branches_by_bus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transmission_gurobi/bus.html#declare_eq_p_net_withdraw_at_bus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#transmission_gurobi.bus.declare_eq_p_net_withdraw_at_bus" title="Permalink to this definition"></a></dt>
+<dd><p>Create a named gurobipy expression for bus net withdraw</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="construct_models_gurobi.html" class="btn btn-neutral float-left" title="construct_models_gurobi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

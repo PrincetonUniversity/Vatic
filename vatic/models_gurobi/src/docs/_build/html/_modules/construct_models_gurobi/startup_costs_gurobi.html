@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>construct_models_gurobi.startup_costs_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transmission_gurobi.html">transmission_gurobi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">construct_models_gurobi.startup_costs_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for construct_models_gurobi.startup_costs_gurobi</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Add startup costs constraints and the related variables</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">._status_vars_gurobi</span> <span class="kn">import</span> <span class="n">_is_relaxed</span>
+
+<span class="kn">from</span> <span class="nn">gurobipy</span> <span class="kn">import</span> <span class="n">LinExpr</span><span class="p">,</span> <span class="n">GRB</span><span class="p">,</span> <span class="n">Model</span>
+
+
+<div class="viewcode-block" id="MLR_startup_costs"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.startup_costs_gurobi.MLR_startup_costs">[docs]</a><span class="k">def</span> <span class="nf">MLR_startup_costs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">add_startup_cost_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add startup cost constraints based on equations (2)--(3) from</span>
+<span class="sd">    G. Morales-Espana, J. M. Latorre, and A. Ramos. Tight and compact MILP</span>
+<span class="sd">    formulation for the thermal unit commitment problem. IEEE Transactions on</span>
+<span class="sd">    Power Systems, 28(4):4897–4908, 2013.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># begin latorre startup costs</span>
+
+    <span class="c1"># compute the per-generator, per-time period startup costs #</span>
+    <span class="c1"># BK -- replace with delta&#39;s</span>
+    <span class="k">def</span> <span class="nf">startup_costs_index_set_generator</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriods</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostsIndexSet</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+    <span class="p">]</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostsIndexSet_Plus1</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">_is_relaxed</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_delta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostsIndexSet_Plus1</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;delta&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_delta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostsIndexSet_Plus1</span><span class="p">,</span> <span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;delta&quot;</span>
+        <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">delta_eq_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_UnitStart</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+        <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_delta_eq</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">delta_eq_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;delta_eq&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># BK -- updated to reflect previous generator condition</span>
+    <span class="c1"># BK -- assumes initial time is 1</span>
+    <span class="k">def</span> <span class="nf">delta_ineq_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_InitialTime</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="c1"># the last startup indicator doesn&#39;t have a lag</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">this_lag</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">s</span><span class="p">]</span>
+        <span class="n">next_lag</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># this is negative if the generator has previously been off</span>
+        <span class="n">generator_t0_state</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="nb">round</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_UnitOnT0State</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># equation (15) in ME</span>
+        <span class="k">if</span> <span class="n">next_lag</span> <span class="o">+</span> <span class="n">generator_t0_state</span> <span class="o">&lt;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">next_lag</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span><span class="o">.</span><span class="n">lb</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span><span class="o">.</span><span class="n">ub</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">_status_vars</span> <span class="o">==</span> <span class="s2">&quot;garver_2bin_vars&quot;</span><span class="p">:</span>
+            <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">_UnitStart</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">this_lag</span><span class="p">,</span> <span class="n">next_lag</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+            <span class="n">linear_vars</span> <span class="o">+=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">m</span><span class="o">.</span><span class="n">_UnitOn</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="o">-</span> <span class="n">this_lag</span><span class="p">]]</span>
+            <span class="n">linear_coefs</span> <span class="o">+=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">next_lag</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">m</span><span class="o">.</span><span class="n">_UnitOnT0</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+                <span class="c1"># return m.delta[g,s,t] &lt;= m.UnitOnT0[g] - m.UnitOn[g,t-this_lag] + sum(m.UnitStart[g,t-i] for i in range(this_lag, next_lag))</span>
+            <span class="k">elif</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">next_lag</span><span class="p">:</span>
+                <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_UnitOn</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="o">-</span> <span class="n">next_lag</span><span class="p">])</span>
+                <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+                <span class="c1"># return m.delta[g,s,t] &lt;= m.UnitOn[g,t-next_lag] - m.UnitOn[g,t-this_lag] + sum(m.UnitStart[g,t-i] for i in range(this_lag, next_lag))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># equation (2) in ME</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="n">next_lag</span><span class="p">:</span>
+                <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">_UnitStop</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">this_lag</span><span class="p">,</span> <span class="n">next_lag</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+                <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+                <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">delta_ineq_constrs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="nb">set</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_StartupCostsIndexSet</span><span class="p">:</span>
+        <span class="n">constr</span> <span class="o">=</span> <span class="n">delta_ineq_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">constr</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delta_ineq_constrs</span><span class="p">[</span><span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="n">constr</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_delta_ineq</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">delta_ineq_constrs</span><span class="p">[</span><span class="n">g_s_t</span><span class="p">]</span> <span class="k">for</span> <span class="n">g_s_t</span> <span class="ow">in</span> <span class="n">delta_ineq_constrs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;delta_ineq&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">add_startup_cost_var</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_StartupCost</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_SingleFuelGenerators</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;StartupCost&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">ComputeStartupCost2_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_delta</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]]</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_StartupCosts</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_StartupCost</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+        <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ComputeStartupCosts</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">ComputeStartupCost2_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_SingleFuelGenerators</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComputeStartupCosts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="KOW_startup_costs"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.startup_costs_gurobi.KOW_startup_costs">[docs]</a><span class="k">def</span> <span class="nf">KOW_startup_costs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">add_startup_cost_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add start up cost constaints based on</span>
+<span class="sd">    Ben Knueven, Jim Ostrowski, and Jean-Paul Watson. A novel matching</span>
+<span class="sd">    formulation for startup costs in unit commitment, 2017.</span>
+<span class="sd">    URL http://www.optimization-online.org/DB_FILE/2017/03/5897.pdf.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># begin ostrowski startup costs</span>
+    <span class="c1"># time_period_list = model._TimePeriods</span>
+    <span class="n">initial_time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">after_last_time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">ValidShutdownTimePeriods_generator</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="c1"># for speed, if we don&#39;t have different startups</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># adds the necessary index for starting-up after a shutdown before the time horizon began</span>
+        <span class="n">unit_on_t0_state</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_UnitOnT0State</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">unit_on_t0_state</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span> <span class="o">+</span> <span class="p">[</span>
+                <span class="n">initial_time</span>
+                <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">unit_on_t0_state</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">_TimePeriodLengthHours</span><span class="p">))</span>
+            <span class="p">]</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ValidShutdownTimePeriods</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">g</span><span class="p">:</span> <span class="n">ValidShutdownTimePeriods_generator</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">ShutdownHotStartupPairs_generator</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="c1"># for speed, if we don&#39;t have different startups</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="n">first_lag</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">last_lag</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">t_prime</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ValidShutdownTimePeriods</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+            <span class="n">t_first</span> <span class="o">=</span> <span class="n">first_lag</span> <span class="o">+</span> <span class="n">t_prime</span>
+            <span class="n">t_last</span> <span class="o">=</span> <span class="n">last_lag</span> <span class="o">+</span> <span class="n">t_prime</span>
+            <span class="k">if</span> <span class="n">t_first</span> <span class="o">&lt;</span> <span class="n">initial_time</span><span class="p">:</span>
+                <span class="n">t_first</span> <span class="o">=</span> <span class="n">initial_time</span>
+            <span class="k">if</span> <span class="n">t_last</span> <span class="o">&gt;</span> <span class="n">after_last_time</span><span class="p">:</span>
+                <span class="n">t_last</span> <span class="o">=</span> <span class="n">after_last_time</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">t_first</span><span class="p">,</span> <span class="n">t_last</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">t_prime</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ShutdownHotStartupPairs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">g</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">ShutdownHotStartupPairs_generator</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+    <span class="p">}</span>
+
+    <span class="c1"># (g,t&#39;,t) will be an inidicator for g for shutting down at time t&#39; and starting up at time t</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator_domain</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">t_prime</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+        <span class="k">for</span> <span class="n">t_prime</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ShutdownHotStartupPairs</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">_is_relaxed</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator_domain</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;StartupIndicator&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator_domain</span><span class="p">,</span>
+            <span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;StartupIndicator&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># compute the per-generator, per-time period startup costs #</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_GeneratorShutdownPeriods</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ValidShutdownTimePeriods</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+    <span class="p">]</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ShutdownsByStartups</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+    <span class="p">}</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">_StartupsByShutdowns</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">g_t</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">g_t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_GeneratorShutdownPeriods</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t_p</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_StartupIndicator_domain</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_ShutdownsByStartups</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t_p</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_StartupsByShutdowns</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t_p</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">startup_match_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_StartupIndicator</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t_prime</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">t_prime</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ShutdownsByStartups</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_UnitStart</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+        <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_StartupMatch</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">startup_match_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_ThermalGenerators</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;StartupMatch&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">shutdown_match_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">begin_times</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupsByShutdowns</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">begin_times</span><span class="p">:</span>  <span class="c1">#if this is empty</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_StartupIndicator</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t_p</span><span class="p">]</span> <span class="k">for</span> <span class="n">t_p</span> <span class="ow">in</span> <span class="n">begin_times</span>
+        <span class="p">)</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_vars</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">initial_time</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_UnitStop</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+            <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+
+    <span class="n">shutdown_match_cons</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">g_t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_GeneratorShutdownPeriods</span><span class="p">:</span>
+        <span class="n">cons</span> <span class="o">=</span> <span class="n">shutdown_match_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g_t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g_t</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">cons</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">shutdown_match_cons</span><span class="p">[</span><span class="n">g_t</span><span class="p">]</span> <span class="o">=</span> <span class="n">cons</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ShutdownMatch</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">shutdown_match_cons</span><span class="p">[</span><span class="n">g_t</span><span class="p">]</span> <span class="k">for</span> <span class="n">g_t</span> <span class="ow">in</span> <span class="n">shutdown_match_cons</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ShutdownMatch&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">add_startup_cost_var</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_StartupCost</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_SingleFuelGenerators</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span><span class="p">,</span>
+            <span class="n">lb</span><span class="o">=-</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+            <span class="n">ub</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INFINITY</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;StartupCost&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">ComputeStartupCost2_rule</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">startup_lags</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_ScaledStartupLags</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="n">startup_costs</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCosts</span><span class="p">[</span><span class="n">g</span><span class="p">]</span>
+        <span class="n">last_startup_cost</span> <span class="o">=</span> <span class="n">startup_costs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">linear_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">_StartupCost</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">m</span><span class="o">.</span><span class="n">_UnitStart</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]]</span>
+        <span class="n">linear_coefs</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">last_startup_cost</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_ShutdownsByStartups</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">_StartupCostIndices</span><span class="p">[</span><span class="n">g</span><span class="p">]:</span>
+                <span class="n">this_lag</span> <span class="o">=</span> <span class="n">startup_lags</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+                <span class="n">next_lag</span> <span class="o">=</span> <span class="n">startup_lags</span><span class="p">[</span><span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">this_lag</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">-</span> <span class="n">tp</span> <span class="o">&lt;</span> <span class="n">next_lag</span><span class="p">:</span>
+                    <span class="n">linear_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">_StartupIndicator</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span>
+                    <span class="n">linear_coefs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">startup_costs</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">-</span> <span class="n">last_startup_cost</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">LinExpr</span><span class="p">(</span><span class="n">linear_coefs</span><span class="p">,</span> <span class="n">linear_vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">_ComputeStartupCosts</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">ComputeStartupCost2_rule</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_SingleFuelGenerators</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_TimePeriods</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComputeStartupCosts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

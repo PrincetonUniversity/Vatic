@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>construct_models_gurobi.services_gurobi &mdash; Vatic-Gurobipy 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Vatic-Gurobipy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../main_model_functions_gurobi.html">main_model_functions_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../construct_models_gurobi.html">construct_models_gurobi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transmission_gurobi.html">transmission_gurobi package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Vatic-Gurobipy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">construct_models_gurobi.services_gurobi</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for construct_models_gurobi.services_gurobi</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pseudo functions to add storage services and ancillary services in the future</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">gurobipy</span> <span class="kn">import</span> <span class="n">Model</span>
+
+
+<div class="viewcode-block" id="storage_services"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.services_gurobi.storage_services">[docs]</a><span class="k">def</span> <span class="nf">storage_services</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+    <span class="c1"># Add storage services</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_Storage</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;Storage Units are in the assets. Need to rewrite the storage_services() function to add constrs&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ancillary_services"><a class="viewcode-back" href="../../construct_models_gurobi.html#construct_models_gurobi.services_gurobi.ancillary_services">[docs]</a><span class="k">def</span> <span class="nf">ancillary_services</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add ancillary services: regulation, spinning reserve, nonspinning reserve, operational reserve, flexible ramp</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># NOTE: As in most markets, the value of ancillary services from high to low is regulation, spinning reserve, nonspinning reserve, and supplemental reserve.</span>
+    <span class="c1">#       We allow for a higher-quality ancillary service to be subtituted for a lower-quality one</span>
+    <span class="c1">#       Flexible ramp is treated differently, again as it is in most markets. There is no bid for flexible ramp, and it is priced at opportunity cost</span>
+
+    <span class="n">md</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_model_data</span>
+
+    <span class="n">system</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;system&quot;</span><span class="p">]</span>
+    <span class="n">elements</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span>
+
+    <span class="c1"># list of possible ancillary services coming</span>
+    <span class="c1"># from model_data</span>
+    <span class="n">ancillary_service_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;spinning_reserve_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;non_spinning_reserve_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;regulation_up_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;regulation_down_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;supplemental_reserve_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;flexible_ramp_up_requirement&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;flexible_ramp_down_requirement&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;zone&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
+        <span class="n">elements</span><span class="p">[</span><span class="s2">&quot;zone&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;area&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
+        <span class="n">elements</span><span class="p">[</span><span class="s2">&quot;area&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># check and see if each one of these services appears anywhere in model_data</span>
+    <span class="k">def</span> <span class="nf">_check_for_requirement</span><span class="p">(</span><span class="n">requirement</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="n">system</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">zone</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">[</span><span class="s2">&quot;zone&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="n">zone</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">[</span><span class="s2">&quot;area&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="n">area</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># flags for if ancillary services appear</span>
+    <span class="n">add_spinning_reserve</span> <span class="o">=</span> <span class="n">_check_for_requirement</span><span class="p">(</span>
+        <span class="s2">&quot;spinning_reserve_requirement&quot;</span>
+    <span class="p">)</span>
+    <span class="n">add_non_spinning_reserve</span> <span class="o">=</span> <span class="n">_check_for_requirement</span><span class="p">(</span>
+        <span class="s2">&quot;non_spinning_reserve_requirement&quot;</span>
+    <span class="p">)</span>
+    <span class="n">add_regulation_reserve</span> <span class="o">=</span> <span class="n">_check_for_requirement</span><span class="p">(</span>
+        <span class="s2">&quot;regulation_up_requirement&quot;</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="n">_check_for_requirement</span><span class="p">(</span><span class="s2">&quot;regulation_down_requirement&quot;</span><span class="p">)</span>
+    <span class="n">add_supplemental_reserve</span> <span class="o">=</span> <span class="n">_check_for_requirement</span><span class="p">(</span>
+        <span class="s2">&quot;supplemental_reserve_requirement&quot;</span>
+    <span class="p">)</span>
+    <span class="n">add_flexi_ramp_reserve</span> <span class="o">=</span> <span class="n">_check_for_requirement</span><span class="p">(</span>
+        <span class="s2">&quot;flexible_ramp_up_requirement&quot;</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="n">_check_for_requirement</span><span class="p">(</span><span class="s2">&quot;flexible_ramp_down_requirement&quot;</span><span class="p">)</span>
+
+    <span class="c1"># check here and break if there&#39;s nothing to do</span>
+    <span class="n">no_reserves</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">add_spinning_reserve</span>
+            <span class="ow">or</span> <span class="n">add_non_spinning_reserve</span>
+            <span class="ow">or</span> <span class="n">add_regulation_reserve</span>
+            <span class="ow">or</span> <span class="n">add_supplemental_reserve</span>
+            <span class="ow">or</span> <span class="n">add_flexi_ramp_reserve</span>
+    <span class="p">)</span>
+
+    <span class="c1"># add a flag for which brach we took here</span>
+    <span class="k">if</span> <span class="n">no_reserves</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_nonbasic_reserves</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_regulation_service</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_spinning_reserve</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_non_spinning_reserve</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_supplemental_reserve</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_flexible_ramping</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">model</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;Ancillary services are there. Need to rewrite the ancillary_services() function to add constrs&quot;</span>
+        <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Junying (Alice) Fang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
