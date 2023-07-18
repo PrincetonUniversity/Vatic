@@ -18,10 +18,9 @@ optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid form
 
 After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of
 the following from command line:
+```git clone https://github.com/PrincetonUniversity/Vatic.git --branch vatic_gurobipy --single-branch```
 
-```git clone https://github.com/PrincetonUniversity/Vatic.git```
-
-```git clone git@github.com:PrincetonUniversity/Vatic.git```
+```git clone git@github.com:PrincetonUniversity/Vatic.git --branch vatic_gurobipy --single-branch```
 
 Then, from inside the cloned directory, install Vatic:
 ```
