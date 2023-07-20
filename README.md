@@ -1,6 +1,3 @@
-[![CI-test](https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml/badge.svg)](
-https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
-
 [![DOI](https://zenodo.org/badge/406584271.svg)](https://zenodo.org/badge/latestdoi/406584271)
 
 
