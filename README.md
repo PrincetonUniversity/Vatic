@@ -32,11 +32,6 @@ cd Vatic
 pip install .
 ```
 
-While this will install Vatic's Python package dependencies, you will need to also choose and install a MILP solver
-with Python support. A good free option is [Cbc](https://github.com/coin-or/Cbc); we also recommend considering
-obtaining a license for [Gurobi](https://www.gurobi.com/), which allows for much faster simulation.
-
-
 ### Installing grid datasets ###
 
 The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
@@ -52,7 +47,7 @@ use with Vatic by running ```cd Vatic; git submodule init; git submodule update;
 
 ### Installing Gurobi ###
 
-The Vatic supports the latest version of gurobi 10.0.1. Please install the gurobi version 10.0.1 on the PC or load it on the cluster with module load gurobi/10.0.1.
+The Vatic_Gurobipy supports the latest version of gurobi 10.0.1. Please install the gurobi version 10.0.1 on the PC or load it on the cluster with module load gurobi/10.0.1.
 
 ## Running Vatic ##
 
