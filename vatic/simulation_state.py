@@ -15,7 +15,7 @@ class VaticStateError(Exception):
     pass
 
 
-class VaticSimulationState:
+class SimulationState:
     """A system state that can be updated with data from RUCs and SCEDs.
 
     Parameters
@@ -120,6 +120,9 @@ class VaticSimulationState:
 
         return self._commitments.loc[:, ts].astype(bool)
 
+    def clear_commitments(self):
+        self._commitments = pd.DataFrame()
+
     @property
     def current_actuals(self) -> pd.Series:
         """Get the current actual value for each forecastable.
@@ -209,6 +212,7 @@ class VaticSimulationState:
                                   f"{sced_time}; this SCED model only has "
                                   f"states {sced.TimePeriods}")
 
+        #TODO: just assume sced_time=1 every time?, see also model.InitialTime
         sced_indx = 1 + sced.TimePeriods.index(sced_time)
 
         for gen, init_state in self._init_gen_state.items():
@@ -217,7 +221,7 @@ class VaticSimulationState:
 
             # March forward, counting how long the state is on or off
             for t in sced.TimePeriods[:sced_indx]:
-                new_on = int(round(sced.results['commitment'][gen, t])) > 0
+                new_on = sced.results['commitment'][gen, t]
 
                 if new_on == unit_on:
                     state_duration += 1
@@ -236,7 +240,7 @@ class VaticSimulationState:
             pmin = sced.MinPowerOutput[gen, sced_time]
             pmax = sced.MaxPowerOutput[gen, sced_time]
 
-            if unit_on == 0:
+            if not unit_on:
                 assert gen_power == 0.
 
             elif (pmin - 1e-5) <= gen_power < pmin:
@@ -265,7 +269,7 @@ class VaticSimulationState:
 
     def get_state_with_sced_offset(self,
                                    sced: ScedModel,
-                                   offset: int) -> VaticSimulationState:
+                                   offset: int) -> SimulationState:
         new_state = deepcopy(self)
 
         new_state.actuals = new_state.actuals.iloc[offset:, :]
@@ -282,7 +286,7 @@ class VaticSimulationState:
             unit_on = init_state > 0
 
             # march forward, counting how long the state is on or off
-            for new_on in sced.get_commitments(gen):
+            for new_on in sced.get_commitments(gen)[:offset]:
                 if new_on == unit_on:
                     state_duration += 1
                 else:
@@ -305,7 +309,7 @@ class VaticSimulationState:
             # touch-up in this case.
             # TODO: Eventually make the 1e-5 an user-settable option.
 
-            if unit_on == 0:
+            if not unit_on:
                 # if the unit is off, then the power generated at
                 # t0 must be greater than or equal to 0 (Egret #219)
                 pwr_generated = max(pwr_generated, 0.0)
@@ -313,7 +317,7 @@ class VaticSimulationState:
             elif math.isclose(pmin, pwr_generated, rel_tol=0, abs_tol=1e-5):
                 pwr_generated = pmin
             elif math.isclose(pmax, pwr_generated, rel_tol=0, abs_tol=1e-5):
-                pwr_generated = pmin
+                pwr_generated = pmax
 
             new_state._init_gen_state[gen] = state_duration
             new_state._init_power_gen[gen] = pwr_generated

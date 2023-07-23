@@ -11,8 +11,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from .time_manager import VaticTime
-from .simulation_state import VaticSimulationState
+from .time_manager import GridTimeStep
+from .simulation_state import SimulationState
 from .models import RucModel, ScedModel
 
 
@@ -20,7 +20,7 @@ class ProviderError(Exception):
     pass
 
 
-class PickleProvider:
+class DataProvider:
     """Loading data from input datasets and generating UC and ED models.
 
     This class' purpose is to store the parsed grid data created by
@@ -152,8 +152,8 @@ class PickleProvider:
 
     def create_ruc(
             self,
-            time_step: VaticTime,
-            current_state: VaticSimulationState | None = None,
+            time_step: GridTimeStep,
+            current_state: SimulationState | None = None,
             copy_first_day: bool = False
             ) -> RucModel:
         """Generates a Reliability Unit Commitment model.
@@ -187,7 +187,7 @@ class PickleProvider:
 
         ruc_model = RucModel(self.template,
                              fcsts['RenewGen'], fcsts['LoadBus'],
-                             self._reserve_factor)
+                             self._reserve_factor, sim_state=current_state)
 
         # TODO: add more reporting
         if self._output_ruc_initial_conditions:
@@ -257,7 +257,7 @@ class PickleProvider:
                           use_load.reset_index(drop=True)], axis=1)
 
     def create_sced(self,
-                    time_step: VaticTime, current_state: VaticSimulationState,
+                    time_step: GridTimeStep, current_state: SimulationState,
                     sced_horizon: int) -> ScedModel:
         """Generates a Security Constrained Economic Dispatch model.
 

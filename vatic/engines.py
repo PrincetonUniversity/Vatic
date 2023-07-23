@@ -10,12 +10,12 @@ import datetime
 import pandas as pd
 from copy import deepcopy
 
-from .data_providers import PickleProvider
+from .data_providers import DataProvider
 from .models import RucModel, ScedModel
-from .simulation_state import VaticSimulationState
-from .ptdf_manager import VaticPTDFManager
+from .simulation_state import SimulationState
+from .ptdf_manager import PTDFManager
 from .stats_manager import StatsManager
-from .time_manager import VaticTimeManager, VaticTime
+from .time_manager import VaticTimeManager, GridTimeStep
 
 
 class Simulator:
@@ -108,7 +108,7 @@ class Simulator:
         #time dictionary for profiling
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
 
-        self._data_provider = PickleProvider(
+        self._data_provider = DataProvider(
             template_data, gen_data, load_data, load_shed_penalty,
             reserve_shortfall_penalty, reserve_factor,
             prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
@@ -123,10 +123,10 @@ class Simulator:
         self.init_ruc_file = init_ruc_file
         self.verbosity = verbosity
 
-        self._simulation_state = VaticSimulationState(
+        self._simulation_state = SimulationState(
             ruc_execution_hour, ruc_every_hours, self._sced_frequency_minutes)
         self._prior_sced_instance = None
-        self._ptdf_manager = VaticPTDFManager()
+        self._ptdf_manager = PTDFManager()
 
         self._time_manager = VaticTimeManager(
             self._data_provider.first_day, self._data_provider.final_day,
@@ -236,7 +236,10 @@ class Simulator:
         # find out when this unit commitment will come into effect and solve it
         uc_datetime = self._time_manager.get_uc_activation_time(
             self._current_timestep)
-        ruc = self.solve_ruc(VaticTime(uc_datetime, False, False), proj_state)
+
+        proj_state.clear_commitments()
+        ruc = self.solve_ruc(GridTimeStep(uc_datetime, False, False),
+                             proj_state)
 
         self._stats_manager.collect_ruc_solution(self._current_timestep,
                                                  ruc.results)
@@ -266,8 +269,8 @@ class Simulator:
 
     def solve_ruc(
             self,
-            time_step: VaticTime,
-            sim_state: Optional[VaticSimulationState] = None
+            time_step: GridTimeStep,
+            sim_state: Optional[SimulationState] = None
             ) -> RucModel:
         ruc_model = self._data_provider.create_ruc(time_step, sim_state)
         self._ptdf_manager.mark_active(ruc_model)

@@ -12,7 +12,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from .time_manager import VaticTime
+from .time_manager import GridTimeStep
 from .models import RucModel, ScedModel
 
 
@@ -64,7 +64,7 @@ class StatsManager:
         return pd.Series(stats).unstack().round(self.max_decimals)
 
     def collect_ruc_solution(self,
-                             time_step: VaticTime, ruc_data: dict) -> None:
+                             time_step: GridTimeStep, ruc_data: dict) -> None:
         """Gets the key statistics from a solved reliability unit commitment.
 
         Args
@@ -96,7 +96,7 @@ class StatsManager:
                   "\n")
 
     def collect_sced_solution(self,
-                              time_step: VaticTime, sced: ScedModel,
+                              time_step: GridTimeStep, sced: ScedModel,
                               lmps: dict | None) -> None:
         """Gets the key statistics from a solved economic dispatch.
 

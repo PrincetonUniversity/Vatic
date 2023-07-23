@@ -41,7 +41,7 @@ HighConfidenceOptions = PTDFOptions(ruc={'pre_lp_iteration_limit': 0,
                                     lmp_ed={'pre_lp_iteration_limit': 0})
 
 
-class VaticPTDFManager:
+class PTDFManager:
     """Keeping track of the active constraints handed to EGRET models."""
 
     def __init__(self,

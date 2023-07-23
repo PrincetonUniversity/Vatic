@@ -105,11 +105,17 @@ class BaseModel(ABC):
             grid_template['NondispatchableGenerators'])
 
         # easier to do this here than in rajan_takriti due to sim_state
-        self.FixedCommitment = tupledict({
-            (g, t): (None if sim_state is None
-                     else sim_state.get_commitments().loc[g, t])
-            for g, t in product(*self.thermal_periods)
-            })
+        if sim_state is None:
+            self.FixedCommitment = tupledict({
+                (g, t): None for g, t in product(*self.thermal_periods)})
+
+        else:
+            state_cmts = sim_state.get_commitments().stack().to_dict()
+
+            self.FixedCommitment = tupledict({
+                (g, t): state_cmts[g, t] if (g, t) in state_cmts else None
+                for g, t in product(*self.thermal_periods)
+                })
 
         self.future_status = (future_status if future_status
                               else {g: 0 for g in self.ThermalGenerators})
@@ -479,11 +485,6 @@ class BaseModel(ABC):
 
             'power_generated': {
                 (g, t): self.model._PowerGenerated[g, t].getValue()
-                for g, t in product(*self.thermal_periods)
-                },
-
-            'commitment': {
-                (g, t): self.model._UnitOn[g, t].x
                 for g, t in product(*self.thermal_periods)
                 },
 
@@ -1568,6 +1569,11 @@ class RucModel(BaseModel):
     def _parse_model_results(self):
         results = super()._parse_model_results()
 
+        results['commitment'] = {
+            (g, t): bool(round(self.model._UnitOn[g, t].x))
+            for g, t in product(*self.thermal_periods)
+            }
+
         results['reserves_provided'] = {
             (g, t): self.model._ReserveProvided[g, t].getValue()
             for g, t in product(*self.thermal_periods)
@@ -1900,8 +1906,6 @@ class RucModel(BaseModel):
 
         self.model.update()
 
-        self.model.write("gurobi.lp")
-
 
 class ScedModel(BaseModel):
 
@@ -1909,6 +1913,7 @@ class ScedModel(BaseModel):
 
     def _parse_model_results(self):
         results = super()._parse_model_results()
+        results['commitment'] = deepcopy(self.FixedCommitment)
 
         results['reserves_provided'] = {
             (g, t): self.model._ReserveProvided[g, t].x

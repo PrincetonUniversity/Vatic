@@ -4,7 +4,7 @@ from datetime import timedelta, datetime, time, date
 from typing import Iterator
 
 
-class VaticTime:
+class GridTimeStep:
     """A single time step of a simulation.
 
     This class represents a time point within a run of a simulation engine and
@@ -120,7 +120,7 @@ class VaticTimeManager:
 
         self._current_time = None
 
-    def time_steps(self) -> Iterator[VaticTime]:
+    def time_steps(self) -> Iterator[GridTimeStep]:
         """Produces the time points over which a simulation run iterates."""
 
         current_time = datetime.combine(self.start_date, time(0))
@@ -145,21 +145,21 @@ class VaticTimeManager:
                 next_activation_time += self.ruc_interval
 
             # produce a time point and update the time state of the simulation
-            time_step = VaticTime(current_time,
-                                  is_planning_time, is_activation_time)
+            time_step = GridTimeStep(current_time,
+                                     is_planning_time, is_activation_time)
 
             self._current_time = time_step
             yield time_step
 
             current_time += self.sced_interval
 
-    def get_first_timestep(self) -> VaticTime:
+    def get_first_timestep(self) -> GridTimeStep:
         """Gets e.g. when the simulation's initialization RUC will run."""
 
-        return VaticTime(datetime.combine(self.start_date, time(0)),
-                         False, False)
+        return GridTimeStep(datetime.combine(self.start_date, time(0)),
+                            False, False)
 
-    def get_uc_activation_time(self, time_step: VaticTime) -> datetime:
+    def get_uc_activation_time(self, time_step: GridTimeStep) -> datetime:
         """When will a RUC generated at this time point be activated?"""
 
         return time_step.when + self.ruc_delay
