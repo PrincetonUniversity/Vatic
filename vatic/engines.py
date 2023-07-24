@@ -187,9 +187,10 @@ class Simulator:
     def initialize_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's first day.
 
-        This method is a merge of
-        prescient.simulator.OracleManager.call_initialization_oracle
-        and OracleManager._generate_ruc.
+        For the first day of the simulation, we use the initial states given to
+        the simulation to create an RUC "on the spot" — if we are simulating
+        more than one day this plan will be created for subsequent days ahead
+        of time instead.
 
         """
         first_step = self._time_manager.get_first_timestep()
@@ -202,7 +203,7 @@ class Simulator:
 
         # ...otherwise, solve the initial RUC
         else:
-            ruc_data = self.solve_ruc(first_step).results
+            ruc_data = self.solve_ruc(first_step, sim_state=None).results
 
         self._stats_manager.collect_ruc_solution(first_step, ruc_data)
 
@@ -219,9 +220,16 @@ class Simulator:
     def call_planning_oracle(self) -> None:
         """Creates a day-ahead unit commitment for the simulation's next day.
 
-        This method is adapted from OracleManager.call_planning_oracle.
+        This method is called when we need to make a plan of thermal
+        commitments for the upcoming day (and is thus not called when only
+        simulating one day at a time — see `initialize_oracle` above).
 
+        For example, with the default `ruc_delay` value of 8 (hours), we create
+        this plan for the next day at 4pm of the previous day.
         """
+
+        # first we need to simulate forwards to the start of the next day to
+        # get realistic grid states at the time when the RUC will be activated
         if self._simulation_state.ruc_delay == 0:
             proj_state = deepcopy(self._simulation_state)
 
@@ -249,13 +257,7 @@ class Simulator:
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
 
     def call_oracle(self) -> None:
-        """Solves the real-time economic dispatch for the current time step.
-
-        This method is adapted from OracleManager.call_operation_oracle.
-
-        """
-        if self.verbosity > 0:
-            print("\nSolving SCED instance")
+        """Solve the real-time economic dispatch for the current time step."""
 
         sced_model = self.solve_sced(hours_in_objective=1,
                                      sced_horizon=self.sced_horizon)
@@ -267,50 +269,51 @@ class Simulator:
         self._stats_manager.collect_sced_solution(self._current_timestep,
                                                   sced_model, lmps)
 
-    def solve_ruc(
-            self,
-            time_step: GridTimeStep,
-            sim_state: Optional[SimulationState] = None
-            ) -> RucModel:
-        ruc_model = self._data_provider.create_ruc(time_step, sim_state)
-        self._ptdf_manager.mark_active(ruc_model)
+    def solve_ruc(self,
+                  time_step: GridTimeStep,
+                  sim_state: SimulationState | None) -> RucModel:
+        """Create a unit commitment model and find an optimal solution."""
 
-        ruc_model.generate(relax_binaries=False,
-                           ptdf=self._ptdf_manager.ptdf_matrix,
-                           ptdf_options=self._ptdf_manager.ruc_ptdf_options,
-                           objective_hours=self._data_provider.ruc_horizon)
+        ruc = self._data_provider.create_ruc(time_step, sim_state)
+        self._ptdf_manager.mark_active(ruc)
 
-        ruc_model.solve(relaxed=False, mipgap=self.mipgap,
-                        threads=self.solver_options['Threads'], outputflag=0)
+        ruc.generate(relax_binaries=False, ptdf=self._ptdf_manager.ptdf_matrix,
+                     ptdf_options=self._ptdf_manager.ruc_ptdf_options,
+                     objective_hours=self._data_provider.ruc_horizon)
 
-        self._ptdf_manager.ptdf_matrix = ruc_model.PTDF
-        self._ptdf_manager.update_active(ruc_model)
+        ruc.solve(relaxed=False, mipgap=self.mipgap,
+                  threads=self.solver_options['Threads'], outputflag=0)
 
-        return ruc_model
+        self._ptdf_manager.ptdf_matrix = ruc.PTDF
+        self._ptdf_manager.update_active(ruc)
+
+        return ruc
 
     def solve_sced(self,
                    hours_in_objective: int, sced_horizon: int) -> ScedModel:
+        """Create an economic dispatch model and find an optimal solution."""
 
-        sced_model = self._data_provider.create_sced(self._current_timestep,
-                                                     self._simulation_state,
-                                                     sced_horizon=sced_horizon)
-        self._ptdf_manager.mark_active(sced_model)
+        sced = self._data_provider.create_sced(self._current_timestep,
+                                               self._simulation_state,
+                                               sced_horizon=sced_horizon)
+        self._ptdf_manager.mark_active(sced)
 
-        sced_model.generate(relax_binaries=False,
-                            ptdf=self._ptdf_manager.ptdf_matrix,
-                            ptdf_options=self._ptdf_manager.sced_ptdf_options,
-                            objective_hours=hours_in_objective)
+        sced.generate(relax_binaries=False,
+                      ptdf=self._ptdf_manager.ptdf_matrix,
+                      ptdf_options=self._ptdf_manager.sced_ptdf_options,
+                      objective_hours=hours_in_objective)
 
         self._hours_in_objective = hours_in_objective
-        self._ptdf_manager.ptdf_matrix = sced_model.PTDF
+        self._ptdf_manager.ptdf_matrix = sced.PTDF
 
-        sced_model.solve(relaxed=False, mipgap=self.mipgap,
-                         threads=self.solver_options['Threads'], outputflag=0)
-        self._ptdf_manager.update_active(sced_model)
+        sced.solve(relaxed=False, mipgap=self.mipgap,
+                   threads=self.solver_options['Threads'], outputflag=0)
+        self._ptdf_manager.update_active(sced)
 
-        return sced_model
+        return sced
 
     def solve_lmp(self, sced: ScedModel) -> dict:
+        """Create an economic dispatch model and solve for prices at buses."""
 
         # often we want to avoid having the reserve requirement shortfall make
         # any impact on the prices whatsoever
@@ -320,5 +323,11 @@ class Simulator:
 
         sced.solve(relaxed=True, mipgap=self.mipgap,
                    threads=self.solver_options['Threads'], outputflag=0)
+        lmps = sced.model._TransmissionBlock[1]['PTDF'].calculate_LMP(sced, 1)
 
-        return sced.model._TransmissionBlock[1]['PTDF'].calculate_LMP(sced, 1)
+        # return the SCED to its original state
+        sced.model._ReserveShortfallPenalty = 1e3
+        sced.enforce_binaries()
+        sced.add_objective()
+
+        return lmps

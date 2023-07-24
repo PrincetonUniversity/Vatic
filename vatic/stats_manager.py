@@ -123,12 +123,12 @@ class StatsManager:
 
             'total_demand': round(sced.Demand[t1].sum(), self.max_decimals),
 
-            'fixed_costs': round(sum(cost for (g, t), cost
-                                     in sced.results['commitment_cost'].items()
-                                     if t == t1),
-                                 self.max_decimals),
+            'fixed_cost': round(sum(cost for (g, t), cost
+                                    in sced.results['commitment_cost'].items()
+                                    if t == t1),
+                                self.max_decimals),
 
-            'variable_costs': round(
+            'variable_cost': round(
                 sum(cost for (g, t), cost
                     in sced.results['production_cost'].items() if t == t1),
                 self.max_decimals
@@ -218,17 +218,17 @@ class StatsManager:
 
         if self.verbosity > 0:
             print(f"{time_step.when.strftime('%F (%I%p)')}  SCED fixed costs: "
-                  f"{self._sced_stats[time_step]['fixed_costs']}"
+                  f"{self._sced_stats[time_step]['fixed_cost']}"
                   "\tvariable costs: "
-                  f"{self._sced_stats[time_step]['variable_costs']}")
+                  f"{self._sced_stats[time_step]['variable_cost']}")
 
     def consolidate_output(self, sim_runtime=None) -> dict[str, pd.DataFrame]:
         """Creates tables storing outputs of all models this simulation ran."""
 
         report_dfs = {
             'hourly_summary': pd.DataFrame({
-                time_step: {'FixedCosts': stats['fixed_costs'],
-                            'VariableCosts': stats['variable_costs'],
+                time_step: {'FixedCosts': stats['fixed_cost'],
+                            'VariableCosts': stats['variable_cost'],
                             'LoadShedding': stats['load_shedding'],
                             'OverGeneration': stats['over_generation'],
                             'AvailableReserves': stats['available_reserve'],
@@ -240,13 +240,20 @@ class StatsManager:
                             'Price': stats['price'],
                             'Number on/offs': stats['on_offs'],
                             'Sum on/off ramps': stats['sum_on_off_ramps'],
-                            'Sum nominal ramps': stats['sum_nominal_ramps'],
-                            }
+                            'Sum nominal ramps': stats['sum_nominal_ramps']}
                 for time_step, stats in self._sced_stats.items()
                 }).T,
             }
 
+        # somewhat bulky output files
         if self.output_detail > 0:
+            report_dfs['runtimes'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Type': 'SCED', 'Solve Time': stats['runtime']}}
+                for time_step, stats in self._sced_stats.items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour', 'Type'],
+                                                    verify_integrity=True)
+
             report_dfs['thermal_detail'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
                  **{'Generator': gen,
@@ -256,8 +263,9 @@ class StatsManager:
                     'Unit Cost': stats['observed_costs'][gen]}}
                 for time_step, stats in self._sced_stats.items()
                 for gen, gen_state in stats['observed_thermal_states'].items()
-                ]).drop('Minute', axis=1).set_index(
-                ['Date', 'Hour', 'Generator'], verify_integrity=True)
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour',
+                                                     'Generator'],
+                                                    verify_integrity=True)
 
         return report_dfs
 
