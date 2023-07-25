@@ -379,8 +379,8 @@ def load_base_params(
                 if this_demand < 0.0:
                     logger.warning(
                         "***WARNING: The demand at bus `{}` for time period <{}> is "
-                        "negative - value {:.4f}}; model={}".format(
-                            b, t, this_demand, m._name
+                        "negative - value {:.4f}; ".format(
+                            b, t, this_demand
                         )
                     )
 
