@@ -60,7 +60,7 @@ class StatsManager:
             if self.create_plots:
                 os.makedirs(Path(self.write_dir, "plots"), exist_ok=True)
 
-    def _dict_to_frame(self, stats: dict[tuple[str, int], int | float]):
+    def _dict_to_frame(self, stats: dict) -> pd.DataFrame:
         return pd.Series(stats).unstack().round(self.max_decimals)
 
     def collect_ruc_solution(self,
@@ -188,6 +188,17 @@ class StatsManager:
                 for gen in sced.ThermalGenerators
                 }).round(self.max_decimals),
 
+            'observed_renewables_levels': pd.Series({
+                gen: sced.results['power_generated'][gen, t1]
+                for gen in sced.RenewableGenerators
+                }).round(self.max_decimals),
+
+            'observed_renewables_curtailment': pd.Series({
+                gen: (sced.MaxPowerOutput[gen, t1]
+                      - sced.results['power_generated'][gen, t1])
+                for gen in sced.RenewableGenerators
+                }).round(self.max_decimals),
+
             'observed_thermal_states': pd.Series({
                 gen: sced.is_generator_on(gen)
                 for gen in sced.ThermalGenerators
@@ -198,6 +209,7 @@ class StatsManager:
             'observed_flow_levels': round(
                 sced.flows.loc[t1], self.max_decimals),
 
+            'bus_demands': sced.Demand.loc[:, t1].round(self.max_decimals),
             'observed_bus_mismatches': pd.Series({
                 gen: v.getValue() if isinstance(v, LinExpr) else v
                 for (gen, t), v in sced.results['p_balances'].items()
@@ -254,6 +266,18 @@ class StatsManager:
                 ]).drop('Minute', axis=1).set_index(['Date', 'Hour', 'Type'],
                                                     verify_integrity=True)
 
+            if sim_runtime:
+                report_dfs['total_runtime'] = round(sim_runtime,
+                                                    self.max_decimals)
+
+            report_dfs['ruc_summary'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'FixedCosts': stats['fixed_cost'],
+                    'VariableCosts': stats['variable_cost']}}
+                for time_step, stats in self._ruc_stats.items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour'],
+                                                    verify_integrity=True)
+
             report_dfs['thermal_detail'] = pd.DataFrame.from_records([
                 {**time_step.labels(),
                  **{'Generator': gen,
@@ -265,6 +289,57 @@ class StatsManager:
                 for gen, gen_state in stats['observed_thermal_states'].items()
                 ]).drop('Minute', axis=1).set_index(['Date', 'Hour',
                                                      'Generator'],
+                                                    verify_integrity=True)
+
+            report_dfs['renew_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen, 'Output': gen_output,
+                    'Curtailment': stats['observed_renewables_curtailment'][
+                        gen]}}
+                for time_step, stats in self._sced_stats.items()
+                for gen, gen_output in
+                stats['observed_renewables_levels'].items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour',
+                                                     'Generator'],
+                                                    verify_integrity=True)
+
+        # very bulky output files
+        if self.output_detail > 1:
+            report_dfs['daily_commits'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Generator': gen,
+                    **{'Commit {}'.format(i + 1): val
+                       for i, val in enumerate(cmt)},
+                    **{'Output {}'.format(i + 1): val
+                       for i, val in enumerate(stats['generation'][gen])},
+                    **{'Reserve {}'.format(i + 1): val
+                       for i, val in enumerate(stats['reserves'][gen])}}}
+                for time_step, stats in self._ruc_stats.items()
+                for gen, cmt in stats['commitments'].items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour',
+                                                     'Generator'],
+                                                    verify_integrity=True)
+
+            report_dfs['daily_commits'].columns = pd.MultiIndex.from_tuples(
+                [tuple(x)
+                 for x in report_dfs['daily_commits'].columns.str.split(' ')]
+                )
+
+            report_dfs['bus_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'Bus': bus, 'Demand': bus_demand,
+                    'Mismatch': stats['observed_bus_mismatches'][bus],
+                    'LMP': stats['observed_bus_LMPs'][bus]}}
+                for time_step, stats in self._sced_stats.items()
+                for bus, bus_demand in stats['bus_demands'].items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour', 'Bus'],
+                                                    verify_integrity=True)
+
+            report_dfs['line_detail'] = pd.DataFrame.from_records([
+                {**time_step.labels(), **{'Line': line, 'Flow': line_flow}}
+                for time_step, stats in self._sced_stats.items()
+                for line, line_flow in stats['observed_flow_levels'].items()
+                ]).drop('Minute', axis=1).set_index(['Date', 'Hour', 'Line'],
                                                     verify_integrity=True)
 
         return report_dfs
