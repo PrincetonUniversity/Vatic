@@ -13,7 +13,7 @@ from vatic.data import load_input
 from vatic.models_gurobi.src.main_model_functions_gurobi.generate_model_gurobi import generate_model
 
 
-model_old_path = '/Users/jf3375/Desktop/model_outputs/ruc_old_20200102.lp'
+model_old_path = '/Users/jf3375/Desktop/Vatic_Compare/Vatic_Gurobipy/Vatic/vatic_test'
 
 input_grid = 'RTS-GMLC'
 start_date = datetime.strptime('2020-01-02', '%Y-%m-%d').date()
