@@ -49,7 +49,7 @@ is:
 
 ```vatic-det $input_grid $start_date $num_days ```
 
-`input_grid` can be either of the currently supported grids: "RTS-GMLC", "Texas-7k", or "Texas-7k_2030."
+`input_grid` can be either of the currently supported grids: `RTS-GMLC`, `Texas-7k`, or `Texas-7k_2030`.
 
 `start_date` is the first day that will be simulated by Vatic, given in YYYY-MM-DD format. For RTS-GMLC, only dates in
 2020 are supported, while the Texas grids only support dates in 2018.
