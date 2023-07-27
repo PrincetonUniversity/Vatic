@@ -238,23 +238,23 @@ class StatsManager:
         """Creates tables storing outputs of all models this simulation ran."""
 
         report_dfs = {
-            'hourly_summary': pd.DataFrame({
-                time_step: {'FixedCosts': stats['fixed_cost'],
-                            'VariableCosts': stats['variable_cost'],
-                            'LoadShedding': stats['load_shedding'],
-                            'OverGeneration': stats['over_generation'],
-                            'AvailableReserves': stats['available_reserve'],
-                            'ReserveShortfall': stats['reserve_shortfall'],
-                            'RenewablesUsed': stats['renewable_generation'],
-                            'RenewablesAvailable': stats[
-                                'available_renewables'],
-                            'Demand': stats['total_demand'],
-                            'Price': stats['price'],
-                            'Number on/offs': stats['on_offs'],
-                            'Sum on/off ramps': stats['sum_on_off_ramps'],
-                            'Sum nominal ramps': stats['sum_nominal_ramps']}
+            'hourly_summary': pd.DataFrame.from_records([
+                {**time_step.labels(),
+                 **{'FixedCosts': stats['fixed_cost'],
+                    'VariableCosts': stats['variable_cost'],
+                    'LoadShedding': stats['load_shedding'],
+                    'OverGeneration': stats['over_generation'],
+                    'AvailableReserves': stats['available_reserve'],
+                    'ReserveShortfall': stats['reserve_shortfall'],
+                    'RenewablesUsed': stats['renewable_generation'],
+                    'RenewablesAvailable': stats['available_renewables'],
+                    'Demand': stats['total_demand'], 'Price': stats['price'],
+                    'Number on/offs': stats['on_offs'],
+                    'Sum on/off ramps': stats['sum_on_off_ramps'],
+                    'Sum nominal ramps': stats['sum_nominal_ramps']}}
                 for time_step, stats in self._sced_stats.items()
-                }).T,
+                ]).drop('Minute', axis=1).set_index(
+                ['Date', 'Hour'], verify_integrity=True)
             }
 
         # somewhat bulky output files

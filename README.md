@@ -10,15 +10,19 @@ Vatic is a Python package for running simulations of a power grid using the
 optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid formulations created using
 [Egret](https://github.com/grid-parity-exchange/Egret).
 
+Vatic is specifically designed for use with the Gurobi simulation engine; before running Vatic, make sure you have
+a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see older releases of Vatic
+(e.g. `v0.4.1-a0`) if you are looking to use other solvers such as CBC.
+
 
 ## Installing Vatic ##
 
-After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of
-the following from command line:
+After making sure you have a Python version within 3.8 through 3.11 installed (e.g. through
+`conda create --name vatic-test python=3.11`), clone the repository using one of the following from command line:
 
-```git clone https://github.com/PrincetonUniversity/Vatic.git```
+```git clone https://github.com/PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
 
-```git clone git@github.com:PrincetonUniversity/Vatic.git```
+```git clone git@github.com:PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
 
 Then, from inside the cloned directory, install Vatic:
 ```
@@ -67,13 +71,9 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
                     was invoked from. Vatic will create this directory if it does not already exist.
 
- - `--solver` The solver to use for RUC and SCED optimization model instances, such as `cbc` or `gurobi`. The default is
-              [cbc](https://github.com/coin-or/Cbc), which is available for free through services such as `conda`.
-              Note that you may have to install your preferred solver separately.
-
- - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
-                   given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using
-                   Gurobi, you might specify ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
+ - `--solver-args` A list of Gurobi arguments to modify the behaviour of the solver used for RUCs and SCEDs. These 
+                   should be given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example:
+                   ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
 
  - `--threads (-t)` The number of compute cores to be used for parallelization within the optimization solver. If you
                     are running `vatic-det` on a remote compute cluster, do not use more cores than what has been
@@ -136,10 +136,3 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
 
  - `--last-conditions-file` If given, the final states of the thermal generators will be saved to use as initial states
                             for another simulation run (see `init-conditions-file` above).
-
-
-## Using a gurobipy implementation ##
-
-Installing Vatic also installs the command `vatic-gb`, which has the same interface as `vatic-det` but without the
-`--solver` argument. We recommend using this tool if you have access to the gurobi solver, as the underlying simulation
-engine here has been implemented at a speed of up to 10x faster than the `vatic-det` version.

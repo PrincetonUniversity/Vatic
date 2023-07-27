@@ -38,18 +38,17 @@ class DataProvider:
     creation methods originally included in prescient.egret.engine.egret_plugin
     """
 
-    def __init__(
-            self,
-            template_data: dict, gen_data: pd.DataFrame,
-            load_data: pd.DataFrame, load_shed_penalty: float,
-            reserve_shortfall_penalty: float, reserve_factor: float,
-            prescient_sced_forecasts: bool, ruc_prescience_hour: int,
-            ruc_execution_hour: int, ruc_every_hours: int,
-            ruc_horizon: int, enforce_sced_shutdown_ramprate: bool,
-            no_startup_shutdown_curves: bool, verbosity: int,
-            start_date: Optional[date] = None, num_days: Optional[int] = None,
-            renew_costs: Optional[dict | str | Path | list[float]] = None
-            ) -> None:
+    def __init__(self,
+                 template_data: dict, gen_data: pd.DataFrame,
+                 load_data: pd.DataFrame, load_shed_penalty: float,
+                 reserve_shortfall_penalty: float, reserve_factor: float,
+                 prescient_sced_forecasts: bool, ruc_prescience_hour: int,
+                 ruc_execution_hour: int, ruc_every_hours: int,
+                 ruc_horizon: int, enforce_sced_shutdown_ramprate: bool,
+                 no_startup_shutdown_curves: bool, verbosity: int,
+                 start_date: Optional[date] = None,
+                 num_days: Optional[int] = None,
+                 renew_costs: Optional[str | Path | dict] = None) -> None:
 
         if not (gen_data.index == load_data.index).all():
             raise ProviderError("The generator and the bus demand datasets "
@@ -75,30 +74,7 @@ class DataProvider:
         self.prescient_sced_forecasts = prescient_sced_forecasts
         self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
         self._no_startup_shutdown_curves = no_startup_shutdown_curves
-
-        # parse cost curves given for renewable generators as necessary
-        if isinstance(renew_costs, dict):
-            self.renew_costs = renew_costs
-
-        elif isinstance(renew_costs, (str, Path)):
-            with open(renew_costs, 'rb') as f:
-                self.renew_costs = pickle.load(f)
-
-        elif isinstance(renew_costs, list):
-            ncosts = len(renew_costs) - 1
-
-            if ncosts == 0:
-                self.renew_costs = [(1., float(renew_costs[0]))]
-            else:
-                self.renew_costs = [(i / ncosts, float(c))
-                                    for i, c in enumerate(renew_costs)]
-
-        elif renew_costs is None:
-            self.renew_costs = None
-
-        else:
-            raise TypeError("Unrecognized renewable "
-                            "costs given: `{}`!".format(renew_costs))
+        self.renew_costs = renew_costs
 
         if start_date:
             self.first_day = start_date
@@ -184,8 +160,39 @@ class DataProvider:
 
         fcsts = self.get_forecastables(use_actuals=False,
                                        times_requested=self.ruc_horizon)
+        use_template = deepcopy(self.template)
 
-        ruc_model = RucModel(self.template,
+        # easier to do this here, than in model formulations as originally
+        if self.renew_costs:
+            if isinstance(self.renew_costs, (str, Path)):
+                with open(self.renew_costs, 'rb') as f:
+                    costs = pickle.load(f)
+
+            else:
+                costs = deepcopy(self.renew_costs)
+
+            for (gen, ts), cost_dict in costs.items():
+                t = self.gen_data.index.get_loc(ts) + 1
+
+                if gen in use_template['CostPiecewisePoints']:
+                    use_template['CostPiecewisePoints'][gen][t] \
+                        = cost_dict['break_points']
+                    use_template['CostPiecewiseValues'][gen][t] \
+                        = cost_dict['reliability_cost']
+
+                else:
+                    use_template['CostPiecewisePoints'][gen] = {
+                        t: cost_dict['break_points']}
+                    use_template['CostPiecewiseValues'][gen] = {
+                        t: cost_dict['reliability_cost']}
+
+                if self.ruc_horizon >= 24 + t:
+                    use_template['CostPiecewisePoints'][gen][24 + t] \
+                        = cost_dict['break_points']
+                    use_template['CostPiecewiseValues'][gen][24 + t] \
+                        = cost_dict['reliability_cost']
+
+        ruc_model = RucModel(use_template,
                              fcsts['RenewGen'], fcsts['LoadBus'],
                              self._reserve_factor, sim_state=current_state)
 

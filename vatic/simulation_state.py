@@ -105,9 +105,6 @@ class SimulationState:
         if not isinstance(ts, list):
             raise TypeError("Times must be given as a list of integers!")
 
-        if len(ts) == 0:
-            print("Give list of times is empty, returning empty dataframe!")
-
         # TODO: make this match retrieval of times in `timestep_commitments`?
         for t in ts:
             if not isinstance(t, int):

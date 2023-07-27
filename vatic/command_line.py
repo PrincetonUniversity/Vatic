@@ -69,8 +69,8 @@ def run_deterministic():
 
     parser.add_argument("--init-ruc-file", type=Path, dest="init_ruc_file",
                         help="where to save/load the initial RUC from")
-    parser.add_argument("--renew-costs", "-c", nargs='*', dest="renew_costs",
-                        help="use costs for renewables from input directory")
+    parser.add_argument("--renew-costs", "-c", dest="renew_costs",
+                        help="use costs for renewables from input file")
 
     parser.add_argument(
         "--init-conditions-file", type=Path, dest="init_conds_file",

@@ -94,7 +94,7 @@ class Simulator:
                  no_startup_shutdown_curves: bool,
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
-                 renew_costs: Optional[dict | str | Path | list[float]],
+                 renew_costs: Optional[str | Path],
                  save_to_csv, last_conditions_file) -> None:
 
         self.run_lmps = run_lmps #lmp: Locational Marginal Price

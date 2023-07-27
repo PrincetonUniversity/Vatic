@@ -81,12 +81,6 @@ class BaseModel(ABC):
         self.time_steps = renews_data.index.to_list()
         self.verbose = 0
 
-        self.gen_costs = {
-            gen: (grid_template['CostPiecewiseValues'][gen][-1]
-                  / grid_template['CostPiecewisePoints'][gen][-1])
-            for gen in grid_template['CostPiecewiseValues']
-            }
-
         self.PTDFoptions = dict()
         self.PTDF = None
         self.BaseMVA = 1.
@@ -238,7 +232,7 @@ class BaseModel(ABC):
 
         self.prod_indices = [
             (g, t, i) for g in self.ThermalGenerators for t in self.TimePeriods
-            for i in range(len(self.PiecewiseGenerationPoints[g]) - 1)
+            for i in range(len(self.PiecewiseGenerationPoints[g][t]) - 1)
             ]
 
         self.InitTimePeriodsOnline = tupledict({
@@ -269,6 +263,12 @@ class BaseModel(ABC):
         self.StageSet = ['Stage_1', 'Stage_2']
         self.solve_time = None
         self.results = None
+
+        self.gen_costs = {
+            gen: (grid_template['CostPiecewiseValues'][gen][-1]
+                  / grid_template['CostPiecewisePoints'][gen][-1])
+            for gen in self.ThermalGenerators
+            }
 
         self.model = None
 
@@ -441,22 +441,6 @@ class BaseModel(ABC):
         self.solve_time = time.time() - start_time
         self.results = self._parse_model_results()
 
-    def _solve_careful(self):
-        self.relax_binaries()
-        self.model.optimize()
-
-        if self.model.Status != 2:
-            print("infeasible model, exiting!")
-            self.model.computeIIS()
-            self.model.write('model.ilp')
-            exit(1)
-
-        self._lazy_ptdf_uc_solve_loop()
-
-        self.enforce_binaries()
-        self.model.optimize()
-        self._lazy_ptdf_uc_solve_loop()
-
     def _parse_model_results(self):
         if not self.model:
             raise ValueError("Model must be solved before its results "
@@ -618,110 +602,122 @@ class BaseModel(ABC):
                 for gen in self.ThermalGenerators}
 
     def _piecewise_adjustment_helper(self, points, costs):
-        new_points, new_vals, p_mins = dict(), dict(), dict()
+        if not sorted(points.keys()) == sorted(costs.keys()):
+            raise VaticModelError("Incompatible cost curves with "
+                                  "differing generators listed!")
 
-        for g in self.ThermalGenerators:
-            if g not in points:
-                raise ValueError(f"Missing cost curve points for "
-                                 f"thermal generator `{g}`!")
+        gen_list = self.ThermalGenerators | self.RenewableGenerators
+        new_points = {g: dict() for g in gen_list}
+        new_vals = {g: dict() for g in gen_list}
+        p_mins = {g: dict() for g in gen_list}
 
-            if g not in costs:
-                raise ValueError(f"Missing cost curve values for "
-                                 f"thermal generator `{g}`!")
+        for g in points:
+            if g not in gen_list:
+                raise ValueError(f"Invalid cost curve generator given: `{g}`")
 
-            p_min, p_max = (self.MinPowerOutput[g, self.InitialTime],
-                            self.MaxPowerOutput[g, self.InitialTime])
+            if isinstance(points[g], list):
+                use_points = {t: points[g] for t in self.TimePeriods}
+                use_costs = {t: costs[g] for t in self.TimePeriods}
+            else:
+                use_points = points[g]
+                use_costs = costs[g]
 
-            gen_min = 0.
-            gen_points = []
-            gen_vals = []
+            for t in self.TimePeriods:
+                p_min, p_max = (self.MinPowerOutput[g, t],
+                                self.MaxPowerOutput[g, t])
 
-            # input_func = _eliminate_piecewise_duplicates(input_func)
-            set_p_min = False
+                gen_min = 0.
+                gen_points = []
+                gen_vals = []
 
-            # NOTE: this implicitly inserts a (0.,0.)
-            #       into every cost array
-            prior_output, prior_cost = 0., 0.
+                # input_func = _eliminate_piecewise_duplicates(input_func)
+                set_p_min = False
 
-            for output, cost in zip(points[g], costs[g]):
-                ## catch this case
-                if math.isclose(output, p_min) and math.isclose(output, p_max):
-                    gen_points.append(0.)
-                    gen_vals.append(0.)
-                    gen_min = cost
+                # NOTE: this implicitly inserts a (0.,0.)
+                #       into every cost array
+                prior_output, prior_cost = 0., 0.
 
-                    break
-
-                ## output < p_min
-                elif _much_less_than(output, p_min):
-                    pass
-
-                ## p_min == output
-                elif math.isclose(output, p_min):
-                    assert set_p_min is False
-                    gen_points.append(0.)
-                    gen_vals.append(0.)
-                    gen_min = cost
-                    set_p_min = True
-
-                ## p_min < output
-                elif (_much_less_than(p_min, output)
-                      and _much_less_than(output, p_max)):
-                    if not set_p_min:
+                for output, cost in zip(use_points[t], use_costs[t]):
+                    ## catch this case
+                    if (math.isclose(output, p_min)
+                            and math.isclose(output, p_max)):
                         gen_points.append(0.)
                         gen_vals.append(0.)
+                        gen_min = cost
 
-                        price = (cost - prior_cost) / (output - prior_output)
-                        gen_min = (p_min - prior_output) * price + prior_cost
+                        break
 
-                        gen_points.append(output - p_min)
-                        gen_vals.append((output - p_min) * price)
-                        set_p_min = True
+                    ## output < p_min
+                    elif _much_less_than(output, p_min):
+                        pass
 
-                    else:
-                        gen_points.append(output - p_min)
-                        gen_vals.append(cost - gen_min)
-
-                elif math.isclose(output, p_max) or _much_less_than(p_max, output):
-                    if not set_p_min:
+                    ## p_min == output
+                    elif math.isclose(output, p_min):
+                        assert set_p_min is False
                         gen_points.append(0.)
                         gen_vals.append(0.)
-
-                        price = (cost - prior_cost) / (output - prior_output)
-                        gen_min = (p_min - prior_output) * price + prior_cost
-                        gen_points.append(p_max - p_min)
-
-                        if math.isclose(output, p_max):
-                            gen_vals.append(cost - gen_min)
-                        else:
-                            gen_vals.append((p_max - p_min) * price)
-
+                        gen_min = cost
                         set_p_min = True
 
-                    else:
-                        gen_points.append(p_max - p_min)
+                    ## p_min < output
+                    elif (_much_less_than(p_min, output)
+                          and _much_less_than(output, p_max)):
+                        if not set_p_min:
+                            gen_points.append(0.)
+                            gen_vals.append(0.)
 
-                        if math.isclose(output, p_max):
-                            gen_vals.append(cost - gen_min)
-                        else:
                             price = (cost - prior_cost) / (output - prior_output)
-                            gen_vals.append((p_max - prior_output)
-                                            * price + prior_cost - gen_min)
+                            gen_min = (p_min - prior_output) * price + prior_cost
 
-                    break
+                            gen_points.append(output - p_min)
+                            gen_vals.append((output - p_min) * price)
+                            set_p_min = True
 
-                else:
-                    raise ValueError(
-                        "Unexpected case in _piecewise_adjustment_helper, "
-                        "p_min={}, p_max={}, output={}".format(
-                            p_min, p_max, output)
-                        )
+                        else:
+                            gen_points.append(output - p_min)
+                            gen_vals.append(cost - gen_min)
 
-                prior_output, prior_cost = output, cost
+                    elif (math.isclose(output, p_max)
+                          or _much_less_than(p_max, output)):
+                        if not set_p_min:
+                            gen_points.append(0.)
+                            gen_vals.append(0.)
 
-            new_points[g] = gen_points
-            new_vals[g] = gen_vals
-            p_mins[g] = gen_min
+                            price = (cost - prior_cost) / (output - prior_output)
+                            gen_min = (p_min - prior_output) * price + prior_cost
+                            gen_points.append(p_max - p_min)
+
+                            if math.isclose(output, p_max):
+                                gen_vals.append(cost - gen_min)
+                            else:
+                                gen_vals.append((p_max - p_min) * price)
+
+                            set_p_min = True
+
+                        else:
+                            gen_points.append(p_max - p_min)
+
+                            if math.isclose(output, p_max):
+                                gen_vals.append(cost - gen_min)
+                            else:
+                                price = (cost - prior_cost) / (output - prior_output)
+                                gen_vals.append((p_max - prior_output)
+                                                * price + prior_cost - gen_min)
+
+                        break
+
+                    else:
+                        raise ValueError(
+                            "Unexpected case in _piecewise_adjustment_helper, "
+                            "p_min={}, p_max={}, output={}".format(
+                                p_min, p_max, output)
+                            )
+
+                    prior_output, prior_cost = output, cost
+
+                new_points[g][t] = gen_points
+                new_vals[g][t] = gen_vals
+                p_mins[g][t] = gen_min
 
         return new_points, new_vals, p_mins
 
@@ -899,7 +895,7 @@ class BaseModel(ABC):
     def piecewise_production_sum_rule(self, g, t):
         linear_vars = [
             self.model._PiecewiseProduction[g, t, i]
-            for i in range(len(self.PiecewiseGenerationPoints[g]) - 1)
+            for i in range(len(self.PiecewiseGenerationPoints[g][t]) - 1)
             ]
 
         linear_coefs = [1.] * len(linear_vars)
@@ -915,8 +911,8 @@ class BaseModel(ABC):
         # MinimumPowerOutput, we need to scale Startup/Shutdown ramps
         # to it as well
 
-        upper = self.PiecewiseGenerationPoints[g][i + 1]
-        lower = self.PiecewiseGenerationPoints[g][i]
+        upper = self.PiecewiseGenerationPoints[g][t][i + 1]
+        lower = self.PiecewiseGenerationPoints[g][t][i]
         SU = self.StartupRampLimit[g]
         minP = self.MinPowerOutput[g, t]
         su_step = _step_coeff(upper, lower, SU - minP)
@@ -969,8 +965,8 @@ class BaseModel(ABC):
         UT = self.ScaledMinUpTime[g]
 
         if UT <= 1 and t < self.NumTimePeriods:
-            upper = self.PiecewiseGenerationPoints[g][i + 1]
-            lower = self.PiecewiseGenerationPoints[g][i]
+            upper = self.PiecewiseGenerationPoints[g][t][i + 1]
+            lower = self.PiecewiseGenerationPoints[g][t][i]
             SD = self.ScaledShutdownRampLimit[g]
             minP = self.MinPowerOutput[g, t]
 
@@ -1250,8 +1246,8 @@ class BaseModel(ABC):
 
     def piecewise_production_costs_rule(self, g, t):
         if (g, t, 0) in self.prod_indices:
-            points = self.PiecewiseGenerationPoints[g]
-            costs = self.PiecewiseGenerationCosts[g]
+            points = self.PiecewiseGenerationPoints[g][t]
+            costs = self.PiecewiseGenerationCosts[g][t]
 
             linear_coefs = [(costs[i + 1] - costs[i])
                             / (points[i + 1] - points[i])
@@ -1440,7 +1436,7 @@ class BaseModel(ABC):
                                   + self.model._LoadGenerateMismatch[b, tm])
 
             # _PTDF_DCOPF_NETWORK_MODEL
-            bus_loads = {bus: self.Demand.loc[bus, tm] for bus in self.Buses}
+            bus_loads = self.Demand.loc[:, tm].to_dict()
             block['pl'] = bus_loads
 
             block['branches_in_service'] = tuple(
@@ -1484,7 +1480,7 @@ class BaseModel(ABC):
 
     def add_objective(self):
         self.model._NoLoadCost = tupledict({
-            (g, t): self.MinProductionCost[g] * self.model._UnitOn[g, t]
+            (g, t): self.MinProductionCost[g][t] * self.model._UnitOn[g, t]
             for g, t in product(*self.thermal_periods)
             })
 
@@ -1700,7 +1696,7 @@ class RucModel(BaseModel):
 
     def compute_production_costs_rule(self, g, t, avg_power):
         ## piecewise points for power buckets
-        piecewise_points = self.PiecewiseGenerationPoints[g]
+        piecewise_points = self.PiecewiseGenerationPoints[g][t]
         piecewise_eval = [0] * (len(piecewise_points) - 1)
 
         ## fill the buckets (skip the first since it's min power)
@@ -1724,8 +1720,8 @@ class RucModel(BaseModel):
     def kow_production_costs_tightened(self):
         self.model._PiecewiseProduction = self.model.addVars(
             self.prod_indices,
-            lb=0., ub=[self.PiecewiseGenerationPoints[g][i + 1]
-                       - self.PiecewiseGenerationPoints[g][i]
+            lb=0., ub=[self.PiecewiseGenerationPoints[g][t][i + 1]
+                       - self.PiecewiseGenerationPoints[g][t][i]
                        for g, t, i in self.prod_indices],
             name='PiecewiseProduction'
             )
@@ -2015,8 +2011,8 @@ class ScedModel(BaseModel):
     def ca_production_costs(self):
         self.model._PiecewiseProduction = self.model.addVars(
             self.prod_indices,
-            lb=0., ub=[self.PiecewiseGenerationPoints[g][i + 1]
-                       - self.PiecewiseGenerationPoints[g][i]
+            lb=0., ub=[self.PiecewiseGenerationPoints[g][t][i + 1]
+                       - self.PiecewiseGenerationPoints[g][t][i]
                        for g, t, i in self.prod_indices],
             name='PiecewiseProduction'
             )
