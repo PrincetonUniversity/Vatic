@@ -18,11 +18,12 @@ a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see 
 ## Installing Vatic ##
 
 After making sure you have a Python version within 3.8 through 3.11 installed (e.g. through
-`conda create --name vatic-test python=3.11`), clone the repository using one of the following from command line:
+`conda create --name vatic-test python=3.11`), clone the repository from Github. We recommend using the SSH interface:
 
-```git clone https://github.com/PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+```git clone git@github.com:PrincetonUniversity/Vatic.git -b v0.5.2-rc1 --single-branch```
 
-```git clone git@github.com:PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+Note that this also requires the prior installation of SSH keys for use with Github, as described [here]
+(https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 
 Then, from inside the cloned directory, install Vatic:
 ```

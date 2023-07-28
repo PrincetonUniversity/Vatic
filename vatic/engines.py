@@ -169,7 +169,6 @@ class Simulator:
             self.call_oracle()
             self.simulation_times['Sim'] += time.time() - oracle_start_time
 
-            # clean gurobi envrionment to remove memory cache and run faster
         sim_time = time.time() - simulation_start_time
 
         print("Simulation Complete")

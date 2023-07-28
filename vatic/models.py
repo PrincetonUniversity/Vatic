@@ -47,7 +47,7 @@ class VaticModelError(Exception):
     pass
 
 
-class BaseModel(ABC):
+class GurobiModel(ABC):
 
     model_name = "VaticModel"
 
@@ -1558,7 +1558,8 @@ class BaseModel(ABC):
         return fcsts
 
 
-class RucModel(BaseModel):
+class RucModel(GurobiModel):
+    """A gurobipy implementation of reliability unit commitment."""
 
     model_name = "UnitCommitment"
 
@@ -1903,7 +1904,8 @@ class RucModel(BaseModel):
         self.model.update()
 
 
-class ScedModel(BaseModel):
+class ScedModel(GurobiModel):
+    """A gurobipy implementation of security-constrained economic dispatch."""
 
     model_name = 'EconomicDispatch'
 

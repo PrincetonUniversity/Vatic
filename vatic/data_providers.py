@@ -280,22 +280,9 @@ class DataProvider:
 
         """
 
-        # assert current_state.timestep_count >= sced_horizon
-
-        # add the forecasted load demands and renewable generator outputs, and
-        # adjust them to be closer to the corresponding actual values
+        # this makes the forecasts equal to the actuals!
         if self.prescient_sced_forecasts:
-
-            # get the data for this date from the input datasets
-            sced_data = self.get_forecastables(use_actuals=True,
-                                               times_requested=sced_horizon)
-
-            for k, sced_data in sced_data:
-                future = current_state.get_future_actuals(k)
-
-                # this error method makes the forecasts equal to the actuals!
-                for t in range(sced_horizon):
-                    sced_data[t] = future[t]
+            sced_data = current_state.forecasts.iloc[:sced_horizon]
 
         # this error method adjusts future forecasts based on how much
         # the forecast over/underestimated the current actual value

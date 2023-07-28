@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from .models import BaseModel
+from .models import GurobiModel
 
 
 PTDFOptions = namedtuple('PTDFOptions',
@@ -83,12 +83,12 @@ class PTDFManager:
 
         return False
 
-    def mark_active(self, model: BaseModel) -> None:
+    def mark_active(self, model: GurobiModel) -> None:
         for branch, branch_data in model.branches.items():
             if branch in self._active_branch_constraints:
                 branch_data['lazy'] = False
 
-    def update_active(self, model: BaseModel) -> None:
+    def update_active(self, model: GurobiModel) -> None:
         # increment active
         for branch in self._active_branch_constraints:
             self._active_branch_constraints[branch] += 1

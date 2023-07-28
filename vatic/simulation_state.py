@@ -126,7 +126,7 @@ class SimulationState:
 
         This is the actual value for the current time period (time index 0).
         Values are returned in the same order as
-        BaseModel.get_forecastables, but instead of returning arrays it
+        GurobiModel.get_forecastables, but instead of returning arrays it
         returns a single value.
 
         """
