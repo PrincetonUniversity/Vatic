@@ -44,8 +44,7 @@ class DataProvider:
                  reserve_shortfall_penalty: float, reserve_factor: float,
                  prescient_sced_forecasts: bool, ruc_prescience_hour: int,
                  ruc_execution_hour: int, ruc_every_hours: int,
-                 ruc_horizon: int, enforce_sced_shutdown_ramprate: bool,
-                 no_startup_shutdown_curves: bool, verbosity: int,
+                 ruc_horizon: int, verbosity: int,
                  start_date: Optional[date] = None,
                  num_days: Optional[int] = None,
                  renew_costs: Optional[str | Path | dict] = None) -> None:
@@ -72,8 +71,6 @@ class DataProvider:
         self._output_ruc_initial_conditions = verbosity > 3
 
         self.prescient_sced_forecasts = prescient_sced_forecasts
-        self._enforce_sced_shutdown_ramprate = enforce_sced_shutdown_ramprate
-        self._no_startup_shutdown_curves = no_startup_shutdown_curves
         self.renew_costs = renew_costs
 
         if start_date:
@@ -124,14 +121,9 @@ class DataProvider:
             if gen in self.renewables
             ]
 
-        self.shutdown_curves = dict()
-
-    def create_ruc(
-            self,
-            time_step: GridTimeStep,
-            current_state: SimulationState | None = None,
-            copy_first_day: bool = False
-            ) -> RucModel:
+    def create_ruc(self,
+                   time_step: GridTimeStep,
+                   current_state: SimulationState | None = None) -> RucModel:
         """Generates a Reliability Unit Commitment model.
 
         This a merge of Prescient's EgretEngine.create_deterministic_ruc and
@@ -143,23 +135,13 @@ class DataProvider:
             current_state   If given, a simulation state used to get initial
                             states for the generators, which will otherwise be
                             pulled from the input datasets.
-
         """
-        forecast_request_count = 24
-        if not copy_first_day:
-            forecast_request_count = self.ruc_horizon
-
-        start_hour = time_step.when.hour
-        start_day = time_step.when.date()
         assert (time_step.when.minute == 0)
         assert (time_step.when.second == 0)
 
-        step_delta = timedelta(minutes=self.data_freq)
-        start_dt = pd.Timestamp(time_step.when, tz='utc')
-        ruc_times = list()
-
         fcsts = self.get_forecastables(use_actuals=False,
-                                       times_requested=self.ruc_horizon)
+                                       times_requested=self.ruc_horizon,
+                                       start_day=time_step.when.date())
         use_template = deepcopy(self.template)
 
         # easier to do this here, than in model formulations as originally
@@ -196,36 +178,27 @@ class DataProvider:
                              fcsts['RenewGen'], fcsts['LoadBus'],
                              self._reserve_factor, sim_state=current_state)
 
-        # TODO: add more reporting
-        if self._output_ruc_initial_conditions:
-            tgens = dict(ruc_model.elements('generator',
-                                            generator_type='thermal'))
-            gen_label_size = max((len(gen) for gen in tgens), default=0) + 1
-
-            print("\nInitial generator conditions (gen-name t0-unit-on"
-                  " t0-unit-on-state t0-power-generated):")
-
-            for gen, gen_data in tgens.items():
-                print(' '.join([
-                    format(gen, '{}s'.format(gen_label_size)),
-                    format(str(int(gen_data['initial_status'] > 0)), '5s'),
-                    format(gen_data['initial_status'], '7d'),
-                    format(gen_data['initial_p_output'], '12.2f')
-                    ]))
-
         return ruc_model
 
     def get_forecastables(self,
                           use_actuals: bool,
-                          times_requested: int) -> pd.DataFrame:
+                          times_requested: int,
+                          start_day: Optional[date] = None) -> pd.DataFrame:
         """Compare e.g. to formulations.forecastables."""
+        start_ts = pd.Timestamp(start_day, tz='utc').date()
+
+        if start_day:
+            use_indx = self.gen_data.index[self.gen_data.index.date
+                                           == start_ts]
+        else:
+            use_indx = self.gen_data.index
 
         if use_actuals:
-            use_gen = self.gen_data['actl'].copy()
-            use_load = self.load_data['actl'].copy()
+            use_gen = self.gen_data.loc[use_indx, 'actl']
+            use_load = self.load_data.loc[use_indx, 'actl']
         else:
-            use_gen = self.gen_data['fcst'].copy()
-            use_load = self.load_data['fcst'].copy()
+            use_gen = self.gen_data.loc[use_indx, 'fcst']
+            use_load = self.load_data.loc[use_indx, 'fcst']
 
         if times_requested <= 24:
             use_gen = use_gen.iloc[:times_requested]
@@ -326,63 +299,10 @@ class DataProvider:
                     future_status_times[on_gen] = -(
                             gen_cmts[~gen_cmts].index.min() - sced_horizon)
 
-        template_data = deepcopy(self.template)
-        template_data['ShutdownRampLimit'] = {
-            gen: 1. + pmin
-            for gen, pmin in self.template['MinimumPowerOutput'].items()
-            }
-
         sced_model = ScedModel(
-            template_data, sced_data['RenewGen'], sced_data['LoadBus'],
+            self.template, sced_data['RenewGen'], sced_data['LoadBus'],
             reserve_factor=self._reserve_factor,
             sim_state=current_state, future_status=future_status_times
             )
 
         return sced_model
-
-    # adapted from prescient.engine.egret.egret_plugin
-    @staticmethod
-    def _calculate_sced_ramp_capacity(gen_data: dict, ramp_rate_sced: float,
-                                      minutes_per_step: int,
-                                      capacity_key: str) -> float:
-        if capacity_key in gen_data:
-            susd_capacity_time_varying = isinstance(gen_data[capacity_key],
-                                                    dict)
-            p_min_time_varying = isinstance(gen_data['p_min'], dict)
-
-            if p_min_time_varying and susd_capacity_time_varying:
-                capacity = sum(
-                    (susd - pm) * (minutes_per_step / 60.) + pm
-                    for pm, susd in zip(gen_data['p_min']['values'],
-                                        gen_data[capacity_key]['values'])
-                    ) / len(gen_data['p_min']['values'])
-
-            elif p_min_time_varying:
-                capacity = sum(
-                    (gen_data[capacity_key] - pm)
-                    * (minutes_per_step / 60.) + pm
-                    for pm in gen_data['p_min']['values']
-                    ) / len(gen_data['p_min']['values'])
-
-            elif susd_capacity_time_varying:
-                capacity = sum(
-                    (susd - gen_data['p_min']) * (minutes_per_step / 60.)
-                    + gen_data['p_min']
-                    for susd in gen_data[capacity_key]['values']
-                    ) / len(gen_data[capacity_key]['values'])
-
-            else:
-                capacity = ((gen_data[capacity_key] - gen_data['p_min'])
-                            * (minutes_per_step / 60.) + gen_data['p_min'])
-
-        else:
-            if isinstance(gen_data['p_min'], dict):
-                capacity = sum(
-                    pm + ramp_rate_sced / 2. for pm in
-                    gen_data['p_min']['values']
-                    ) / len(gen_data['p_min']['values'])
-
-            else:
-                capacity = gen_data['p_min'] + ramp_rate_sced / 2.
-
-        return capacity

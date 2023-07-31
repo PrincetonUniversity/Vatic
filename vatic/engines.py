@@ -90,8 +90,6 @@ class Simulator:
                  ruc_execution_hour: int, ruc_every_hours: int,
                  ruc_horizon: int, sced_horizon: int,
                  lmp_shortfall_costs: bool,
-                 enforce_sced_shutdown_ramprate: bool,
-                 no_startup_shutdown_curves: bool,
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
                  renew_costs: Optional[str | Path],
@@ -112,8 +110,7 @@ class Simulator:
             template_data, gen_data, load_data, load_shed_penalty,
             reserve_shortfall_penalty, reserve_factor,
             prescient_sced_forecasts, ruc_prescience_hour, ruc_execution_hour,
-            ruc_every_hours, ruc_horizon, enforce_sced_shutdown_ramprate,
-            no_startup_shutdown_curves, verbosity, start_date, num_days,
+            ruc_every_hours, ruc_horizon, verbosity, start_date, num_days,
             renew_costs
             )
 
@@ -213,7 +210,10 @@ class Simulator:
                 pickle.dump(ruc_data, f, protocol=-1)
 
         sim_actuals = self._data_provider.get_forecastables(
-            use_actuals=True, times_requested=self._data_provider.ruc_horizon)
+            use_actuals=True, times_requested=self._data_provider.ruc_horizon,
+            start_day=first_step.when
+            )
+
         self._simulation_state.apply_initial_ruc(ruc_data, sim_actuals)
 
     def call_planning_oracle(self) -> None:
@@ -252,7 +252,10 @@ class Simulator:
                                                  ruc.results)
 
         sim_actuals = self._data_provider.get_forecastables(
-            use_actuals=True, times_requested=self._data_provider.ruc_horizon)
+            use_actuals=True, times_requested=self._data_provider.ruc_horizon,
+            start_day=uc_datetime.date()
+            )
+
         self._simulation_state.apply_planning_ruc(ruc, sim_actuals)
 
     def call_oracle(self) -> None:

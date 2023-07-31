@@ -137,21 +137,6 @@ def run_deterministic():
                         help="take reserve shortfall costs into "
                              "account when calculating LMPs")
 
-    # how generator startup and shutdown constraints are calculated and used
-    parser.add_argument("--enforce-sced-shutdown-ramprate",
-                        action='store_true',
-                        dest="enforce_sced_shutdown_ramprate",
-                        help="Enforces shutdown ramp-rate constraints in the "
-                             "SCED. Enabling this options requires a long "
-                             "SCED look-ahead (at least an hour) to ensure "
-                             "the shutdown ramp-rate constraints can "
-                             "be satisfied.")
-    parser.add_argument("--no-startup-shutdown-curves",
-                        action='store_true', dest="no_startup_shutdown_curves",
-                        help="For thermal generators, do not infer "
-                             "startup/shutdown ramping curves when "
-                             "starting-up and shutting-down.")
-
     parser.add_argument("--verbose", "-v", action='count', default=0,
                         help="how much info to print about the ongoing state "
                              "of the simulator and its solvers")
@@ -191,8 +176,6 @@ def run_deterministic():
         ruc_every_hours=args.ruc_every_hours,
         ruc_horizon=args.ruc_horizon, sced_horizon=args.sced_horizon,
         lmp_shortfall_costs=args.lmp_shortfall_costs,
-        enforce_sced_shutdown_ramprate=args.enforce_sced_shutdown_ramprate,
-        no_startup_shutdown_curves=args.no_startup_shutdown_curves,
         output_detail=args.output_detail, init_ruc_file=args.init_ruc_file,
         verbosity=args.verbose, output_max_decimals=args.output_max_decimals,
         create_plots=args.create_plots, renew_costs=renew_costs,
