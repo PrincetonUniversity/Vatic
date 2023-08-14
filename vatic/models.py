@@ -409,7 +409,7 @@ class GurobiModel(ABC):
             self.model.update()
             self.model.optimize()
 
-    def solve(self, relaxed, mipgap, threads, outputflag):
+    def solve(self, relaxed, mipgap, threads, outputflag, parse_result=True):
         self.model.Params.OutputFlag = outputflag
         self.model.Params.MIPGap = mipgap
         self.model.Params.Threads = threads
@@ -428,7 +428,9 @@ class GurobiModel(ABC):
             raise VaticModelError("infeasible model, exiting!")
 
         self.solve_time = time.time() - start_time
-        self.results = self._parse_model_results()
+
+        if parse_result:
+            self.results = self._parse_model_results()
 
     def _parse_model_results(self):
         if not self.model:
@@ -1769,7 +1771,6 @@ class RucModel(GurobiModel):
 
         for g, t_p, t in self.model._StartupIndicator_domain:
             self.model._ShutdownsByStartups[g, t] += [t_p]
-            self.model._ShutdownsByStartups[g, t] += [t_p]
             self.model._StartupsByShutdowns[g, t_p] += [t]
 
         self.model._StartupMatch = self.model.addConstrs(
@@ -2025,8 +2026,8 @@ class ScedModel(GurobiModel):
 
         for g, s, t in self.startup_costs_indices:
             if s < len(self.StartupCostIndices[g]) - 1:
-                this_lag = self.StartupCostIndices[g][s]
-                next_lag = self.StartupCostIndices[g][s + 1]
+                this_lag = self.StartupLags[g][s]
+                next_lag = self.StartupLags[g][s + 1]
 
                 if next_lag + self.UnitOnT0State[g] < t < next_lag:
                     self.model._delta[g, s, t].lb = 0

@@ -324,7 +324,7 @@ class Simulator:
         sced.add_objective()
 
         sced.solve(relaxed=True, mipgap=self.mipgap,
-                   threads=self.solver_options['Threads'], outputflag=0)
+                   threads=self.solver_options['Threads'], outputflag=0, parse_result=False)
         lmps = sced.model._TransmissionBlock[1]['PTDF'].calculate_LMP(sced, 1)
 
         # return the SCED to its original state
