@@ -70,12 +70,14 @@ class GurobiModel(ABC):
                  grid_template: dict, renews_data: pd.DataFrame,
                  load_data: pd.DataFrame, reserve_factor: float,
                  sim_state: Optional[Any] = None,
-                 future_status: Optional[dict[str, int]] = None) -> None:
+                 future_status: Optional[dict[str, int]] = None,
+                 renew_cost: bool = False,) -> None:
 
         if not (renews_data.index == load_data.index).all():
             raise ValueError("Renewable generator outputs and load demands "
                              "must come from the same times!")
 
+        self.renew_cost = renew_cost
         self.RenewOutput = renews_data.transpose()
         self.Demand = load_data.transpose()
         self.time_steps = renews_data.index.to_list()
@@ -216,13 +218,35 @@ class GurobiModel(ABC):
             self.PiecewiseGenerationCosts,
             self.MinProductionCost) = self._piecewise_adjustment_helper(
                     grid_template['CostPiecewisePoints'],
-                    grid_template['CostPiecewiseValues']
+                    grid_template['CostPiecewiseValues'],
                     )
 
-        self.prod_indices = [
+        self.prod_gt_indices = [
+            (g, t) for g in self.ThermalGenerators for t in self.TimePeriods
+            ]
+
+        self.prod_gtp_indices = [
             (g, t, i) for g in self.ThermalGenerators for t in self.TimePeriods
             for i in range(len(self.PiecewiseGenerationPoints[g][t]) - 1)
             ]
+
+        if renew_cost:
+            (self.RenewablePiecewiseGenerationPoints, 
+                self.RenewablePiecewiseGenerationCosts) = self._validate_renewable_piecewise_curve(
+                    grid_template['RenewableCostPiecewisePoints'], grid_template['RenewableCostPiecewiseValues']
+                )
+
+            self.renewable_prod_gt_indices = [
+                (g, t) for g in self.RenewableGenerators if g in self.RenewablePiecewiseGenerationPoints 
+                for t in self.TimePeriods if t in self.RenewablePiecewiseGenerationPoints[g] 
+                ]
+
+            self.renewable_prod_gtp_indices = [
+                (g, t, i) 
+                    for g in self.RenewableGenerators if g in self.RenewablePiecewiseGenerationPoints 
+                    for t in self.TimePeriods if t in self.RenewablePiecewiseGenerationPoints[g] 
+                    for i in range(len(self.RenewablePiecewiseGenerationPoints[g][t]) - 1) 
+                ]
 
         self.InitTimePeriodsOnline = tupledict({
             g: int(min(self.NumTimePeriods,
@@ -421,7 +445,6 @@ class GurobiModel(ABC):
         # constraints, proceed with adding the constraints and re-solving
         if self.model.Status == 2:
             self._lazy_ptdf_uc_solve_loop()
-
         else:
             self.model.computeIIS()
             self.model.write('model.ilp')
@@ -597,7 +620,7 @@ class GurobiModel(ABC):
             raise VaticModelError("Incompatible cost curves with "
                                   "differing generators listed!")
 
-        gen_list = self.ThermalGenerators | self.RenewableGenerators
+        gen_list = self.ThermalGenerators
         new_points = {g: dict() for g in gen_list}
         new_vals = {g: dict() for g in gen_list}
         p_mins = {g: dict() for g in gen_list}
@@ -711,6 +734,52 @@ class GurobiModel(ABC):
                 p_mins[g][t] = gen_min
 
         return new_points, new_vals, p_mins
+
+    def _validate_renewable_piecewise_curve(self, points, costs):
+        if not sorted(points.keys()) == sorted(costs.keys()):
+            raise VaticModelError("Incompatible cost curves with "
+                                  "differing generators listed!")
+        new_points = dict()
+        new_vals = dict()
+
+        for g in points:
+            if g not in self.RenewableGenerators:
+                raise ValueError(f"Invalid cost curve generator given: `{g}`")
+
+            new_points[g] = dict()
+            new_vals[g] = dict()
+
+            use_points = points[g]
+            use_costs = costs[g]
+
+            if not sorted(use_points.keys()) == sorted(use_costs.keys()):
+                raise VaticModelError("Incompatible cost curves with "
+                                    "differing time steps listed!")
+
+            for t in use_points:
+
+                # Only use cost curve up to p_max
+                gen_points = []
+                gen_vals = []
+                p_max = self.MaxPowerOutput[g, t]
+
+                for output, cost in zip(use_points[t], use_costs[t]): 
+                    if output <= p_max:
+                        gen_points.append(output)
+                        gen_vals.append(cost)
+                    else:
+                        if gen_points[-1] < p_max:
+                            price = (cost - gen_vals[-1]) /  (output - gen_points[-1])
+                            adjust_cost = gen_vals[-1] + price * (p_max - gen_points[-1])
+                            gen_points.append(output)
+                            gen_vals.append(adjust_cost)
+                        else:
+                            break
+
+                new_points[g][t] = gen_points
+                new_vals[g][t] = gen_vals
+
+        return new_points, new_vals
 
     def garver_3bin_vars(self, relax_binaries):
         vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
@@ -885,6 +954,18 @@ class GurobiModel(ABC):
 
         linear_coefs = [1.] * len(linear_vars)
         linear_vars.append(self.model._PowerGeneratedAboveMinimum[g, t])
+        linear_coefs.append(-1.)
+
+        return LinExpr(linear_coefs, linear_vars) == 0
+
+    def renewable_piecewise_production_sum_rule(self, g, t):
+        linear_vars = [
+            self.model._RenewablePiecewiseProduction[g, t, i]
+            for i in range(len(self.RenewablePiecewiseGenerationPoints[g][t]) - 1)
+            ]
+
+        linear_coefs = [1.] * len(linear_vars)
+        linear_vars.append(self.model._RenewablePowerUsed[g, t])
         linear_coefs.append(-1.)
 
         return LinExpr(linear_coefs, linear_vars) == 0
@@ -1216,7 +1297,7 @@ class GurobiModel(ABC):
             )
 
     def piecewise_production_costs_rule(self, g, t):
-        if (g, t, 0) in self.prod_indices:
+        if (g, t) in self.prod_gt_indices:
             points = self.PiecewiseGenerationPoints[g][t]
             costs = self.PiecewiseGenerationCosts[g][t]
 
@@ -1231,8 +1312,21 @@ class GurobiModel(ABC):
 
             return LinExpr(linear_coefs, linear_vars) == 0
 
-        else:
-            return self.model._ProductionCost[g, t] == 0
+    def renewable_piecewise_production_costs_rule(self, g, t):
+        if (g, t) in self.renewable_prod_gt_indices:
+            points = self.RenewablePiecewiseGenerationPoints[g][t]
+            costs = self.RenewablePiecewiseGenerationCosts[g][t]
+
+            linear_coefs = [(costs[i + 1] - costs[i])
+                            / (points[i + 1] - points[i])
+                            for i in range(len(points) - 1)]
+            linear_vars = [self.model._RenewablePiecewiseProduction[g, t, i]
+                           for i in range(len(points) - 1)]
+
+            linear_coefs.append(-1.)
+            linear_vars.append(self.model._RenewableProductionCost[g, t])
+
+            return LinExpr(linear_coefs, linear_vars) == 0
 
     def rajan_takriti_ut_dt(self):
         for g, t in product(*self.thermal_periods):
@@ -1471,6 +1565,14 @@ class GurobiModel(ABC):
             for t in self.TimePeriods
             }
 
+        if self.renew_cost:
+            self.model._RenewableStageCost = {'Stage_1': 0, 
+                'Stage_2': sum(self.model._RenewableProductionCost[g, t] 
+                for g, t in self.renewable_prod_gt_indices)
+            }
+        else:
+            self.model._RenewableStageCost = {st: 0. for st in self.StageSet}
+        
         self.model._GenerationStageCost = {
             st: (sum(sum(self.model._ProductionCost[g, t]
                         for g in self.ThermalGenerators)
@@ -1481,6 +1583,7 @@ class GurobiModel(ABC):
                       for t in self.model._GenerationTimeInStage[st])
                  + sum(self.model._StorageCost[s, t] for s in self.Storage
                        for t in self.model._GenerationTimeInStage[st]))
+                 + self.model._RenewableStageCost[st]
             for st in self.StageSet
             }
 
@@ -1689,27 +1792,50 @@ class RucModel(GurobiModel):
                    / (piecewise_points[l + 1] - piecewise_points[l])
                    * piecewise_eval[l] for l in range(len(piecewise_eval)))
 
+    def compute_renewable_production_costs_rule(self, g, t, avg_power):
+        ## piecewise points for power buckets
+        piecewise_points = self.RenewablePiecewiseGenerationPoints[g][t]
+        piecewise_eval = [0] * (len(piecewise_points) - 1)
+
+        ## fill the buckets (skip the first since it's min power)
+        for l in range(len(piecewise_eval)):
+            ## fill this bucket all the way
+            if avg_power >= piecewise_points[l + 1]:
+                piecewise_eval[l] = (piecewise_points[l + 1]
+                                     - piecewise_points[l])
+
+            ## fill the bucket part way and stop
+            elif avg_power < piecewise_points[l + 1]:
+                piecewise_eval[l] = avg_power - piecewise_points[l]
+                break
+
+        # slope * production
+        return sum((self.model._RenewablePiecewiseProductionCosts[g, t, l + 1]
+                    - self.model._RenewablePiecewiseProductionCosts[g, t, l])
+                   / (piecewise_points[l + 1] - piecewise_points[l])
+                   * piecewise_eval[l] for l in range(len(piecewise_eval)))
+
     def kow_production_costs_tightened(self):
         self.model._PiecewiseProduction = self.model.addVars(
-            self.prod_indices,
+            self.prod_gtp_indices,
             lb=0., ub=[self.PiecewiseGenerationPoints[g][t][i + 1]
                        - self.PiecewiseGenerationPoints[g][t][i]
-                       for g, t, i in self.prod_indices],
+                       for g, t, i in self.prod_gtp_indices],
             name='PiecewiseProduction'
             )
 
         self.model._PiecewiseProductionSum = self.model.addConstrs(
             (self.piecewise_production_sum_rule(g, t)
-             for g, t, _ in self.prod_indices), name='PiecewiseProductionSum'
+             for g, t in self.prod_gt_indices), name='PiecewiseProductionSum'
             )
 
         self.model._PiecewiseProductionLimits = self.model.addConstrs(
             (self.piecewise_production_limits_rule(g, t, i)
-             for g, t, i in self.prod_indices),
+             for g, t, i in self.prod_gtp_indices),
             name='PiecewiseProductionLimits'
             )
 
-        limits_periods = [(g, t, i) for g, t, i in self.prod_indices
+        limits_periods = [(g, t, i) for g, t, i in self.prod_gtp_indices
                           if self.ScaledMinUpTime[g] <= 1
                           and t < self.NumTimePeriods]
 
@@ -1731,6 +1857,36 @@ class RucModel(GurobiModel):
             )
 
         self.model._ComputeProductionCosts = self.compute_production_costs_rule
+
+    def renewable_kow_production_costs_tightened(self):
+        """
+        Add production costs for renewables
+        """
+        self.model._RenewablePiecewiseProduction = self.model.addVars(
+            self.renewable_prod_gtp_indices,
+            lb=0., ub=[self.RenewablePiecewiseGenerationPoints[g][t][i + 1]
+                       - self.RenewablePiecewiseGenerationPoints[g][t][i]
+                       for g, t, i in self.renewable_prod_gtp_indices],
+            name='RenewablePiecewiseProduction'
+            )
+
+        self.model._RenewablePiecewiseProductionSum = self.model.addConstrs(
+            (self.renewable_piecewise_production_sum_rule(g, t)
+             for g, t in self.renewable_prod_gt_indices), name='RenewablePiecewiseProductionSum'
+            )
+
+        self.model._RenewableProductionCost = self.model.addVars(
+            self.renewable_prod_gt_indices, lb=-GRB.INFINITY, ub=GRB.INFINITY,
+            name='RenewableProductionCost'
+            )
+
+        self.model._RenewableProductionCostConstr = self.model.addConstrs(
+            (self.renewable_piecewise_production_costs_rule(g, t)
+             for g, t in self.renewable_prod_gt_indices),
+            name='RenewableProductionCostConstr'
+            )
+
+        self.model._ComputeRenewableProductionCosts = self.compute_renewable_production_costs_rule
 
     def kow_startup_costs(self, relax_binaries):
         vtype = GRB.CONTINUOUS if relax_binaries else GRB.BINARY
@@ -1855,6 +2011,8 @@ class RucModel(GurobiModel):
         self.pgg_KOW_gen_limits()
         self.damcikurt_ramping()
         self.kow_production_costs_tightened()
+        if self.renew_cost:
+            self.renewable_kow_production_costs_tightened()
         self.rajan_takriti_ut_dt()
         self.kow_startup_costs(relax_binaries)
 
@@ -1872,7 +2030,6 @@ class RucModel(GurobiModel):
         self._add_zero_cost_hours(objective_hours)
 
         self.model.update()
-
 
 class ScedModel(GurobiModel):
     """A gurobipy implementation of security-constrained economic dispatch."""
@@ -1982,16 +2139,16 @@ class ScedModel(GurobiModel):
 
     def ca_production_costs(self):
         self.model._PiecewiseProduction = self.model.addVars(
-            self.prod_indices,
+            self.prod_gtp_indices,
             lb=0., ub=[self.PiecewiseGenerationPoints[g][t][i + 1]
                        - self.PiecewiseGenerationPoints[g][t][i]
-                       for g, t, i in self.prod_indices],
+                       for g, t, i in self.prod_gtp_indices],
             name='PiecewiseProduction'
             )
 
         self.model._PiecewiseProductionSum = self.model.addConstrs(
             (self.piecewise_production_sum_rule(g, t)
-             for g, t, _ in self.prod_indices), name='PiecewiseProductionSum'
+             for g, t in self.prod_gt_indices), name='PiecewiseProductionSum'
             )
 
         self.model._ProductionCost = self.model.addVars(

@@ -153,30 +153,27 @@ class DataProvider:
             else:
                 costs = deepcopy(self.renew_costs)
 
+            use_template['RenewableCostPiecewisePoints'] = {}
+            use_template['RenewableCostPiecewiseValues'] = {}
             for (gen, ts), cost_dict in costs.items():
                 t = self.gen_data.index.get_loc(ts) + 1
 
-                if gen in use_template['CostPiecewisePoints']:
-                    use_template['CostPiecewisePoints'][gen][t] \
+                if gen in use_template['RenewableCostPiecewisePoints']:
+                    use_template['RenewableCostPiecewisePoints'][gen][t] \
                         = cost_dict['break_points']
-                    use_template['CostPiecewiseValues'][gen][t] \
+                    use_template['RenewableCostPiecewiseValues'][gen][t] \
                         = cost_dict['reliability_cost']
 
                 else:
-                    use_template['CostPiecewisePoints'][gen] = {
+                    use_template['RenewableCostPiecewisePoints'][gen] = {
                         t: cost_dict['break_points']}
-                    use_template['CostPiecewiseValues'][gen] = {
+                    use_template['RenewableCostPiecewiseValues'][gen] = {
                         t: cost_dict['reliability_cost']}
-
-                if self.ruc_horizon >= 24 + t:
-                    use_template['CostPiecewisePoints'][gen][24 + t] \
-                        = cost_dict['break_points']
-                    use_template['CostPiecewiseValues'][gen][24 + t] \
-                        = cost_dict['reliability_cost']
 
         ruc_model = RucModel(use_template,
                              fcsts['RenewGen'], fcsts['LoadBus'],
-                             self._reserve_factor, sim_state=current_state)
+                             self._reserve_factor, sim_state = current_state, 
+                             renew_cost = self.renew_costs != None)
 
         return ruc_model
 

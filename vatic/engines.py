@@ -261,7 +261,7 @@ class Simulator:
     def call_oracle(self) -> None:
         """Solve the real-time economic dispatch for the current time step."""
 
-        sced_model = self.solve_sced(hours_in_objective=1,
+        sced_model = self.solve_sced(hours_in_objective=self.sced_horizon,
                                      sced_horizon=self.sced_horizon)
         lmps = self.solve_lmp(sced_model) if self.run_lmps else None
 
