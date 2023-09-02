@@ -480,9 +480,9 @@ class GurobiModel(ABC):
 
         results = {
             'solve_time': self.solve_time,
-
+            
             'power_generated': {
-                (g, t): self.model._PowerGenerated[g, t].getValue()
+                (g, t): self.model._PowerGeneratedStartupShutdown[g, t].getValue()
                 for g, t in product(*self.thermal_periods)
                 },
 
