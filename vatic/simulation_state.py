@@ -237,8 +237,12 @@ class SimulationState:
             pmin = sced.MinPowerOutput[gen, sced_time]
             pmax = sced.MaxPowerOutput[gen, sced_time]
 
-            if (pmin - 1e-5) <= gen_power < pmin:
+            if not unit_on:
+                pass
+                
+            elif (pmin - 1e-5) <= gen_power < pmin:
                 gen_power = pmin
+                
             elif pmax < gen_power <= (pmax + 1e-5):
                 gen_power = pmax
 
