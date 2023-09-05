@@ -252,7 +252,7 @@ class DataProvider:
 
         # this makes the forecasts equal to the actuals!
         if self.prescient_sced_forecasts:
-            sced_data = current_state.forecasts.iloc[:sced_horizon]
+            sced_data = current_state.actuals.iloc[:sced_horizon]
 
         # this error method adjusts future forecasts based on how much
         # the forecast over/underestimated the current actual value
