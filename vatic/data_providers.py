@@ -172,6 +172,7 @@ class DataProvider:
 
         ruc_model = RucModel(use_template,
                              fcsts['RenewGen'], fcsts['LoadBus'],
+                             self._load_mismatch_cost, self._reserve_mismatch_cost, 
                              self._reserve_factor, sim_state = current_state, 
                              renew_cost = self.renew_costs != None)
 
@@ -298,7 +299,9 @@ class DataProvider:
 
         sced_model = ScedModel(
             self.template, sced_data['RenewGen'], sced_data['LoadBus'],
-            reserve_factor=self._reserve_factor,
+            load_mismatch_penalty = self._load_mismatch_cost,
+            reserve_shortfall_penalty = self._reserve_mismatch_cost,
+            reserve_factor=self._reserve_factor, 
             sim_state=current_state, future_status=future_status_times
             )
 

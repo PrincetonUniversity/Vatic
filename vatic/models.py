@@ -68,7 +68,8 @@ class GurobiModel(ABC):
 
     def __init__(self,
                  grid_template: dict, renews_data: pd.DataFrame,
-                 load_data: pd.DataFrame, reserve_factor: float,
+                 load_data: pd.DataFrame, load_mismatch_penalty: float, 
+                 reserve_shortfall_penalty: float, reserve_factor: float,
                  sim_state: Optional[Any] = None,
                  future_status: Optional[dict[str, int]] = None,
                  renew_cost: bool = False,) -> None:
@@ -77,6 +78,9 @@ class GurobiModel(ABC):
             raise ValueError("Renewable generator outputs and load demands "
                              "must come from the same times!")
 
+        self.reserve_factor = reserve_factor
+        self.load_mismatch_penalty = load_mismatch_penalty
+        self.reserve_shortfall_penalty = reserve_shortfall_penalty
         self.renew_cost = renew_cost
         self.RenewOutput = renews_data.transpose()
         self.Demand = load_data.transpose()
@@ -130,7 +134,7 @@ class GurobiModel(ABC):
 
         # set aside a proportion of the total demand as the self.model's reserve
         # requirement (if any) at each time point
-        self.ReserveReqs = reserve_factor * self.Demand.sum(axis=0)
+        self.ReserveReqs = self.reserve_factor * self.Demand.sum(axis=0)
 
         self.Buses = OrderedSet(grid_template['Buses'])
         self.TransmissionLines = grid_template['TransmissionLines']
@@ -303,8 +307,6 @@ class GurobiModel(ABC):
 
         self.model._StartupCurve = {g: list() for g in self.ThermalGenerators}
         self.model._ShutdownCurve = {g: list() for g in self.ThermalGenerators}
-        self.model._LoadMismatchPenalty = 1e4
-        self.model._ReserveShortfallPenalty = 1e3
 
         self.model._ThermalLimits = {br: bdict['rating_long_term']
                                      for br, bdict in self.branches.items()}
@@ -1449,13 +1451,13 @@ class GurobiModel(ABC):
 
         for b, t in self.model._LoadSheddingBusTimes:
             self.model._LoadMismatchCost[t] += (
-                    self.model._LoadMismatchPenalty
+                    self.load_mismatch_penalty
                     * self.model._LoadShedding[b, t]
                     )
 
         for b, t in self.model._OverGenerationBusTimes:
             self.model._LoadMismatchCost[t] += (
-                    self.model._LoadMismatchPenalty
+                    self.load_mismatch_penalty
                     * self.model._OverGeneration[b, t]
                     )
 
@@ -1561,7 +1563,7 @@ class GurobiModel(ABC):
             }
 
         self.model._ReserveShortfallCost = {
-            t: self.model._ReserveShortfallPenalty * self.model._ReserveShortfall[t]
+            t: self.reserve_shortfall_penalty * self.model._ReserveShortfall[t]
             for t in self.TimePeriods
             }
 

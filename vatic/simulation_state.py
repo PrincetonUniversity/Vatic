@@ -254,7 +254,7 @@ class SimulationState:
             elif gen_power > pmax:
                 raise VaticStateError(f"Invalid power generation {gen_power} "
                                       f"for {gen} which is greater than "
-                                      f"pmin={pmax}!")
+                                      f"pmax={pmax}!")
 
             self._init_gen_state[gen] = state_duration
             self._init_power_gen[gen] = gen_power
