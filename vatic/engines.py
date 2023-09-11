@@ -303,7 +303,8 @@ class Simulator:
         sced.generate(relax_binaries=False,
                       ptdf=self._ptdf_manager.ptdf_matrix,
                       ptdf_options=self._ptdf_manager.sced_ptdf_options,
-                      objective_hours=hours_in_objective)
+                      objective_hours=hours_in_objective, 
+                      shutdown_curves=self._data_provider.shutdown_curves)
 
         self._hours_in_objective = hours_in_objective
         self._ptdf_manager.ptdf_matrix = sced.PTDF

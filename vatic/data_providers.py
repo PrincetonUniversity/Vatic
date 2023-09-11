@@ -121,6 +121,8 @@ class DataProvider:
             if gen in self.renewables
             ]
 
+        self.shutdown_curves = dict()
+
     def create_ruc(self,
                    time_step: GridTimeStep,
                    current_state: SimulationState | None = None) -> RucModel:

@@ -120,15 +120,6 @@ class GurobiModel(ABC):
         self.future_status = (future_status if future_status
                               else {g: 0 for g in self.ThermalGenerators})
 
-        self.TimePeriodsSinceShutdown = {
-            gen: 10000 if s >= 0 else -s
-            for gen, s in self.future_status.items()
-            }
-        self.TimePeriodsBeforeStartup = {
-            gen: 10000 if s <= 0 else s
-            for gen, s in self.future_status.items()
-            }
-
         self.Demand.columns = self.TimePeriods
         self.RenewOutput.columns = self.TimePeriods
 
@@ -189,6 +180,16 @@ class GurobiModel(ABC):
 
         self.UnitOnT0 = tupledict({
             g: init_st > 0. for g, init_st in self.UnitOnT0State.items()})
+
+        self.TimePeriodsSinceShutdown = {
+            gen: 10000 if self.UnitOnT0State[gen] >= 0 else 
+            int(math.ceil(-self.UnitOnT0State[gen]))
+            for gen in self.ThermalGenerators
+            }
+        self.TimePeriodsBeforeStartup = {
+            gen: 10000 if s <= 0 else s
+            for gen, s in self.future_status.items()
+            }
 
         self.ScaledMinUpTime = tupledict({
             g: min(grid_template['MinimumUpTime'][g], self.NumTimePeriods)
@@ -292,7 +293,8 @@ class GurobiModel(ABC):
     def get_commitments(self, gen: str) -> list[bool]:
         return [self.FixedCommitment[gen, t] for t in self.TimePeriods]
 
-    def _initialize_model(self, ptdf, ptdf_options) -> None:
+    def _initialize_model(self, ptdf, ptdf_options, 
+            shutdown_curves: dict = dict()) -> None:
         self.model = gp.Model(self.model_name)
         self.model._ptdf_options = self.DEFAULT_PTDF_OPTIONS
 
@@ -305,8 +307,8 @@ class GurobiModel(ABC):
         if ptdf:
             self.PTDF = ptdf
 
-        self.model._StartupCurve = {g: list() for g in self.ThermalGenerators}
-        self.model._ShutdownCurve = {g: list() for g in self.ThermalGenerators}
+        self.model._StartupCurve = {gen: list() for gen in self.ThermalGenerators}
+        self.model._ShutdownCurve = shutdown_curves
 
         self.model._ThermalLimits = {br: bdict['rating_long_term']
                                      for br, bdict in self.branches.items()}
@@ -1239,20 +1241,20 @@ class GurobiModel(ABC):
 
             future_startup_past_shutdown_production = 0.
             future_startup_power_index = (time_periods_before_startup
-                                          + self.NumTimePeriods - t)
+                                          + self.NumTimePeriods - t - 1)
 
             if future_startup_power_index <= len(startup_curve) - 1:
                 future_startup_past_shutdown_production += startup_curve[
                     future_startup_power_index]
 
-            past_shutdown_power_index = time_periods_since_shutdown + t
+            past_shutdown_power_index = time_periods_since_shutdown + t - 1
             if past_shutdown_power_index <= len(shutdown_curve) - 1:
                 future_startup_past_shutdown_production += shutdown_curve[
                     past_shutdown_power_index]
 
             for startup_idx in range(
                     min(len(startup_curve), self.NumTimePeriods + 1 - t)):
-                linear_vars.append(self.model._UnitStart[g, t + startup_idx])
+                linear_vars.append(self.model._UnitStart[g, t + startup_idx + 1])
                 linear_coefs.append(startup_curve[startup_idx])
 
             for shutdown_idx in range(min(len(shutdown_curve), t)):
@@ -2241,9 +2243,10 @@ class ScedModel(GurobiModel):
 
     def generate(self,
                  relax_binaries: bool, ptdf_options: dict,
-                 ptdf, objective_hours: int) -> None:
+                 ptdf, objective_hours: int, 
+                 shutdown_curves: dict) -> None:
 
-        self._initialize_model(ptdf, ptdf_options)
+        self._initialize_model(ptdf, ptdf_options, shutdown_curves)
 
         for gen in self.ThermalGenerators:
             self.ShutdownRampLimit[gen] = (
@@ -2261,14 +2264,18 @@ class ScedModel(GurobiModel):
             if (not self.FixedCommitment[gen, self.InitialTime]
                     and self.UnitOnT0State[gen] > 0):
                 shut_capc = self.PowerGeneratedT0[gen]
-            else:
+
+                self.model._ShutdownCurve[gen] = [
+                    shut_capc - i * self.NominalRampDownLimit[gen] for i in 
+                    range(1, int(math.ceil(shut_capc / self.NominalRampDownLimit[gen])))]
+
+            if gen not in self.model._ShutdownCurve:
                 shut_capc = self.ShutdownRampLimit[gen] - self.MinPowerOutput[
                     gen, self.InitialTime]
 
-            shut_capc -= self.NominalRampDownLimit[gen]
-            while shut_capc > 0:
-                self.model._ShutdownCurve[gen] += [shut_capc]
-                shut_capc -= self.NominalRampDownLimit[gen]
+                self.model._ShutdownCurve[gen] = [
+                    shut_capc - i * self.NominalRampDownLimit[gen] for i in 
+                    range(1, int(math.ceil(shut_capc / self.NominalRampDownLimit[gen])))]
 
         self.garver_3bin_vars(relax_binaries)
         self.garver_power_vars()
