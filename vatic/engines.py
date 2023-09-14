@@ -88,7 +88,7 @@ class Simulator:
                  reserve_factor: float, output_detail: int,
                  prescient_sced_forecasts: bool, ruc_prescience_hour: int,
                  ruc_execution_hour: int, ruc_every_hours: int,
-                 ruc_horizon: int, sced_horizon: int,
+                 ruc_horizon: int, sced_horizon: int, hours_in_objective: int,
                  lmp_shortfall_costs: bool,
                  init_ruc_file: str | Path | None, verbosity: int,
                  output_max_decimals: int, create_plots: bool,
@@ -99,9 +99,9 @@ class Simulator:
         self.mipgap = mipgap #Put mipgap in the initalization
         self.solver_options = solver_options
         self.sced_horizon = sced_horizon
+        self.hours_in_objective = hours_in_objective
         self.lmp_shortfall_costs = lmp_shortfall_costs
 
-        self._hours_in_objective = None
         self._current_timestep = None
         #time dictionary for profiling
         self.simulation_times = {'Init': 0., 'Plan': 0., 'Sim': 0.}
@@ -261,7 +261,7 @@ class Simulator:
     def call_oracle(self) -> None:
         """Solve the real-time economic dispatch for the current time step."""
 
-        sced_model = self.solve_sced(hours_in_objective=self.sced_horizon,
+        sced_model = self.solve_sced(hours_in_objective=self.hours_in_objective,
                                      sced_horizon=self.sced_horizon)
         lmps = self.solve_lmp(sced_model) if self.run_lmps else None
 
@@ -306,7 +306,6 @@ class Simulator:
                       objective_hours=hours_in_objective, 
                       shutdown_curves=self._data_provider.shutdown_curves)
 
-        self._hours_in_objective = hours_in_objective
         self._ptdf_manager.ptdf_matrix = sced.PTDF
 
         sced.solve(relaxed=False, mipgap=self.mipgap,
