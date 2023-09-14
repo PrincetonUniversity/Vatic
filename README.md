@@ -1,6 +1,9 @@
 [![CI-test](https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml/badge.svg)](
 https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
 
+[![DOI](https://zenodo.org/badge/406584271.svg)](https://zenodo.org/badge/latestdoi/406584271)
+
+
 # Vatic #
 
 Vatic is a Python package for running simulations of a power grid using the
@@ -10,25 +13,28 @@ Vatic is a Python package for running simulations of a power grid using the
 optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid formulations created using
 [Egret](https://github.com/grid-parity-exchange/Egret).
 
-Vatic is specifically designed for use with the Gurobi simulation engine; before running Vatic, make sure you have
-a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see older releases of Vatic
-(e.g. `v0.4.1-a0`) if you are looking to use other solvers such as CBC.
-
 
 ## Installing Vatic ##
 
-After making sure you have a Python version within 3.8 through 3.11 installed (e.g. through
-`conda create --name vatic-test python=3.11`), clone the repository using one of the following from command line:
+After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of
+the following from command line:
 
-```git clone https://github.com/PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+```git clone https://github.com/PrincetonUniversity/Vatic.git```
 
-```git clone git@github.com:PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+```git clone git@github.com:PrincetonUniversity/Vatic.git```
 
 Then, from inside the cloned directory, install Vatic:
 ```
 cd Vatic
 pip install .
 ```
+
+While this will install Vatic's Python package dependencies, you will need to also choose and install a MILP solver
+with Python support. A good free option is [Cbc](https://github.com/coin-or/Cbc); we also recommend considering
+obtaining a license for [Gurobi](https://www.gurobi.com/), which allows for much faster simulation.
+
+
+### Installing grid datasets ###
 
 The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
 https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)
@@ -71,9 +77,13 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
                     was invoked from. Vatic will create this directory if it does not already exist.
 
- - `--solver-args` A list of Gurobi arguments to modify the behaviour of the solver used for RUCs and SCEDs. These 
-                   should be given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example:
-                   ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
+ - `--solver` The solver to use for RUC and SCED optimization model instances, such as `cbc` or `gurobi`. The default is
+              [cbc](https://github.com/coin-or/Cbc), which is available for free through services such as `conda`.
+              Note that you may have to install your preferred solver separately.
+
+ - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
+                   given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using
+                   Gurobi, you might specify ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
 
  - `--threads (-t)` The number of compute cores to be used for parallelization within the optimization solver. If you
                     are running `vatic-det` on a remote compute cluster, do not use more cores than what has been
