@@ -20,13 +20,20 @@ a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see 
 After making sure you have a Python version within 3.8 through 3.11 installed (e.g. through
 `conda create --name vatic-test python=3.11`), clone the repository using one of the following from command line:
 
-```git clone https://github.com/PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+```git clone https://github.com/PrincetonUniversity/Vatic.git```
 
-```git clone git@github.com:PrincetonUniversity/Vatic.git -b v0.5.2-rc0 --single-branch```
+OR
+
+```git clone git@github.com:PrincetonUniversity/Vatic.git```
+
+Move to the newely created directory
+```cd Vatic```
+
+If you wish to work on the stable version, checkout the stable branch (if know what you're doing and want to work on the experimental main branch, skip this step):
+```git checkout merge_to_1332616```
 
 Then, from inside the cloned directory, install Vatic:
 ```
-cd Vatic
 pip install .
 ```
 
