@@ -159,6 +159,7 @@ def run_deterministic():
                              "of the simulator and its solvers")
 
     args = parser.parse_args()
+    print("Solver input is ignored and gurobi is used.")
     template_data, gen_data, load_data = load_input(
         args.input_grid, args.start_date, args.num_days, args.init_conds_file)
 
@@ -182,7 +183,7 @@ def run_deterministic():
 
     Simulator(
         template_data, gen_data, load_data, out_dir=out_dir,
-        start_date=args.start_date, num_days=args.num_days, solver=args.solver,
+        start_date=args.start_date, num_days=args.num_days,
         solver_options=solver_args, run_lmps=args.lmps, mipgap=args.ruc_mipgap,
         load_shed_penalty=args.load_shed_penalty,
         reserve_shortfall_penalty=args.reserve_short_penalty,
