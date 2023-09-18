@@ -23,9 +23,14 @@ the following from command line:
 
 ```git clone git@github.com:PrincetonUniversity/Vatic.git```
 
+Move to the newely created directory
+``` cd Vatic```
+
+If you wish to work on the stable version, checkout the stable branch (if you wish to work on the Main directory, skip this step):
+```git checkout merge_to_1332616```
+
 Then, from inside the cloned directory, install Vatic:
 ```
-cd Vatic
 pip install .
 ```
 
