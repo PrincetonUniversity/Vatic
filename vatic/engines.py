@@ -150,7 +150,7 @@ class Simulator:
     def __init__(self,
                  template_data: dict, gen_data: pd.DataFrame,
                  load_data: pd.DataFrame, out_dir: Path | str | None,
-                 start_date: datetime.date, num_days: int, 
+                 start_date: datetime.date, num_days: int, solver: str,
                  solver_options: dict, run_lmps: bool, mipgap: float,
                  load_shed_penalty: float, reserve_shortfall_penalty: float,
                  reserve_factor: float, output_detail: int,
@@ -164,7 +164,7 @@ class Simulator:
                  output_max_decimals: int, create_plots: bool,
                  renew_costs: Optional[dict | str | Path | list[float]],
                  save_to_csv, last_conditions_file) -> None:
-        solver = "gurobi" #Amit: Quick fix to be compatible with the new pipeline
+
         self._ruc_solver = self._verify_solver(solver, 'RUC')
         self._sced_solver = self._verify_solver(solver, 'SCED')
 
