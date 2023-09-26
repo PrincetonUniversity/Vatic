@@ -150,7 +150,7 @@ class Simulator:
     def __init__(self,
                  template_data: dict, gen_data: pd.DataFrame,
                  load_data: pd.DataFrame, out_dir: Path | str | None,
-                 start_date: datetime.date, num_days: int, solver:str="gurobi", 
+                 start_date: datetime.date, num_days: int, solver="gurobi": str, 
                  solver_options: dict, run_lmps: bool, mipgap: float,
                  load_shed_penalty: float, reserve_shortfall_penalty: float,
                  reserve_factor: float, output_detail: int,
