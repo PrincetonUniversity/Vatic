@@ -35,7 +35,7 @@ If you wish to work on the stable version, checkout the stable branch (if know w
 Make sure you have anaconda installed. On the cluster, run the following command
 `module load anaconda3/2022.10`.
 To create a virtual environment, whose name is "vatic-test", run the following command:
-`conda env create -n vatic-test`
+`conda create -n vatic-test`
 and activate it:
 `conda activate vatic-test`. 
 
