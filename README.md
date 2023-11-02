@@ -32,6 +32,13 @@ Move to the newely created directory
 If you wish to work on the stable version, checkout the stable branch (if know what you're doing and want to work on the experimental main branch, skip this step):
 ```git checkout merge_to_1332616```
 
+Make sure you have anaconda installed. On the cluster, run the following command
+`module load anaconda3/2022.10`.
+To create a virtual environment, whose name is "vatic-test", run the following command:
+`conda env create -f environment.yml -n vatic-test`
+and activate it:
+`conda activate vatic-test`. 
+
 Then, from inside the cloned directory, install Vatic:
 ```
 pip install .
