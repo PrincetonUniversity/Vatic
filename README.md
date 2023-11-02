@@ -17,8 +17,7 @@ a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see 
 
 ## Installing Vatic ##
 
-After making sure you have a Python version within 3.8 through 3.11 installed (e.g. through
-`conda create --name vatic-test python=3.11`), clone the repository using one of the following from command line:
+After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of the following from command line:
 
 ```git clone https://github.com/PrincetonUniversity/Vatic.git```
 
@@ -35,7 +34,7 @@ If you wish to work on the stable version, checkout the stable branch (if know w
 Make sure you have anaconda installed. On the cluster, run the following command
 `module load anaconda3/2022.10`.
 To create a virtual environment, whose name is "vatic-test", run the following command:
-`conda create -n vatic-test`
+`conda create -n vatic-test python=3.11`
 and activate it:
 `conda activate vatic-test`. 
 
