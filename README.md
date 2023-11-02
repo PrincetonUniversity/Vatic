@@ -80,10 +80,10 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
     output = pickle.load(f)
 ```
 
-An example of how to run Vatic on 2020-05-04 on 1 day using Gurobi:
+An example of how to run Vatic on 2020-05-04 on 1 day using Gurobi, and saving the output to .csv files:
 
 ```
-vatic-det RTS-GMLC 2020-05-04 1 --solver gurobi
+vatic-det RTS-GMLC 2020-05-04 1 --solver gurobi --csv
 ```
 
 `vatic-det` also supports the following optional arguments further controlling its behaviour:
