@@ -80,14 +80,25 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
     output = pickle.load(f)
 ```
 
+An example of how to run Vatic on 2020-05-04 on 1 day using Gurobi:
+
+```
+vatic-det RTS-GMLC 2020-05-04 1 --solver gurobi
+```
+
 `vatic-det` also supports the following optional arguments further controlling its behaviour:
+
 
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
                     was invoked from. Vatic will create this directory if it does not already exist.
 
- - `--solver-args` A list of Gurobi arguments to modify the behaviour of the solver used for RUCs and SCEDs. These 
-                   should be given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example:
-                   ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
+ - `--solver` The solver to use for RUC and SCED optimization model instances, such as `cbc` or `gurobi`. The default is
+              [cbc](https://github.com/coin-or/Cbc), which is available for free through services such as `conda`.
+              Note that you may have to install your preferred solver separately.
+
+ - `--solver-args` A list of arguments to modify the behaviour of the solver used for RUCs and SCEDs. These should be
+                   given in the format ```--solver-args arg1=x arg2=y arg3=z ...```. For example, if you are using
+                   Gurobi, you might specify ```--solver-args Cuts=1 Presolve=1 Heuristics=0.03```.
 
  - `--threads (-t)` The number of compute cores to be used for parallelization within the optimization solver. If you
                     are running `vatic-det` on a remote compute cluster, do not use more cores than what has been
