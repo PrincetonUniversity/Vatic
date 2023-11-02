@@ -83,8 +83,13 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
 An example of how to run Vatic on 2020-05-04 on 1 day using Gurobi, and saving the output to .csv files:
 
 ```
-vatic-det RTS-GMLC 2020-05-04 1 --solver gurobi --csv
+date="2020-05-04"
+out_dir="./${date}/"
+mkdir ${out_dir}
+vatic-det RTS-GMLC ${date} 1 --solver gurobi --csv --out-dir ${out_dir}
 ```
+
+And the results will be stored at the newly created directory whose name is the date.
 
 `vatic-det` also supports the following optional arguments further controlling its behaviour:
 
