@@ -15,9 +15,7 @@ def run_deterministic():
     # we define here the options governing the behaviour of the simulation
     # that are accessible to the user through the command line interface...
     parser = argparse.ArgumentParser(
-        "vatic-det", description="Simulate a deterministic scenario using a "
-                                 "gurobipy model implementation."
-        )
+        "vatic-det", description="Simulate a deterministic scenario.")
 
     # ...starting with which power grid dataset should be used
     parser.add_argument("input_grid", type=str,
@@ -34,6 +32,10 @@ def run_deterministic():
     parser.add_argument("--out-dir", "-o", type=Path, dest="out_dir",
                         help="directory where output will be stored")
 
+    # which solver is used for optimizations within the simulation, and which
+    # solver hyper-parameters will be used
+    parser.add_argument("--solver", type=str, default="cbc",
+                        help="How to solve RUCs and SCEDs.")
     parser.add_argument("--solver-args", nargs='*', dest="solver_args",
                         help="A list of arguments to pass to the solver for "
                              "both RUCs and SCEDs.")
@@ -69,8 +71,8 @@ def run_deterministic():
 
     parser.add_argument("--init-ruc-file", type=Path, dest="init_ruc_file",
                         help="where to save/load the initial RUC from")
-    parser.add_argument("--renew-costs", "-c", dest="renew_costs",
-                        help="use costs for renewables from input file")
+    parser.add_argument("--renew-costs", "-c", nargs='*', dest="renew_costs",
+                        help="use costs for renewables from input directory")
 
     parser.add_argument(
         "--init-conditions-file", type=Path, dest="init_conds_file",
@@ -180,7 +182,7 @@ def run_deterministic():
 
     Simulator(
         template_data, gen_data, load_data, out_dir=out_dir,
-        start_date=args.start_date, num_days=args.num_days,
+        start_date=args.start_date, num_days=args.num_days, solver=args.solver,
         solver_options=solver_args, run_lmps=args.lmps, mipgap=args.ruc_mipgap,
         load_shed_penalty=args.load_shed_penalty,
         reserve_shortfall_penalty=args.reserve_short_penalty,

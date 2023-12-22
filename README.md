@@ -1,6 +1,9 @@
 [![CI-test](https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml/badge.svg)](
 https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
 
+[![DOI](https://zenodo.org/badge/406584271.svg)](https://zenodo.org/badge/latestdoi/406584271)
+
+
 # Vatic #
 
 Vatic is a Python package for running simulations of a power grid using the
@@ -10,12 +13,9 @@ Vatic is a Python package for running simulations of a power grid using the
 optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid formulations created using
 [Egret](https://github.com/grid-parity-exchange/Egret).
 
-Vatic is specifically designed for use with the Gurobi simulation engine; before running Vatic, make sure you have
-a valid Gurobi license installed (e.g. `module load gurobi/10.0.1`). Please see older releases of Vatic
-(e.g. `v0.4.1-a0`) if you are looking to use other solvers such as CBC.
-
 
 ## Installing Vatic ##
+
 
 After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of the following from command line:
 
@@ -28,9 +28,6 @@ OR
 Move to the newely created directory
 ```cd Vatic```
 
-If you wish to work on the stable version, checkout the stable branch (if know what you're doing and want to work on the experimental main branch, skip this step):
-```git checkout merge_to_1332616```
-
 Make sure you have anaconda installed. On the cluster, run the following command
 `module load anaconda3/2022.10`.
 To create a virtual environment, whose name is "vatic-test", run the following command:
@@ -42,6 +39,13 @@ Then, from inside the cloned directory, install Vatic:
 ```
 pip install .
 ```
+
+While this will install Vatic's Python package dependencies, you will need to also choose and install a MILP solver
+with Python support. A good free option is [Cbc](https://github.com/coin-or/Cbc); we also recommend considering
+obtaining a license for [Gurobi](https://www.gurobi.com/), which allows for much faster simulation.
+
+
+### Installing grid datasets ###
 
 The Vatic repository includes the [May 2021 version of the Texas-7k grid dataset](
 https://electricgrids.engr.tamu.edu/electric-grid-test-cases/datasets-for-arpa-e-perform-program/)

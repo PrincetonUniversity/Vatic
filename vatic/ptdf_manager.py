@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from .models import BaseModel
+from .model_data import VaticModelData
 
 
 PTDFOptions = namedtuple('PTDFOptions',
@@ -41,18 +41,19 @@ HighConfidenceOptions = PTDFOptions(ruc={'pre_lp_iteration_limit': 0,
                                     lmp_ed={'pre_lp_iteration_limit': 0})
 
 
-class PTDFManager:
+class VaticPTDFManager:
     """Keeping track of the active constraints handed to EGRET models."""
 
     def __init__(self,
                  inactive_limit: int = 5, limit_eps: float = 1e-2) -> None:
         # stored PTDF_matrix_dict for Egret
-        self.ptdf_matrix = None
+        self.PTDF_matrix_dict = None
 
         # dictionary with activate constraints keys are some immutable unique
         # constraint identifier (e.g., line name), values are the number of
         # times since last active
         self._active_branch_constraints = dict()
+        self._active_interface_constraints = dict()
 
         # constraints leave the active set if we
         # haven't seen them after this many cycles
@@ -83,24 +84,38 @@ class PTDFManager:
 
         return False
 
-    def mark_active(self, model: BaseModel) -> None:
-        for branch, branch_data in model.branches.items():
+    def mark_active(self, model: VaticModelData) -> None:
+        for branch, branch_data in model.elements(element_type='branch'):
             if branch in self._active_branch_constraints:
                 branch_data['lazy'] = False
 
-    def update_active(self, model: BaseModel) -> None:
+        for intrfce, intrfce_data in model.elements(element_type='interface'):
+            if intrfce in self._active_interface_constraints:
+                intrfce_data['lazy'] = False
+
+    def update_active(self, model: VaticModelData) -> None:
         # increment active
         for branch in self._active_branch_constraints:
             self._active_branch_constraints[branch] += 1
+        for intrfce in self._active_interface_constraints:
+            self._active_interface_constraints[intrfce] += 1
 
         misses = 0
-        for branch, branch_flows in model.flows.items():
-            if self._at_limit(branch_flows.to_list(),
-                              model.branches[branch]['rating_long_term']):
+        for branch, branch_data in model.elements(element_type='branch'):
+            if self._at_limit(branch_data['pf']['values'],
+                              branch_data['rating_long_term']):
                 # we're seeing it now, so reset its counter or make a new one
                 if branch not in self._active_branch_constraints:
                     misses += 1
                 self._active_branch_constraints[branch] = 0
+
+        for intrfce, intrfce_data in model.elements(element_type='interface'):
+            if self._at_two_sided_limit(intrfce_data['pf']['values'],
+                                        intrfce_data['lower_limit'],
+                                        intrfce_data['upper_limit']):
+                if intrfce not in self._active_interface_constraints:
+                    misses += 1
+                self._active_interface_constraints[intrfce] = 0
 
         if misses == 0:
             self._calls_since_last_miss += 1
@@ -126,6 +141,15 @@ class PTDFManager:
 
         for branch in del_branches:
             del self._active_branch_constraints[branch]
+
+        del_interfaces = {
+            intrfce
+            for intrfce, i_cnstrs in self._active_interface_constraints.items()
+            if i_cnstrs > self._inactive_limit
+            }
+
+        for intrfce in del_interfaces:
+            del self._active_interface_constraints[intrfce]
 
     @property
     def ruc_ptdf_options(self):
