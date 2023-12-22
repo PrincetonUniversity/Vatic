@@ -16,16 +16,27 @@ optimization as implemented in [Pyomo](http://www.pyomo.org/) to power grid form
 
 ## Installing Vatic ##
 
-After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of
-the following from command line:
+
+After making sure you have a Python version within 3.8 through 3.11 installed, clone the repository using one of the following from command line:
 
 ```git clone https://github.com/PrincetonUniversity/Vatic.git```
 
+OR
+
 ```git clone git@github.com:PrincetonUniversity/Vatic.git```
+
+Move to the newely created directory
+```cd Vatic```
+
+Make sure you have anaconda installed. On the cluster, run the following command
+`module load anaconda3/2022.10`.
+To create a virtual environment, whose name is "vatic-test", run the following command:
+`conda create -n vatic-test python=3.11`
+and activate it:
+`conda activate vatic-test`. 
 
 Then, from inside the cloned directory, install Vatic:
 ```
-cd Vatic
 pip install .
 ```
 
@@ -72,7 +83,19 @@ with bz2.BZ2File("output.p.gz", 'r') as f:
     output = pickle.load(f)
 ```
 
+An example of how to run Vatic on 2020-05-04 on 1 day using Gurobi, and saving the output to .csv files:
+
+```
+date="2020-05-04"
+out_dir="./${date}/"
+mkdir ${out_dir}
+vatic-det RTS-GMLC ${date} 1 --solver gurobi --csv --out-dir ${out_dir}
+```
+
+And the results will be stored at the newly created directory whose name is the date.
+
 `vatic-det` also supports the following optional arguments further controlling its behaviour:
+
 
  - `--out-dir (-o)` Where the output will be stored; if not specified it will be saved to the location `vatic-det`
                     was invoked from. Vatic will create this directory if it does not already exist.
