@@ -3,6 +3,10 @@ https://github.com/PrincetonUniversity/Vatic/actions/workflows/test.yml)
 
 [![DOI](https://zenodo.org/badge/406584271.svg)](https://zenodo.org/badge/latestdoi/406584271)
 
+License Notice
+This software is made available for academic and research purposes only under a license from Princeton University.
+Commercial use is prohibited without a separate license agreement.
+For commercial use licensing inquiries, contact: rmukerji@loudonenergy.com
 
 # Vatic #
 
