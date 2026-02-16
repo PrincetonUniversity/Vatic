@@ -12,6 +12,7 @@ import pandas as pd
 
 from .model_data import VaticModelData
 from .time_manager import VaticTime
+from .compat import hourly_freq
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -603,7 +604,7 @@ class StatsManager:
                 t.strftime('%m/%d\n%-I%p') if i % 6 == 0 else ""
                 for i, t in enumerate(pd.date_range(start=ruc_time.when,
                                                     periods=commits.shape[1],
-                                                    freq='H'))
+                                                    freq=hourly_freq()))
                 ]
 
             ylbls = [

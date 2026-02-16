@@ -33,6 +33,8 @@ import math
 import pandas as pd
 from datetime import datetime
 
+from vatic.compat import hourly_resample
+
 import os
 _ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -566,8 +568,8 @@ class GridLoader(ABC):
             load_fcsts = self.get_forecasts('Load', start_date, end_date)
 
         if load_actls is None:
-            load_actls = self.get_actuals(
-                'Load', start_date, end_date).resample('H').mean()
+            load_actls = hourly_resample(
+                self.get_actuals('Load', start_date, end_date)).mean()
 
         site_dfs = dict()
         for zone, zone_df in self.bus_df.groupby('Area'):
@@ -628,8 +630,8 @@ class GridLoader(ABC):
 
         for asset_type in self.timeseries_cohorts:
             gen_fcsts = self.get_forecasts(asset_type, start_date, end_date)
-            gen_actls = self.get_actuals(
-                asset_type, start_date, end_date).resample('H').mean()
+            gen_actls = hourly_resample(
+                self.get_actuals(asset_type, start_date, end_date)).mean()
 
             gen_fcsts.columns = pd.MultiIndex.from_tuples(
                 [('fcst', asset_name) for asset_name in gen_fcsts.columns])
@@ -714,8 +716,8 @@ class GridLoader(ABC):
         gen_df = pd.concat([gen_df, gen_scens], axis=1)
 
         for asset_type in self.no_scenario_renews:
-            new_actuals = self.get_actuals(
-                asset_type, start_date, end_date).resample('H').mean()
+            new_actuals = hourly_resample(
+                self.get_actuals(asset_type, start_date, end_date)).mean()
 
             for asset_name, asset_actuals in new_actuals.iteritems():
                 gen_df['actl', asset_name] = asset_actuals
