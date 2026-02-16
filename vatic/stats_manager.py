@@ -387,17 +387,17 @@ class StatsManager:
             tgen_gby = report_dfs['thermal_detail'].groupby('Generator')
 
             # get the final output for each generator
-            final_dispatch = tgen_gby.apply(lambda x: round(x['Dispatch'][-1], 2))
+            final_dispatch = tgen_gby.apply(lambda x: round(x['Dispatch'].iloc[-1], 2))
 
             # get the final on/off state for each generator
             final_bool = tgen_gby.apply(
-                lambda x: (x['Unit State'][-1] * 2 - 1))
+                lambda x: (x['Unit State'].iloc[-1] * 2 - 1))
 
             # find how long it has been since each generator was in a state not
             # matching its final state, combine this info with final on/off
             last_conds = tgen_gby.apply(
                 lambda x: (x['Unit State']
-                           != x['Unit State'][-1])[::-1].argmax()
+                           != x['Unit State'].iloc[-1])[::-1].argmax()
                 ) * final_bool
 
             # for generators which were on or off for the entire simulation
