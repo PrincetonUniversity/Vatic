@@ -665,7 +665,7 @@ class PickleProvider:
             # we can just copy the final value of the first day
             else:
                 day_data['MaxNondispatchablePower'].update({
-                    (gen, i): float(gen_data[gen][-1]) for i in range(25, 49)})
+                    (gen, i): float(gen_data[gen].iloc[-1]) for i in range(25, 49)})
 
         # for dispatchable renewables, minimum output is always zero
         for gen in self.template['DispatchRenewables']:
