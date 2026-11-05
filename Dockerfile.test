@@ -1,0 +1,21 @@
+# Containerized test environment for Vatic: runs the README-claims test suite
+# (static checks + end-to-end RTS-GMLC simulations with the free CBC solver).
+FROM python:3.11.10-slim-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git coinor-cbc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+# install pinned dependencies first so they are cached across source changes
+COPY requirements-test.lock ./
+RUN pip install --no-cache-dir -r requirements-test.lock
+
+COPY . .
+RUN pip install --no-cache-dir --no-deps .
+
+# run from a directory without the source tree so tests exercise the
+# *installed* package (the way the README tells users to run Vatic)
+WORKDIR /work
+CMD ["python", "-m", "pytest", "/src/tests", "-v"]

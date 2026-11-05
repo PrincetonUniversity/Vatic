@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-      - '**.md'
       - 'docs/**'
       - 'LICENSE'
       - '.gitignore'
@@ -41,10 +40,28 @@ jobs:
           sh vatic/tests/check_rts.sh
           echo tests finished successfully!
 
+  lint:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: ruff + mypy on the test suite
+        run: |
+          pip install ruff==0.7.4 mypy==1.13.0 pytest==8.3.3
+          ruff check tests
+          mypy --ignore-missing-imports --follow-imports=skip \
+               --python-version 3.8 tests
+
   test:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
@@ -68,13 +85,37 @@ jobs:
 
           conda create --name vatic-env -c conda-forge \
                         python=${{ matrix.python-version }} \
-                        numpy pandas scipy dill matplotlib pyomo coincbc
+                        numpy pandas scipy dill matplotlib pyomo coincbc pytest
 
           conda activate vatic-env
           pip install .
 
           vatic-det RTS-GMLC 2020-07-20 2 \
                       --solver cbc --threads 2 --ruc-mipgap=0.01 \
-                      --reserve-factor=0.10 --sced-horizon=2 --output-detail 2 
+                      --reserve-factor=0.10 --sced-horizon=2 --output-detail 2
 
           echo tests finished successfully!
+
+      - name: readme-claims
+        shell: bash -l {0}
+
+        # run outside the source tree so the *installed* package is tested
+        run: |
+          conda activate vatic-env
+          cd "$RUNNER_TEMP"
+          python -m pytest -c "$GITHUB_WORKSPACE/setup.cfg" \
+                 "$GITHUB_WORKSPACE/tests" -v
+
+  docker:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          submodules: 'recursive'
+
+      - name: containerized test suite
+        run: |
+          docker compose -f docker-compose.test.yml build
+          docker compose -f docker-compose.test.yml run --rm tests
