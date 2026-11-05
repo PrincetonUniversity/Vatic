@@ -587,7 +587,7 @@ class StatsManager:
                     i: ((output - self._grid_data['thermal_min_outputs'][gen])
                         / (self._grid_data['thermal_capacities'][gen]
                            - self._grid_data['thermal_min_outputs'][gen])
-                        if output > 0. else np.NaN)
+                        if output > 0. else np.nan)
                     for i, output in enumerate(outputs)
                     }
 
